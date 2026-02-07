@@ -28,7 +28,7 @@
  * @property {WeaponLevel[]} levels - Level progression data
  */
 
-export const WEAPONS = {
+const WEAPONS = {
   LASER_FRONTAL: {
     id: 'laser_frontal',
     name: 'Laser Frontal',
@@ -218,7 +218,7 @@ export const WEAPONS = {
  * Weapon evolution definitions
  * Combines maxed weapons with passives to create ultimate weapons
  */
-export const WEAPON_EVOLUTIONS = {
+const WEAPON_EVOLUTIONS = {
   RAYON_PLASMA: {
     id: 'rayon_plasma_continu',
     name: 'Rayon Plasma Continu',
@@ -305,7 +305,7 @@ export const WEAPON_EVOLUTIONS = {
  * @param {string} weaponId - Weapon identifier
  * @returns {WeaponData|null}
  */
-export function getWeaponData(weaponId) {
+function getWeaponData(weaponId) {
   return WEAPONS[weaponId.toUpperCase()] || null;
 }
 
@@ -316,7 +316,7 @@ export function getWeaponData(weaponId) {
  * @param {string} passiveId - Passive ID
  * @returns {Object|null}
  */
-export function getWeaponEvolution(weaponId, weaponLevel, passiveId) {
+function getWeaponEvolution(weaponId, weaponLevel, passiveId) {
   for (const evolution of Object.values(WEAPON_EVOLUTIONS)) {
     if (
       evolution.requiredWeapon === weaponId &&
@@ -327,4 +327,16 @@ export function getWeaponEvolution(weaponId, weaponLevel, passiveId) {
     }
   }
   return null;
+}
+
+// Export to global namespace
+const WeaponData = {
+  WEAPONS,
+  WEAPON_EVOLUTIONS,
+  getWeaponData,
+  getWeaponEvolution
+};
+
+if (typeof window !== 'undefined') {
+  window.WeaponData = WeaponData;
 }

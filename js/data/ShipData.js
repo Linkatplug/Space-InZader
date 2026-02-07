@@ -32,7 +32,7 @@
  * @property {string} sprite - Sprite identifier or shape
  */
 
-export const SHIPS = {
+const SHIPS = {
   DEFENSEUR: {
     id: 'defenseur',
     name: 'Défenseur',
@@ -139,7 +139,7 @@ export const SHIPS = {
  * @param {string} shipId - Ship identifier
  * @returns {ShipData|null}
  */
-export function getShipData(shipId) {
+function getShipData(shipId) {
   return SHIPS[shipId.toUpperCase()] || null;
 }
 
@@ -147,7 +147,7 @@ export function getShipData(shipId) {
  * Get all ships sorted by difficulty
  * @returns {ShipData[]}
  */
-export function getAllShips() {
+function getAllShips() {
   const difficultyOrder = { easy: 0, medium: 1, hard: 2 };
   return Object.values(SHIPS).sort((a, b) => {
     return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
@@ -160,7 +160,7 @@ export function getAllShips() {
  * @param {Object} passiveEffects - Effects from passive items
  * @returns {ShipStats}
  */
-export function calculateEffectiveStats(baseStats, passiveEffects = {}) {
+function calculateEffectiveStats(baseStats, passiveEffects = {}) {
   const stats = { ...baseStats };
 
   // Apply multiplicative bonuses
@@ -214,7 +214,7 @@ export function calculateEffectiveStats(baseStats, passiveEffects = {}) {
  * @param {string} shipId - Ship identifier
  * @returns {Object|null}
  */
-export function getShipUnlockRequirements(shipId) {
+function getShipUnlockRequirements(shipId) {
   const requirements = {
     defenseur: null, // Always unlocked
     equilibre: null, // Always unlocked
@@ -238,7 +238,7 @@ export function getShipUnlockRequirements(shipId) {
  * @param {Object} playerProgress - Player progress data
  * @returns {boolean}
  */
-export function isShipUnlocked(shipId, playerProgress) {
+function isShipUnlocked(shipId, playerProgress) {
   const requirements = getShipUnlockRequirements(shipId);
   
   if (!requirements) return true; // No requirements means always unlocked
@@ -252,4 +252,18 @@ export function isShipUnlocked(shipId, playerProgress) {
   }
   
   return true;
+}
+
+// Export to global namespace
+const ShipData = {
+  SHIPS,
+  getShipData,
+  getAllShips,
+  calculateEffectiveStats,
+  getShipUnlockRequirements,
+  isShipUnlocked
+};
+
+if (typeof window !== 'undefined') {
+  window.ShipData = ShipData;
 }

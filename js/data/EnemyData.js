@@ -32,7 +32,7 @@
  * @property {string} [splitType] - Type of enemy spawned on death
  */
 
-export const ENEMIES = {
+const ENEMIES = {
   DRONE_BASIQUE: {
     id: 'drone_basique',
     name: 'Drone Basique',
@@ -164,7 +164,7 @@ export const ENEMIES = {
 /**
  * AI behavior configurations
  */
-export const AI_BEHAVIORS = {
+const AI_BEHAVIORS = {
   chase: {
     description: 'Direct pursuit of player',
     updateInterval: 0.1,
@@ -201,7 +201,7 @@ export const AI_BEHAVIORS = {
 /**
  * Spawn wave configurations for director system
  */
-export const SPAWN_WAVES = {
+const SPAWN_WAVES = {
   early: {
     timeRange: [0, 300], // 0-5 minutes
     budgetPerSecond: 2,
@@ -233,7 +233,7 @@ export const SPAWN_WAVES = {
  * @param {string} enemyId - Enemy identifier
  * @returns {EnemyData|null}
  */
-export function getEnemyData(enemyId) {
+function getEnemyData(enemyId) {
   return ENEMIES[enemyId.toUpperCase()] || null;
 }
 
@@ -244,7 +244,7 @@ export function getEnemyData(enemyId) {
  * @param {number} difficultyMultiplier - Additional difficulty scaling
  * @returns {EnemyData}
  */
-export function scaleEnemyStats(enemyData, gameTime, difficultyMultiplier = 1.0) {
+function scaleEnemyStats(enemyData, gameTime, difficultyMultiplier = 1.0) {
   const timeFactor = 1 + (gameTime / 300) * 0.3; // +30% every 5 minutes
   const scaling = timeFactor * difficultyMultiplier;
 
@@ -265,7 +265,7 @@ export function scaleEnemyStats(enemyData, gameTime, difficultyMultiplier = 1.0)
  * @param {number} gameTime - Current game time in seconds
  * @returns {Object}
  */
-export function getCurrentWave(gameTime) {
+function getCurrentWave(gameTime) {
   for (const [key, wave] of Object.entries(SPAWN_WAVES)) {
     if (gameTime >= wave.timeRange[0] && gameTime < wave.timeRange[1]) {
       return { key, ...wave };
@@ -281,7 +281,7 @@ export function getCurrentWave(gameTime) {
  * @param {number} gameTime - Current game time
  * @returns {Array<string>}
  */
-export function selectEnemySpawn(budget, enemyPool, gameTime) {
+function selectEnemySpawn(budget, enemyPool, gameTime) {
   const enemies = [];
   let remainingBudget = budget;
 
@@ -330,7 +330,7 @@ export function selectEnemySpawn(budget, enemyPool, gameTime) {
  * @param {number} screenHeight - Screen height
  * @returns {{x: number, y: number}}
  */
-export function getSpawnPosition(playerX, playerY, screenWidth, screenHeight) {
+function getSpawnPosition(playerX, playerY, screenWidth, screenHeight) {
   const margin = 50;
   const edge = Math.floor(Math.random() * 4); // 0=top, 1=right, 2=bottom, 3=left
 
@@ -358,4 +358,20 @@ export function getSpawnPosition(playerX, playerY, screenWidth, screenHeight) {
     default:
       return { x: playerX, y: playerY };
   }
+}
+
+// Export to global namespace
+const EnemyData = {
+  ENEMIES,
+  AI_BEHAVIORS,
+  SPAWN_WAVES,
+  getEnemyData,
+  scaleEnemyStats,
+  getCurrentWave,
+  selectEnemySpawn,
+  getSpawnPosition
+};
+
+if (typeof window !== 'undefined') {
+  window.EnemyData = EnemyData;
 }

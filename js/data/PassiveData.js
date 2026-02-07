@@ -36,7 +36,7 @@
  * @property {string} icon - Icon character/emoji
  */
 
-export const PASSIVES = {
+const PASSIVES = {
   SURCHAUFFE: {
     id: 'surchauffe',
     name: 'Surchauffe',
@@ -186,7 +186,7 @@ export const PASSIVES = {
  * @param {string} passiveId - Passive identifier
  * @returns {PassiveData|null}
  */
-export function getPassiveData(passiveId) {
+function getPassiveData(passiveId) {
   return PASSIVES[passiveId.toUpperCase()] || null;
 }
 
@@ -195,7 +195,7 @@ export function getPassiveData(passiveId) {
  * @param {Array<{id: string, stacks: number}>} passives - Array of passive IDs with stack counts
  * @returns {PassiveEffects}
  */
-export function calculateTotalEffects(passives) {
+function calculateTotalEffects(passives) {
   const totalEffects = {};
 
   for (const passive of passives) {
@@ -221,7 +221,7 @@ export function calculateTotalEffects(passives) {
  * @param {number} luck - Player luck stat
  * @returns {number}
  */
-export function getRarityWeight(rarity, luck = 0) {
+function getRarityWeight(rarity, luck = 0) {
   const baseWeights = {
     common: 60,
     uncommon: 25,
@@ -251,7 +251,7 @@ export function getRarityWeight(rarity, luck = 0) {
  * @param {Array<string>} exclude - Passive IDs to exclude
  * @returns {PassiveData|null}
  */
-export function getRandomPassive(luck = 0, exclude = []) {
+function getRandomPassive(luck = 0, exclude = []) {
   const available = Object.values(PASSIVES).filter(
     p => !exclude.includes(p.id)
   );
@@ -271,4 +271,17 @@ export function getRandomPassive(luck = 0, exclude = []) {
   }
 
   return available[available.length - 1];
+}
+
+// Export to global namespace
+const PassiveData = {
+  PASSIVES,
+  getPassiveData,
+  calculateTotalEffects,
+  getRarityWeight,
+  getRandomPassive
+};
+
+if (typeof window !== 'undefined') {
+  window.PassiveData = PassiveData;
 }
