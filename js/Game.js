@@ -145,7 +145,7 @@ class Game {
     }
 
     createPlayer() {
-        const shipData = ShipData.SHIPS[this.gameState.selectedShip];
+        const shipData = ShipData.getShipData(this.gameState.selectedShip);
         if (!shipData) {
             console.error('Invalid ship:', this.gameState.selectedShip);
             return;
@@ -201,7 +201,7 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return;
 
-        const weaponData = WeaponData.WEAPONS[weaponType];
+        const weaponData = WeaponData.getWeaponData(weaponType);
         if (!weaponData) {
             console.error('Invalid weapon:', weaponType);
             return;
@@ -236,7 +236,7 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return;
 
-        const passiveData = PassiveData.PASSIVES[passiveType];
+        const passiveData = PassiveData.getPassiveData(passiveType);
         if (!passiveData) {
             console.error('Invalid passive:', passiveType);
             return;
@@ -271,7 +271,7 @@ class Game {
         if (!playerComp) return;
 
         // Reset stats to base
-        const shipData = ShipData.SHIPS[this.gameState.selectedShip];
+        const shipData = ShipData.getShipData(this.gameState.selectedShip);
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 

@@ -209,6 +209,10 @@ class UISystem {
             if (!this.selectedShipId && ships.indexOf(ship) === 0) {
                 this.selectedShipId = ship.id;
                 card.classList.add('selected');
+                // Dispatch ship selected event for default selection
+                window.dispatchEvent(new CustomEvent('shipSelected', { 
+                    detail: { ship: ship.id } 
+                }));
             } else if (this.selectedShipId === ship.id) {
                 card.classList.add('selected');
             }
@@ -230,6 +234,11 @@ class UISystem {
                 document.querySelectorAll('.ship-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 this.selectedShipId = ship.id;
+                
+                // Dispatch ship selected event
+                window.dispatchEvent(new CustomEvent('shipSelected', { 
+                    detail: { ship: ship.id } 
+                }));
             });
 
             this.shipSelection.appendChild(card);
