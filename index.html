@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space InZader - Roguelite Space Shooter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a1a;
+            font-family: 'Courier New', monospace;
+            color: #00ffff;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.3);
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #000;
+            border: 2px solid #00ffff;
+        }
+
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .menu-screen, .level-up-screen, .game-over-screen, .meta-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 26, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: all;
+        }
+
+        .menu-screen.active, .level-up-screen.active, .game-over-screen.active, .meta-screen.active {
+            display: flex;
+        }
+
+        .title {
+            font-size: 48px;
+            text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+            margin-bottom: 40px;
+            letter-spacing: 4px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #00ffff 0%, #0088ff 100%);
+            color: #000;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            border-radius: 5px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .ship-selection {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .ship-card {
+            background: rgba(0, 255, 255, 0.1);
+            border: 2px solid #00ffff;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 200px;
+        }
+
+        .ship-card:hover, .ship-card.selected {
+            background: rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 20px #00ffff;
+        }
+
+        .boost-options {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            max-width: 900px;
+        }
+
+        .boost-card {
+            background: rgba(100, 100, 100, 0.3);
+            border: 2px solid #888;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 250px;
+            max-width: 280px;
+            border-radius: 8px;
+        }
+
+        .boost-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .boost-card.rare {
+            border-color: #4488ff;
+            background: rgba(68, 136, 255, 0.2);
+        }
+
+        .boost-card.epic {
+            border-color: #aa44ff;
+            background: rgba(170, 68, 255, 0.2);
+        }
+
+        .boost-card.legendary {
+            border-color: #ffaa00;
+            background: rgba(255, 170, 0, 0.2);
+        }
+
+        .boost-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .boost-description {
+            font-size: 14px;
+            line-height: 1.4;
+            opacity: 0.9;
+        }
+
+        .hud {
+            position: absolute;
+            color: #00ffff;
+            text-shadow: 0 0 5px #000;
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .hud-top-left {
+            top: 10px;
+            left: 10px;
+        }
+
+        .hud-top-center {
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .hud-bottom-left {
+            bottom: 10px;
+            left: 10px;
+        }
+
+        .hud-bottom-center {
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .hud-bottom-right {
+            bottom: 10px;
+            right: 10px;
+        }
+
+        .health-bar {
+            width: 200px;
+            height: 20px;
+            background: rgba(255, 0, 0, 0.3);
+            border: 2px solid #ff0000;
+            position: relative;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6600);
+            transition: width 0.3s;
+        }
+
+        .xp-bar {
+            width: 300px;
+            height: 15px;
+            background: rgba(0, 255, 0, 0.3);
+            border: 2px solid #00ff00;
+            position: relative;
+        }
+
+        .xp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff00, #88ff00);
+            transition: width 0.3s;
+        }
+
+        .stats-panel {
+            background: rgba(10, 10, 26, 0.9);
+            border: 2px solid #00ffff;
+            padding: 20px;
+            margin: 20px;
+            max-width: 500px;
+        }
+
+        .stat-line {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+        <div id="ui">
+            <!-- Main Menu -->
+            <div class="menu-screen active" id="menuScreen">
+                <h1 class="title">SPACE INZADER</h1>
+                <div class="ship-selection" id="shipSelection"></div>
+                <button class="button" id="startButton">START GAME</button>
+                <button class="button" id="metaButton">UPGRADES</button>
+            </div>
+
+            <!-- Level Up Screen -->
+            <div class="level-up-screen" id="levelUpScreen">
+                <h2 class="title" style="font-size: 36px;">LEVEL UP!</h2>
+                <p style="font-size: 20px; margin-bottom: 20px;">Choose one upgrade:</p>
+                <div class="boost-options" id="boostOptions"></div>
+            </div>
+
+            <!-- Game Over Screen -->
+            <div class="game-over-screen" id="gameOverScreen">
+                <h2 class="title" style="font-size: 48px;">GAME OVER</h2>
+                <div class="stats-panel" id="endStats"></div>
+                <button class="button" id="returnMenuButton">RETURN TO MENU</button>
+            </div>
+
+            <!-- Meta Progression Screen -->
+            <div class="meta-screen" id="metaScreen">
+                <h2 class="title" style="font-size: 36px;">UPGRADES</h2>
+                <div class="stats-panel" id="metaUpgrades"></div>
+                <button class="button" id="backToMenuButton">BACK TO MENU</button>
+            </div>
+
+            <!-- In-Game HUD -->
+            <div class="hud hud-top-left" id="hudTopLeft">
+                <div>Time: <span id="timeDisplay">0:00</span></div>
+            </div>
+            <div class="hud hud-top-center" id="hudTopCenter">
+                <div>Kills: <span id="killsDisplay">0</span> | Score: <span id="scoreDisplay">0</span></div>
+            </div>
+            <div class="hud hud-bottom-left" id="hudBottomLeft">
+                <div class="health-bar">
+                    <div class="health-fill" id="healthFill"></div>
+                </div>
+                <div style="margin-top: 5px;">HP: <span id="hpDisplay">100/100</span></div>
+            </div>
+            <div class="hud hud-bottom-center" id="hudBottomCenter">
+                <div>Level: <span id="levelDisplay">1</span></div>
+                <div class="xp-bar">
+                    <div class="xp-fill" id="xpFill"></div>
+                </div>
+            </div>
+            <div class="hud hud-bottom-right" id="hudBottomRight">
+                <div id="weaponSlots"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Scripts -->
+    <script src="js/utils/Math.js"></script>
+    <script src="js/core/ECS.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/data/WeaponData.js"></script>
+    <script src="js/data/PassiveData.js"></script>
+    <script src="js/data/ShipData.js"></script>
+    <script src="js/data/EnemyData.js"></script>
+    <script src="js/systems/MovementSystem.js"></script>
+    <script src="js/systems/CombatSystem.js"></script>
+    <script src="js/systems/CollisionSystem.js"></script>
+    <script src="js/systems/AISystem.js"></script>
+    <script src="js/systems/SpawnerSystem.js"></script>
+    <script src="js/systems/PickupSystem.js"></script>
+    <script src="js/systems/RenderSystem.js"></script>
+    <script src="js/systems/UISystem.js"></script>
+    <script src="js/systems/ParticleSystem.js"></script>
+    <script src="js/managers/SaveManager.js"></script>
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/Game.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
