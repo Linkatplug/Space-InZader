@@ -29,32 +29,32 @@ class SaveManager {
                 banishUnlock: false  // Unlock banish in level-up
             },
             ships: {
-                defender: { unlocked: true },
-                gunner: { unlocked: true },
-                balanced: { unlocked: true },
+                defenseur: { unlocked: true },
+                mitrailleur: { unlocked: true },
+                equilibre: { unlocked: true },
                 vampire: { unlocked: false } // Unlock with Noyaux
             },
             weapons: {
-                laser: { unlocked: true },
-                minigun: { unlocked: true },
-                missile: { unlocked: true },
-                orb: { unlocked: true },
-                vampiric: { unlocked: false },
-                mine: { unlocked: false },
-                lightning: { unlocked: false },
-                drone: { unlocked: false }
+                laser_frontal: { unlocked: true },
+                mitraille: { unlocked: true },
+                missiles_guides: { unlocked: true },
+                orbes_orbitaux: { unlocked: true },
+                rayon_vampirique: { unlocked: false },
+                mines: { unlocked: false },
+                arc_electrique: { unlocked: false },
+                tourelle_drone: { unlocked: false }
             },
             passives: {
-                overheat: { unlocked: true },
-                radiator: { unlocked: true },
-                coldBlood: { unlocked: true },
-                blackHeart: { unlocked: false },
-                teslaCoil: { unlocked: false },
-                focuser: { unlocked: false },
-                magTractor: { unlocked: false },
+                surchauffe: { unlocked: true },
+                radiateur: { unlocked: true },
+                sang_froid: { unlocked: true },
+                coeur_noir: { unlocked: false },
+                bobines_tesla: { unlocked: false },
+                focaliseur: { unlocked: false },
+                mag_tractor: { unlocked: false },
                 plating: { unlocked: true },
-                reactor: { unlocked: true },
-                luck: { unlocked: false }
+                reacteur: { unlocked: true },
+                chance: { unlocked: false }
             },
             settings: {
                 musicVolume: 0.5,

@@ -145,7 +145,7 @@ class Game {
     }
 
     createPlayer() {
-        const shipData = ShipData.ships[this.gameState.selectedShip];
+        const shipData = ShipData.SHIPS[this.gameState.selectedShip];
         if (!shipData) {
             console.error('Invalid ship:', this.gameState.selectedShip);
             return;
@@ -201,7 +201,7 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return;
 
-        const weaponData = WeaponData.weapons[weaponType];
+        const weaponData = WeaponData.WEAPONS[weaponType];
         if (!weaponData) {
             console.error('Invalid weapon:', weaponType);
             return;
@@ -236,7 +236,7 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return;
 
-        const passiveData = PassiveData.passives[passiveType];
+        const passiveData = PassiveData.PASSIVES[passiveType];
         if (!passiveData) {
             console.error('Invalid passive:', passiveType);
             return;
@@ -271,7 +271,7 @@ class Game {
         if (!playerComp) return;
 
         // Reset stats to base
-        const shipData = ShipData.ships[this.gameState.selectedShip];
+        const shipData = ShipData.SHIPS[this.gameState.selectedShip];
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 
@@ -339,19 +339,19 @@ class Game {
         else rarity = 'common';
 
         // Get available items
-        const availableWeapons = Object.keys(WeaponData.weapons).filter(key => {
-            const weapon = WeaponData.weapons[key];
+        const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
+            const weapon = WeaponData.WEAPONS[key];
             return weapon.rarity === rarity && this.saveData.weapons[key].unlocked;
         });
 
-        const availablePassives = Object.keys(PassiveData.passives).filter(key => {
-            const passive = PassiveData.passives[key];
+        const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
+            const passive = PassiveData.PASSIVES[key];
             return passive.rarity === rarity && this.saveData.passives[key].unlocked;
         });
 
         const all = [
-            ...availableWeapons.map(w => ({ type: 'weapon', key: w, data: WeaponData.weapons[w] })),
-            ...availablePassives.map(p => ({ type: 'passive', key: p, data: PassiveData.passives[p] }))
+            ...availableWeapons.map(w => ({ type: 'weapon', key: w, data: WeaponData.WEAPONS[w] })),
+            ...availablePassives.map(p => ({ type: 'passive', key: p, data: PassiveData.PASSIVES[p] }))
         ];
 
         if (all.length === 0) {

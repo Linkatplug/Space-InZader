@@ -163,8 +163,8 @@ class UISystem {
     renderShipSelection() {
         this.shipSelection.innerHTML = '';
 
-        // Get ships (assuming SHIPS is available globally or from data)
-        const ships = typeof getAllShips === 'function' ? getAllShips() : this.getDefaultShips();
+        // Get ships from ShipData
+        const ships = ShipData && ShipData.getAllShips ? ShipData.getAllShips() : this.getDefaultShips();
 
         ships.forEach(ship => {
             const card = document.createElement('div');
