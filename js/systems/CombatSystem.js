@@ -4,9 +4,10 @@
  */
 
 class CombatSystem {
-    constructor(world, gameState) {
+    constructor(world, gameState, audioManager) {
         this.world = world;
         this.gameState = gameState;
+        this.audioManager = audioManager;
     }
 
     /**
@@ -56,6 +57,27 @@ class CombatSystem {
      */
     fireWeapon(player, weapon) {
         const type = weapon.data.type;
+        
+        // Play appropriate sound effect
+        if (this.audioManager && this.audioManager.initialized) {
+            switch (type) {
+                case 'direct':
+                case 'continuous_beam':
+                    this.audioManager.playSFX('laser', 1);
+                    break;
+                case 'spread':
+                    this.audioManager.playSFX('laser', 0.8);
+                    break;
+                case 'homing':
+                case 'mega_homing':
+                    this.audioManager.playSFX('missile', 1);
+                    break;
+                case 'chain':
+                case 'storm':
+                    this.audioManager.playSFX('electric', 1);
+                    break;
+            }
+        }
         
         switch (type) {
             case 'direct':

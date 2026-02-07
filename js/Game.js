@@ -20,8 +20,8 @@ class Game {
         // Game systems
         this.systems = {
             movement: new MovementSystem(this.world, this.canvas),
-            collision: new CollisionSystem(this.world, this.gameState),
-            combat: new CombatSystem(this.world, this.gameState),
+            collision: new CollisionSystem(this.world, this.gameState, this.audioManager),
+            combat: new CombatSystem(this.world, this.gameState, this.audioManager),
             ai: new AISystem(this.world, this.canvas),
             spawner: new SpawnerSystem(this.world, this.gameState, this.canvas),
             pickup: new PickupSystem(this.world, this.gameState),

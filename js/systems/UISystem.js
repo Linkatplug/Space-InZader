@@ -166,6 +166,7 @@ class UISystem {
                 this.showMainMenu();
                 break;
             case 'game':
+                this.hideAllScreens();
                 this.showHUD();
                 break;
             case 'levelup':
@@ -185,6 +186,7 @@ class UISystem {
      */
     showMainMenu() {
         this.hideAllScreens();
+        this.hideHUD();
         if (this.menuScreen) {
             this.menuScreen.classList.add('active');
         }

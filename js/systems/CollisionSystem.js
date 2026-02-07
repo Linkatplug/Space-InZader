@@ -4,9 +4,10 @@
  */
 
 class CollisionSystem {
-    constructor(world, gameState) {
+    constructor(world, gameState, audioManager) {
         this.world = world;
         this.gameState = gameState;
+        this.audioManager = audioManager;
     }
 
     update(deltaTime) {
@@ -187,6 +188,11 @@ class CollisionSystem {
 
         health.current -= damage;
         this.gameState.stats.damageDealt += damage;
+        
+        // Play hit sound
+        if (this.audioManager && this.audioManager.initialized) {
+            this.audioManager.playSFX('hit', MathUtils.randomFloat(0.9, 1.1));
+        }
 
         if (health.current <= 0) {
             this.killEnemy(enemy);
@@ -203,6 +209,11 @@ class CollisionSystem {
         const actualDamage = Math.max(1, damage - playerComp.stats.armor);
         health.current -= actualDamage;
         this.gameState.stats.damageTaken += actualDamage;
+        
+        // Play hit sound
+        if (this.audioManager && this.audioManager.initialized) {
+            this.audioManager.playSFX('hit', 1.2);
+        }
 
         if (health.current <= 0) {
             health.current = 0;
@@ -215,6 +226,11 @@ class CollisionSystem {
         const pos = enemy.getComponent('position');
         
         if (enemyComp && pos) {
+            // Play explosion sound
+            if (this.audioManager && this.audioManager.initialized) {
+                this.audioManager.playSFX('explosion', MathUtils.randomFloat(0.8, 1.2));
+            }
+            
             // Drop XP
             this.spawnPickup(pos.x, pos.y, 'xp', enemyComp.xpValue);
             
@@ -253,6 +269,11 @@ class CollisionSystem {
         if (!pickupComp || pickupComp.collected) return;
         
         pickupComp.collected = true;
+        
+        // Play pickup sound
+        if (this.audioManager && this.audioManager.initialized) {
+            this.audioManager.playSFX('pickup', MathUtils.randomFloat(0.9, 1.1));
+        }
 
         switch (pickupComp.type) {
             case 'xp':
