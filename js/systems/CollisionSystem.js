@@ -32,7 +32,11 @@ class CollisionSystem {
             const projCol = projectile.getComponent('collision');
             const projComp = projectile.getComponent('projectile');
             
-            if (!projPos || !projCol || !projComp || projComp.owner !== 'player') continue;
+            if (!projPos || !projCol || !projComp) continue;
+            
+            // Check if projectile is from player (owner is a player entity)
+            const ownerEntity = this.world.getEntity(projComp.owner);
+            if (!ownerEntity || ownerEntity.type !== 'player') continue;
 
             for (const enemy of enemies) {
                 const enemyPos = enemy.getComponent('position');
@@ -153,7 +157,11 @@ class CollisionSystem {
                 const projCol = projectile.getComponent('collision');
                 const projComp = projectile.getComponent('projectile');
                 
-                if (!projPos || !projCol || !projComp || projComp.owner !== 'enemy') continue;
+                if (!projPos || !projCol || !projComp) continue;
+                
+                // Check if projectile is from enemy (owner is an enemy entity)
+                const ownerEntity = this.world.getEntity(projComp.owner);
+                if (!ownerEntity || ownerEntity.type !== 'enemy') continue;
 
                 if (MathUtils.circleCollision(
                     playerPos.x, playerPos.y, playerCol.radius,

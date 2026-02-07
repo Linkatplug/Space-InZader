@@ -55,7 +55,7 @@ class CombatSystem {
      * @param {Object} weapon - Weapon component
      */
     fireWeapon(player, weapon) {
-        const type = weapon.evolved ? weapon.data.type : weapon.data.type;
+        const type = weapon.data.type;
         
         switch (type) {
             case 'direct':

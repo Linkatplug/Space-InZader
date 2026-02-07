@@ -481,7 +481,7 @@ class AISystem {
      * @returns {Entity} Created projectile
      */
     createEnemyProjectile(x, y, angle, damage, speed, lifetime, owner, color) {
-        const projectile = this.world.createEntity('enemy_projectile');
+        const projectile = this.world.createEntity('projectile');
         
         projectile.addComponent('position', Components.Position(x, y));
         projectile.addComponent('velocity', Components.Velocity(
@@ -495,7 +495,7 @@ class AISystem {
             speed,
             lifetime,
             owner,
-            'enemy'
+            'enemy_shot'
         ));
         
         return projectile;
