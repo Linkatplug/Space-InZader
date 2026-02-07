@@ -68,10 +68,18 @@ class UISystem {
      * Bind UI event handlers
      */
     bindEvents() {
-        this.startButton.addEventListener('click', () => this.onStartGame());
-        this.metaButton.addEventListener('click', () => this.onShowMeta());
-        this.returnMenuButton.addEventListener('click', () => this.onReturnToMenu());
-        this.backToMenuButton.addEventListener('click', () => this.onBackToMenu());
+        if (this.startButton) {
+            this.startButton.addEventListener('click', () => this.onStartGame());
+        }
+        if (this.metaButton) {
+            this.metaButton.addEventListener('click', () => this.onShowMeta());
+        }
+        if (this.returnMenuButton) {
+            this.returnMenuButton.addEventListener('click', () => this.onReturnToMenu());
+        }
+        if (this.backToMenuButton) {
+            this.backToMenuButton.addEventListener('click', () => this.onBackToMenu());
+        }
     }
 
     /**
@@ -149,11 +157,37 @@ class UISystem {
     }
 
     /**
+     * Show screen by name
+     * @param {string} screen - Screen name ('menu', 'game', 'levelup', 'gameover', 'meta')
+     */
+    showScreen(screen) {
+        switch (screen) {
+            case 'menu':
+                this.showMainMenu();
+                break;
+            case 'game':
+                this.showHUD();
+                break;
+            case 'levelup':
+                // Handled by showLevelUp
+                break;
+            case 'gameover':
+                this.showGameOver();
+                break;
+            case 'meta':
+                this.showMetaScreen();
+                break;
+        }
+    }
+
+    /**
      * Show main menu screen
      */
     showMainMenu() {
         this.hideAllScreens();
-        this.menuScreen.classList.add('active');
+        if (this.menuScreen) {
+            this.menuScreen.classList.add('active');
+        }
         this.renderShipSelection();
     }
 
@@ -373,10 +407,10 @@ class UISystem {
      * Hide all screens
      */
     hideAllScreens() {
-        this.menuScreen.classList.remove('active');
-        this.levelUpScreen.classList.remove('active');
-        this.gameOverScreen.classList.remove('active');
-        this.metaScreen.classList.remove('active');
+        if (this.menuScreen) this.menuScreen.classList.remove('active');
+        if (this.levelUpScreen) this.levelUpScreen.classList.remove('active');
+        if (this.gameOverScreen) this.gameOverScreen.classList.remove('active');
+        if (this.metaScreen) this.metaScreen.classList.remove('active');
     }
 
     /**

@@ -27,7 +27,7 @@ class Game {
             pickup: new PickupSystem(this.world, this.gameState),
             particle: new ParticleSystem(this.world),
             render: new RenderSystem(this.world, this.ctx, this.canvas),
-            ui: new UISystem(this.gameState, this.saveData, this.saveManager)
+            ui: new UISystem(this.world, this.gameState)
         };
         
         // Game loop
