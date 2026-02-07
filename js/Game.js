@@ -26,7 +26,7 @@ class Game {
             spawner: new SpawnerSystem(this.world, this.gameState, this.canvas),
             pickup: new PickupSystem(this.world, this.gameState),
             particle: new ParticleSystem(this.world),
-            render: new RenderSystem(this.world, this.ctx, this.canvas),
+            render: new RenderSystem(this.canvas, this.world, this.gameState),
             ui: new UISystem(this.world, this.gameState)
         };
         
@@ -429,7 +429,7 @@ class Game {
             this.lastTime = currentTime;
             
             // Always render
-            this.systems.render.update(deltaTime);
+            this.systems.render.render(deltaTime);
             
             // Only update game logic if running
             if (this.running && this.gameState.isState(GameStates.RUNNING)) {
