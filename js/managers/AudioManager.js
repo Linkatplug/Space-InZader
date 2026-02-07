@@ -298,6 +298,7 @@ class AudioManager {
         if (!this.initialized || this.musicPlaying) return;
         
         this.musicPlaying = true;
+        this.currentMelodyIndex = 0;
         this.playMusicLoop();
     }
 
@@ -317,7 +318,7 @@ class AudioManager {
     }
 
     /**
-     * Play continuous background music loop
+     * Play continuous background music loop with variations
      */
     playMusicLoop() {
         if (!this.musicPlaying || !this.initialized) return;
@@ -325,17 +326,55 @@ class AudioManager {
         const now = this.context.currentTime;
         const noteDuration = 0.2;
         
-        // Simple 8-bit style arpeggio melody
-        const melody = [
-            { freq: 262, dur: noteDuration },      // C4
-            { freq: 330, dur: noteDuration },      // E4
-            { freq: 392, dur: noteDuration },      // G4
-            { freq: 523, dur: noteDuration },      // C5
-            { freq: 392, dur: noteDuration },      // G4
-            { freq: 330, dur: noteDuration },      // E4
-            { freq: 294, dur: noteDuration },      // D4
-            { freq: 330, dur: noteDuration }       // E4
+        // Multiple melodic phrases to avoid repetition
+        const melodies = [
+            // Phrase 1: Ascending arpeggio
+            [
+                { freq: 262, dur: noteDuration },      // C4
+                { freq: 330, dur: noteDuration },      // E4
+                { freq: 392, dur: noteDuration },      // G4
+                { freq: 523, dur: noteDuration },      // C5
+                { freq: 392, dur: noteDuration },      // G4
+                { freq: 330, dur: noteDuration },      // E4
+                { freq: 294, dur: noteDuration },      // D4
+                { freq: 330, dur: noteDuration }       // E4
+            ],
+            // Phrase 2: Descending pattern
+            [
+                { freq: 523, dur: noteDuration },      // C5
+                { freq: 494, dur: noteDuration },      // B4
+                { freq: 440, dur: noteDuration },      // A4
+                { freq: 392, dur: noteDuration },      // G4
+                { freq: 440, dur: noteDuration },      // A4
+                { freq: 392, dur: noteDuration },      // G4
+                { freq: 330, dur: noteDuration },      // E4
+                { freq: 262, dur: noteDuration }       // C4
+            ],
+            // Phrase 3: Rhythmic bounce
+            [
+                { freq: 392, dur: noteDuration },      // G4
+                { freq: 330, dur: noteDuration },      // E4
+                { freq: 392, dur: noteDuration },      // G4
+                { freq: 330, dur: noteDuration },      // E4
+                { freq: 349, dur: noteDuration },      // F4
+                { freq: 294, dur: noteDuration },      // D4
+                { freq: 349, dur: noteDuration },      // F4
+                { freq: 294, dur: noteDuration }       // D4
+            ],
+            // Phrase 4: Spacey ambience
+            [
+                { freq: 262, dur: noteDuration * 2 },  // C4 (long)
+                { freq: 349, dur: noteDuration },      // F4
+                { freq: 392, dur: noteDuration },      // G4
+                { freq: 466, dur: noteDuration * 2 },  // A#4 (long)
+                { freq: 392, dur: noteDuration },      // G4
+                { freq: 330, dur: noteDuration }       // E4
+            ]
         ];
+
+        // Rotate through melodies for variety
+        const melody = melodies[this.currentMelodyIndex];
+        this.currentMelodyIndex = (this.currentMelodyIndex + 1) % melodies.length;
 
         let time = now;
         melody.forEach(note => {
@@ -346,7 +385,7 @@ class AudioManager {
             osc.frequency.setValueAtTime(note.freq, time);
             
             gain.gain.setValueAtTime(0, time);
-            gain.gain.linearRampToValueAtTime(0.05, time + 0.01);
+            gain.gain.linearRampToValueAtTime(0.04, time + 0.01);  // Slightly quieter
             gain.gain.linearRampToValueAtTime(0, time + note.dur);
             
             osc.connect(gain);
@@ -358,8 +397,11 @@ class AudioManager {
             time += note.dur;
         });
 
+        // Calculate total duration for this phrase
+        const totalDuration = melody.reduce((sum, note) => sum + note.dur, 0);
+        
         // Schedule next loop
-        setTimeout(() => this.playMusicLoop(), melody.length * noteDuration * 1000);
+        setTimeout(() => this.playMusicLoop(), totalDuration * 1000);
     }
 
     /**

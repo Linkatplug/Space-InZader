@@ -354,19 +354,19 @@ class Game {
             // Get available items for this rarity
             const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
                 const weapon = WeaponData.WEAPONS[key];
-                const saveWeapon = this.saveData.weapons[key];
+                const saveWeapon = this.saveData.weapons[weapon.id]; // Use weapon.id (lowercase)
                 return weapon.rarity === rarity && saveWeapon && saveWeapon.unlocked;
             });
 
             const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
                 const passive = PassiveData.PASSIVES[key];
-                const savePassive = this.saveData.passives[key];
+                const savePassive = this.saveData.passives[passive.id]; // Use passive.id (lowercase)
                 return passive.rarity === rarity && savePassive && savePassive.unlocked;
             });
 
             const all = [
-                ...availableWeapons.map(w => ({ type: 'weapon', key: w, data: WeaponData.WEAPONS[w] })),
-                ...availablePassives.map(p => ({ type: 'passive', key: p, data: PassiveData.PASSIVES[p] }))
+                ...availableWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
+                ...availablePassives.map(p => ({ type: 'passive', key: PassiveData.PASSIVES[p].id, data: PassiveData.PASSIVES[p] }))
             ];
 
             // Filter out duplicates

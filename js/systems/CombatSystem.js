@@ -59,23 +59,24 @@ class CombatSystem {
     fireWeapon(player, weapon) {
         const type = weapon.data.type;
         
-        // Play appropriate sound effect
+        // Play appropriate sound effect with pitch variation
         if (this.audioManager && this.audioManager.initialized) {
             switch (type) {
                 case 'direct':
                 case 'continuous_beam':
-                    this.audioManager.playSFX('laser', 1);
+                    this.audioManager.playSFX('laser', MathUtils.randomFloat(0.9, 1.1));
                     break;
                 case 'spread':
-                    this.audioManager.playSFX('laser', 0.8);
+                    // Minigun needs more variety - vary between 0.6 and 1.2
+                    this.audioManager.playSFX('laser', MathUtils.randomFloat(0.6, 1.2));
                     break;
                 case 'homing':
                 case 'mega_homing':
-                    this.audioManager.playSFX('missile', 1);
+                    this.audioManager.playSFX('missile', MathUtils.randomFloat(0.85, 1.15));
                     break;
                 case 'chain':
                 case 'storm':
-                    this.audioManager.playSFX('electric', 1);
+                    this.audioManager.playSFX('electric', MathUtils.randomFloat(0.9, 1.1));
                     break;
             }
         }
