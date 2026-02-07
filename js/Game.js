@@ -335,54 +335,61 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return null;
 
-        // Determine rarity based on luck
-        const roll = Math.random() + luck * 0.1;
-        let rarity;
+        // Try rarities in order based on luck, with fallbacks
+        const rarities = ['legendary', 'epic', 'rare', 'common'];
         
-        if (roll > 0.95) rarity = 'legendary';
-        else if (roll > 0.8) rarity = 'epic';
-        else if (roll > 0.5) rarity = 'rare';
-        else rarity = 'common';
+        // Determine starting rarity based on luck
+        const roll = Math.random() + luck * 0.1;
+        let startIndex;
+        
+        if (roll > 0.95) startIndex = 0; // legendary
+        else if (roll > 0.8) startIndex = 1; // epic
+        else if (roll > 0.5) startIndex = 2; // rare
+        else startIndex = 3; // common
 
-        // Get available items
-        const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
-            const weapon = WeaponData.WEAPONS[key];
-            const saveWeapon = this.saveData.weapons[key];
-            return weapon.rarity === rarity && saveWeapon && saveWeapon.unlocked;
-        });
+        // Try each rarity starting from the rolled one
+        for (let i = startIndex; i < rarities.length; i++) {
+            const rarity = rarities[i];
+            
+            // Get available items for this rarity
+            const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
+                const weapon = WeaponData.WEAPONS[key];
+                const saveWeapon = this.saveData.weapons[key];
+                return weapon.rarity === rarity && saveWeapon && saveWeapon.unlocked;
+            });
 
-        const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
-            const passive = PassiveData.PASSIVES[key];
-            const savePassive = this.saveData.passives[key];
-            return passive.rarity === rarity && savePassive && savePassive.unlocked;
-        });
+            const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
+                const passive = PassiveData.PASSIVES[key];
+                const savePassive = this.saveData.passives[key];
+                return passive.rarity === rarity && savePassive && savePassive.unlocked;
+            });
 
-        const all = [
-            ...availableWeapons.map(w => ({ type: 'weapon', key: w, data: WeaponData.WEAPONS[w] })),
-            ...availablePassives.map(p => ({ type: 'passive', key: p, data: PassiveData.PASSIVES[p] }))
-        ];
+            const all = [
+                ...availableWeapons.map(w => ({ type: 'weapon', key: w, data: WeaponData.WEAPONS[w] })),
+                ...availablePassives.map(p => ({ type: 'passive', key: p, data: PassiveData.PASSIVES[p] }))
+            ];
 
-        if (all.length === 0) {
-            // Fallback to any rarity
-            return this.selectRandomBoost(0, existing);
+            // Filter out duplicates
+            const filtered = all.filter(item => {
+                return !existing.some(e => e.type === item.type && e.key === item.key);
+            });
+
+            // If we found options, select one
+            if (filtered.length > 0) {
+                const selected = MathUtils.randomChoice(filtered);
+                return {
+                    type: selected.type,
+                    key: selected.key,
+                    name: selected.data.name,
+                    description: selected.data.description,
+                    rarity: selected.data.rarity,
+                    color: selected.data.color
+                };
+            }
         }
 
-        // Filter out duplicates
-        const filtered = all.filter(item => {
-            return !existing.some(e => e.type === item.type && e.key === item.key);
-        });
-
-        if (filtered.length === 0) return null;
-
-        const selected = MathUtils.randomChoice(filtered);
-        return {
-            type: selected.type,
-            key: selected.key,
-            name: selected.data.name,
-            description: selected.data.description,
-            rarity: selected.data.rarity,
-            color: selected.data.color
-        };
+        // No options available at any rarity level
+        return null;
     }
 
     applyBoost(boost) {
