@@ -4,10 +4,11 @@
  */
 
 class CollisionSystem {
-    constructor(world, gameState, audioManager) {
+    constructor(world, gameState, audioManager, particleSystem = null) {
         this.world = world;
         this.gameState = gameState;
         this.audioManager = audioManager;
+        this.particleSystem = particleSystem;
     }
 
     update(deltaTime) {
@@ -224,11 +225,20 @@ class CollisionSystem {
     killEnemy(enemy) {
         const enemyComp = enemy.getComponent('enemy');
         const pos = enemy.getComponent('position');
+        const renderable = enemy.getComponent('renderable');
         
         if (enemyComp && pos) {
             // Play explosion sound
             if (this.audioManager && this.audioManager.initialized) {
                 this.audioManager.playSFX('explosion', MathUtils.randomFloat(0.8, 1.2));
+            }
+            
+            // Create explosion particle effect
+            if (this.particleSystem) {
+                const color = renderable ? renderable.color : '#ff6600';
+                const size = renderable ? renderable.size : 20;
+                const particleCount = Math.min(30, 15 + size);
+                this.particleSystem.createExplosion(pos.x, pos.y, size, color, particleCount);
             }
             
             // Drop XP

@@ -20,15 +20,18 @@ class Game {
         // Game systems
         this.systems = {
             movement: new MovementSystem(this.world, this.canvas),
-            collision: new CollisionSystem(this.world, this.gameState, this.audioManager),
+            particle: new ParticleSystem(this.world),
+            collision: new CollisionSystem(this.world, this.gameState, this.audioManager, null), // Will set particle system below
             combat: new CombatSystem(this.world, this.gameState, this.audioManager),
             ai: new AISystem(this.world, this.canvas),
             spawner: new SpawnerSystem(this.world, this.gameState, this.canvas),
             pickup: new PickupSystem(this.world, this.gameState),
-            particle: new ParticleSystem(this.world),
             render: new RenderSystem(this.canvas, this.world, this.gameState),
             ui: new UISystem(this.world, this.gameState)
         };
+        
+        // Set particle system reference in collision system
+        this.systems.collision.particleSystem = this.systems.particle;
         
         // Game loop
         this.lastTime = 0;
@@ -344,12 +347,14 @@ class Game {
         // Get available items
         const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
             const weapon = WeaponData.WEAPONS[key];
-            return weapon.rarity === rarity && this.saveData.weapons[key].unlocked;
+            const saveWeapon = this.saveData.weapons[key];
+            return weapon.rarity === rarity && saveWeapon && saveWeapon.unlocked;
         });
 
         const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
             const passive = PassiveData.PASSIVES[key];
-            return passive.rarity === rarity && this.saveData.passives[key].unlocked;
+            const savePassive = this.saveData.passives[key];
+            return passive.rarity === rarity && savePassive && savePassive.unlocked;
         });
 
         const all = [

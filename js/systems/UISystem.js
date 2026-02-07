@@ -329,7 +329,7 @@ class UISystem {
     onBoostSelected(boost, index) {
         // Dispatch custom event for game to handle
         const event = new CustomEvent('boostSelected', { detail: { boost, index } });
-        document.dispatchEvent(event);
+        window.dispatchEvent(event);
 
         // Hide level up screen
         this.levelUpScreen.classList.remove('active');
