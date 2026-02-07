@@ -31,19 +31,20 @@ class CombatSystem {
     /**
      * Update weapon cooldown and fire if ready
      * @param {Entity} player - Player entity
-     * @param {Object} weaponData - Weapon component data
+     * @param {Object} weapon - Weapon object from playerComp.weapons
      * @param {number} deltaTime - Time elapsed
      */
-    updateWeapon(player, weaponData, deltaTime) {
-        const weapon = weaponData.component;
-        if (!weapon) return;
+    updateWeapon(player, weapon, deltaTime) {
+        if (!weapon || !weapon.data) return;
 
         // Update cooldown
         weapon.cooldown -= deltaTime;
 
         // Fire when cooldown is ready
         if (weapon.cooldown <= 0) {
-            const fireRate = weapon.data.fireRate * player.getComponent('player').stats.fireRate;
+            const playerStats = player.getComponent('player').stats;
+            const baseFireRate = weapon.data.fireRate || 1;
+            const fireRate = baseFireRate * playerStats.fireRate;
             weapon.cooldown = fireRate > 0 ? 1 / fireRate : 999;
             
             this.fireWeapon(player, weapon);
