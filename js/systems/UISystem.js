@@ -46,6 +46,7 @@ class UISystem {
         this.levelDisplay = document.getElementById('levelDisplay');
         this.xpFill = document.getElementById('xpFill');
         this.weaponSlots = document.getElementById('weaponSlots');
+        this.controlsHelp = document.getElementById('controlsHelp');
 
         // Menu elements
         this.shipSelection = document.getElementById('shipSelection');
@@ -439,6 +440,11 @@ class UISystem {
         hudElements.forEach(el => {
             if (el) el.style.display = 'block';
         });
+        
+        // Show controls help
+        if (this.controlsHelp) {
+            this.controlsHelp.classList.add('active');
+        }
     }
 
     /**
@@ -456,6 +462,11 @@ class UISystem {
         hudElements.forEach(el => {
             if (el) el.style.display = 'none';
         });
+        
+        // Hide controls help
+        if (this.controlsHelp) {
+            this.controlsHelp.classList.remove('active');
+        }
     }
 
     /**

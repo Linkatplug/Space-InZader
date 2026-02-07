@@ -158,7 +158,7 @@ class Game {
 
         this.player = this.world.createEntity('player');
         
-        const maxHealth = shipData.baseStats.health + metaHealth;
+        const maxHealth = shipData.baseStats.maxHealth + metaHealth;
         
         this.player.addComponent('position', Components.Position(
             this.canvas.width / 2,
@@ -172,12 +172,12 @@ class Game {
         
         const playerComp = Components.Player();
         playerComp.speed = shipData.baseStats.speed;
-        playerComp.stats.damage = shipData.baseStats.damage * metaDamage;
-        playerComp.stats.fireRate = shipData.baseStats.fireRate;
-        playerComp.stats.speed = shipData.baseStats.moveSpeed;
+        playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
+        playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier;
+        playerComp.stats.speed = shipData.baseStats.speed / 200; // Normalize speed
         playerComp.stats.maxHealth = 1;
         playerComp.stats.critChance = shipData.baseStats.critChance;
-        playerComp.stats.critDamage = shipData.baseStats.critDamage;
+        playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
         playerComp.stats.lifesteal = shipData.baseStats.lifesteal;
         playerComp.stats.xpBonus = metaXP;
         
@@ -275,14 +275,14 @@ class Game {
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 
-        playerComp.stats.damage = shipData.baseStats.damage * metaDamage;
-        playerComp.stats.fireRate = shipData.baseStats.fireRate;
-        playerComp.stats.speed = shipData.baseStats.moveSpeed;
+        playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
+        playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier;
+        playerComp.stats.speed = shipData.baseStats.speed / 200; // Normalize speed
         playerComp.stats.critChance = shipData.baseStats.critChance;
-        playerComp.stats.critDamage = shipData.baseStats.critDamage;
+        playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
         playerComp.stats.lifesteal = shipData.baseStats.lifesteal;
         playerComp.stats.xpBonus = metaXP;
-        playerComp.stats.armor = 0;
+        playerComp.stats.armor = shipData.baseStats.armor || 0;
         playerComp.stats.projectileSpeed = 1;
         playerComp.stats.range = 1;
 

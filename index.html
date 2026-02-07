@@ -236,6 +236,46 @@
             display: flex;
             justify-content: space-between;
         }
+
+        .controls-help {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(10, 10, 26, 0.9);
+            border: 2px solid #00ffff;
+            padding: 15px;
+            font-size: 14px;
+            color: #00ffff;
+            border-radius: 5px;
+            max-width: 250px;
+            display: none;
+            pointer-events: none;
+        }
+
+        .controls-help.active {
+            display: block;
+        }
+
+        .controls-help h4 {
+            margin: 0 0 10px 0;
+            color: #00ffff;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .controls-help p {
+            margin: 5px 0;
+            line-height: 1.4;
+        }
+
+        .controls-help .key {
+            display: inline-block;
+            background: rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -292,6 +332,15 @@
             </div>
             <div class="hud hud-bottom-right" id="hudBottomRight">
                 <div id="weaponSlots"></div>
+            </div>
+            
+            <!-- Controls Help -->
+            <div class="controls-help" id="controlsHelp">
+                <h4>🎮 CONTRÔLES</h4>
+                <p><span class="key">W A S D</span> ou <span class="key">Z Q S D</span> - Se déplacer</p>
+                <p><span class="key">ESC</span> - Pause</p>
+                <p>🔫 Tir automatique sur l'ennemi le plus proche</p>
+                <p>✨ Collectez les orbes verts pour gagner XP</p>
             </div>
         </div>
     </div>
