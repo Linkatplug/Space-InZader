@@ -444,6 +444,16 @@ class UISystem {
         // Show controls help
         if (this.controlsHelp) {
             this.controlsHelp.classList.add('active');
+            
+            // Auto-hide controls help after 10 seconds
+            if (this.controlsHelpTimer) {
+                clearTimeout(this.controlsHelpTimer);
+            }
+            this.controlsHelpTimer = setTimeout(() => {
+                if (this.controlsHelp) {
+                    this.controlsHelp.classList.remove('active');
+                }
+            }, 10000); // 10 seconds
         }
     }
 
