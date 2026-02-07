@@ -292,9 +292,81 @@ class AudioManager {
     }
 
     /**
+     * Start background music loop
+     */
+    startBackgroundMusic() {
+        if (!this.initialized || this.musicPlaying) return;
+        
+        this.musicPlaying = true;
+        this.playMusicLoop();
+    }
+
+    /**
+     * Stop background music
+     */
+    stopBackgroundMusic() {
+        this.musicPlaying = false;
+        if (this.musicOscillator) {
+            try {
+                this.musicOscillator.stop();
+            } catch (e) {
+                // Already stopped
+            }
+            this.musicOscillator = null;
+        }
+    }
+
+    /**
+     * Play continuous background music loop
+     */
+    playMusicLoop() {
+        if (!this.musicPlaying || !this.initialized) return;
+
+        const now = this.context.currentTime;
+        const noteDuration = 0.2;
+        
+        // Simple 8-bit style arpeggio melody
+        const melody = [
+            { freq: 262, dur: noteDuration },      // C4
+            { freq: 330, dur: noteDuration },      // E4
+            { freq: 392, dur: noteDuration },      // G4
+            { freq: 523, dur: noteDuration },      // C5
+            { freq: 392, dur: noteDuration },      // G4
+            { freq: 330, dur: noteDuration },      // E4
+            { freq: 294, dur: noteDuration },      // D4
+            { freq: 330, dur: noteDuration }       // E4
+        ];
+
+        let time = now;
+        melody.forEach(note => {
+            const osc = this.context.createOscillator();
+            const gain = this.context.createGain();
+            
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(note.freq, time);
+            
+            gain.gain.setValueAtTime(0, time);
+            gain.gain.linearRampToValueAtTime(0.05, time + 0.01);
+            gain.gain.linearRampToValueAtTime(0, time + note.dur);
+            
+            osc.connect(gain);
+            gain.connect(this.musicGain);
+            
+            osc.start(time);
+            osc.stop(time + note.dur);
+            
+            time += note.dur;
+        });
+
+        // Schedule next loop
+        setTimeout(() => this.playMusicLoop(), melody.length * noteDuration * 1000);
+    }
+
+    /**
      * Stop all sounds
      */
     stopAll() {
+        this.stopBackgroundMusic();
         if (this.context) {
             // Web Audio nodes are automatically garbage collected when done
             // No need to manually stop them

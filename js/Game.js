@@ -140,6 +140,9 @@ class Game {
         // Hide menu, show game
         this.systems.ui.showScreen('game');
         
+        // Start background music
+        this.audioManager.startBackgroundMusic();
+        
         // Start game loop
         this.running = true;
     }
@@ -301,7 +304,7 @@ class Game {
         const boosts = this.generateBoostOptions();
         this.gameState.pendingBoosts = boosts;
         
-        this.systems.ui.showLevelUpScreen(boosts);
+        this.systems.ui.showLevelUp(boosts);
         
         // Play level up sound
         this.audioManager.playSFX('levelup');
@@ -414,8 +417,11 @@ class Game {
         this.saveManager.addNoyaux(noyaux, this.saveData);
         this.saveManager.updateStats(this.gameState.stats, this.saveData);
         
+        // Stop background music
+        this.audioManager.stopBackgroundMusic();
+        
         // Show game over screen
-        this.systems.ui.showGameOverScreen();
+        this.systems.ui.showGameOver();
         
         // Play death sound
         this.audioManager.playSFX('death');
