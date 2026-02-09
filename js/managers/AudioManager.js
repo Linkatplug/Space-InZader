@@ -573,6 +573,26 @@ class AudioManager {
                     { freq: 330, dur: noteDur },     // E4
                     { freq: 349, dur: noteDur },     // F4
                     { freq: 392, dur: longDur }      // G4
+                ],
+                // Calm 3: Peaceful melody
+                [
+                    { freq: 294, dur: noteDur },     // D4
+                    { freq: 330, dur: noteDur },     // E4
+                    { freq: 294, dur: noteDur },     // D4
+                    { freq: 262, dur: longDur },     // C4
+                    { freq: 294, dur: noteDur },     // D4
+                    { freq: 330, dur: noteDur },     // E4
+                    { freq: 392, dur: longDur }      // G4
+                ],
+                // Calm 4: Serene flow
+                [
+                    { freq: 349, dur: longDur },     // F4
+                    { freq: 330, dur: noteDur },     // E4
+                    { freq: 294, dur: noteDur },     // D4
+                    { freq: 330, dur: longDur },     // E4
+                    { freq: 349, dur: noteDur },     // F4
+                    { freq: 392, dur: noteDur },     // G4
+                    { freq: 349, dur: longDur }      // F4
                 ]
             ],
             action: [
@@ -608,6 +628,28 @@ class AudioManager {
                     { freq: 392, dur: noteDur * 0.7 },  // G4
                     { freq: 330, dur: noteDur * 0.7 },  // E4
                     { freq: 294, dur: noteDur }         // D4
+                ],
+                // Action 4: Driving beat
+                [
+                    { freq: 440, dur: noteDur * 0.6 },  // A4
+                    { freq: 392, dur: noteDur * 0.6 },  // G4
+                    { freq: 440, dur: noteDur * 0.6 },  // A4
+                    { freq: 494, dur: noteDur },        // B4
+                    { freq: 440, dur: noteDur * 0.6 },  // A4
+                    { freq: 392, dur: noteDur * 0.6 },  // G4
+                    { freq: 330, dur: noteDur },        // E4
+                    { freq: 392, dur: noteDur }         // G4
+                ],
+                // Action 5: Frantic energy
+                [
+                    { freq: 587, dur: noteDur * 0.5 },  // D5
+                    { freq: 523, dur: noteDur * 0.5 },  // C5
+                    { freq: 494, dur: noteDur * 0.5 },  // B4
+                    { freq: 440, dur: noteDur * 0.5 },  // A4
+                    { freq: 494, dur: noteDur * 0.5 },  // B4
+                    { freq: 523, dur: noteDur * 0.5 },  // C5
+                    { freq: 587, dur: noteDur },        // D5
+                    { freq: 659, dur: noteDur }         // E5
                 ]
             ],
             boss: [
@@ -640,6 +682,26 @@ class AudioManager {
                     { freq: 196, dur: noteDur * 0.7 },  // G3
                     { freq: 233, dur: noteDur * 0.7 },  // A#3
                     { freq: 262, dur: longDur }         // C4
+                ],
+                // Boss 4: Menacing march
+                [
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 175, dur: noteDur },        // F3
+                    { freq: 196, dur: longDur },        // G3
+                    { freq: 175, dur: noteDur },        // F3
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 131, dur: longDur }         // C3
+                ],
+                // Boss 5: Dark power
+                [
+                    { freq: 110, dur: longDur },        // A2
+                    { freq: 123, dur: noteDur },        // B2
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 165, dur: longDur },        // E3
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 131, dur: noteDur },        // C3
+                    { freq: 110, dur: longDur }         // A2
                 ]
             ]
         };
