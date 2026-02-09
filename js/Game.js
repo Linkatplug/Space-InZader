@@ -498,6 +498,12 @@ class Game {
         const preferredTags = shipData.preferredTags || [];
         const bannedTags = shipData.bannedTags || [];
         
+        // 60% chance to use preferred tags, 40% for global pool
+        // FIX: Calculate ONCE per boost, not per rarity iteration
+        const usePreferred = Math.random() < 0.6 && preferredTags.length > 0;
+        
+        logger.debug('Game', `Selecting boost: usePreferred=${usePreferred}, preferredTags=${preferredTags.join(',')}`);
+        
         // Try rarities in order based on luck, with fallbacks
         const rarities = ['legendary', 'epic', 'rare', 'common'];
         
@@ -517,9 +523,6 @@ class Game {
         // Try each rarity starting from the rolled one
         for (let i = startIndex; i < rarities.length; i++) {
             const rarity = rarities[i];
-            
-            // 60% chance to use preferred tags, 40% for global pool
-            const usePreferred = Math.random() < 0.6;
             
             // Get available weapons with tag filtering
             const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
@@ -567,19 +570,63 @@ class Game {
                 return true;
             });
 
-            const all = [
+            let all = [
                 ...availableWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
                 ...availablePassives.map(p => ({ type: 'passive', key: PassiveData.PASSIVES[p].id, data: PassiveData.PASSIVES[p] }))
             ];
+
+            // FIX: If preferred pool is empty, fallback to global pool for this rarity
+            if (all.length === 0 && usePreferred) {
+                logger.debug('Game', `No preferred options at ${rarity}, trying global pool`);
+                
+                // Retry without preferred filter
+                const globalWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
+                    const weapon = WeaponData.WEAPONS[key];
+                    const saveWeapon = this.saveData.weapons[weapon.id];
+                    if (!saveWeapon || !saveWeapon.unlocked) return false;
+                    if (weapon.rarity !== rarity) return false;
+                    
+                    const existing = playerComp.weapons.find(w => w.type === weapon.id);
+                    if (existing && existing.level >= weapon.maxLevel) return false;
+                    
+                    const hasBannedTag = weapon.tags?.some(t => bannedTags.includes(t));
+                    if (hasBannedTag) return false;
+                    
+                    return true;
+                });
+                
+                const globalPassives = Object.keys(PassiveData.PASSIVES).filter(key => {
+                    const passive = PassiveData.PASSIVES[key];
+                    const savePassive = this.saveData.passives[passive.id];
+                    if (!savePassive || !savePassive.unlocked) return false;
+                    if (passive.rarity !== rarity) return false;
+                    
+                    const existing = playerComp.passives.find(p => p.id === passive.id);
+                    if (existing && existing.stacks >= passive.maxStacks) return false;
+                    
+                    const hasBannedTag = passive.tags?.some(t => bannedTags.includes(t));
+                    if (hasBannedTag) return false;
+                    
+                    return true;
+                });
+                
+                all = [
+                    ...globalWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
+                    ...globalPassives.map(p => ({ type: 'passive', key: PassiveData.PASSIVES[p].id, data: PassiveData.PASSIVES[p] }))
+                ];
+            }
 
             // Filter out duplicates
             const filtered = all.filter(item => {
                 return !existing.some(e => e.type === item.type && e.key === item.key);
             });
 
+            logger.debug('Game', `Rarity ${rarity}: found ${filtered.length} options (before dedup: ${all.length})`);
+
             // If we found options, select one
             if (filtered.length > 0) {
                 const selected = MathUtils.randomChoice(filtered);
+                logger.info('Game', `Selected ${selected.type}: ${selected.key} (${rarity})`);
                 return {
                     type: selected.type,
                     key: selected.key,
@@ -590,6 +637,8 @@ class Game {
                 };
             }
         }
+
+        logger.warn('Game', 'No boost options available at any rarity level');
 
         // No options available at any rarity level
         return null;
