@@ -271,6 +271,59 @@ class UISystem {
 
         // Update weapon slots
         this.updateWeaponDisplay(playerComp);
+        
+        // Update synergy display
+        this.updateSynergyDisplay();
+    }
+    
+    /**
+     * Update synergy HUD display
+     */
+    updateSynergyDisplay() {
+        if (!window.game || !window.game.synergySystem) return;
+        
+        const activeSynergies = window.game.synergySystem.getActiveSynergies();
+        
+        // Get or create synergy container
+        let synergyContainer = document.getElementById('synergyDisplay');
+        if (!synergyContainer) {
+            synergyContainer = document.createElement('div');
+            synergyContainer.id = 'synergyDisplay';
+            synergyContainer.style.cssText = `
+                position: absolute;
+                top: 60px;
+                left: 10px;
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+                pointer-events: none;
+            `;
+            document.getElementById('ui').appendChild(synergyContainer);
+        }
+        
+        // Clear and rebuild
+        synergyContainer.innerHTML = '';
+        
+        if (activeSynergies.length === 0) return;
+        
+        activeSynergies.forEach(({ synergy, count, threshold }) => {
+            const badge = document.createElement('div');
+            const color = threshold === 4 ? '#FFD700' : '#00FFFF';
+            
+            badge.style.cssText = `
+                background: rgba(0, 0, 0, 0.8);
+                border: 2px solid ${color};
+                padding: 5px 10px;
+                border-radius: 5px;
+                font-size: 12px;
+                color: ${color};
+                text-shadow: 0 0 5px ${color};
+                box-shadow: 0 0 10px ${color}40;
+            `;
+            
+            badge.textContent = `${synergy.name} ${count}/${threshold}`;
+            synergyContainer.appendChild(badge);
+        });
     }
 
     /**
@@ -770,17 +823,18 @@ class UISystem {
      * Show level up screen with boost options
      * @param {Array} boosts - Available boost options
      */
-    showLevelUp(boosts) {
+    showLevelUp(boosts, rerollsRemaining = 0) {
         this.hideAllScreens();
         this.levelUpScreen.classList.add('active');
-        this.renderBoostOptions(boosts);
+        this.renderBoostOptions(boosts, rerollsRemaining);
     }
 
     /**
      * Render boost selection options
      * @param {Array} boosts - Available boosts
+     * @param {number} rerollsRemaining - Number of rerolls left
      */
-    renderBoostOptions(boosts) {
+    renderBoostOptions(boosts, rerollsRemaining = 0) {
         this.boostOptions.innerHTML = '';
 
         boosts.forEach((boost, index) => {
@@ -789,15 +843,19 @@ class UISystem {
             
             const rarityColor = this.rarityColors[boost.rarity || 'common'];
             
+            // Special styling for keystones
+            const isKeystone = boost.isKeystone || boost.uniquePerRun;
+            
             card.innerHTML = `
+                ${isKeystone ? '<div style="color: #FFD700; font-size: 24px; margin-bottom: 5px;">⭐</div>' : ''}
                 <div class="boost-name" style="color: ${rarityColor};">
-                    ${boost.name}
+                    ${boost.name || boost.data?.name}
                 </div>
                 <div style="font-size: 11px; color: ${rarityColor}; margin-bottom: 8px; text-transform: uppercase;">
-                    ${boost.rarity || 'common'}
+                    ${isKeystone ? 'KEYSTONE' : (boost.rarity || 'common')}
                 </div>
                 <div class="boost-description">
-                    ${boost.description}
+                    ${boost.description || boost.data?.description}
                 </div>
                 ${boost.currentLevel ? `
                     <div style="margin-top: 8px; font-size: 11px; opacity: 0.7;">
@@ -812,6 +870,18 @@ class UISystem {
 
             this.boostOptions.appendChild(card);
         });
+        
+        // Add reroll button if rerolls available
+        if (rerollsRemaining > 0) {
+            const rerollBtn = document.createElement('button');
+            rerollBtn.className = 'button';
+            rerollBtn.style.marginTop = '20px';
+            rerollBtn.textContent = `REROLL (${rerollsRemaining} LEFT)`;
+            rerollBtn.addEventListener('click', () => {
+                window.dispatchEvent(new CustomEvent('rerollBoosts'));
+            });
+            this.boostOptions.appendChild(rerollBtn);
+        }
     }
 
     /**
