@@ -10,11 +10,11 @@ class WaveSystem {
         
         // Wave state
         this.waveNumber = 1;
-        this.waveDuration = 45; // 45 seconds per wave
+        this.waveDuration = 35; // 35 seconds per wave
         this.waveTimer = 0;
         this.isPaused = false;
         this.pauseTimer = 0;
-        this.pauseDuration = 2; // 2 second pause between waves
+        this.pauseDuration = 1.5; // 1.5 second pause between waves
         
         // Spawn triggers
         this.shouldSpawn = true;

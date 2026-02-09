@@ -8,6 +8,7 @@ class UISystem {
     constructor(world, gameState) {
         this.world = world;
         this.gameState = gameState;
+        this.waveSystem = null; // Will be set by Game.js
         
         // Cache DOM elements
         this.cacheElements();
@@ -96,6 +97,7 @@ class UISystem {
 
         // HUD elements
         this.timeDisplay = document.getElementById('timeDisplay');
+        this.waveDisplay = document.getElementById('waveDisplay');
         this.killsDisplay = document.getElementById('killsDisplay');
         this.scoreDisplay = document.getElementById('scoreDisplay');
         this.hpDisplay = document.getElementById('hpDisplay');
@@ -270,6 +272,11 @@ class UISystem {
             const minutes = Math.floor(this.gameState.stats.time / 60);
             const seconds = Math.floor(this.gameState.stats.time % 60);
             this.timeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            // Update wave display
+            if (this.waveSystem && this.waveDisplay) {
+                this.waveDisplay.textContent = this.waveSystem.getWaveNumber();
+            }
 
             // Update kills and score
             this.killsDisplay.textContent = this.gameState.stats.kills;
@@ -1328,36 +1335,36 @@ class UISystem {
     showWaveAnnouncement(waveNumber) {
         const announcement = document.createElement('div');
         announcement.style.position = 'fixed';
-        announcement.style.top = '20%';  // Moved up from center
+        announcement.style.top = '35%';  // Positioned slightly above center
         announcement.style.left = '50%';
         announcement.style.transform = 'translate(-50%, -50%)';
-        announcement.style.padding = '15px 40px';  // Reduced from 40px 80px
-        announcement.style.background = 'rgba(0, 0, 0, 0.4)';  // Much more transparent
-        announcement.style.border = '2px solid rgba(0, 255, 255, 0.6)';  // Thinner, semi-transparent
-        announcement.style.borderRadius = '10px';
+        announcement.style.padding = '10px 30px';  // Compact padding
+        announcement.style.background = 'rgba(0, 0, 0, 0.3)';  // Very transparent
+        announcement.style.border = '2px solid rgba(0, 255, 255, 0.5)';  // Semi-transparent border
+        announcement.style.borderRadius = '8px';
         announcement.style.color = '#00FFFF';
-        announcement.style.fontSize = '36px';  // Reduced from 72px
+        announcement.style.fontSize = '28px';  // ~40% of original 72px
         announcement.style.fontWeight = 'bold';
-        announcement.style.textShadow = '0 0 15px #00FFFF';  // Reduced glow
+        announcement.style.textShadow = '0 0 10px #00FFFF';  // Subtle glow
         announcement.style.zIndex = '2000';
         announcement.style.pointerEvents = 'none';
         announcement.style.opacity = '0';
-        announcement.style.transition = 'opacity 0.3s ease-in';
+        announcement.style.transition = 'opacity 0.2s ease-in';
         announcement.textContent = `VAGUE ${waveNumber}`;  // French: WAVE → VAGUE
 
         document.getElementById('ui').appendChild(announcement);
 
-        // Fade in
+        // Fade in quickly
         setTimeout(() => {
-            announcement.style.opacity = '1';
+            announcement.style.opacity = '0.9';  // Max 0.9 opacity for subtlety
         }, 50);
 
-        // Hold and fade out (faster)
+        // Hold briefly and fade out rapidly
         setTimeout(() => {
-            announcement.style.transition = 'opacity 0.4s ease-out';
+            announcement.style.transition = 'opacity 0.3s ease-out';
             announcement.style.opacity = '0';
-            setTimeout(() => announcement.remove(), 400);
-        }, 1500);  // Reduced from 2000ms to 1500ms
+            setTimeout(() => announcement.remove(), 300);
+        }, 1000);  // Disappears faster (1s instead of 1.5s)
         
         // Show controls on wave 1 only
         if (waveNumber === 1 && !this.controlsShownThisGame) {

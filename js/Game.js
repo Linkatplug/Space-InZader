@@ -85,6 +85,9 @@ class Game {
             this.systems.spawner.triggerWaveSpawns(this.gameState.stats.time);
         };
         
+        // Give UI system reference to wave system for display updates
+        this.systems.ui.waveSystem = this.systems.wave;
+        
         // Game loop
         this.lastTime = 0;
         this.running = false;
