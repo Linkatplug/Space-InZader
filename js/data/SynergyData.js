@@ -29,13 +29,13 @@ const SYNERGIES = {
     blood: {
         id: 'blood',
         name: 'Vampirique',
-        description: '2: +5% Lifesteal | 4: Soigne 15% PV max sur élite | 6: +15% Lifesteal MAIS -25% PV max',
+        description: '2: +3% Lifesteal | 4: Soigne 15% PV max sur élite | 6: +8% Lifesteal MAIS -25% PV max',
         tagsCounted: ['vampire', 'on_hit', 'on_kill'],
         thresholds: [2, 4, 6],
         bonus2: {
             type: 'stat_add',
             stat: 'lifesteal',
-            value: 0.05
+            value: 0.03
         },
         bonus4: {
             type: 'event',
@@ -45,7 +45,7 @@ const SYNERGIES = {
         bonus6: {
             type: 'stat_add_multi',
             stats: {
-                lifesteal: 0.15,
+                lifesteal: 0.08,
                 maxHealthMultiplier: -0.25
             }
         },

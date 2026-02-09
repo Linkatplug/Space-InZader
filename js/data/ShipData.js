@@ -51,7 +51,7 @@ const SHIPS = {
       fireRateMultiplier: 0.8,
       speed: 220 * 1.05,
       armor: 0,
-      lifesteal: 0.15,
+      lifesteal: 0.05,
       critChance: 0.05,
       critMultiplier: 1.5,
       magnetRange: 100,

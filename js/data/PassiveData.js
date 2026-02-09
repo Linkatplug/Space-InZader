@@ -112,7 +112,7 @@ const PASSIVES = {
     effects: {
       critChance: 0.08,
       critMultiplier: 0.2,
-      lifesteal: 0.05
+      lifesteal: 0.03
     },
     maxStacks: 4,
     color: '#4169E1',
@@ -126,7 +126,7 @@ const PASSIVES = {
     description: 'Énergie vampirique puissante au prix de ta vitalité.',
     rarity: 'rare',
     effects: {
-      lifesteal: 0.15,
+      lifesteal: 0.08,
       maxHealthMultiplier: -0.1,
       damageMultiplier: 0.08
     },
@@ -278,7 +278,7 @@ const PASSIVES = {
     description: 'Récupère de la santé avec le temps.',
     rarity: 'common',
     effects: {
-      healthRegen: 0.5
+      healthRegen: 0.2
     },
     maxStacks: 6,
     color: '#00FA9A',
@@ -412,7 +412,7 @@ const PASSIVES = {
     description: 'Convertit les dégâts en santé.',
     rarity: 'uncommon',
     effects: {
-      lifesteal: 0.08
+      lifesteal: 0.04
     },
     maxStacks: 5,
     color: '#DC143C',
@@ -744,8 +744,8 @@ const PASSIVES = {
     description: 'Lifesteal extrême et régénération. -10% dégâts.',
     rarity: 'epic',
     effects: {
-      lifesteal: 0.25,
-      healthRegen: 2.0,
+      lifesteal: 0.12,
+      healthRegen: 0.8,
       maxHealthMultiplier: 0.20,
       damageMultiplier: -0.10
     },
@@ -901,7 +901,7 @@ const PASSIVES = {
     description: 'Lifesteal massif mais vitesse réduite.',
     rarity: 'epic',
     effects: {
-      lifesteal: 0.35,
+      lifesteal: 0.15,
       maxHealthMultiplier: 0.40,
       speedMultiplier: -0.20,
       damageMultiplier: 0.15
@@ -1088,7 +1088,7 @@ const PASSIVES = {
     description: 'Lifesteal puissant mais santé maximale réduite. -20% PV max.',
     rarity: 'rare',
     effects: {
-      lifesteal: 0.25,
+      lifesteal: 0.12,
       maxHealthMultiplier: -0.20
     },
     maxStacks: 2,
@@ -1103,7 +1103,7 @@ const PASSIVES = {
     description: 'Lifesteal sur tous les projectiles. -30% dégâts.',
     rarity: 'epic',
     effects: {
-      lifesteal: 0.15,
+      lifesteal: 0.08,
       projectileLifesteal: true,
       damageMultiplier: -0.30
     },
