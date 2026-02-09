@@ -16,9 +16,11 @@ class AudioManager {
         this.muted = false;
         this.previousMasterVolume = 1.0;
         
-        // MP3 Music system
+        // MP3 Music system - Update this list when adding new music files
         this.musicTracks = [
+            'music/1263681_8-Bit-Flight.mp3',
             'music/19583_newgrounds_robot_.mp3',
+            'music/290077_spacecake.mp3',
             'music/575907_Space-Dumka-8bit.mp3',
             'music/770175_Outer-Space-Adventure-Agen.mp3',
             'music/888921_8-Bit-Flight-Loop.mp3'
