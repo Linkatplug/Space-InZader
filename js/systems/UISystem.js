@@ -352,6 +352,7 @@ class UISystem {
      */
     showShipSelection() {
         this.hideAllScreens();
+        this.stopMenuStarfield();
         if (this.menuScreen) {
             this.menuScreen.classList.add('active');
         }
@@ -512,6 +513,7 @@ class UISystem {
         
         const animate = () => {
             if (!this.mainMenu || !this.mainMenu.classList.contains('active')) {
+                cancelAnimationFrame(this.menuStarfieldAnim);
                 this.menuStarfieldAnim = null;
                 return;
             }
