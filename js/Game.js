@@ -472,6 +472,14 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return;
 
+        // Store old health and shield values before recalculation
+        const health = this.player.getComponent('health');
+        const shield = this.player.getComponent('shield');
+        const oldMaxHP = health ? health.max : 100;
+        const oldCurrentHP = health ? health.current : 100;
+        const oldMaxShield = shield ? shield.max : 0;
+        const oldCurrentShield = shield ? shield.current : 0;
+
         // Reset stats to DEFAULT_STATS blueprint to prevent undefined errors
         playerComp.stats = structuredClone(DEFAULT_STATS);
         
@@ -505,16 +513,33 @@ class Game {
             PassiveData.applyPassiveEffects(passive, playerComp.stats);
         }
         
-        // Update shield component based on stats
-        const shield = this.player.getComponent('shield');
+        // Recalculate max HP with ratio preservation
+        if (health) {
+            const metaHealth = this.saveData.upgrades.maxHealth * 10;
+            const baseMaxHP = shipData.baseStats.maxHealth + metaHealth;
+            const hpMultiplier = playerComp.stats.maxHealthMultiplier || 1;
+            const newMaxHP = Math.floor(baseMaxHP * hpMultiplier);
+            
+            // Preserve HP ratio
+            const hpRatio = oldMaxHP > 0 ? oldCurrentHP / oldMaxHP : 1;
+            health.max = Math.max(1, newMaxHP);
+            health.current = Math.max(1, Math.min(Math.ceil(health.max * hpRatio), health.max));
+            
+            console.log(`Max HP recalculated: ${oldMaxHP} -> ${health.max}, Current: ${oldCurrentHP} -> ${health.current}`);
+        }
+        
+        // Update shield component based on stats with ratio preservation
         if (shield && playerComp.stats.shield > 0) {
-            shield.max = playerComp.stats.shield;
+            const newMaxShield = playerComp.stats.shield;
+            
+            // Preserve shield ratio
+            const shieldRatio = oldMaxShield > 0 ? oldCurrentShield / oldMaxShield : 1;
+            shield.max = newMaxShield;
+            shield.current = Math.max(0, Math.min(Math.ceil(shield.max * shieldRatio), shield.max));
             shield.regen = playerComp.stats.shieldRegen;
             shield.regenDelayMax = playerComp.stats.shieldRegenDelay;
-            // Don't reduce current shield, but cap it
-            if (shield.current > shield.max) {
-                shield.current = shield.max;
-            }
+            
+            console.log(`Shield recalculated: ${oldMaxShield} -> ${shield.max}, Current: ${oldCurrentShield} -> ${shield.current}`);
         } else if (shield) {
             // No shield stats, reset shield
             shield.current = 0;
