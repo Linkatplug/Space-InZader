@@ -645,7 +645,7 @@ class UISystem {
     onClearScores() {
         const saveManager = window.game?.saveManager;
         if (saveManager && confirm('Are you sure you want to clear all scores?')) {
-            saveManager.clearScores();
+            saveManager.clearScoreboard();
             this.renderScoreboard();
         }
     }
