@@ -79,7 +79,13 @@ class SynergySystem {
             });
             
             if (count >= synergy.thresholds[0]) {
-                const threshold = count >= synergy.thresholds[1] ? 4 : 2;
+                // Determine threshold: 6, 4, or 2
+                let threshold = 2;
+                if (synergy.thresholds.length >= 3 && count >= synergy.thresholds[2]) {
+                    threshold = 6;
+                } else if (synergy.thresholds.length >= 2 && count >= synergy.thresholds[1]) {
+                    threshold = 4;
+                }
                 this.activeSynergies.set(synergy.id, { count, threshold });
             }
         });
@@ -106,6 +112,15 @@ class SynergySystem {
             coolingRate: 0,
             dashCooldown: 0,
             summonCap: 0,
+            damageMultiplier: 0,
+            damageTakenMultiplier: 0,
+            rangeMultiplier: 0,
+            magnetRange: 0,
+            maxHealthMultiplier: 0,
+            speedMultiplier: 0,
+            heatGenerationMultiplier: 0,
+            selfExplosionDamage: 0,
+            critChance: 0,
             // Mechanic flags
             onEliteKillHeal: 0,
             critExplosion: null,
@@ -120,7 +135,15 @@ class SynergySystem {
             const synergy = SynergyData.getSynergy(synergyId);
             if (!synergy) return;
             
-            const bonus = data.threshold === 4 ? synergy.bonus4 : synergy.bonus2;
+            // Select appropriate bonus based on threshold
+            let bonus;
+            if (data.threshold === 6 && synergy.bonus6) {
+                bonus = synergy.bonus6;
+            } else if (data.threshold === 4 && synergy.bonus4) {
+                bonus = synergy.bonus4;
+            } else {
+                bonus = synergy.bonus2;
+            }
             
             if (bonus.type === 'stat_add') {
                 if (typeof playerComp.synergyBonuses[bonus.stat] === 'number') {
@@ -128,6 +151,15 @@ class SynergySystem {
                 } else {
                     playerComp.synergyBonuses[bonus.stat] = bonus.value;
                 }
+            } else if (bonus.type === 'stat_add_multi') {
+                // Apply multiple stats at once
+                Object.entries(bonus.stats).forEach(([stat, value]) => {
+                    if (typeof playerComp.synergyBonuses[stat] === 'number') {
+                        playerComp.synergyBonuses[stat] += value;
+                    } else {
+                        playerComp.synergyBonuses[stat] = value;
+                    }
+                });
             } else if (bonus.type === 'event') {
                 // Store event-based bonuses for combat system to use
                 if (bonus.event === 'on_elite_kill') {
