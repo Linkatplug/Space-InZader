@@ -502,6 +502,8 @@ class AudioManager {
      * Start background music loop (MP3 playback)
      */
     startBackgroundMusic() {
+        console.log('startBackgroundMusic called - initialized:', this.initialized, 'musicPlaying:', this.musicPlaying);
+        
         if (!this.initialized || this.musicPlaying) return;
         
         this.musicPlaying = true;
@@ -541,8 +543,13 @@ class AudioManager {
      * Play a random MP3 track
      */
     playRandomMP3() {
-        if (!this.musicPlaying || !this.initialized) return;
+        if (!this.musicPlaying || !this.initialized) {
+            console.log('playRandomMP3 skipped - musicPlaying:', this.musicPlaying, 'initialized:', this.initialized);
+            return;
+        }
 
+        console.log('Starting playRandomMP3...');
+        
         // Clean up previous audio element
         if (this.currentAudio) {
             this.currentAudio.pause();

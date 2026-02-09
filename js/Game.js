@@ -219,6 +219,11 @@ class Game {
             if (!audioInitialized) {
                 this.audioManager.init();
                 audioInitialized = true;
+                
+                // Start background music immediately after initialization
+                this.audioManager.startBackgroundMusic();
+                console.log('Audio initialized and music started');
+                
                 document.removeEventListener('click', initAudio);
                 document.removeEventListener('keydown', initAudio);
             }
