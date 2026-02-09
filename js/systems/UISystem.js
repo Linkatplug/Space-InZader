@@ -386,7 +386,7 @@ class UISystem {
         }
         this.startMenuStarfield();
         if (window.game?.audioManager) {
-            window.game.audioManager.switchTheme('calm');
+            window.game.audioManager.setMusicTheme('calm');
         }
     }
 
