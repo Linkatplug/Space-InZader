@@ -97,6 +97,26 @@ class AudioManager {
     }
 
     /**
+     * Alias for setMute (backward compatibility)
+     * @param {boolean} muted - Whether to mute
+     */
+    setMuted(muted) {
+        this.setMute(muted);
+    }
+
+    /**
+     * Set SFX volume
+     * @param {number} volume - Volume level (0-1)
+     */
+    setSfxVolume(volume) {
+        this.sfxVolume = Math.max(0, Math.min(1, volume));
+        if (this.sfxGain && !this.muted) {
+            this.sfxGain.gain.value = this.sfxVolume;
+        }
+        this.saveSettings();
+    }
+
+    /**
      * Save audio settings to localStorage
      */
     saveSettings() {

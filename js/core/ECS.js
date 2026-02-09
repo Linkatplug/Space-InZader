@@ -218,3 +218,15 @@ function createBoss(phase, patterns) {
         nextPhaseHealth: 0.5
     };
 }
+
+// === Backward compatibility Components wrapper ===
+// DO NOT REMOVE: used by Game.createPlayer and systems
+const Components = {
+    Position: (x, y) => ({ x, y }),
+    Velocity: (vx, vy) => ({ vx, vy }),
+    Health: (current, max) => ({ current, max }),
+    Sprite: (sprite) => ({ sprite }),
+    Collider: (radius) => ({ radius }),
+    Weapon: (id) => ({ id }),
+    Player: () => ({})
+};
