@@ -1165,13 +1165,53 @@ function getRandomPassive(luck = 0, exclude = []) {
   return available[available.length - 1];
 }
 
+/**
+ * Apply passive effects to player stats
+ * This method is called by Game.recalculatePlayerStats() for each passive the player owns
+ * @param {Object} passive - Passive object with {id, stacks} properties
+ * @param {Object} stats - Player stats object to modify
+ */
+function applyPassiveEffects(passive, stats) {
+  const data = getPassiveData(passive.id);
+  if (!data) {
+    console.warn(`PassiveData: Unknown passive "${passive.id}"`);
+    return;
+  }
+  
+  const stacks = Math.min(passive.stacks, data.maxStacks);
+  
+  // Apply each effect multiplied by stacks
+  for (const [effectKey, effectValue] of Object.entries(data.effects)) {
+    // Handle multiplier effects (e.g., damageMultiplier, fireRateMultiplier)
+    if (effectKey.endsWith('Multiplier')) {
+      const statKey = effectKey.replace('Multiplier', '');
+      if (stats[statKey] !== undefined) {
+        // Multiply: stat *= (1 + effect * stacks)
+        stats[statKey] *= (1 + effectValue * stacks);
+      } else {
+        console.warn(`PassiveData: Stat "${statKey}" not found for effect "${effectKey}"`);
+      }
+    } 
+    // Handle additive effects (e.g., armor, magnetRange)
+    else {
+      if (stats[effectKey] !== undefined) {
+        stats[effectKey] += effectValue * stacks;
+      } else {
+        // Create stat if it doesn't exist
+        stats[effectKey] = effectValue * stacks;
+      }
+    }
+  }
+}
+
 // Export to global namespace
 const PassiveData = {
   PASSIVES,
   getPassiveData,
   calculateTotalEffects,
   getRarityWeight,
-  getRandomPassive
+  getRandomPassive,
+  applyPassiveEffects
 };
 
 if (typeof window !== 'undefined') {
