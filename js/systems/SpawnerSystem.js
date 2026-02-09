@@ -431,6 +431,73 @@ class SpawnerSystem {
                 armor: 10,
                 splitCount: 5,
                 splitType: 'elite'
+            },
+            tank_boss: {
+                id: 'tank_boss',
+                name: 'Tank Boss',
+                health: 2500,
+                damage: 60,
+                speed: 50,
+                xpValue: 300,
+                aiType: 'chase',
+                size: 50,
+                color: '#4169E1',
+                spawnCost: 150,
+                attackPattern: {
+                    type: 'melee',
+                    damage: 80,
+                    cooldown: 2.0,
+                    range: 60
+                },
+                armor: 25,
+                splitCount: 8,
+                splitType: 'tank'
+            },
+            swarm_boss: {
+                id: 'swarm_boss',
+                name: 'Swarm Boss',
+                health: 800,
+                damage: 25,
+                speed: 120,
+                xpValue: 250,
+                aiType: 'weave',
+                size: 35,
+                color: '#00FF00',
+                spawnCost: 120,
+                attackPattern: {
+                    type: 'shoot',
+                    damage: 20,
+                    cooldown: 0.5,
+                    range: 350,
+                    projectileSpeed: 300,
+                    projectileColor: '#00FF00'
+                },
+                armor: 5,
+                splitCount: 15,
+                splitType: 'chasseur_rapide'
+            },
+            sniper_boss: {
+                id: 'sniper_boss',
+                name: 'Sniper Boss',
+                health: 1200,
+                damage: 30,
+                speed: 80,
+                xpValue: 280,
+                aiType: 'kite',
+                size: 38,
+                color: '#FFD700',
+                spawnCost: 130,
+                attackPattern: {
+                    type: 'shoot',
+                    damage: 50,
+                    cooldown: 1.5,
+                    range: 600,
+                    projectileSpeed: 500,
+                    projectileColor: '#FFFF00'
+                },
+                armor: 8,
+                splitCount: 6,
+                splitType: 'tireur'
             }
         };
 
