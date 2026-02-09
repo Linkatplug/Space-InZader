@@ -27,6 +27,9 @@ class AudioManager {
         this.musicSource = null;
         this.musicPlaying = false;
         this.lastPlayedIndex = -1;
+        this.errorCount = 0;
+        this.onTrackEnded = null;
+        this.onTrackError = null;
         
         // Kept for backward compatibility
         this.currentTheme = 'calm';
@@ -513,6 +516,13 @@ class AudioManager {
         if (this.currentAudio) {
             this.currentAudio.pause();
             this.currentAudio.currentTime = 0;
+            // Remove event listeners
+            if (this.onTrackEnded) {
+                this.currentAudio.removeEventListener('ended', this.onTrackEnded);
+            }
+            if (this.onTrackError) {
+                this.currentAudio.removeEventListener('error', this.onTrackError);
+            }
             this.currentAudio = null;
         }
         if (this.musicSource) {
@@ -523,6 +533,8 @@ class AudioManager {
             }
             this.musicSource = null;
         }
+        // Reset error count
+        this.errorCount = 0;
     }
 
     /**
@@ -530,6 +542,24 @@ class AudioManager {
      */
     playRandomMP3() {
         if (!this.musicPlaying || !this.initialized) return;
+
+        // Clean up previous audio element
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio.removeEventListener('ended', this.onTrackEnded);
+            this.currentAudio.removeEventListener('error', this.onTrackError);
+            this.currentAudio = null;
+        }
+        
+        // Disconnect previous source
+        if (this.musicSource) {
+            try {
+                this.musicSource.disconnect();
+            } catch (e) {
+                // Already disconnected
+            }
+            this.musicSource = null;
+        }
 
         // Select a random track (avoid immediate repeat)
         let randomIndex;
@@ -544,39 +574,51 @@ class AudioManager {
         this.currentAudio = new Audio(trackPath);
         this.currentAudio.volume = this.muted ? 0 : this.musicVolume;
         
-        // Connect to Web Audio API for proper volume control
-        if (this.context) {
+        // Create bound event handlers for cleanup
+        this.onTrackEnded = () => {
+            if (this.musicPlaying) {
+                this.playRandomMP3();
+            }
+        };
+        
+        this.onTrackError = (e) => {
+            console.error('Error loading music track:', trackPath, e);
+            // Try next track on error (with limit to prevent infinite loop)
+            if (this.musicPlaying && (!this.errorCount || this.errorCount < this.musicTracks.length)) {
+                this.errorCount = (this.errorCount || 0) + 1;
+                setTimeout(() => this.playRandomMP3(), 1000);
+            } else {
+                console.error('All music tracks failed to load. Stopping music.');
+                this.stopBackgroundMusic();
+                this.errorCount = 0;
+            }
+        };
+        
+        // Add event listeners
+        this.currentAudio.addEventListener('ended', this.onTrackEnded);
+        this.currentAudio.addEventListener('error', this.onTrackError);
+
+        // Connect to Web Audio API for proper volume control (only once per element)
+        if (this.context && !this.currentAudio.connectedToWebAudio) {
             try {
                 this.musicSource = this.context.createMediaElementSource(this.currentAudio);
                 this.musicSource.connect(this.musicGain);
+                this.currentAudio.connectedToWebAudio = true;
             } catch (e) {
-                // If already connected or error, just use HTML5 audio volume
+                // If connection fails, just use HTML5 audio volume control
                 console.warn('Could not connect audio to Web Audio API:', e);
             }
         }
 
-        // Play next random track when current ends
-        this.currentAudio.addEventListener('ended', () => {
-            if (this.musicPlaying) {
-                this.playRandomMP3();
-            }
-        });
-
-        // Handle errors
-        this.currentAudio.addEventListener('error', (e) => {
-            console.error('Error loading music track:', trackPath, e);
-            // Try next track on error
-            if (this.musicPlaying) {
-                setTimeout(() => this.playRandomMP3(), 1000);
-            }
-        });
-
         // Start playback
-        this.currentAudio.play().catch(e => {
+        this.currentAudio.play().then(() => {
+            // Reset error count on successful play
+            this.errorCount = 0;
+            console.log('Now playing:', trackPath);
+        }).catch(e => {
             console.error('Error playing music:', e);
+            this.onTrackError(e);
         });
-
-        console.log('Now playing:', trackPath);
     }
 
     /**
