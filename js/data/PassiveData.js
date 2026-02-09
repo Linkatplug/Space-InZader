@@ -1183,7 +1183,7 @@ function applyPassiveEffects(passive, stats) {
   for (const [effectKey, effectValue] of Object.entries(effects)) {
     const totalValue = effectValue * stacks;
 
-    // Handle multiplier effects (these modify existing stat values)
+    // Handle multiplier effects (these modify existing stat values multiplicatively)
     if (effectKey === 'damageMultiplier') {
       stats.damage = (stats.damage || 1) * (1 + totalValue);
     } else if (effectKey === 'fireRateMultiplier') {
@@ -1197,7 +1197,9 @@ function applyPassiveEffects(passive, stats) {
     } else if (effectKey === 'projectileSpeedMultiplier') {
       stats.projectileSpeed = (stats.projectileSpeed || 1) * (1 + totalValue);
     } else if (effectKey === 'critMultiplier') {
-      stats.critDamage = (stats.critDamage || 1) + totalValue;
+      stats.critDamage = (stats.critDamage || 1) * (1 + totalValue);
+    } else if (effectKey === 'xpMultiplier') {
+      stats.xpBonus = (stats.xpBonus || 1) * (1 + totalValue);
     }
     // Handle additive effects (these add to existing stat values)
     else if (effectKey === 'critChance') {
@@ -1208,33 +1210,16 @@ function applyPassiveEffects(passive, stats) {
       stats.armor = (stats.armor || 0) + totalValue;
     } else if (effectKey === 'luck') {
       stats.luck = (stats.luck || 0) + totalValue;
-    } else if (effectKey === 'xpMultiplier') {
-      stats.xpBonus = (stats.xpBonus || 1) * (1 + totalValue);
-    } else if (effectKey === 'magnetRange') {
-      // This would need to be handled elsewhere, not in stats
-      // stats.magnetRange = (stats.magnetRange || 0) + totalValue;
-    } else if (effectKey === 'overheatReduction') {
-      // This might need special handling
-      // stats.overheatReduction = (stats.overheatReduction || 0) + totalValue;
     }
-    // Handle other special effects that don't directly map to stats
-    // These might need to be handled by game systems
-    else if (effectKey.includes('electricDamage') || effectKey.includes('stun') ||
-             effectKey.includes('piercing') || effectKey.includes('ricochet') ||
-             effectKey.includes('explosion') || effectKey.includes('projectileCount') ||
-             effectKey.includes('shield') || effectKey.includes('regen') ||
-             effectKey.includes('execute') || effectKey.includes('fury') ||
-             effectKey.includes('heal') || effectKey.includes('chain') ||
-             effectKey.includes('slow') || effectKey.includes('orbit') ||
-             effectKey.includes('revive') || effectKey.includes('double') ||
-             effectKey.includes('homing') || effectKey.includes('dash') ||
-             effectKey.includes('reflect') || effectKey.includes('speed') ||
-             effectKey.includes('xp') || effectKey.includes('kill') ||
-             effectKey.includes('berserk') || effectKey.includes('low') ||
-             effectKey.includes('aura') || effectKey.includes('dodge') ||
-             effectKey.includes('damage') || effectKey.includes('rage')) {
-      // These effects are handled by specific game systems
-      // Store them in stats for systems to check
+    // Handle special effects that don't directly map to basic stats
+    // These are stored in stats for game systems to check and handle
+    else {
+      // Store all other effects in stats for systems to consume
+      // This includes: electricDamageBonus, stunChance, piercing, ricochetChance,
+      // explosionChance, projectileCount, shield, healthRegen, executeThreshold,
+      // furyPerKill, healOnKill, chainLightning, slowChance, orbitDamage,
+      // revive, doubleShotChance, homingStrength, dashCooldownReduction,
+      // magnetRange, overheatReduction, and many others
       stats[effectKey] = (stats[effectKey] || 0) + totalValue;
     }
   }
