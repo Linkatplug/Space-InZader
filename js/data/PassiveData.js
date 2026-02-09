@@ -178,6 +178,509 @@ const PASSIVES = {
     maxStacks: 5,
     color: '#FFD700',
     icon: '🍀'
+  },
+
+  // ===== NEW PASSIVES (30+) =====
+
+  // Common (simple stat boosts)
+  MUNITIONS_LOURDES: {
+    id: 'munitions_lourdes',
+    name: 'Munitions Lourdes',
+    description: '+Dégâts bruts. Frappe plus fort.',
+    rarity: 'common',
+    effects: {
+      damageMultiplier: 0.12
+    },
+    maxStacks: 8,
+    color: '#FF8C00',
+    icon: '💥'
+  },
+
+  CADENCE_RAPIDE: {
+    id: 'cadence_rapide',
+    name: 'Cadence Rapide',
+    description: 'Tire plus vite. Plus de projectiles par seconde.',
+    rarity: 'common',
+    effects: {
+      fireRateMultiplier: 0.10
+    },
+    maxStacks: 8,
+    color: '#00FF00',
+    icon: '⚡'
+  },
+
+  VITALITE: {
+    id: 'vitalite',
+    name: 'Vitalité',
+    description: '+Santé maximale. Survie améliorée.',
+    rarity: 'common',
+    effects: {
+      maxHealthMultiplier: 0.10
+    },
+    maxStacks: 6,
+    color: '#32CD32',
+    icon: '❤️'
+  },
+
+  REGENERATION: {
+    id: 'regeneration',
+    name: 'Régénération',
+    description: 'Récupère de la santé avec le temps.',
+    rarity: 'common',
+    effects: {
+      healthRegen: 0.5
+    },
+    maxStacks: 6,
+    color: '#00FA9A',
+    icon: '💚'
+  },
+
+  MOBILITE: {
+    id: 'mobilite',
+    name: 'Mobilité',
+    description: 'Déplacement plus rapide. Esquive facilitée.',
+    rarity: 'common',
+    effects: {
+      speedMultiplier: 0.08
+    },
+    maxStacks: 7,
+    color: '#00CED1',
+    icon: '💨'
+  },
+
+  COLLECTEUR: {
+    id: 'collecteur',
+    name: 'Collecteur',
+    description: 'Augmente le rayon magnétique pour ramasser l\'XP.',
+    rarity: 'common',
+    effects: {
+      magnetRange: 40
+    },
+    maxStacks: 6,
+    color: '#DAA520',
+    icon: '🔰'
+  },
+
+  // Uncommon (combo effects)
+  PERFORANT: {
+    id: 'perforant',
+    name: 'Perforant',
+    description: 'Les projectiles traversent un ennemi supplémentaire.',
+    rarity: 'uncommon',
+    effects: {
+      piercing: 1,
+      damageMultiplier: 0.08
+    },
+    maxStacks: 3,
+    color: '#9370DB',
+    icon: '🎯'
+  },
+
+  RICOCHET: {
+    id: 'ricochet',
+    name: 'Ricochet',
+    description: 'Chance de faire rebondir les projectiles sur les ennemis.',
+    rarity: 'uncommon',
+    effects: {
+      ricochetChance: 0.15,
+      bounceCount: 1
+    },
+    maxStacks: 4,
+    color: '#FF1493',
+    icon: '🔄'
+  },
+
+  EXPLOSION_IMPACT: {
+    id: 'explosion_impact',
+    name: 'Explosion d\'Impact',
+    description: 'Les tirs ont une chance d\'exploser en zone.',
+    rarity: 'uncommon',
+    effects: {
+      explosionChance: 0.12,
+      explosionRadius: 30,
+      explosionDamage: 0.5
+    },
+    maxStacks: 3,
+    color: '#FF4500',
+    icon: '💣'
+  },
+
+  MULTI_TIR: {
+    id: 'multi_tir',
+    name: 'Multi-Tir',
+    description: '+1 projectile par salve. Couverture améliorée.',
+    rarity: 'uncommon',
+    effects: {
+      projectileCount: 1,
+      damageMultiplier: -0.05
+    },
+    maxStacks: 4,
+    color: '#FF6347',
+    icon: '🌟'
+  },
+
+  PRECISION: {
+    id: 'precision',
+    name: 'Précision',
+    description: 'Augmente les critiques et la vitesse des projectiles.',
+    rarity: 'uncommon',
+    effects: {
+      critChance: 0.06,
+      projectileSpeedMultiplier: 0.15
+    },
+    maxStacks: 5,
+    color: '#4682B4',
+    icon: '🎲'
+  },
+
+  BOUCLIER_ENERGIE: {
+    id: 'bouclier_energie',
+    name: 'Bouclier d\'Énergie',
+    description: 'Absorbe des dégâts périodiquement.',
+    rarity: 'uncommon',
+    effects: {
+      shield: 20,
+      shieldRegen: 2
+    },
+    maxStacks: 4,
+    color: '#00BFFF',
+    icon: '🛡️'
+  },
+
+  VAMPIRISME: {
+    id: 'vampirisme',
+    name: 'Vampirisme',
+    description: 'Convertit les dégâts en santé.',
+    rarity: 'uncommon',
+    effects: {
+      lifesteal: 0.08
+    },
+    maxStacks: 5,
+    color: '#DC143C',
+    icon: '🧛'
+  },
+
+  PORTEE_ETENDUE: {
+    id: 'portee_etendue',
+    name: 'Portée Étendue',
+    description: 'Armes plus efficaces à longue distance.',
+    rarity: 'uncommon',
+    effects: {
+      rangeMultiplier: 0.20,
+      damageMultiplier: 0.05
+    },
+    maxStacks: 4,
+    color: '#6A5ACD',
+    icon: '📡'
+  },
+
+  ECONOMIE_ENERGIE: {
+    id: 'economie_energie',
+    name: 'Économie d\'Énergie',
+    description: 'Réduit surchauffe et améliore cadence.',
+    rarity: 'uncommon',
+    effects: {
+      overheatReduction: 0.20,
+      fireRateMultiplier: 0.08
+    },
+    maxStacks: 4,
+    color: '#20B2AA',
+    icon: '⚙️'
+  },
+
+  // Rare (powerful combos)
+  EXECUTION: {
+    id: 'execution',
+    name: 'Exécution',
+    description: '+Dégâts sur ennemis à faible santé.',
+    rarity: 'rare',
+    effects: {
+      executeThreshold: 0.25,
+      executeDamageBonus: 0.50,
+      damageMultiplier: 0.10
+    },
+    maxStacks: 3,
+    color: '#8B0000',
+    icon: '⚔️'
+  },
+
+  FUREUR_COMBAT: {
+    id: 'fureur_combat',
+    name: 'Fureur de Combat',
+    description: 'Stack de dégâts qui augmente avec les kills.',
+    rarity: 'rare',
+    effects: {
+      furyPerKill: 0.02,
+      furyMax: 0.50,
+      furyDecay: 0.01
+    },
+    maxStacks: 3,
+    color: '#FF0000',
+    icon: '🔥'
+  },
+
+  PREDATEUR: {
+    id: 'predateur',
+    name: 'Prédateur',
+    description: 'Bonus XP et santé sur kill.',
+    rarity: 'rare',
+    effects: {
+      xpMultiplier: 0.20,
+      healOnKill: 2,
+      damageMultiplier: 0.12
+    },
+    maxStacks: 3,
+    color: '#FFD700',
+    icon: '👑'
+  },
+
+  CHAINE_FOUDRE: {
+    id: 'chaine_foudre',
+    name: 'Chaîne de Foudre',
+    description: 'Les attaques électriques sautent entre ennemis.',
+    rarity: 'rare',
+    effects: {
+      chainLightning: 1,
+      electricDamageBonus: 0.30,
+      chainRange: 150
+    },
+    maxStacks: 4,
+    color: '#00FFFF',
+    icon: '⚡'
+  },
+
+  TEMPS_RALENTI: {
+    id: 'temps_ralenti',
+    name: 'Temps Ralenti',
+    description: 'Chance de ralentir les ennemis touchés.',
+    rarity: 'rare',
+    effects: {
+      slowChance: 0.20,
+      slowAmount: 0.40,
+      slowDuration: 2.0
+    },
+    maxStacks: 3,
+    color: '#4169E1',
+    icon: '⏰'
+  },
+
+  LAME_TOURNOYANTE: {
+    id: 'lame_tournoyante',
+    name: 'Lame Tournoyante',
+    description: 'Dégâts de zone autour du vaisseau.',
+    rarity: 'rare',
+    effects: {
+      orbitDamage: 5,
+      orbitRadius: 80,
+      orbitSpeed: 2.0
+    },
+    maxStacks: 4,
+    color: '#FF00FF',
+    icon: '🌀'
+  },
+
+  CRITIQUE_MORTEL: {
+    id: 'critique_mortel',
+    name: 'Critique Mortel',
+    description: 'Critiques dévastateurs mais moins fréquents.',
+    rarity: 'rare',
+    effects: {
+      critChance: -0.02,
+      critMultiplier: 0.80
+    },
+    maxStacks: 3,
+    color: '#DC143C',
+    icon: '💀'
+  },
+
+  SURVIVANT: {
+    id: 'survivant',
+    name: 'Survivant',
+    description: 'Bouclier et régénération quand blessé.',
+    rarity: 'rare',
+    effects: {
+      lowHealthShield: 30,
+      lowHealthRegen: 2.0,
+      lowHealthThreshold: 0.30
+    },
+    maxStacks: 2,
+    color: '#32CD32',
+    icon: '🩹'
+  },
+
+  DOUBLE_TIR: {
+    id: 'double_tir',
+    name: 'Double Tir',
+    description: 'Chance de tirer deux fois simultanément.',
+    rarity: 'rare',
+    effects: {
+      doubleShotChance: 0.18,
+      fireRateMultiplier: 0.10
+    },
+    maxStacks: 3,
+    color: '#FF69B4',
+    icon: '🎆'
+  },
+
+  // Epic (game-changing)
+  ARSENAL_ORBITAL: {
+    id: 'arsenal_orbital',
+    name: 'Arsenal Orbital',
+    description: 'Satellites armés tournent autour du vaisseau.',
+    rarity: 'epic',
+    effects: {
+      orbitCount: 2,
+      orbitDamage: 15,
+      orbitRadius: 120,
+      fireRateMultiplier: 0.15
+    },
+    maxStacks: 2,
+    color: '#9400D3',
+    icon: '🛸'
+  },
+
+  PHOENIX: {
+    id: 'phoenix',
+    name: 'Phoenix',
+    description: 'Reviens à la vie une fois par vague.',
+    rarity: 'epic',
+    effects: {
+      revive: 1,
+      reviveHealth: 0.50,
+      damageMultiplier: 0.20
+    },
+    maxStacks: 1,
+    color: '#FF4500',
+    icon: '🔥'
+  },
+
+  TEMPETE_PROJECTILES: {
+    id: 'tempete_projectiles',
+    name: 'Tempête de Projectiles',
+    description: '+3 projectiles, cadence folle, dégâts réduits.',
+    rarity: 'epic',
+    effects: {
+      projectileCount: 3,
+      fireRateMultiplier: 0.40,
+      damageMultiplier: -0.20
+    },
+    maxStacks: 2,
+    color: '#FFD700',
+    icon: '🌪️'
+  },
+
+  NEXUS_ENERGIE: {
+    id: 'nexus_energie',
+    name: 'Nexus d\'Énergie',
+    description: 'Toutes les stats augmentent légèrement.',
+    rarity: 'epic',
+    effects: {
+      damageMultiplier: 0.15,
+      fireRateMultiplier: 0.15,
+      speedMultiplier: 0.15,
+      maxHealthMultiplier: 0.15,
+      critChance: 0.05
+    },
+    maxStacks: 2,
+    color: '#00FFFF',
+    icon: '⭐'
+  },
+
+  DEVASTATION: {
+    id: 'devastation',
+    name: 'Dévastation',
+    description: 'Énormes dégâts, pénétration, zone d\'effet.',
+    rarity: 'epic',
+    effects: {
+      damageMultiplier: 0.50,
+      piercing: 2,
+      explosionChance: 0.25,
+      explosionRadius: 60,
+      fireRateMultiplier: -0.15
+    },
+    maxStacks: 1,
+    color: '#8B0000',
+    icon: '☄️'
+  },
+
+  GARDIEN: {
+    id: 'gardien',
+    name: 'Gardien',
+    description: 'Bouclier massif et armure renforcée.',
+    rarity: 'epic',
+    effects: {
+      shield: 100,
+      shieldRegen: 5,
+      armor: 5,
+      maxHealthMultiplier: 0.30
+    },
+    maxStacks: 2,
+    color: '#4169E1',
+    icon: '🏰'
+  },
+
+  INSTINCT_TUEUR: {
+    id: 'instinct_tueur',
+    name: 'Instinct Tueur',
+    description: 'Bonus massif sur kill: vitesse, dégâts, heal.',
+    rarity: 'epic',
+    effects: {
+      killSpeedBoost: 0.20,
+      killDamageBoost: 0.15,
+      healOnKill: 5,
+      killBoostDuration: 3.0
+    },
+    maxStacks: 2,
+    color: '#FF1493',
+    icon: '🗡️'
+  },
+
+  SURCHARGE_ARCANIQUE: {
+    id: 'surcharge_arcanique',
+    name: 'Surcharge Arcanique',
+    description: 'Projectiles géants, lents mais dévastateurs.',
+    rarity: 'epic',
+    effects: {
+      projectileSizeMultiplier: 2.0,
+      damageMultiplier: 0.80,
+      projectileSpeedMultiplier: -0.30,
+      piercing: 3
+    },
+    maxStacks: 1,
+    color: '#9400D3',
+    icon: '🔮'
+  },
+
+  SIPHON_VITAL: {
+    id: 'siphon_vital',
+    name: 'Siphon Vital',
+    description: 'Lifesteal extrême et régénération.',
+    rarity: 'epic',
+    effects: {
+      lifesteal: 0.25,
+      healthRegen: 2.0,
+      maxHealthMultiplier: 0.20,
+      damageMultiplier: 0.10
+    },
+    maxStacks: 2,
+    color: '#DC143C',
+    icon: '🩸'
+  },
+
+  MAITRE_TEMPS: {
+    id: 'maitre_temps',
+    name: 'Maître du Temps',
+    description: 'Ralentit tous les ennemis proches.',
+    rarity: 'epic',
+    effects: {
+      auraSlowAmount: 0.30,
+      auraRadius: 200,
+      dashCooldownReduction: 0.30,
+      speedMultiplier: 0.20
+    },
+    maxStacks: 1,
+    color: '#4682B4',
+    icon: '⌛'
   }
 };
 

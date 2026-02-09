@@ -52,6 +52,8 @@ const SHIPS = {
       luck: 0.0
     },
     startingWeapon: 'laser_frontal',
+    preferredWeapons: ['laser_frontal', 'missiles_guides', 'tourelle_drone'],
+    preferredPassives: ['plating', 'vitalite', 'regeneration', 'bouclier_energie', 'gardien', 'survivant'],
     color: '#00BFFF',
     secondaryColor: '#1E90FF',
     difficulty: 'easy',
@@ -77,6 +79,8 @@ const SHIPS = {
       luck: 0.0
     },
     startingWeapon: 'mitraille',
+    preferredWeapons: ['mitraille', 'laser_frontal', 'missiles_guides'],
+    preferredPassives: ['cadence_rapide', 'radiateur', 'multi_tir', 'tempete_projectiles', 'double_tir', 'economie_energie'],
     color: '#FFD700',
     secondaryColor: '#FFA500',
     difficulty: 'medium',
@@ -102,6 +106,8 @@ const SHIPS = {
       luck: 0.05
     },
     startingWeapon: 'orbes_orbitaux',
+    preferredWeapons: ['orbes_orbitaux', 'arc_electrique', 'laser_frontal', 'mitraille'],
+    preferredPassives: ['nexus_energie', 'chance', 'precision', 'munitions_lourdes', 'mobilite', 'collecteur'],
     color: '#9370DB',
     secondaryColor: '#8A2BE2',
     difficulty: 'easy',
@@ -127,6 +133,8 @@ const SHIPS = {
       luck: 0.1
     },
     startingWeapon: 'rayon_vampirique',
+    preferredWeapons: ['rayon_vampirique', 'orbes_orbitaux', 'lame_tournoyante'],
+    preferredPassives: ['vampirisme', 'sang_froid', 'coeur_noir', 'siphon_vital', 'predateur', 'critique_mortel', 'execution'],
     color: '#DC143C',
     secondaryColor: '#8B0000',
     difficulty: 'hard',

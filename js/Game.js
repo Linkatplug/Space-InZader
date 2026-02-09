@@ -402,6 +402,8 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return null;
 
+        const shipData = ShipData.getShipData(this.gameState.selectedShip);
+        
         // Try rarities in order based on luck, with fallbacks
         const rarities = ['legendary', 'epic', 'rare', 'common'];
         
@@ -418,17 +420,42 @@ class Game {
         for (let i = startIndex; i < rarities.length; i++) {
             const rarity = rarities[i];
             
-            // Get available items for this rarity
+            // Get available weapons (60% preferred, 40% global)
             const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
                 const weapon = WeaponData.WEAPONS[key];
-                const saveWeapon = this.saveData.weapons[weapon.id]; // Use weapon.id (lowercase)
-                return weapon.rarity === rarity && saveWeapon && saveWeapon.unlocked;
+                const saveWeapon = this.saveData.weapons[weapon.id];
+                if (!saveWeapon || !saveWeapon.unlocked) return false;
+                if (weapon.rarity !== rarity) return false;
+                
+                // Check if weapon already at max level
+                const existing = playerComp.weapons.find(w => w.type === weapon.id);
+                if (existing && existing.level >= weapon.maxLevel) return false;
+                
+                // 60% chance for preferred weapons, 40% for all weapons
+                if (shipData.preferredWeapons && shipData.preferredWeapons.includes(weapon.id)) {
+                    return Math.random() < 0.85; // Higher chance for preferred
+                } else {
+                    return Math.random() < 0.4; // Lower chance for non-preferred
+                }
             });
 
+            // Get available passives (60% preferred, 40% global)
             const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
                 const passive = PassiveData.PASSIVES[key];
-                const savePassive = this.saveData.passives[passive.id]; // Use passive.id (lowercase)
-                return passive.rarity === rarity && savePassive && savePassive.unlocked;
+                const savePassive = this.saveData.passives[passive.id];
+                if (!savePassive || !savePassive.unlocked) return false;
+                if (passive.rarity !== rarity) return false;
+                
+                // Check if passive already at maxStacks
+                const existing = playerComp.passives.find(p => p.id === passive.id);
+                if (existing && existing.stacks >= passive.maxStacks) return false;
+                
+                // 60% chance for preferred passives, 40% for all passives
+                if (shipData.preferredPassives && shipData.preferredPassives.includes(passive.id)) {
+                    return Math.random() < 0.85; // Higher chance for preferred
+                } else {
+                    return Math.random() < 0.4; // Lower chance for non-preferred
+                }
             });
 
             const all = [

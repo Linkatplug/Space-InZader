@@ -51,8 +51,8 @@ class CollisionSystem {
                     projPos.x, projPos.y, projCol.radius,
                     enemyPos.x, enemyPos.y, enemyCol.radius
                 )) {
-                    // Deal damage to enemy
-                    this.damageEnemy(enemy, projComp.damage);
+                    // Deal damage to enemy (pass owner entity for lifesteal)
+                    this.damageEnemy(enemy, projComp.damage, ownerEntity);
                     
                     // Remove projectile if not piercing
                     if (projComp.piercing <= 0) {
@@ -183,12 +183,27 @@ class CollisionSystem {
         }
     }
 
-    damageEnemy(enemy, damage) {
+    damageEnemy(enemy, damage, attacker = null) {
         const health = enemy.getComponent('health');
         if (!health) return;
 
         health.current -= damage;
         this.gameState.stats.damageDealt += damage;
+        
+        // Apply lifesteal if attacker is player
+        if (attacker && attacker.type === 'player') {
+            const playerComp = attacker.getComponent('player');
+            const playerHealth = attacker.getComponent('health');
+            
+            if (playerComp && playerHealth && playerComp.stats.lifesteal > 0) {
+                const healAmount = damage * playerComp.stats.lifesteal;
+                const newHealth = Math.min(playerHealth.max, playerHealth.current + healAmount);
+                if (newHealth > playerHealth.current) {
+                    playerHealth.current = newHealth;
+                    logger.debug('Combat', `Lifesteal healed ${healAmount.toFixed(1)} HP`);
+                }
+            }
+        }
         
         // Play hit sound
         if (this.audioManager && this.audioManager.initialized) {
