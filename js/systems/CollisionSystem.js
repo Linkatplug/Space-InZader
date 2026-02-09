@@ -268,13 +268,68 @@ class CollisionSystem {
         const renderable = enemy.getComponent('renderable');
         
         if (enemyComp && pos) {
+            // Handle explosive enemies - deal area damage
+            if (enemyComp.isExplosive && enemyComp.attackPattern?.type === 'explode') {
+                const explosionRadius = enemyComp.attackPattern.explosionRadius || 80;
+                const explosionDamage = enemyComp.attackPattern.damage || 40;
+                
+                // Find all entities near the explosion
+                const player = this.world.getEntitiesByType('player')[0];
+                const allEnemies = this.world.getEntitiesByType('enemy');
+                
+                // Damage player if in range
+                if (player) {
+                    const playerPos = player.getComponent('position');
+                    if (playerPos) {
+                        const dx = playerPos.x - pos.x;
+                        const dy = playerPos.y - pos.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < explosionRadius) {
+                            const damageFalloff = 1 - (distance / explosionRadius);
+                            this.damagePlayer(player, explosionDamage * damageFalloff);
+                        }
+                    }
+                }
+                
+                // Damage nearby enemies
+                for (const nearbyEnemy of allEnemies) {
+                    if (nearbyEnemy.id === enemy.id) continue;
+                    
+                    const nearbyPos = nearbyEnemy.getComponent('position');
+                    if (nearbyPos) {
+                        const dx = nearbyPos.x - pos.x;
+                        const dy = nearbyPos.y - pos.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < explosionRadius) {
+                            const damageFalloff = 1 - (distance / explosionRadius);
+                            this.damageEnemy(nearbyEnemy, explosionDamage * damageFalloff * 0.5); // Reduced friendly fire
+                        }
+                    }
+                }
+                
+                // Enhanced visual effect for explosion
+                if (this.particleSystem) {
+                    const explosionColor = enemyComp.attackPattern.explosionColor || '#FF4500';
+                    this.particleSystem.createExplosion(pos.x, pos.y, explosionRadius * 0.6, explosionColor, 40);
+                }
+                
+                // Screen shake for explosion
+                if (this.screenEffects) {
+                    this.screenEffects.shake(8, 0.3);
+                    this.screenEffects.flash(enemyComp.attackPattern.explosionColor || '#FF4500', 0.4, 0.2);
+                }
+            }
+            
             // Play explosion sound
             if (this.audioManager && this.audioManager.initialized) {
-                this.audioManager.playSFX('explosion', MathUtils.randomFloat(0.8, 1.2));
+                const pitch = enemyComp.isExplosive ? 0.6 : MathUtils.randomFloat(0.8, 1.2);
+                this.audioManager.playSFX('explosion', pitch);
             }
             
             // Create explosion particle effect
-            if (this.particleSystem) {
+            if (this.particleSystem && !enemyComp.isExplosive) {
                 const color = renderable ? renderable.color : '#ff6600';
                 const size = renderable ? renderable.size : 20;
                 const particleCount = Math.min(30, 15 + size);

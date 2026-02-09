@@ -58,6 +58,12 @@ class AISystem {
             case 'boss':
                 this.bossAI(enemy, player, deltaTime);
                 break;
+            case 'kamikaze':
+                this.kamikazeAI(enemy, player, deltaTime);
+                break;
+            case 'stationary':
+                this.stationaryAI(enemy, player, deltaTime);
+                break;
             default:
                 this.chaseAI(enemy, player, deltaTime);
         }
@@ -431,6 +437,54 @@ class AISystem {
                 attackPattern.projectileColor || '#FF0000'
             );
         }
+    }
+
+    /**
+     * Kamikaze AI - Rush directly at player for suicide attack
+     * @param {Entity} enemy - Enemy entity
+     * @param {Entity} player - Player entity
+     * @param {number} deltaTime - Time elapsed
+     */
+    kamikazeAI(enemy, player, deltaTime) {
+        const enemyPos = enemy.getComponent('position');
+        const playerPos = player.getComponent('position');
+        const enemyVel = enemy.getComponent('velocity');
+        const enemyComp = enemy.getComponent('enemy');
+        
+        if (!enemyPos || !playerPos || !enemyVel || !enemyComp) return;
+
+        // Calculate direction to player
+        const dx = playerPos.x - enemyPos.x;
+        const dy = playerPos.y - enemyPos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 0) {
+            // Speed boost as it gets closer (more aggressive)
+            const speedBoost = 1 + (1 - Math.min(distance / 300, 1)) * 0.5;
+            const speed = enemyComp.speed * speedBoost;
+            
+            // Direct charge at player
+            enemyVel.vx = (dx / distance) * speed;
+            enemyVel.vy = (dy / distance) * speed;
+        }
+    }
+
+    /**
+     * Stationary AI - Stays in place and shoots
+     * @param {Entity} enemy - Enemy entity
+     * @param {Entity} player - Player entity
+     * @param {number} deltaTime - Time elapsed
+     */
+    stationaryAI(enemy, player, deltaTime) {
+        const enemyVel = enemy.getComponent('velocity');
+        
+        if (!enemyVel) return;
+        
+        // Don't move
+        enemyVel.vx = 0;
+        enemyVel.vy = 0;
+        
+        // Face towards player (rotation handled by attack system)
     }
 
     /**

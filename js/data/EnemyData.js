@@ -231,6 +231,93 @@ const ENEMIES = {
     armor: 8,
     splitCount: 6,
     splitType: 'tireur'
+  },
+
+  // New Enemy Variants
+  EXPLOSIF: {
+    id: 'explosif',
+    name: 'Drone Explosif',
+    health: 15,
+    damage: 30, // High contact damage
+    speed: 150,
+    xpValue: 10,
+    aiType: 'kamikaze',
+    size: 14,
+    color: '#FF6600',
+    secondaryColor: '#FF3300',
+    spawnCost: 3,
+    attackPattern: {
+      type: 'explode',
+      damage: 40,
+      explosionRadius: 80,
+      explosionColor: '#FF4500'
+    },
+    armor: 0,
+    isExplosive: true // Flag for explosion on death
+  },
+
+  TIREUR_LOURD: {
+    id: 'tireur_lourd',
+    name: 'Tireur Lourd',
+    health: 45,
+    damage: 15,
+    speed: 60,
+    xpValue: 18,
+    aiType: 'kite',
+    size: 15,
+    color: '#8B4513',
+    secondaryColor: '#A0522D',
+    spawnCost: 5,
+    attackPattern: {
+      type: 'shoot',
+      damage: 25,
+      cooldown: 2.5,
+      range: 400,
+      projectileSpeed: 200,
+      projectileColor: '#FF8C00'
+    },
+    armor: 3
+  },
+
+  DEMON_VITESSE: {
+    id: 'demon_vitesse',
+    name: 'Démon de Vitesse',
+    health: 8,
+    damage: 25,
+    speed: 250,
+    xpValue: 15,
+    aiType: 'aggressive',
+    size: 9,
+    color: '#00FFFF',
+    secondaryColor: '#00CED1',
+    spawnCost: 4,
+    attackPattern: {
+      type: 'none'
+    },
+    armor: 0
+  },
+
+  TOURELLE: {
+    id: 'tourelle',
+    name: 'Tourelle',
+    health: 60,
+    damage: 5,
+    speed: 0, // Stationary
+    xpValue: 20,
+    aiType: 'stationary',
+    size: 18,
+    color: '#696969',
+    secondaryColor: '#808080',
+    spawnCost: 6,
+    attackPattern: {
+      type: 'shoot',
+      damage: 18,
+      cooldown: 1.2,
+      range: 500,
+      projectileSpeed: 400,
+      projectileColor: '#FFA500'
+    },
+    armor: 5
   }
 };
 
@@ -268,6 +355,17 @@ const AI_BEHAVIORS = {
       { healthThreshold: 0.66, pattern: 'shoot_spiral' },
       { healthThreshold: 0.33, pattern: 'enrage' }
     ]
+  },
+  kamikaze: {
+    description: 'Rush directly at player for suicide attack',
+    updateInterval: 0.05,
+    predictionFactor: 0.3,
+    speedBoost: 1.2 // Gets faster as it approaches
+  },
+  stationary: {
+    description: 'Stays in place and shoots',
+    updateInterval: 0.3,
+    rotationSpeed: 2.0
   }
 };
 
@@ -277,27 +375,27 @@ const AI_BEHAVIORS = {
 const SPAWN_WAVES = {
   early: {
     timeRange: [0, 300], // 0-5 minutes
-    budgetPerSecond: 2,
-    enemyPool: ['drone_basique', 'chasseur_rapide'],
-    spawnInterval: 2.0
+    budgetPerSecond: 3, // Increased from 2
+    enemyPool: ['drone_basique', 'chasseur_rapide', 'explosif', 'demon_vitesse'],
+    spawnInterval: 1.5 // Reduced from 2.0 for more frequent spawns
   },
   mid: {
     timeRange: [300, 600], // 5-10 minutes
-    budgetPerSecond: 4,
-    enemyPool: ['drone_basique', 'chasseur_rapide', 'tireur', 'tank'],
-    spawnInterval: 1.5
+    budgetPerSecond: 5, // Increased from 4
+    enemyPool: ['drone_basique', 'chasseur_rapide', 'tireur', 'tank', 'explosif', 'tireur_lourd', 'demon_vitesse'],
+    spawnInterval: 1.2 // Reduced from 1.5
   },
   late: {
     timeRange: [600, 1200], // 10-20 minutes
-    budgetPerSecond: 8,
-    enemyPool: ['chasseur_rapide', 'tireur', 'tank', 'elite'],
-    spawnInterval: 1.0
+    budgetPerSecond: 10, // Increased from 8
+    enemyPool: ['chasseur_rapide', 'tireur', 'tank', 'elite', 'tireur_lourd', 'tourelle', 'demon_vitesse'],
+    spawnInterval: 0.9 // Reduced from 1.0
   },
   endgame: {
     timeRange: [1200, 9999], // 20+ minutes
-    budgetPerSecond: 15,
-    enemyPool: ['tank', 'elite', 'boss'],
-    spawnInterval: 0.8
+    budgetPerSecond: 18, // Increased from 15
+    enemyPool: ['tank', 'elite', 'boss', 'tireur_lourd', 'tourelle'],
+    spawnInterval: 0.7 // Reduced from 0.8
   }
 };
 
