@@ -12,7 +12,7 @@ class SpawnerSystem {
         // Spawning state
         this.spawnBudget = 0;
         this.spawnTimer = 0;
-        this.maxEnemiesOnScreen = 150;
+        this.maxEnemiesOnScreen = 250;
         
         // Wave tracking
         this.waveNumber = 1;
@@ -122,9 +122,9 @@ class SpawnerSystem {
     calculateDifficultyMultipliers(gameTime, waveNumber) {
         const timeMinutes = gameTime / 60;
         
-        // Multipliers with soft caps
-        const enemyCountMult = Math.min(3.0, 1 + (timeMinutes * 0.15));
-        const enemyHealthMult = Math.min(4.0, 1 + (waveNumber * 0.12));
+        // Multipliers with soft caps (augmentés pour plus de difficulté)
+        const enemyCountMult = Math.min(4.0, 1 + (timeMinutes * 0.20));
+        const enemyHealthMult = Math.min(5.0, 1 + (waveNumber * 0.15));
         const enemySpeedMult = Math.min(2.0, 1 + (waveNumber * 0.05));
         
         return { enemyCountMult, enemyHealthMult, enemySpeedMult };
@@ -147,15 +147,15 @@ class SpawnerSystem {
      * @param {number} gameTime - Current game time
      */
     triggerWaveSpawns(gameTime) {
-        // Check for boss spawn (every 10 waves)
-        if (this.waveNumber % 10 === 0 && !this.bossSpawnedThisWave) {
+        // Check for boss spawn (every 5 waves)
+        if (this.waveNumber % 5 === 0 && !this.bossSpawnedThisWave) {
             const bossTypes = ['boss', 'tank_boss', 'swarm_boss', 'sniper_boss'];
-            const bossType = bossTypes[Math.floor(this.waveNumber / 10) % bossTypes.length];
+            const bossType = bossTypes[Math.floor(this.waveNumber / 5) % bossTypes.length];
             this.spawnBoss(gameTime, bossType);
             this.bossSpawnedThisWave = true;
         }
-        // Check for elite spawn (every 5 waves)
-        else if (this.waveNumber % 5 === 0 && !this.eliteSpawnedThisWave) {
+        // Check for elite spawn (every 3 waves)
+        else if (this.waveNumber % 3 === 0 && !this.eliteSpawnedThisWave) {
             this.spawnElite(gameTime);
             this.eliteSpawnedThisWave = true;
         }

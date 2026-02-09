@@ -698,7 +698,9 @@ class Game {
         if (this.gameState.isState(GameStates.RUNNING)) {
             this.gameState.setState(GameStates.PAUSED);
             this.running = false;
-            // Show pause UI
+            // Show pause menu UI
+            this.systems.ui.showPauseMenu();
+            logger.info('Game', 'Game paused - menu opened');
         }
     }
 
