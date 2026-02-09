@@ -310,6 +310,7 @@ class Game {
         playerComp.stats.critChance = shipData.baseStats.critChance;
         playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
         playerComp.stats.lifesteal = shipData.baseStats.lifesteal;
+        playerComp.stats.healthRegen = shipData.baseStats.healthRegen || 0;
         playerComp.stats.xpBonus = metaXP;
         
         this.player.addComponent('player', playerComp);
@@ -442,6 +443,7 @@ class Game {
         playerComp.stats.critChance = shipData.baseStats.critChance;
         playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
         playerComp.stats.lifesteal = shipData.baseStats.lifesteal;
+        playerComp.stats.healthRegen = shipData.baseStats.healthRegen || 0;
         playerComp.stats.xpBonus = metaXP;
         playerComp.stats.armor = shipData.baseStats.armor || 0;
         playerComp.stats.projectileSpeed = 1;
