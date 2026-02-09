@@ -222,11 +222,18 @@ function createBoss(phase, patterns) {
 // === Backward compatibility Components wrapper ===
 // DO NOT REMOVE: used by Game.createPlayer and systems
 const Components = {
-    Position: (x, y) => ({ x, y }),
-    Velocity: (vx, vy) => ({ vx, vy }),
-    Health: (current, max) => ({ current, max }),
+    Position: createPosition,
+    Velocity: createVelocity,
+    Health: createHealth,
+    Collision: createCollision,
+    Renderable: createRenderable,
+    Player: createPlayer,
+    Enemy: createEnemy,
+    Weapon: createWeapon,
+    Projectile: createProjectile,
+    Pickup: createPickup,
+    Particle: createParticle,
+    Boss: createBoss,
     Sprite: (sprite) => ({ sprite }),
-    Collider: (radius) => ({ radius }),
-    Weapon: (id) => ({ id }),
-    Player: () => ({})
+    Collider: (radius) => ({ radius })
 };
