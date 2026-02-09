@@ -193,6 +193,49 @@
         .hud-bottom-right {
             bottom: 10px;
             right: 10px;
+            max-width: 350px;
+            text-align: right;
+        }
+        
+        .weapon-status {
+            background: rgba(10, 10, 26, 0.8);
+            border: 1px solid #00ffff;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        
+        .weapon-status-title {
+            color: #ffaa00;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .weapon-item {
+            margin: 2px 0;
+            color: #00ffff;
+        }
+        
+        .passive-status {
+            background: rgba(10, 10, 26, 0.8);
+            border: 1px solid #aa44ff;
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .passive-status-title {
+            color: #aa44ff;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        
+        .passive-item {
+            margin: 2px 0;
+            color: #ccccff;
         }
 
         .health-bar {
@@ -206,6 +249,21 @@
         .health-fill {
             height: 100%;
             background: linear-gradient(90deg, #ff0000, #ff6600);
+            transition: width 0.3s;
+        }
+        
+        .shield-bar {
+            width: 200px;
+            height: 15px;
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            position: relative;
+            margin-top: 3px;
+        }
+        
+        .shield-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ddff, #00ffff);
             transition: width 0.3s;
         }
 
@@ -713,6 +771,10 @@
                     <div class="health-fill" id="healthFill"></div>
                 </div>
                 <div style="margin-top: 5px;">HP: <span id="hpDisplay">100/100</span></div>
+                <div class="shield-bar" id="shieldBar" style="display: none;">
+                    <div class="shield-fill" id="shieldFill"></div>
+                </div>
+                <div id="shieldDisplay" style="margin-top: 3px; display: none;">SHIELD: <span id="shieldValue">0/0</span></div>
             </div>
             <div class="hud hud-bottom-center" id="hudBottomCenter">
                 <div>Level: <span id="levelDisplay">1</span></div>
@@ -721,7 +783,14 @@
                 </div>
             </div>
             <div class="hud hud-bottom-right" id="hudBottomRight">
-                <div id="weaponSlots"></div>
+                <div class="weapon-status" id="weaponStatus">
+                    <div class="weapon-status-title">⚔️ ARMES</div>
+                    <div id="weaponList"></div>
+                </div>
+                <div class="passive-status" id="passiveStatus">
+                    <div class="passive-status-title">✨ BONUS ACTIFS</div>
+                    <div id="passiveList"></div>
+                </div>
             </div>
             
             <!-- Controls Help -->

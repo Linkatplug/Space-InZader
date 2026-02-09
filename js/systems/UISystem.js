@@ -34,6 +34,9 @@ class UISystem {
         
         // Menu starfield animation ID
         this.menuStarfieldAnim = null;
+        
+        // Controls help tracking
+        this.controlsShownThisGame = false;
     }
 
     /**
@@ -101,6 +104,16 @@ class UISystem {
         this.xpFill = document.getElementById('xpFill');
         this.weaponSlots = document.getElementById('weaponSlots');
         this.controlsHelp = document.getElementById('controlsHelp');
+        
+        // Shield elements
+        this.shieldBar = document.getElementById('shieldBar');
+        this.shieldFill = document.getElementById('shieldFill');
+        this.shieldDisplay = document.getElementById('shieldDisplay');
+        this.shieldValue = document.getElementById('shieldValue');
+        
+        // Weapon and passive status elements
+        this.weaponList = document.getElementById('weaponList');
+        this.passiveList = document.getElementById('passiveList');
 
         // Menu elements (ship selection)
         this.shipSelection = document.getElementById('shipSelection');
@@ -265,9 +278,25 @@ class UISystem {
             const healthPercent = (health.current / health.max) * 100;
             this.healthFill.style.width = `${Math.max(0, healthPercent)}%`;
         }
+        
+        // Update shield
+        const shield = player.getComponent('shield');
+        if (shield && shield.max > 0) {
+            this.shieldBar.style.display = 'block';
+            this.shieldDisplay.style.display = 'block';
+            this.shieldValue.textContent = `${Math.ceil(shield.current)}/${shield.max}`;
+            const shieldPercent = (shield.current / shield.max) * 100;
+            this.shieldFill.style.width = `${Math.max(0, shieldPercent)}%`;
+        } else {
+            this.shieldBar.style.display = 'none';
+            this.shieldDisplay.style.display = 'none';
+        }
 
-        // Update weapon slots
+        // Update weapon display
         this.updateWeaponDisplay(playerComp);
+        
+        // Update passive display
+        this.updatePassiveDisplay(playerComp);
         
         // Update synergy display
         this.updateSynergyDisplay();
@@ -328,22 +357,68 @@ class UISystem {
      * @param {Object} playerComp - Player component
      */
     updateWeaponDisplay(playerComp) {
-        if (!playerComp || !playerComp.weapons) return;
+        if (!playerComp || !playerComp.weapons || !this.weaponList) return;
 
-        this.weaponSlots.innerHTML = '';
+        this.weaponList.innerHTML = '';
         
         playerComp.weapons.forEach((weapon, index) => {
             const weaponDiv = document.createElement('div');
-            weaponDiv.style.marginBottom = '5px';
-            weaponDiv.style.fontSize = '12px';
-            weaponDiv.style.textAlign = 'right';
+            weaponDiv.className = 'weapon-item';
             
-            const weaponName = weapon.type || 'Unknown';
+            const weaponData = weapon.data;
+            const weaponName = weaponData?.name || weapon.type || 'Unknown';
             const level = weapon.level || 1;
-            const maxLevel = weapon.data?.maxLevel || 8;
+            const maxLevel = weaponData?.maxLevel || 8;
+            const rarity = weaponData?.rarity || 'common';
             
-            weaponDiv.innerHTML = `${weaponName} <span style="color: #00ff00;">Lv${level}/${maxLevel}</span>`;
-            this.weaponSlots.appendChild(weaponDiv);
+            // Get rarity color
+            const rarityColor = this.rarityColors[rarity] || '#888';
+            
+            // Format weapon info
+            weaponDiv.innerHTML = `
+                <span style="color: ${rarityColor};">${weaponName}</span> 
+                <span style="color: #00ff00;">Lv${level}/${maxLevel}</span>
+            `;
+            this.weaponList.appendChild(weaponDiv);
+        });
+    }
+    
+    /**
+     * Update passive display
+     */
+    updatePassiveDisplay(playerComp) {
+        if (!playerComp || !playerComp.passives || !this.passiveList) return;
+        
+        this.passiveList.innerHTML = '';
+        
+        // Get unique passives with stacks
+        const passiveMap = new Map();
+        playerComp.passives.forEach(passive => {
+            const key = passive.type || passive.id;
+            if (passiveMap.has(key)) {
+                passiveMap.get(key).stacks++;
+            } else {
+                passiveMap.set(key, {
+                    ...passive,
+                    stacks: 1
+                });
+            }
+        });
+        
+        // Display passives
+        passiveMap.forEach((passive, key) => {
+            const passiveDiv = document.createElement('div');
+            passiveDiv.className = 'passive-item';
+            
+            const passiveData = passive.data;
+            const name = passiveData?.name || passive.type || key;
+            const rarity = passiveData?.rarity || 'common';
+            const rarityColor = this.rarityColors[rarity] || '#888';
+            
+            const stackText = passive.stacks > 1 ? ` x${passive.stacks}` : '';
+            
+            passiveDiv.innerHTML = `<span style="color: ${rarityColor};">${name}${stackText}</span>`;
+            this.passiveList.appendChild(passiveDiv);
         });
     }
 
@@ -1028,20 +1103,7 @@ class UISystem {
             if (el) el.style.display = 'block';
         });
         
-        // Show controls help
-        if (this.controlsHelp) {
-            this.controlsHelp.classList.add('active');
-            
-            // Auto-hide controls help after 10 seconds
-            if (this.controlsHelpTimer) {
-                clearTimeout(this.controlsHelpTimer);
-            }
-            this.controlsHelpTimer = setTimeout(() => {
-                if (this.controlsHelp) {
-                    this.controlsHelp.classList.remove('active');
-                }
-            }, 10000); // 10 seconds
-        }
+        // Don't show controls automatically - only on wave 1
     }
 
     /**
@@ -1264,6 +1326,31 @@ class UISystem {
             announcement.style.opacity = '0';
             setTimeout(() => announcement.remove(), 500);
         }, 2000);
+        
+        // Show controls on wave 1 only
+        if (waveNumber === 1 && !this.controlsShownThisGame) {
+            this.showControlsHelp();
+            this.controlsShownThisGame = true;
+        }
+    }
+    
+    /**
+     * Show controls help overlay
+     */
+    showControlsHelp() {
+        if (this.controlsHelp) {
+            this.controlsHelp.classList.add('active');
+            
+            // Auto-hide controls help after 10 seconds
+            if (this.controlsHelpTimer) {
+                clearTimeout(this.controlsHelpTimer);
+            }
+            this.controlsHelpTimer = setTimeout(() => {
+                if (this.controlsHelp) {
+                    this.controlsHelp.classList.remove('active');
+                }
+            }, 10000); // 10 seconds
+        }
     }
 
     /**
@@ -1272,5 +1359,7 @@ class UISystem {
     reset() {
         this.hideAllScreens();
         this.hideHUD();
+        // Reset controls flag for new game
+        this.controlsShownThisGame = false;
     }
 }
