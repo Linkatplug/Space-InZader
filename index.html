@@ -276,6 +276,292 @@
             border-radius: 3px;
             font-weight: bold;
         }
+
+        /* Main Menu Styles */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            pointer-events: all;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        .overlay {
+            background: rgba(10, 10, 26, 0.95);
+            z-index: 100;
+        }
+
+        #mainMenu {
+            background: #000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #menuStarfield {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .main-menu-container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-title {
+            font-size: 72px;
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
+            margin-bottom: 60px;
+            letter-spacing: 8px;
+            animation: titlePulse 3s ease-in-out infinite;
+        }
+
+        @keyframes titlePulse {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.05); filter: brightness(1.2); }
+        }
+
+        .main-menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-width: 300px;
+        }
+
+        .menu-btn {
+            background: transparent;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            padding: 18px 50px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .menu-btn:hover::before {
+            left: 100%;
+        }
+
+        .menu-btn:hover {
+            background: rgba(0, 255, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            transform: translateX(5px);
+        }
+
+        .menu-footer {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #666;
+            letter-spacing: 2px;
+        }
+
+        /* Pause Menu */
+        #pauseMenu, #commandsScreen {
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .pause-container, .commands-container, .options-container, .scoreboard-container {
+            background: rgba(0, 20, 40, 0.9);
+            border: 3px solid #00ffff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+            min-width: 400px;
+        }
+
+        .pause-container h2, .commands-container h2, .options-container h2, .scoreboard-container h2 {
+            color: #00ffff;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 36px;
+            letter-spacing: 4px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .command-list {
+            color: #00ffff;
+            font-size: 16px;
+            line-height: 2;
+            margin-bottom: 30px;
+        }
+
+        .command-list div {
+            padding: 8px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        /* Options Screen */
+        .option-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 20px 0;
+            gap: 15px;
+        }
+
+        .option-row label {
+            color: #00ffff;
+            font-size: 18px;
+            min-width: 150px;
+        }
+
+        .option-row input[type="range"] {
+            flex: 1;
+            height: 6px;
+            background: rgba(0, 255, 255, 0.2);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .option-row input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #00ffff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .option-row input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #00ffff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .option-row input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+        }
+
+        .vol-btn {
+            background: rgba(0, 255, 255, 0.2);
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .vol-btn:hover {
+            background: rgba(0, 255, 255, 0.4);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .option-row span {
+            color: #00ffff;
+            font-size: 18px;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        /* Scoreboard */
+        .score-list {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .score-entry {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            transition: all 0.2s;
+        }
+
+        .score-entry:hover {
+            background: rgba(0, 255, 255, 0.1);
+            border-color: #00ffff;
+        }
+
+        .score-entry.rank-1 { border-color: #ffaa00; background: rgba(255, 170, 0, 0.1); }
+        .score-entry.rank-2 { border-color: #aaaaaa; background: rgba(170, 170, 170, 0.1); }
+        .score-entry.rank-3 { border-color: #cd7f32; background: rgba(205, 127, 50, 0.1); }
+
+        .score-header {
+            display: flex;
+            justify-content: space-between;
+            color: #00ffff;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .score-details {
+            color: #aaa;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .score-build {
+            color: #888;
+            font-size: 12px;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .ship-card.locked {
+            opacity: 0.5;
+            cursor: not-allowed;
+            position: relative;
+        }
+
+        .ship-card.locked::after {
+            content: '🔒 LOCKED';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4444;
+            font-size: 24px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -283,11 +569,105 @@
         <canvas id="gameCanvas" width="1280" height="720"></canvas>
         <div id="ui">
             <!-- Main Menu -->
-            <div class="menu-screen active" id="menuScreen">
-                <h1 class="title">SPACE INZADER</h1>
+            <div id="mainMenu" class="screen active">
+                <div class="main-menu-container">
+                    <h1 class="game-title">SPACE INZADER</h1>
+                    <div class="main-menu-buttons">
+                        <button class="menu-btn" id="playBtn">PLAY</button>
+                        <button class="menu-btn" id="scoreboardBtn">SCOREBOARD</button>
+                        <button class="menu-btn" id="optionsBtn">OPTIONS</button>
+                        <button class="menu-btn" id="creditsBtn">CREDITS</button>
+                    </div>
+                    <div class="menu-footer">v1.0 | ESC = Pause</div>
+                </div>
+                <canvas id="menuStarfield" width="1280" height="720"></canvas>
+            </div>
+
+            <!-- Ship Selection -->
+            <div class="menu-screen" id="menuScreen">
+                <h1 class="title">SELECT YOUR CLASS</h1>
                 <div class="ship-selection" id="shipSelection"></div>
                 <button class="button" id="startButton">START GAME</button>
-                <button class="button" id="metaButton">UPGRADES</button>
+                <button class="button" id="backToMainBtn">BACK</button>
+            </div>
+
+            <!-- Pause Menu -->
+            <div id="pauseMenu" class="screen overlay">
+                <div class="pause-container">
+                    <h2>PAUSED</h2>
+                    <div class="main-menu-buttons">
+                        <button class="menu-btn" id="resumeBtn">RESUME</button>
+                        <button class="menu-btn" id="commandsBtn">COMMANDS</button>
+                        <button class="menu-btn" id="pauseOptionsBtn">OPTIONS</button>
+                        <button class="menu-btn" id="quitBtn">QUIT TO MENU</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Commands Screen -->
+            <div id="commandsScreen" class="screen overlay">
+                <div class="commands-container">
+                    <h2>COMMANDS</h2>
+                    <div class="command-list">
+                        <div>WASD / ZQSD - Move</div>
+                        <div>Auto-fire at enemies</div>
+                        <div>ESC - Pause</div>
+                        <div>Mouse - Navigate menus</div>
+                    </div>
+                    <button class="menu-btn" id="commandsBackBtn">BACK</button>
+                </div>
+            </div>
+
+            <!-- Options Screen -->
+            <div id="optionsScreen" class="screen overlay">
+                <div class="options-container">
+                    <h2>OPTIONS</h2>
+                    <div class="option-row">
+                        <label>Music Volume</label>
+                        <button class="vol-btn" id="musicDown">-</button>
+                        <input type="range" id="musicSlider" min="0" max="100" value="50">
+                        <button class="vol-btn" id="musicUp">+</button>
+                        <span id="musicValue">50%</span>
+                    </div>
+                    <div class="option-row">
+                        <label>SFX Volume</label>
+                        <button class="vol-btn" id="sfxDown">-</button>
+                        <input type="range" id="sfxSlider" min="0" max="100" value="50">
+                        <button class="vol-btn" id="sfxUp">+</button>
+                        <span id="sfxValue">50%</span>
+                    </div>
+                    <div class="option-row">
+                        <label>Mute All</label>
+                        <input type="checkbox" id="muteToggle">
+                    </div>
+                    <button class="menu-btn" id="optionsBackBtn">BACK</button>
+                </div>
+            </div>
+
+            <!-- Scoreboard Screen -->
+            <div id="scoreboardScreen" class="screen">
+                <div class="scoreboard-container">
+                    <h2>TOP RUNS</h2>
+                    <div id="scoreList" class="score-list"></div>
+                    <div class="main-menu-buttons">
+                        <button class="menu-btn" id="clearScoresBtn">CLEAR SCORES</button>
+                        <button class="menu-btn" id="scoreboardBackBtn">BACK</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credits Screen -->
+            <div id="creditsScreen" class="screen overlay">
+                <div class="commands-container">
+                    <h2>CREDITS</h2>
+                    <div class="command-list">
+                        <div>Created by: Space InZader Team</div>
+                        <div>Engine: JavaScript + Canvas</div>
+                        <div>Audio: Web Audio API</div>
+                        <div>Version: 1.0</div>
+                    </div>
+                    <button class="menu-btn" id="creditsBackBtn">BACK</button>
+                </div>
             </div>
 
             <!-- Level Up Screen -->
@@ -309,6 +689,7 @@
                 <h2 class="title" style="font-size: 36px;">UPGRADES</h2>
                 <div class="stats-panel" id="metaUpgrades"></div>
                 <button class="button" id="backToMenuButton">BACK TO MENU</button>
+                <button class="button" id="metaButton">UPGRADES</button>
             </div>
 
             <!-- In-Game HUD -->

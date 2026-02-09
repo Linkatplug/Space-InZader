@@ -27,6 +27,7 @@
 /**
  * @typedef {Object} PassiveData
  * @property {string} id - Unique identifier
+ * @property {string[]} tags - Category tags for filtering/search (see valid tags below)
  * @property {string} name - Display name
  * @property {string} description - Passive description
  * @property {string} rarity - Rarity tier (common/uncommon/rare/epic)
@@ -36,9 +37,45 @@
  * @property {string} icon - Icon character/emoji
  */
 
+/**
+ * Valid tag values for categorizing passives:
+ * - 'vampire' - lifesteal/healing on hit
+ * - 'on_hit' - triggers on hitting enemies
+ * - 'on_kill' - triggers on killing enemies
+ * - 'crit' - critical hit related
+ * - 'regen' - health regeneration
+ * - 'shield' - shield/barrier related
+ * - 'summon' - summons/minions
+ * - 'fire_rate' - attack speed
+ * - 'heat' - overheat mechanics
+ * - 'projectile' - projectile modifiers
+ * - 'beam' - beam weapons
+ * - 'slow_time' - time manipulation
+ * - 'armor' - armor/defense
+ * - 'aoe' - area of effect
+ * - 'thorns' - reflect damage
+ * - 'dash' - dash/mobility
+ * - 'glass_cannon' - high risk/reward
+ * - 'range' - range modifiers
+ * - 'piercing' - piercing shots
+ * - 'slow' - slowing enemies
+ * - 'shotgun' - spread weapons
+ * - 'short_range' - close range
+ * - 'turret' - turret related
+ * - 'utility' - general utility
+ * - 'berserk' - damage at low health
+ * - 'melee' - melee range
+ * - 'speed' - movement speed
+ * - 'sustain' - survivability
+ * - 'xp' - experience gain
+ * - 'luck' - luck/rng
+ * - 'explosive' - explosions
+ */
+
 const PASSIVES = {
   SURCHAUFFE: {
     id: 'surchauffe',
+    tags: ['fire_rate', 'heat', 'glass_cannon'],
     name: 'Surchauffe',
     description: 'Augmente les dégâts laser. Plus de puissance, plus de chaleur.',
     rarity: 'common',
@@ -53,6 +90,7 @@ const PASSIVES = {
 
   RADIATEUR: {
     id: 'radiateur',
+    tags: ['fire_rate', 'heat', 'utility'],
     name: 'Radiateur',
     description: 'Refroidissement amélioré. Tire plus vite sans surchauffe.',
     rarity: 'uncommon',
@@ -67,6 +105,7 @@ const PASSIVES = {
 
   SANG_FROID: {
     id: 'sang_froid',
+    tags: ['crit', 'vampire', 'on_hit', 'sustain'],
     name: 'Sang Froid',
     description: 'Augmente les chances de coup critique et le vol de vie.',
     rarity: 'rare',
@@ -82,6 +121,7 @@ const PASSIVES = {
 
   COEUR_NOIR: {
     id: 'coeur_noir',
+    tags: ['vampire', 'on_hit', 'glass_cannon'],
     name: 'Cœur Noir',
     description: 'Énergie vampirique puissante au prix de ta vitalité.',
     rarity: 'rare',
@@ -97,6 +137,7 @@ const PASSIVES = {
 
   BOBINES_TESLA: {
     id: 'bobines_tesla',
+    tags: ['on_hit', 'utility', 'aoe'],
     name: 'Bobines Tesla',
     description: 'Amplifie les dégâts électriques et ajoute une chance d\'étourdissement.',
     rarity: 'uncommon',
@@ -112,6 +153,7 @@ const PASSIVES = {
 
   FOCALISEUR: {
     id: 'focaliseur',
+    tags: ['range', 'projectile', 'utility'],
     name: 'Focaliseur',
     description: 'Augmente la portée et la vitesse des projectiles.',
     rarity: 'uncommon',
@@ -126,6 +168,7 @@ const PASSIVES = {
 
   MAG_TRACTOR: {
     id: 'mag_tractor',
+    tags: ['xp', 'utility'],
     name: 'Mag-Tractor',
     description: 'Attire l\'XP et les bonus de plus loin. Gain d\'XP amélioré.',
     rarity: 'common',
@@ -140,6 +183,7 @@ const PASSIVES = {
 
   PLATING: {
     id: 'plating',
+    tags: ['armor', 'sustain'],
     name: 'Plating',
     description: 'Blindage renforcé qui réduit les dégâts reçus.',
     rarity: 'common',
@@ -154,6 +198,7 @@ const PASSIVES = {
 
   REACTEUR: {
     id: 'reacteur',
+    tags: ['speed', 'dash', 'utility'],
     name: 'Réacteur',
     description: 'Moteurs surpuissants. Plus rapide, dash rechargé plus vite.',
     rarity: 'uncommon',
@@ -168,6 +213,7 @@ const PASSIVES = {
 
   CHANCE: {
     id: 'chance',
+    tags: ['luck', 'crit', 'utility'],
     name: 'Chance',
     description: 'Améliore la chance. Objets rares plus fréquents.',
     rarity: 'rare',
@@ -185,6 +231,7 @@ const PASSIVES = {
   // Common (simple stat boosts)
   MUNITIONS_LOURDES: {
     id: 'munitions_lourdes',
+    tags: ['utility'],
     name: 'Munitions Lourdes',
     description: '+Dégâts bruts. Frappe plus fort.',
     rarity: 'common',
@@ -198,6 +245,7 @@ const PASSIVES = {
 
   CADENCE_RAPIDE: {
     id: 'cadence_rapide',
+    tags: ['fire_rate', 'utility'],
     name: 'Cadence Rapide',
     description: 'Tire plus vite. Plus de projectiles par seconde.',
     rarity: 'common',
@@ -211,6 +259,7 @@ const PASSIVES = {
 
   VITALITE: {
     id: 'vitalite',
+    tags: ['sustain'],
     name: 'Vitalité',
     description: '+Santé maximale. Survie améliorée.',
     rarity: 'common',
@@ -224,6 +273,7 @@ const PASSIVES = {
 
   REGENERATION: {
     id: 'regeneration',
+    tags: ['regen', 'sustain'],
     name: 'Régénération',
     description: 'Récupère de la santé avec le temps.',
     rarity: 'common',
@@ -237,6 +287,7 @@ const PASSIVES = {
 
   MOBILITE: {
     id: 'mobilite',
+    tags: ['speed', 'utility'],
     name: 'Mobilité',
     description: 'Déplacement plus rapide. Esquive facilitée.',
     rarity: 'common',
@@ -250,6 +301,7 @@ const PASSIVES = {
 
   COLLECTEUR: {
     id: 'collecteur',
+    tags: ['xp', 'utility'],
     name: 'Collecteur',
     description: 'Augmente le rayon magnétique pour ramasser l\'XP.',
     rarity: 'common',
@@ -264,6 +316,7 @@ const PASSIVES = {
   // Uncommon (combo effects)
   PERFORANT: {
     id: 'perforant',
+    tags: ['piercing', 'projectile'],
     name: 'Perforant',
     description: 'Les projectiles traversent un ennemi supplémentaire.',
     rarity: 'uncommon',
@@ -278,6 +331,7 @@ const PASSIVES = {
 
   RICOCHET: {
     id: 'ricochet',
+    tags: ['projectile', 'aoe', 'utility'],
     name: 'Ricochet',
     description: 'Chance de faire rebondir les projectiles sur les ennemis.',
     rarity: 'uncommon',
@@ -292,6 +346,7 @@ const PASSIVES = {
 
   EXPLOSION_IMPACT: {
     id: 'explosion_impact',
+    tags: ['explosive', 'aoe', 'on_hit'],
     name: 'Explosion d\'Impact',
     description: 'Les tirs ont une chance d\'exploser en zone.',
     rarity: 'uncommon',
@@ -307,6 +362,7 @@ const PASSIVES = {
 
   MULTI_TIR: {
     id: 'multi_tir',
+    tags: ['shotgun', 'projectile', 'aoe'],
     name: 'Multi-Tir',
     description: '+1 projectile par salve. Couverture améliorée.',
     rarity: 'uncommon',
@@ -321,6 +377,7 @@ const PASSIVES = {
 
   PRECISION: {
     id: 'precision',
+    tags: ['crit', 'projectile', 'utility'],
     name: 'Précision',
     description: 'Augmente les critiques et la vitesse des projectiles.',
     rarity: 'uncommon',
@@ -335,6 +392,7 @@ const PASSIVES = {
 
   BOUCLIER_ENERGIE: {
     id: 'bouclier_energie',
+    tags: ['shield', 'regen', 'sustain'],
     name: 'Bouclier d\'Énergie',
     description: 'Absorbe des dégâts périodiquement.',
     rarity: 'uncommon',
@@ -349,6 +407,7 @@ const PASSIVES = {
 
   VAMPIRISME: {
     id: 'vampirisme',
+    tags: ['vampire', 'on_hit', 'sustain'],
     name: 'Vampirisme',
     description: 'Convertit les dégâts en santé.',
     rarity: 'uncommon',
@@ -362,6 +421,7 @@ const PASSIVES = {
 
   PORTEE_ETENDUE: {
     id: 'portee_etendue',
+    tags: ['range', 'utility'],
     name: 'Portée Étendue',
     description: 'Armes plus efficaces à longue distance.',
     rarity: 'uncommon',
@@ -376,6 +436,7 @@ const PASSIVES = {
 
   ECONOMIE_ENERGIE: {
     id: 'economie_energie',
+    tags: ['heat', 'fire_rate', 'utility'],
     name: 'Économie d\'Énergie',
     description: 'Réduit surchauffe et améliore cadence.',
     rarity: 'uncommon',
@@ -391,6 +452,7 @@ const PASSIVES = {
   // Rare (powerful combos)
   EXECUTION: {
     id: 'execution',
+    tags: ['on_hit', 'utility'],
     name: 'Exécution',
     description: '+Dégâts sur ennemis à faible santé.',
     rarity: 'rare',
@@ -406,6 +468,7 @@ const PASSIVES = {
 
   FUREUR_COMBAT: {
     id: 'fureur_combat',
+    tags: ['on_kill', 'utility'],
     name: 'Fureur de Combat',
     description: 'Stack de dégâts qui augmente avec les kills.',
     rarity: 'rare',
@@ -421,6 +484,7 @@ const PASSIVES = {
 
   PREDATEUR: {
     id: 'predateur',
+    tags: ['on_kill', 'xp', 'sustain'],
     name: 'Prédateur',
     description: 'Bonus XP et santé sur kill.',
     rarity: 'rare',
@@ -436,6 +500,7 @@ const PASSIVES = {
 
   CHAINE_FOUDRE: {
     id: 'chaine_foudre',
+    tags: ['on_hit', 'aoe'],
     name: 'Chaîne de Foudre',
     description: 'Les attaques électriques sautent entre ennemis.',
     rarity: 'rare',
@@ -451,6 +516,7 @@ const PASSIVES = {
 
   TEMPS_RALENTI: {
     id: 'temps_ralenti',
+    tags: ['slow', 'on_hit', 'slow_time'],
     name: 'Temps Ralenti',
     description: 'Chance de ralentir les ennemis touchés.',
     rarity: 'rare',
@@ -466,6 +532,7 @@ const PASSIVES = {
 
   LAME_TOURNOYANTE: {
     id: 'lame_tournoyante',
+    tags: ['aoe', 'melee', 'short_range'],
     name: 'Lame Tournoyante',
     description: 'Dégâts de zone autour du vaisseau.',
     rarity: 'rare',
@@ -481,6 +548,7 @@ const PASSIVES = {
 
   CRITIQUE_MORTEL: {
     id: 'critique_mortel',
+    tags: ['crit', 'glass_cannon'],
     name: 'Critique Mortel',
     description: 'Critiques dévastateurs mais moins fréquents.',
     rarity: 'rare',
@@ -495,6 +563,7 @@ const PASSIVES = {
 
   SURVIVANT: {
     id: 'survivant',
+    tags: ['shield', 'regen', 'sustain'],
     name: 'Survivant',
     description: 'Bouclier et régénération quand blessé.',
     rarity: 'rare',
@@ -510,6 +579,7 @@ const PASSIVES = {
 
   DOUBLE_TIR: {
     id: 'double_tir',
+    tags: ['fire_rate', 'utility'],
     name: 'Double Tir',
     description: 'Chance de tirer deux fois simultanément.',
     rarity: 'rare',
@@ -525,6 +595,7 @@ const PASSIVES = {
   // Epic (game-changing)
   ARSENAL_ORBITAL: {
     id: 'arsenal_orbital',
+    tags: ['summon', 'turret', 'aoe', 'fire_rate'],
     name: 'Arsenal Orbital',
     description: 'Satellites armés tournent autour du vaisseau.',
     rarity: 'epic',
@@ -541,6 +612,7 @@ const PASSIVES = {
 
   PHOENIX: {
     id: 'phoenix',
+    tags: ['sustain', 'utility'],
     name: 'Phoenix',
     description: 'Reviens à la vie une fois par vague.',
     rarity: 'epic',
@@ -556,6 +628,7 @@ const PASSIVES = {
 
   TEMPETE_PROJECTILES: {
     id: 'tempete_projectiles',
+    tags: ['shotgun', 'fire_rate', 'glass_cannon'],
     name: 'Tempête de Projectiles',
     description: '+3 projectiles, cadence folle, dégâts réduits.',
     rarity: 'epic',
@@ -571,6 +644,7 @@ const PASSIVES = {
 
   NEXUS_ENERGIE: {
     id: 'nexus_energie',
+    tags: ['utility', 'fire_rate', 'speed', 'crit'],
     name: 'Nexus d\'Énergie',
     description: 'Toutes les stats augmentent légèrement.',
     rarity: 'epic',
@@ -588,6 +662,7 @@ const PASSIVES = {
 
   DEVASTATION: {
     id: 'devastation',
+    tags: ['piercing', 'explosive', 'aoe', 'glass_cannon'],
     name: 'Dévastation',
     description: 'Énormes dégâts, pénétration, zone d\'effet.',
     rarity: 'epic',
@@ -605,6 +680,7 @@ const PASSIVES = {
 
   GARDIEN: {
     id: 'gardien',
+    tags: ['shield', 'armor', 'sustain'],
     name: 'Gardien',
     description: 'Bouclier massif et armure renforcée.',
     rarity: 'epic',
@@ -621,6 +697,7 @@ const PASSIVES = {
 
   INSTINCT_TUEUR: {
     id: 'instinct_tueur',
+    tags: ['on_kill', 'speed', 'sustain'],
     name: 'Instinct Tueur',
     description: 'Bonus massif sur kill: vitesse, dégâts, heal.',
     rarity: 'epic',
@@ -637,6 +714,7 @@ const PASSIVES = {
 
   SURCHARGE_ARCANIQUE: {
     id: 'surcharge_arcanique',
+    tags: ['piercing', 'projectile', 'glass_cannon'],
     name: 'Surcharge Arcanique',
     description: 'Projectiles géants, lents mais dévastateurs.',
     rarity: 'epic',
@@ -653,6 +731,7 @@ const PASSIVES = {
 
   SIPHON_VITAL: {
     id: 'siphon_vital',
+    tags: ['vampire', 'regen', 'on_hit', 'sustain'],
     name: 'Siphon Vital',
     description: 'Lifesteal extrême et régénération.',
     rarity: 'epic',
@@ -669,6 +748,7 @@ const PASSIVES = {
 
   MAITRE_TEMPS: {
     id: 'maitre_temps',
+    tags: ['slow', 'slow_time', 'dash', 'speed'],
     name: 'Maître du Temps',
     description: 'Ralentit tous les ennemis proches.',
     rarity: 'epic',
@@ -685,6 +765,7 @@ const PASSIVES = {
 
   EXPLOSION_CHAIN: {
     id: 'explosion_chain',
+    tags: ['explosive', 'aoe', 'on_kill'],
     name: 'Réaction en Chaîne',
     description: 'Les ennemis explosent en mourant, infligeant des dégâts de zone.',
     rarity: 'rare',
@@ -700,6 +781,7 @@ const PASSIVES = {
 
   AIM_ASSIST: {
     id: 'aim_assist',
+    tags: ['projectile', 'range', 'utility'],
     name: 'Guidage Automatique',
     description: 'Vos projectiles suivent légèrement les ennemis.',
     rarity: 'rare',
@@ -714,6 +796,7 @@ const PASSIVES = {
 
   DASH_MASTERY: {
     id: 'dash_mastery',
+    tags: ['dash', 'utility'],
     name: 'Maîtrise du Dash',
     description: 'Dash amélioré avec invincibilité.',
     rarity: 'rare',
@@ -729,6 +812,7 @@ const PASSIVES = {
 
   THORNS: {
     id: 'thorns',
+    tags: ['thorns', 'armor'],
     name: 'Épines',
     description: 'Renvoie des dégâts aux ennemis qui vous touchent.',
     rarity: 'uncommon',
@@ -743,6 +827,7 @@ const PASSIVES = {
 
   SPEED_BURST: {
     id: 'speed_burst',
+    tags: ['speed', 'on_kill'],
     name: 'Rafale de Vitesse',
     description: 'Gain de vitesse temporaire après un kill.',
     rarity: 'uncommon',
@@ -757,6 +842,7 @@ const PASSIVES = {
 
   XP_MAGNET: {
     id: 'xp_magnet',
+    tags: ['xp', 'utility'],
     name: 'Aimant d\'XP',
     description: 'Augmente considérablement la portée de collecte.',
     rarity: 'common',
@@ -771,6 +857,7 @@ const PASSIVES = {
 
   BERSERKER: {
     id: 'berserker',
+    tags: ['berserk', 'glass_cannon'],
     name: 'Berserker',
     description: 'Plus de dégâts à faible santé.',
     rarity: 'rare',
@@ -785,6 +872,7 @@ const PASSIVES = {
 
   GLASS_CANNON: {
     id: 'glass_cannon',
+    tags: ['glass_cannon', 'fire_rate'],
     name: 'Canon de Verre',
     description: 'Énormes dégâts mais santé réduite.',
     rarity: 'epic',
@@ -800,6 +888,7 @@ const PASSIVES = {
 
   VAMPIRE_LORD: {
     id: 'vampire_lord',
+    tags: ['vampire', 'on_hit', 'sustain', 'glass_cannon'],
     name: 'Seigneur Vampire',
     description: 'Lifesteal massif mais vitesse réduite.',
     rarity: 'epic',
@@ -816,6 +905,7 @@ const PASSIVES = {
 
   CRIT_MASTER: {
     id: 'crit_master',
+    tags: ['crit'],
     name: 'Maître Critique',
     description: 'Critique chance et dégâts augmentés.',
     rarity: 'rare',
@@ -830,6 +920,7 @@ const PASSIVES = {
 
   RAPID_FIRE: {
     id: 'rapid_fire',
+    tags: ['fire_rate', 'heat'],
     name: 'Tir Rapide',
     description: 'Cadence de tir drastiquement augmentée.',
     rarity: 'uncommon',
@@ -844,6 +935,7 @@ const PASSIVES = {
 
   PENETRATING_SHOTS: {
     id: 'penetrating_shots',
+    tags: ['piercing', 'projectile'],
     name: 'Tirs Pénétrants',
     description: 'Vos projectiles traversent les ennemis.',
     rarity: 'rare',
@@ -858,6 +950,7 @@ const PASSIVES = {
 
   SHIELD_GENERATOR: {
     id: 'shield_generator',
+    tags: ['shield', 'regen', 'sustain'],
     name: 'Générateur de Bouclier',
     description: 'Régénère un bouclier périodique.',
     rarity: 'rare',
@@ -873,6 +966,7 @@ const PASSIVES = {
 
   MULTISHOT: {
     id: 'multishot',
+    tags: ['shotgun', 'projectile', 'aoe'],
     name: 'Tir Multiple',
     description: 'Tire plusieurs projectiles à la fois.',
     rarity: 'epic',
@@ -888,6 +982,7 @@ const PASSIVES = {
 
   SLOW_AURA: {
     id: 'slow_aura',
+    tags: ['slow', 'aoe', 'slow_time'],
     name: 'Aura Ralentissante',
     description: 'Les ennemis proches sont ralentis.',
     rarity: 'uncommon',
@@ -902,6 +997,7 @@ const PASSIVES = {
 
   LUCKY_CLOVER: {
     id: 'lucky_clover',
+    tags: ['luck', 'crit', 'xp'],
     name: 'Trèfle Porte-Bonheur',
     description: 'Augmente votre chance pour les drops et critiques.',
     rarity: 'uncommon',
@@ -917,6 +1013,7 @@ const PASSIVES = {
 
   ENERGY_SHIELD: {
     id: 'energy_shield',
+    tags: ['shield', 'armor'],
     name: 'Bouclier Énergétique',
     description: 'Absorbe les dégâts périodiquement.',
     rarity: 'rare',
@@ -931,6 +1028,7 @@ const PASSIVES = {
 
   RAGE_MODE: {
     id: 'rage_mode',
+    tags: ['on_kill', 'utility'],
     name: 'Mode Rage',
     description: 'Les kills augmentent temporairement les dégâts.',
     rarity: 'rare',
@@ -946,6 +1044,7 @@ const PASSIVES = {
 
   DODGE_MASTER: {
     id: 'dodge_master',
+    tags: ['speed', 'utility'],
     name: 'Maître de l\'Esquive',
     description: 'Chance d\'esquiver complètement les dégâts.',
     rarity: 'epic',
@@ -960,6 +1059,7 @@ const PASSIVES = {
 
   OVERCHARGE: {
     id: 'overcharge',
+    tags: ['heat', 'utility'],
     name: 'Surcharge',
     description: 'Les dégâts augmentent avec la surchauffe.',
     rarity: 'rare',

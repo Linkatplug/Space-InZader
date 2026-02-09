@@ -26,6 +26,13 @@
  * @property {string} description - Ship description and playstyle
  * @property {ShipStats} baseStats - Starting statistics
  * @property {string} startingWeapon - ID of starting weapon
+ * @property {string[]} preferredTags - Tags for upgrade filtering
+ * @property {string[]} bannedTags - Tags to exclude from upgrades
+ * @property {string[]} preferredWeapons - Preferred weapon IDs
+ * @property {string[]} preferredPassives - Preferred passive IDs
+ * @property {string|null} keystoneId - Unique keystone passive ID
+ * @property {boolean} unlocked - Whether ship is unlocked
+ * @property {Object|null} unlockCondition - Unlock requirements
  * @property {string} color - Primary ship color (neon)
  * @property {string} secondaryColor - Secondary ship color
  * @property {string} difficulty - Difficulty rating (easy/medium/hard)
@@ -33,91 +40,10 @@
  */
 
 const SHIPS = {
-  DEFENSEUR: {
-    id: 'defenseur',
-    name: 'Défenseur',
-    description: 'Vaisseau blindé avec plus de points de vie. Idéal pour les débutants qui préfèrent la survie.',
-    baseStats: {
-      maxHealth: 120,
-      healthRegen: 0.5,
-      damageMultiplier: 1.0,
-      fireRateMultiplier: 1.0,
-      speed: 200,
-      armor: 3,
-      lifesteal: 0.0,
-      critChance: 0.05,
-      critMultiplier: 1.5,
-      magnetRange: 80,
-      dashCooldown: 3.0,
-      luck: 0.0
-    },
-    startingWeapon: 'laser_frontal',
-    preferredWeapons: ['laser_frontal', 'missiles_guides', 'tourelle_drone'],
-    preferredPassives: ['plating', 'vitalite', 'regeneration', 'bouclier_energie', 'gardien', 'survivant'],
-    color: '#00BFFF',
-    secondaryColor: '#1E90FF',
-    difficulty: 'easy',
-    sprite: 'ship_tank'
-  },
-
-  MITRAILLEUR: {
-    id: 'mitrailleur',
-    name: 'Mitrailleur',
-    description: 'Frappe rapide et cadence élevée. Déluge de balles contre les hordes.',
-    baseStats: {
-      maxHealth: 80,
-      healthRegen: 0.3,
-      damageMultiplier: 0.85,
-      fireRateMultiplier: 1.35,
-      speed: 220,
-      armor: 1,
-      lifesteal: 0.0,
-      critChance: 0.08,
-      critMultiplier: 1.5,
-      magnetRange: 80,
-      dashCooldown: 2.5,
-      luck: 0.0
-    },
-    startingWeapon: 'mitraille',
-    preferredWeapons: ['mitraille', 'laser_frontal', 'missiles_guides'],
-    preferredPassives: ['cadence_rapide', 'radiateur', 'multi_tir', 'tempete_projectiles', 'double_tir', 'economie_energie'],
-    color: '#FFD700',
-    secondaryColor: '#FFA500',
-    difficulty: 'medium',
-    sprite: 'ship_gunship'
-  },
-
-  EQUILIBRE: {
-    id: 'equilibre',
-    name: 'Équilibré',
-    description: 'Statistiques équilibrées pour un gameplay polyvalent. Bon en tout.',
-    baseStats: {
-      maxHealth: 100,
-      healthRegen: 0.4,
-      damageMultiplier: 1.0,
-      fireRateMultiplier: 1.0,
-      speed: 210,
-      armor: 2,
-      lifesteal: 0.0,
-      critChance: 0.06,
-      critMultiplier: 1.5,
-      magnetRange: 90,
-      dashCooldown: 2.8,
-      luck: 0.05
-    },
-    startingWeapon: 'orbes_orbitaux',
-    preferredWeapons: ['orbes_orbitaux', 'arc_electrique', 'laser_frontal', 'mitraille'],
-    preferredPassives: ['nexus_energie', 'chance', 'precision', 'munitions_lourdes', 'mobilite', 'collecteur'],
-    color: '#9370DB',
-    secondaryColor: '#8A2BE2',
-    difficulty: 'easy',
-    sprite: 'ship_balanced'
-  },
-
   VAMPIRE: {
     id: 'vampire',
     name: 'Vampire',
-    description: 'Vol de vie élevé mais fragile. Risque et récompense. Pour experts.',
+    description: 'Sustain through lifesteal and critical strikes',
     baseStats: {
       maxHealth: 70,
       healthRegen: 0.0,
@@ -133,12 +59,177 @@ const SHIPS = {
       luck: 0.1
     },
     startingWeapon: 'rayon_vampirique',
-    preferredWeapons: ['rayon_vampirique', 'orbes_orbitaux', 'lame_tournoyante'],
-    preferredPassives: ['vampirisme', 'sang_froid', 'coeur_noir', 'siphon_vital', 'predateur', 'critique_mortel', 'execution'],
+    preferredTags: ['vampire', 'on_hit', 'on_kill', 'crit', 'regen'],
+    bannedTags: ['shield', 'summon'],
+    preferredWeapons: ['rayon_vampirique', 'orbes_orbitaux'],
+    preferredPassives: ['vampirisme', 'sang_froid', 'coeur_noir'],
+    keystoneId: 'blood_frenzy',
+    unlocked: true,
+    unlockCondition: null,
     color: '#DC143C',
     secondaryColor: '#8B0000',
     difficulty: 'hard',
     sprite: 'ship_vampire'
+  },
+
+  MITRAILLEUR: {
+    id: 'mitrailleur',
+    name: 'Gunner',
+    description: 'High fire rate, overheat mechanics',
+    baseStats: {
+      maxHealth: 80,
+      healthRegen: 0.3,
+      damageMultiplier: 0.85,
+      fireRateMultiplier: 1.35,
+      speed: 220,
+      armor: 1,
+      lifesteal: 0.0,
+      critChance: 0.08,
+      critMultiplier: 1.5,
+      magnetRange: 80,
+      dashCooldown: 2.5,
+      luck: 0.0
+    },
+    startingWeapon: 'mitraille',
+    preferredTags: ['fire_rate', 'heat', 'projectile', 'crit'],
+    bannedTags: ['beam', 'slow_time'],
+    preferredWeapons: ['mitraille', 'laser_frontal', 'missiles_guides'],
+    preferredPassives: ['cadence_rapide', 'radiateur', 'multi_tir'],
+    keystoneId: 'overclock_core',
+    unlocked: true,
+    unlockCondition: null,
+    color: '#FFD700',
+    secondaryColor: '#FFA500',
+    difficulty: 'medium',
+    sprite: 'ship_gunship'
+  },
+
+  TANK: {
+    id: 'tank',
+    name: 'Fortress',
+    description: 'High armor and area control',
+    baseStats: {
+      maxHealth: 200,
+      healthRegen: 0.5,
+      damageMultiplier: 0.9,
+      fireRateMultiplier: 0.85,
+      speed: 180,
+      armor: 10,
+      lifesteal: 0.0,
+      critChance: 0.03,
+      critMultiplier: 1.3,
+      magnetRange: 70,
+      dashCooldown: 4.0,
+      luck: 0.0
+    },
+    startingWeapon: 'laser_frontal',
+    preferredTags: ['armor', 'shield', 'aoe', 'thorns'],
+    bannedTags: ['dash', 'glass_cannon'],
+    preferredWeapons: ['canon_lourd', 'mines', 'arc_electrique'],
+    preferredPassives: ['plating', 'vitalite', 'bouclier_energie'],
+    keystoneId: 'fortress_mode',
+    unlocked: true,
+    unlockCondition: null,
+    color: '#00BFFF',
+    secondaryColor: '#1E90FF',
+    difficulty: 'easy',
+    sprite: 'ship_tank'
+  },
+
+  SNIPER: {
+    id: 'sniper',
+    name: 'Dead Eye',
+    description: 'Critical hits and precision',
+    baseStats: {
+      maxHealth: 85,
+      healthRegen: 0.2,
+      damageMultiplier: 1.25,
+      fireRateMultiplier: 0.75,
+      speed: 205,
+      armor: 0,
+      lifesteal: 0.0,
+      critChance: 0.15,
+      critMultiplier: 3.0,
+      magnetRange: 90,
+      dashCooldown: 2.0,
+      luck: 0.15
+    },
+    startingWeapon: 'laser_frontal',
+    preferredTags: ['crit', 'range', 'piercing', 'slow'],
+    bannedTags: ['shotgun', 'short_range'],
+    preferredWeapons: ['railgun', 'missiles_guides'],
+    preferredPassives: ['critique_mortel', 'precision', 'focaliseur'],
+    keystoneId: 'dead_eye',
+    unlocked: true,
+    unlockCondition: null,
+    color: '#9370DB',
+    secondaryColor: '#8A2BE2',
+    difficulty: 'medium',
+    sprite: 'ship_sniper'
+  },
+
+  ENGINEER: {
+    id: 'engineer',
+    name: 'Engineer',
+    description: 'Summons and turrets',
+    baseStats: {
+      maxHealth: 90,
+      healthRegen: 0.4,
+      damageMultiplier: 0.7,
+      fireRateMultiplier: 0.9,
+      speed: 190,
+      armor: 2,
+      lifesteal: 0.0,
+      critChance: 0.05,
+      critMultiplier: 1.5,
+      magnetRange: 110,
+      dashCooldown: 3.2,
+      luck: 0.05
+    },
+    startingWeapon: 'orbes_orbitaux',
+    preferredTags: ['summon', 'turret', 'aoe', 'utility'],
+    bannedTags: ['vampire', 'glass_cannon'],
+    preferredWeapons: ['tourelle_drone', 'orbes_orbitaux'],
+    preferredPassives: ['arsenal_orbital'],
+    keystoneId: 'machine_network',
+    unlocked: false,
+    unlockCondition: { type: 'wave', value: 15 },
+    color: '#00FF88',
+    secondaryColor: '#00DD66',
+    difficulty: 'medium',
+    sprite: 'ship_engineer'
+  },
+
+  BERSERKER: {
+    id: 'berserker',
+    name: 'Berserker',
+    description: 'Melee fury and speed',
+    baseStats: {
+      maxHealth: 90,
+      healthRegen: 0.1,
+      damageMultiplier: 1.3,
+      fireRateMultiplier: 1.1,
+      speed: 240,
+      armor: 0,
+      lifesteal: 0.05,
+      critChance: 0.12,
+      critMultiplier: 2.0,
+      magnetRange: 60,
+      dashCooldown: 1.5,
+      luck: 0.05
+    },
+    startingWeapon: 'lame_tournoyante',
+    preferredTags: ['berserk', 'melee', 'speed', 'on_hit'],
+    bannedTags: ['shield', 'regen'],
+    preferredWeapons: ['lames_energetiques', 'lame_tournoyante'],
+    preferredPassives: ['fureur_combat', 'berserker', 'execution'],
+    keystoneId: 'rage_engine',
+    unlocked: false,
+    unlockCondition: { type: 'blood_crit_count', value: 5 },
+    color: '#FF4444',
+    secondaryColor: '#CC0000',
+    difficulty: 'hard',
+    sprite: 'ship_berserker'
   }
 };
 
@@ -223,21 +314,8 @@ function calculateEffectiveStats(baseStats, passiveEffects = {}) {
  * @returns {Object|null}
  */
 function getShipUnlockRequirements(shipId) {
-  const requirements = {
-    defenseur: null, // Always unlocked
-    equilibre: null, // Always unlocked
-    mitrailleur: {
-      description: 'Atteindre le niveau 10 avec n\'importe quel vaisseau',
-      level: 10
-    },
-    vampire: {
-      description: 'Atteindre le niveau 20 et tuer 1000 ennemis',
-      level: 20,
-      kills: 1000
-    }
-  };
-
-  return requirements[shipId] || null;
+  const ship = getShipData(shipId);
+  return ship ? ship.unlockCondition : null;
 }
 
 /**
@@ -247,19 +325,21 @@ function getShipUnlockRequirements(shipId) {
  * @returns {boolean}
  */
 function isShipUnlocked(shipId, playerProgress) {
-  const requirements = getShipUnlockRequirements(shipId);
+  const ship = getShipData(shipId);
+  if (!ship) return false;
+  if (ship.unlocked) return true;
   
-  if (!requirements) return true; // No requirements means always unlocked
+  const condition = ship.unlockCondition;
+  if (!condition) return true;
   
-  if (requirements.level && playerProgress.maxLevel < requirements.level) {
-    return false;
+  switch (condition.type) {
+    case 'wave':
+      return playerProgress.maxWave >= condition.value;
+    case 'blood_crit_count':
+      return playerProgress.bloodCritCount >= condition.value;
+    default:
+      return false;
   }
-  
-  if (requirements.kills && playerProgress.totalKills < requirements.kills) {
-    return false;
-  }
-  
-  return true;
 }
 
 // Export to global namespace
