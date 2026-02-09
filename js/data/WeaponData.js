@@ -31,6 +31,7 @@
 const WEAPONS = {
   LASER_FRONTAL: {
     id: 'laser_frontal',
+    tags: ['projectile', 'fire_rate', 'piercing', 'range'],
     name: 'Laser Frontal',
     description: 'Tirs laser directs à haute cadence. Classique mais efficace.',
     baseDamage: 15,
@@ -54,6 +55,7 @@ const WEAPONS = {
 
   MITRAILLE: {
     id: 'mitraille',
+    tags: ['projectile', 'fire_rate', 'shotgun', 'short_range'],
     name: 'Mitraille',
     description: 'Cône de projectiles rapides. Excellent contre les essaims.',
     baseDamage: 8,
@@ -77,6 +79,7 @@ const WEAPONS = {
 
   MISSILES_GUIDES: {
     id: 'missiles_guides',
+    tags: ['projectile', 'homing', 'explosive', 'aoe'],
     name: 'Missiles Guidés',
     description: 'Missiles à tête chercheuse avec explosion à l\'impact.',
     baseDamage: 45,
@@ -100,6 +103,7 @@ const WEAPONS = {
 
   ORBES_ORBITAUX: {
     id: 'orbes_orbitaux',
+    tags: ['orbital', 'melee', 'utility'],
     name: 'Orbes Orbitaux',
     description: 'Sphères d\'énergie en orbite qui endommagent au contact.',
     baseDamage: 20,
@@ -123,6 +127,7 @@ const WEAPONS = {
 
   RAYON_VAMPIRIQUE: {
     id: 'rayon_vampirique',
+    tags: ['beam', 'vampire', 'piercing', 'range'],
     name: 'Rayon Vampirique',
     description: 'Rayon continu qui draine la vie des ennemis.',
     baseDamage: 10,
@@ -146,6 +151,7 @@ const WEAPONS = {
 
   MINES: {
     id: 'mines',
+    tags: ['projectile', 'explosive', 'aoe', 'utility'],
     name: 'Mines',
     description: 'Pose des mines qui explosent au contact des ennemis.',
     baseDamage: 80,
@@ -169,6 +175,7 @@ const WEAPONS = {
 
   ARC_ELECTRIQUE: {
     id: 'arc_electrique',
+    tags: ['projectile', 'electric', 'aoe', 'range'],
     name: 'Arc Électrique',
     description: 'Éclair qui rebondit entre les ennemis proches.',
     baseDamage: 25,
@@ -192,6 +199,7 @@ const WEAPONS = {
 
   TOURELLE_DRONE: {
     id: 'tourelle_drone',
+    tags: ['summon', 'turret', 'projectile', 'utility'],
     name: 'Tourelle Drone',
     description: 'Déploie un drone allié qui tire automatiquement.',
     baseDamage: 12,
@@ -221,6 +229,7 @@ const WEAPONS = {
 const WEAPON_EVOLUTIONS = {
   RAYON_PLASMA: {
     id: 'rayon_plasma_continu',
+    tags: ['beam', 'piercing', 'range', 'heat'],
     name: 'Rayon Plasma Continu',
     description: 'Évolution ultime du laser. Rayon continu dévastateur.',
     requiredWeapon: 'laser_frontal',
@@ -241,6 +250,7 @@ const WEAPON_EVOLUTIONS = {
 
   SALVES_MULTI: {
     id: 'salves_multi_verrouillage',
+    tags: ['projectile', 'homing', 'explosive', 'aoe'],
     name: 'Salves Multi-Verrouillage',
     description: 'Évolution des missiles. Salves massives de missiles intelligents.',
     requiredWeapon: 'missiles_guides',
@@ -261,6 +271,7 @@ const WEAPON_EVOLUTIONS = {
 
   COURONNE_GRAVITATIONNELLE: {
     id: 'couronne_gravitationnelle',
+    tags: ['orbital', 'aoe', 'melee', 'slow'],
     name: 'Couronne Gravitationnelle',
     description: 'Évolution des orbes. Attire et broie les ennemis.',
     requiredWeapon: 'orbes_orbitaux',
@@ -281,6 +292,7 @@ const WEAPON_EVOLUTIONS = {
 
   TEMPETE_IONIQUE: {
     id: 'tempete_ionique',
+    tags: ['projectile', 'electric', 'aoe', 'range'],
     name: 'Tempête Ionique',
     description: 'Évolution de l\'arc électrique. Décharge foudroyante massive.',
     requiredWeapon: 'arc_electrique',
