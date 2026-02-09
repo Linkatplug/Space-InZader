@@ -77,12 +77,58 @@ class SaveManager {
             if (saved) {
                 const data = JSON.parse(saved);
                 // Merge with defaults for new fields
-                return this.mergeSaveData(this.defaultSave, data);
+                const merged = this.mergeSaveData(this.defaultSave, data);
+                // Auto-add missing weapons and passives from data files
+                this.ensureAllContentExists(merged);
+                return merged;
             }
         } catch (e) {
             console.error('Error loading save:', e);
         }
-        return this.createDefaultSave();
+        const defaultSave = this.createDefaultSave();
+        this.ensureAllContentExists(defaultSave);
+        return defaultSave;
+    }
+    
+    /**
+     * Ensure all weapons and passives from data files exist in save
+     * Auto-unlocks based on rarity to make all content accessible
+     */
+    ensureAllContentExists(saveData) {
+        // Ensure weapons object exists
+        if (!saveData.weapons) {
+            saveData.weapons = {};
+        }
+        
+        // Add any missing weapons from WeaponData
+        if (typeof WeaponData !== 'undefined' && WeaponData.WEAPONS) {
+            for (const weaponKey in WeaponData.WEAPONS) {
+                const weapon = WeaponData.WEAPONS[weaponKey];
+                if (!saveData.weapons[weapon.id]) {
+                    // Auto-unlock all content for dev-friendly experience
+                    // Common/Uncommon always unlocked, Rare/Epic/Legendary also unlocked for testing
+                    saveData.weapons[weapon.id] = { unlocked: true };
+                    console.log(`SaveManager: Auto-added weapon ${weapon.id}`);
+                }
+            }
+        }
+        
+        // Ensure passives object exists
+        if (!saveData.passives) {
+            saveData.passives = {};
+        }
+        
+        // Add any missing passives from PassiveData
+        if (typeof PassiveData !== 'undefined' && PassiveData.PASSIVES) {
+            for (const passiveKey in PassiveData.PASSIVES) {
+                const passive = PassiveData.PASSIVES[passiveKey];
+                if (!saveData.passives[passive.id]) {
+                    // Auto-unlock all content for dev-friendly experience
+                    saveData.passives[passive.id] = { unlocked: true };
+                    console.log(`SaveManager: Auto-added passive ${passive.id}`);
+                }
+            }
+        }
     }
 
     save(data) {

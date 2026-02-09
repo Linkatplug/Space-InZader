@@ -42,14 +42,14 @@ const KEYSTONES = {
     blood_frenzy: {
         id: 'blood_frenzy',
         name: 'Blood Frenzy',
-        description: 'Each hit grants +0.5% lifesteal (max 40 stacks). Resets after 3s without hitting.',
+        description: 'Each hit grants +0.25% lifesteal (max 40 stacks). Resets after 3s without hitting.',
         rarity: 'epic',
         tags: ['vampire', 'on_hit'],
         uniquePerRun: true,
         classOnly: ['vampire'],
         effect: {
             type: 'stacking_on_hit',
-            stackValue: 0.005,
+            stackValue: 0.0025,
             maxStacks: 40,
             resetDelayMs: 3000
         },

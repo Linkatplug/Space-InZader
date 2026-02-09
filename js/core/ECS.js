@@ -107,6 +107,17 @@ function createHealth(current, max) {
     };
 }
 
+// Shield component
+function createShield(current, max, regen) {
+    return {
+        current,
+        max,
+        regen: regen || 0, // Shield regen per second
+        regenDelay: 0, // Time since last damage before regen starts
+        regenDelayMax: 3.0 // Seconds to wait before regen starts
+    };
+}
+
 // Collision component
 function createCollision(radius) {
     return { radius };
@@ -220,7 +231,7 @@ function createBoss(phase, patterns) {
 }
 
 // === Backward compatibility Components wrapper ===
-// DO NOT REMOVE: used by Game.createPlayer and systems
+// DO NOT REMOVE: used by Game.createPlayer and legacy systems
 const Components = {
     Position: (x, y) => ({ x, y }),
     Velocity: (vx, vy) => ({ vx, vy }),
@@ -229,6 +240,13 @@ const Components = {
         max,
         invulnerable: false,
         invulnerableTime: 0
+    }),
+    Shield: (current, max, regen) => ({
+        current,
+        max,
+        regen: regen || 0,
+        regenDelay: 0,
+        regenDelayMax: 3.0
     }),
     Sprite: (sprite) => ({ sprite }),
     Collider: (radius) => ({ radius }),
@@ -253,7 +271,10 @@ const Components = {
             xpBonus: 1,
             armor: 0,
             projectileSpeed: 1,
-            range: 1
+            range: 1,
+            shield: 0,
+            shieldRegen: 0,
+            shieldRegenDelay: 3.0
         }
     }),
     Renderable: (color, size, shape = 'circle') => ({ 

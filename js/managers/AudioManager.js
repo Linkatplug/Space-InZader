@@ -16,9 +16,25 @@ class AudioManager {
         this.muted = false;
         this.previousMasterVolume = 1.0;
         
-        // Music theme system
-        this.currentTheme = 'calm';
+        // MP3 Music system - Update this list when adding new music files
+        this.musicTracks = [
+            'music/1263681_8-Bit-Flight.mp3',
+            'music/19583_newgrounds_robot_.mp3',
+            'music/290077_spacecake.mp3',
+            'music/575907_Space-Dumka-8bit.mp3',
+            'music/770175_Outer-Space-Adventure-Agen.mp3',
+            'music/888921_8-Bit-Flight-Loop.mp3'
+        ];
+        this.currentAudio = null;
+        this.musicSource = null;
         this.musicPlaying = false;
+        this.lastPlayedIndex = -1;
+        this.errorCount = 0;
+        this.onTrackEnded = null;
+        this.onTrackError = null;
+        
+        // Kept for backward compatibility
+        this.currentTheme = 'calm';
         this.currentMelodyIndex = 0;
         this.crossfading = false;
         
@@ -61,6 +77,10 @@ class AudioManager {
         if (this.musicGain && !this.muted) {
             this.musicGain.gain.value = this.musicVolume;
         }
+        // Also update HTML5 audio element if playing MP3
+        if (this.currentAudio && !this.muted) {
+            this.currentAudio.volume = this.musicVolume;
+        }
         this.saveSettings();
     }
 
@@ -92,6 +112,10 @@ class AudioManager {
                 if (this.musicGain) this.musicGain.gain.value = this.musicVolume;
                 if (this.sfxGain) this.sfxGain.gain.value = this.sfxVolume;
             }
+        }
+        // Also mute/unmute HTML5 audio element
+        if (this.currentAudio) {
+            this.currentAudio.volume = muted ? 0 : this.musicVolume;
         }
         this.saveSettings();
     }
@@ -477,15 +501,15 @@ class AudioManager {
     }
 
     /**
-     * Start background music loop
+     * Start background music loop (MP3 playback)
      */
     startBackgroundMusic() {
+        console.log('startBackgroundMusic called - initialized:', this.initialized, 'musicPlaying:', this.musicPlaying);
+        
         if (!this.initialized || this.musicPlaying) return;
         
         this.musicPlaying = true;
-        this.currentMelodyIndex = 0;
-        this.currentTheme = 'calm'; // Start with calm theme
-        this.playMusicLoop();
+        this.playRandomMP3();
     }
 
     /**
@@ -493,18 +517,121 @@ class AudioManager {
      */
     stopBackgroundMusic() {
         this.musicPlaying = false;
-        if (this.musicOscillator) {
-            try {
-                this.musicOscillator.stop();
-            } catch (e) {
-                // Already stopped
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio.currentTime = 0;
+            // Remove event listeners
+            if (this.onTrackEnded) {
+                this.currentAudio.removeEventListener('ended', this.onTrackEnded);
             }
-            this.musicOscillator = null;
+            if (this.onTrackError) {
+                this.currentAudio.removeEventListener('error', this.onTrackError);
+            }
+            this.currentAudio = null;
         }
+        if (this.musicSource) {
+            try {
+                this.musicSource.disconnect();
+            } catch (e) {
+                // Already disconnected
+            }
+            this.musicSource = null;
+        }
+        // Reset error count
+        this.errorCount = 0;
     }
 
     /**
-     * Set music theme with crossfade
+     * Play a random MP3 track
+     */
+    playRandomMP3() {
+        if (!this.musicPlaying || !this.initialized) {
+            console.log('playRandomMP3 skipped - musicPlaying:', this.musicPlaying, 'initialized:', this.initialized);
+            return;
+        }
+
+        console.log('Starting playRandomMP3...');
+        
+        // Clean up previous audio element
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio.removeEventListener('ended', this.onTrackEnded);
+            this.currentAudio.removeEventListener('error', this.onTrackError);
+            this.currentAudio = null;
+        }
+        
+        // Disconnect previous source
+        if (this.musicSource) {
+            try {
+                this.musicSource.disconnect();
+            } catch (e) {
+                // Already disconnected
+            }
+            this.musicSource = null;
+        }
+
+        // Select a random track (avoid immediate repeat)
+        let randomIndex;
+        do {
+            randomIndex = Math.floor(Math.random() * this.musicTracks.length);
+        } while (randomIndex === this.lastPlayedIndex && this.musicTracks.length > 1);
+        
+        this.lastPlayedIndex = randomIndex;
+        const trackPath = this.musicTracks[randomIndex];
+
+        // Create new audio element
+        this.currentAudio = new Audio(trackPath);
+        this.currentAudio.volume = this.muted ? 0 : this.musicVolume;
+        
+        // Create bound event handlers for cleanup
+        this.onTrackEnded = () => {
+            if (this.musicPlaying) {
+                this.playRandomMP3();
+            }
+        };
+        
+        this.onTrackError = (e) => {
+            console.error('Error loading music track:', trackPath, e);
+            // Try next track on error (with limit to prevent infinite loop)
+            if (this.musicPlaying && (!this.errorCount || this.errorCount < this.musicTracks.length)) {
+                this.errorCount = (this.errorCount || 0) + 1;
+                setTimeout(() => this.playRandomMP3(), 1000);
+            } else {
+                console.error('All music tracks failed to load. Stopping music.');
+                this.stopBackgroundMusic();
+                this.errorCount = 0;
+            }
+        };
+        
+        // Add event listeners
+        this.currentAudio.addEventListener('ended', this.onTrackEnded);
+        this.currentAudio.addEventListener('error', this.onTrackError);
+
+        // Connect to Web Audio API for proper volume control (only once per element)
+        if (this.context && !this.currentAudio.connectedToWebAudio) {
+            try {
+                this.musicSource = this.context.createMediaElementSource(this.currentAudio);
+                this.musicSource.connect(this.musicGain);
+                this.currentAudio.connectedToWebAudio = true;
+            } catch (e) {
+                // If connection fails, just use HTML5 audio volume control
+                console.warn('Could not connect audio to Web Audio API:', e);
+            }
+        }
+
+        // Start playback
+        this.currentAudio.play().then(() => {
+            // Reset error count on successful play
+            this.errorCount = 0;
+            console.log('Now playing:', trackPath);
+        }).catch(e => {
+            console.error('Error playing music:', e);
+            this.onTrackError(e);
+        });
+    }
+
+    /**
+     * Set music theme (kept for backward compatibility, no longer used with MP3s)
      * @param {string} theme - Theme name ('calm', 'action', 'boss')
      */
     setMusicTheme(theme) {
@@ -513,39 +640,13 @@ class AudioManager {
             return;
         }
         
-        if (this.currentTheme === theme || this.crossfading) return;
-        
-        logger.info('Audio', `Switching music theme: ${this.currentTheme} -> ${theme}`);
-        
-        // Crossfade: reduce current volume, change theme, restore volume
-        if (this.musicGain && this.initialized) {
-            this.crossfading = true;
-            const currentTime = this.context.currentTime;
-            const fadeDuration = 1.5;
-            
-            // Fade out
-            this.musicGain.gain.linearRampToValueAtTime(0.01, currentTime + fadeDuration);
-            
-            // Change theme and fade in
-            setTimeout(() => {
-                this.currentTheme = theme;
-                this.currentMelodyIndex = 0; // Reset melody index
-                
-                if (this.musicGain && this.context) {
-                    const nowTime = this.context.currentTime;
-                    this.musicGain.gain.setValueAtTime(0.01, nowTime);
-                    this.musicGain.gain.linearRampToValueAtTime(this.musicVolume, nowTime + fadeDuration);
-                }
-                
-                this.crossfading = false;
-            }, fadeDuration * 1000);
-        } else {
-            this.currentTheme = theme;
-        }
+        // Store theme for backward compatibility but don't change music
+        this.currentTheme = theme;
+        // MP3 music plays randomly regardless of theme
     }
 
     /**
-     * Get melodies for the current theme
+     * Get melodies for the current theme (kept for backward compatibility, not used with MP3s)
      * @returns {Array} Array of melody phrases
      */
     getThemeMelodies() {
@@ -573,6 +674,26 @@ class AudioManager {
                     { freq: 330, dur: noteDur },     // E4
                     { freq: 349, dur: noteDur },     // F4
                     { freq: 392, dur: longDur }      // G4
+                ],
+                // Calm 3: Peaceful melody
+                [
+                    { freq: 294, dur: noteDur },     // D4
+                    { freq: 330, dur: noteDur },     // E4
+                    { freq: 294, dur: noteDur },     // D4
+                    { freq: 262, dur: longDur },     // C4
+                    { freq: 294, dur: noteDur },     // D4
+                    { freq: 330, dur: noteDur },     // E4
+                    { freq: 392, dur: longDur }      // G4
+                ],
+                // Calm 4: Serene flow
+                [
+                    { freq: 349, dur: longDur },     // F4
+                    { freq: 330, dur: noteDur },     // E4
+                    { freq: 294, dur: noteDur },     // D4
+                    { freq: 330, dur: longDur },     // E4
+                    { freq: 349, dur: noteDur },     // F4
+                    { freq: 392, dur: noteDur },     // G4
+                    { freq: 349, dur: longDur }      // F4
                 ]
             ],
             action: [
@@ -608,6 +729,28 @@ class AudioManager {
                     { freq: 392, dur: noteDur * 0.7 },  // G4
                     { freq: 330, dur: noteDur * 0.7 },  // E4
                     { freq: 294, dur: noteDur }         // D4
+                ],
+                // Action 4: Driving beat
+                [
+                    { freq: 440, dur: noteDur * 0.6 },  // A4
+                    { freq: 392, dur: noteDur * 0.6 },  // G4
+                    { freq: 440, dur: noteDur * 0.6 },  // A4
+                    { freq: 494, dur: noteDur },        // B4
+                    { freq: 440, dur: noteDur * 0.6 },  // A4
+                    { freq: 392, dur: noteDur * 0.6 },  // G4
+                    { freq: 330, dur: noteDur },        // E4
+                    { freq: 392, dur: noteDur }         // G4
+                ],
+                // Action 5: Frantic energy
+                [
+                    { freq: 587, dur: noteDur * 0.5 },  // D5
+                    { freq: 523, dur: noteDur * 0.5 },  // C5
+                    { freq: 494, dur: noteDur * 0.5 },  // B4
+                    { freq: 440, dur: noteDur * 0.5 },  // A4
+                    { freq: 494, dur: noteDur * 0.5 },  // B4
+                    { freq: 523, dur: noteDur * 0.5 },  // C5
+                    { freq: 587, dur: noteDur },        // D5
+                    { freq: 659, dur: noteDur }         // E5
                 ]
             ],
             boss: [
@@ -640,57 +783,31 @@ class AudioManager {
                     { freq: 196, dur: noteDur * 0.7 },  // G3
                     { freq: 233, dur: noteDur * 0.7 },  // A#3
                     { freq: 262, dur: longDur }         // C4
+                ],
+                // Boss 4: Menacing march
+                [
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 175, dur: noteDur },        // F3
+                    { freq: 196, dur: longDur },        // G3
+                    { freq: 175, dur: noteDur },        // F3
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 131, dur: longDur }         // C3
+                ],
+                // Boss 5: Dark power
+                [
+                    { freq: 110, dur: longDur },        // A2
+                    { freq: 123, dur: noteDur },        // B2
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 165, dur: longDur },        // E3
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 131, dur: noteDur },        // C3
+                    { freq: 110, dur: longDur }         // A2
                 ]
             ]
         };
         
         return themes[this.currentTheme] || themes.calm;
-    }
-
-    /**
-     * Play continuous background music loop with theme variations
-     */
-    playMusicLoop() {
-        if (!this.musicPlaying || !this.initialized) return;
-
-        const now = this.context.currentTime;
-        
-        // Get melodies for current theme
-        const melodies = this.getThemeMelodies();
-        
-        // Rotate through melodies for variety (no immediate repetition)
-        const melody = melodies[this.currentMelodyIndex];
-        this.currentMelodyIndex = (this.currentMelodyIndex + 1) % melodies.length;
-
-        let time = now;
-        melody.forEach(note => {
-            const osc = this.context.createOscillator();
-            const gain = this.context.createGain();
-            
-            // Different waveform for boss theme
-            osc.type = this.currentTheme === 'boss' ? 'sawtooth' : 'square';
-            osc.frequency.setValueAtTime(note.freq, time);
-            
-            // Volume envelope
-            const vol = this.currentTheme === 'boss' ? 0.06 : 0.04;
-            gain.gain.setValueAtTime(0, time);
-            gain.gain.linearRampToValueAtTime(vol, time + 0.01);
-            gain.gain.linearRampToValueAtTime(0, time + note.dur);
-            
-            osc.connect(gain);
-            gain.connect(this.musicGain);
-            
-            osc.start(time);
-            osc.stop(time + note.dur);
-            
-            time += note.dur;
-        });
-
-        // Calculate total duration for this phrase
-        const totalDuration = melody.reduce((sum, note) => sum + note.dur, 0);
-        
-        // Schedule next loop
-        setTimeout(() => this.playMusicLoop(), totalDuration * 1000);
     }
 
     /**

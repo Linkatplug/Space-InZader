@@ -124,11 +124,12 @@ class RenderSystem {
      * Render all entities in the game world
      */
     renderEntities() {
-        // Render order: particles -> pickups -> projectiles -> enemies -> player
+        // Render order: particles -> pickups -> projectiles -> enemies -> weather -> player
         this.renderParticles();
         this.renderPickups();
         this.renderProjectiles();
         this.renderEnemies();
+        this.renderWeatherHazards();
         this.renderPlayer();
     }
 
@@ -535,5 +536,126 @@ class RenderSystem {
         this.initStarfield();
         this.bossHealthAlpha = 0;
         this.bossHealthTarget = 0;
+    }
+    
+    /**
+     * Render weather hazards (meteors, black holes)
+     */
+    renderWeatherHazards() {
+        // Render meteors
+        const meteors = this.world.getEntitiesByType('meteor');
+        meteors.forEach(meteor => {
+            const pos = meteor.getComponent('position');
+            const meteorComp = meteor.getComponent('meteor');
+            
+            if (!pos || !meteorComp) return;
+            
+            this.ctx.save();
+            this.ctx.translate(pos.x, pos.y);
+            this.ctx.rotate(meteorComp.rotation);
+            
+            // Draw meteor as rocky brown circle with darker patches
+            const gradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, meteorComp.size);
+            gradient.addColorStop(0, '#A0522D');
+            gradient.addColorStop(0.5, '#8B4513');
+            gradient.addColorStop(1, '#654321');
+            
+            this.ctx.fillStyle = gradient;
+            this.ctx.shadowBlur = 10;
+            this.ctx.shadowColor = '#FF4500';
+            
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, meteorComp.size, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Add some crater-like details
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            for (let i = 0; i < 3; i++) {
+                const angle = (i / 3) * Math.PI * 2;
+                const dist = meteorComp.size * 0.4;
+                const craterSize = meteorComp.size * 0.2;
+                this.ctx.beginPath();
+                this.ctx.arc(
+                    Math.cos(angle) * dist,
+                    Math.sin(angle) * dist,
+                    craterSize,
+                    0,
+                    Math.PI * 2
+                );
+                this.ctx.fill();
+            }
+            
+            this.ctx.restore();
+        });
+        
+        // Render black holes
+        const blackHoles = this.world.getEntitiesByType('black_hole');
+        blackHoles.forEach(blackHole => {
+            const pos = blackHole.getComponent('position');
+            const blackHoleComp = blackHole.getComponent('black_hole');
+            
+            if (!pos || !blackHoleComp) return;
+            
+            this.ctx.save();
+            this.ctx.translate(pos.x, pos.y);
+            
+            // Draw swirling vortex effect
+            const numRings = 6;
+            for (let i = 0; i < numRings; i++) {
+                const ringProgress = i / numRings;
+                const radius = blackHoleComp.pullRadius * (1 - ringProgress * 0.8);
+                const alpha = (1 - ringProgress) * 0.3;
+                const rotation = blackHoleComp.rotation + ringProgress * Math.PI;
+                
+                this.ctx.save();
+                this.ctx.rotate(rotation);
+                this.ctx.globalAlpha = alpha;
+                
+                // Create spiral gradient
+                const gradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+                gradient.addColorStop(0, 'rgba(148, 0, 211, 0.8)');
+                gradient.addColorStop(0.5, 'rgba(75, 0, 130, 0.5)');
+                gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+                
+                this.ctx.fillStyle = gradient;
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, radius, 0, Math.PI * 2);
+                this.ctx.fill();
+                
+                this.ctx.restore();
+            }
+            
+            // Draw core (event horizon)
+            const coreGradient = this.ctx.createRadialGradient(
+                0, 0, 0,
+                0, 0, blackHoleComp.damageRadius
+            );
+            coreGradient.addColorStop(0, '#000000');
+            coreGradient.addColorStop(0.7, '#1a001a');
+            coreGradient.addColorStop(1, '#4B0082');
+            
+            this.ctx.fillStyle = coreGradient;
+            this.ctx.shadowBlur = 30;
+            this.ctx.shadowColor = '#9400D3';
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, blackHoleComp.damageRadius, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Draw accretion disk particles
+            this.ctx.globalAlpha = 0.6;
+            for (let i = 0; i < 20; i++) {
+                const angle = (i / 20) * Math.PI * 2 + blackHoleComp.rotation * 2;
+                const dist = blackHoleComp.damageRadius * 1.5 + Math.sin(blackHoleComp.rotation + i) * 20;
+                const x = Math.cos(angle) * dist;
+                const y = Math.sin(angle) * dist;
+                
+                this.ctx.fillStyle = i % 3 === 0 ? '#9400D3' : '#4B0082';
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+            
+            this.ctx.restore();
+        });
     }
 }

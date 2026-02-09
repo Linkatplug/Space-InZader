@@ -23,6 +23,9 @@ class CollisionSystem {
         
         // Check player-enemy projectile collisions
         this.checkPlayerProjectileCollisions();
+        
+        // Check weather hazard collisions
+        this.checkWeatherHazardCollisions();
     }
 
     checkProjectileEnemyCollisions() {
@@ -236,24 +239,44 @@ class CollisionSystem {
 
     damagePlayer(player, damage) {
         const health = player.getComponent('health');
+        const shield = player.getComponent('shield');
         const playerComp = player.getComponent('player');
         
         if (!health || !playerComp) return;
 
-        // Apply armor reduction
-        const actualDamage = Math.max(1, damage - playerComp.stats.armor);
-        health.current -= actualDamage;
-        this.gameState.stats.damageTaken += actualDamage;
+        let remainingDamage = damage;
         
-        // Play hit sound
-        if (this.audioManager && this.audioManager.initialized) {
-            this.audioManager.playSFX('hit', 1.2);
+        // Shield absorbs damage first
+        if (shield && shield.current > 0) {
+            const shieldDamage = Math.min(shield.current, remainingDamage);
+            shield.current -= shieldDamage;
+            remainingDamage -= shieldDamage;
+            
+            // Reset shield regen delay when damaged
+            shield.regenDelay = shield.regenDelayMax;
+            
+            // Visual feedback for shield hit
+            if (this.screenEffects && shieldDamage > 0) {
+                this.screenEffects.flash('#00FFFF', 0.2, 0.1);
+            }
         }
         
-        // Screen shake and flash on hit
-        if (this.screenEffects) {
-            this.screenEffects.shake(5, 0.2);
-            this.screenEffects.flash('#FF0000', 0.3, 0.15);
+        // Remaining damage goes to health (with armor reduction)
+        if (remainingDamage > 0) {
+            const actualDamage = Math.max(1, remainingDamage - playerComp.stats.armor);
+            health.current -= actualDamage;
+            this.gameState.stats.damageTaken += actualDamage;
+            
+            // Play hit sound
+            if (this.audioManager && this.audioManager.initialized) {
+                this.audioManager.playSFX('hit', 1.2);
+            }
+            
+            // Screen shake and flash on health hit
+            if (this.screenEffects) {
+                this.screenEffects.shake(5, 0.2);
+                this.screenEffects.flash('#FF0000', 0.3, 0.15);
+            }
         }
 
         if (health.current <= 0) {
@@ -267,14 +290,83 @@ class CollisionSystem {
         const pos = enemy.getComponent('position');
         const renderable = enemy.getComponent('renderable');
         
+        // Explosion system constants
+        const EXPLOSION_FRIENDLY_FIRE_MULTIPLIER = 0.5;
+        const EXPLOSION_VISUAL_SCALE = 0.6;
+        const EXPLOSION_PARTICLE_COUNT = 40;
+        const EXPLOSION_SHAKE_INTENSITY = 8;
+        const EXPLOSION_SHAKE_DURATION = 0.3;
+        
         if (enemyComp && pos) {
+            // Handle explosive enemies - deal area damage
+            if (enemyComp.isExplosive && enemyComp.attackPattern?.type === 'explode') {
+                const explosionRadius = enemyComp.attackPattern.explosionRadius || 80;
+                const explosionDamage = enemyComp.attackPattern.damage || 40;
+                
+                // Find all entities near the explosion
+                const player = this.world.getEntitiesByType('player')[0];
+                const allEnemies = this.world.getEntitiesByType('enemy');
+                
+                // Damage player if in range
+                if (player) {
+                    const playerPos = player.getComponent('position');
+                    if (playerPos) {
+                        const dx = playerPos.x - pos.x;
+                        const dy = playerPos.y - pos.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < explosionRadius) {
+                            const damageFalloff = Math.max(0, Math.min(1, 1 - (distance / explosionRadius)));
+                            this.damagePlayer(player, explosionDamage * damageFalloff);
+                        }
+                    }
+                }
+                
+                // Damage nearby enemies
+                for (const nearbyEnemy of allEnemies) {
+                    if (nearbyEnemy.id === enemy.id) continue;
+                    
+                    const nearbyPos = nearbyEnemy.getComponent('position');
+                    if (nearbyPos) {
+                        const dx = nearbyPos.x - pos.x;
+                        const dy = nearbyPos.y - pos.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < explosionRadius) {
+                            const damageFalloff = Math.max(0, Math.min(1, 1 - (distance / explosionRadius)));
+                            // Reduced friendly fire
+                            this.damageEnemy(nearbyEnemy, explosionDamage * damageFalloff * EXPLOSION_FRIENDLY_FIRE_MULTIPLIER);
+                        }
+                    }
+                }
+                
+                // Enhanced visual effect for explosion
+                if (this.particleSystem) {
+                    const explosionColor = enemyComp.attackPattern.explosionColor || '#FF4500';
+                    this.particleSystem.createExplosion(
+                        pos.x, 
+                        pos.y, 
+                        explosionRadius * EXPLOSION_VISUAL_SCALE, 
+                        explosionColor, 
+                        EXPLOSION_PARTICLE_COUNT
+                    );
+                }
+                
+                // Screen shake for explosion
+                if (this.screenEffects) {
+                    this.screenEffects.shake(EXPLOSION_SHAKE_INTENSITY, EXPLOSION_SHAKE_DURATION);
+                    this.screenEffects.flash(enemyComp.attackPattern.explosionColor || '#FF4500', 0.4, 0.2);
+                }
+            }
+            
             // Play explosion sound
             if (this.audioManager && this.audioManager.initialized) {
-                this.audioManager.playSFX('explosion', MathUtils.randomFloat(0.8, 1.2));
+                const pitch = enemyComp.isExplosive ? 0.6 : MathUtils.randomFloat(0.8, 1.2);
+                this.audioManager.playSFX('explosion', pitch);
             }
             
             // Create explosion particle effect
-            if (this.particleSystem) {
+            if (this.particleSystem && !enemyComp.isExplosive) {
                 const color = renderable ? renderable.color : '#ff6600';
                 const size = renderable ? renderable.size : 20;
                 const particleCount = Math.min(30, 15 + size);
@@ -368,6 +460,94 @@ class CollisionSystem {
         // Trigger level up screen
         if (window.game) {
             window.game.triggerLevelUp();
+        }
+    }
+    
+    /**
+     * Check collisions between player and weather hazards (meteors, black holes)
+     */
+    checkWeatherHazardCollisions() {
+        const player = this.world.getEntitiesByType('player')[0];
+        if (!player) return;
+        
+        const playerPos = player.getComponent('position');
+        const playerCol = player.getComponent('collision');
+        
+        if (!playerPos || !playerCol) return;
+        
+        // Check meteor collisions
+        const meteors = this.world.getEntitiesByType('meteor');
+        for (const meteor of meteors) {
+            const meteorPos = meteor.getComponent('position');
+            const meteorCol = meteor.getComponent('collision');
+            const meteorComp = meteor.getComponent('meteor');
+            
+            if (!meteorPos || !meteorCol || !meteorComp) continue;
+            
+            // Check if meteor hit bottom of screen
+            if (meteorPos.y > this.world.canvas?.height + 50) {
+                this.world.removeEntity(meteor.id);
+                continue;
+            }
+            
+            // Check collision with player
+            if (MathUtils.circleCollision(
+                playerPos.x, playerPos.y, playerCol.radius,
+                meteorPos.x, meteorPos.y, meteorCol.radius
+            )) {
+                // Damage player
+                this.damagePlayer(player, meteorComp.damage, 'meteor');
+                
+                // Create explosion effect
+                if (this.particleSystem) {
+                    this.particleSystem.createExplosion(
+                        meteorPos.x,
+                        meteorPos.y,
+                        meteorComp.size,
+                        '#8B4513',
+                        25
+                    );
+                }
+                
+                // Play impact sound
+                if (this.audioManager && this.audioManager.initialized) {
+                    this.audioManager.playSFX('explosion', 1.2);
+                }
+                
+                // Screen shake
+                if (this.screenEffects) {
+                    this.screenEffects.shake(6, 0.2);
+                }
+                
+                // Remove meteor
+                this.world.removeEntity(meteor.id);
+            }
+        }
+        
+        // Check black hole collisions
+        const blackHoles = this.world.getEntitiesByType('black_hole');
+        for (const blackHole of blackHoles) {
+            const blackHolePos = blackHole.getComponent('position');
+            const blackHoleCol = blackHole.getComponent('collision');
+            const blackHoleComp = blackHole.getComponent('black_hole');
+            
+            if (!blackHolePos || !blackHoleCol || !blackHoleComp) continue;
+            
+            const distance = MathUtils.distance(
+                playerPos.x, playerPos.y,
+                blackHolePos.x, blackHolePos.y
+            );
+            
+            // Damage if within damage radius
+            if (distance < blackHoleComp.damageRadius) {
+                // Apply damage over time
+                this.damagePlayer(player, blackHoleComp.damage, 'black_hole');
+                
+                // Visual feedback
+                if (this.screenEffects) {
+                    this.screenEffects.flash('#9400D3', 0.2, 0.1);
+                }
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ class UISystem {
     constructor(world, gameState) {
         this.world = world;
         this.gameState = gameState;
+        this.waveSystem = null; // Will be set by Game.js
         
         // Cache DOM elements
         this.cacheElements();
@@ -34,6 +35,9 @@ class UISystem {
         
         // Menu starfield animation ID
         this.menuStarfieldAnim = null;
+        
+        // Controls help tracking
+        this.controlsShownThisGame = false;
     }
 
     /**
@@ -93,6 +97,7 @@ class UISystem {
 
         // HUD elements
         this.timeDisplay = document.getElementById('timeDisplay');
+        this.waveDisplay = document.getElementById('waveDisplay');
         this.killsDisplay = document.getElementById('killsDisplay');
         this.scoreDisplay = document.getElementById('scoreDisplay');
         this.hpDisplay = document.getElementById('hpDisplay');
@@ -101,6 +106,25 @@ class UISystem {
         this.xpFill = document.getElementById('xpFill');
         this.weaponSlots = document.getElementById('weaponSlots');
         this.controlsHelp = document.getElementById('controlsHelp');
+        
+        // Shield elements
+        this.shieldBar = document.getElementById('shieldBar');
+        this.shieldFill = document.getElementById('shieldFill');
+        this.shieldDisplay = document.getElementById('shieldDisplay');
+        this.shieldValue = document.getElementById('shieldValue');
+        
+        // Stats display elements
+        this.statDamage = document.getElementById('statDamage');
+        this.statFireRate = document.getElementById('statFireRate');
+        this.statSpeed = document.getElementById('statSpeed');
+        this.statArmor = document.getElementById('statArmor');
+        this.statLifesteal = document.getElementById('statLifesteal');
+        this.statRegen = document.getElementById('statRegen');
+        this.statCrit = document.getElementById('statCrit');
+        
+        // Weapon and passive status elements
+        this.weaponList = document.getElementById('weaponList');
+        this.passiveList = document.getElementById('passiveList');
 
         // Menu elements (ship selection)
         this.shipSelection = document.getElementById('shipSelection');
@@ -218,9 +242,6 @@ class UISystem {
         if (this.creditsBackBtn) {
             this.creditsBackBtn.addEventListener('click', () => this.showMainMenu());
         }
-
-        // ESC key for pause/unpause
-        document.addEventListener('keydown', (e) => this.handleEscapeKey(e));
     }
 
     /**
@@ -252,6 +273,11 @@ class UISystem {
             const seconds = Math.floor(this.gameState.stats.time % 60);
             this.timeDisplay.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
 
+            // Update wave display
+            if (this.waveSystem && this.waveDisplay) {
+                this.waveDisplay.textContent = this.waveSystem.getWaveNumber();
+            }
+
             // Update kills and score
             this.killsDisplay.textContent = this.gameState.stats.kills;
             this.scoreDisplay.textContent = this.gameState.stats.score;
@@ -260,6 +286,26 @@ class UISystem {
             this.levelDisplay.textContent = playerComp.level;
             const xpPercent = (playerComp.xp / playerComp.xpRequired) * 100;
             this.xpFill.style.width = `${Math.min(100, xpPercent)}%`;
+            
+            // Update real-time stats display with safe access (nullish coalescing)
+            if (playerComp.stats) {
+                const stats = playerComp.stats;
+                const damageMultiplier = stats.damageMultiplier ?? 1;
+                const fireRateMultiplier = stats.fireRateMultiplier ?? 1;
+                const speed = stats.speed ?? 1;
+                const armor = stats.armor ?? 0;
+                const lifesteal = stats.lifesteal ?? 0;
+                const healthRegen = stats.healthRegen ?? 0;
+                const critChance = stats.critChance ?? 0;
+                
+                this.statDamage.textContent = `${Math.round(damageMultiplier * 100)}%`;
+                this.statFireRate.textContent = `${Math.round(fireRateMultiplier * 100)}%`;
+                this.statSpeed.textContent = `${Math.round(speed)}`;
+                this.statArmor.textContent = `${Math.round(armor)}`;
+                this.statLifesteal.textContent = `${Math.round(lifesteal * 100)}%`;
+                this.statRegen.textContent = `${healthRegen.toFixed(1)}/s`;
+                this.statCrit.textContent = `${Math.round(critChance * 100)}%`;
+            }
         }
 
         if (health) {
@@ -268,12 +314,31 @@ class UISystem {
             const healthPercent = (health.current / health.max) * 100;
             this.healthFill.style.width = `${Math.max(0, healthPercent)}%`;
         }
+        
+        // Update shield
+        const shield = player.getComponent('shield');
+        if (shield && shield.max > 0) {
+            this.shieldBar.style.display = 'block';
+            this.shieldDisplay.style.display = 'block';
+            this.shieldValue.textContent = `${Math.ceil(shield.current)}/${shield.max}`;
+            const shieldPercent = (shield.current / shield.max) * 100;
+            this.shieldFill.style.width = `${Math.max(0, shieldPercent)}%`;
+        } else {
+            this.shieldBar.style.display = 'none';
+            this.shieldDisplay.style.display = 'none';
+        }
 
-        // Update weapon slots
+        // Update weapon display
         this.updateWeaponDisplay(playerComp);
+        
+        // Update passive display
+        this.updatePassiveDisplay(playerComp);
         
         // Update synergy display
         this.updateSynergyDisplay();
+        
+        // Update weather warning
+        this.updateWeatherWarning();
     }
     
     /**
@@ -331,22 +396,68 @@ class UISystem {
      * @param {Object} playerComp - Player component
      */
     updateWeaponDisplay(playerComp) {
-        if (!playerComp || !playerComp.weapons) return;
+        if (!playerComp || !playerComp.weapons || !this.weaponList) return;
 
-        this.weaponSlots.innerHTML = '';
+        this.weaponList.innerHTML = '';
         
         playerComp.weapons.forEach((weapon, index) => {
             const weaponDiv = document.createElement('div');
-            weaponDiv.style.marginBottom = '5px';
-            weaponDiv.style.fontSize = '12px';
-            weaponDiv.style.textAlign = 'right';
+            weaponDiv.className = 'weapon-item';
             
-            const weaponName = weapon.type || 'Unknown';
+            const weaponData = weapon.data;
+            const weaponName = weaponData?.name || weapon.type || 'Unknown';
             const level = weapon.level || 1;
-            const maxLevel = weapon.data?.maxLevel || 8;
+            const maxLevel = weaponData?.maxLevel || 8;
+            const rarity = weaponData?.rarity || 'common';
             
-            weaponDiv.innerHTML = `${weaponName} <span style="color: #00ff00;">Lv${level}/${maxLevel}</span>`;
-            this.weaponSlots.appendChild(weaponDiv);
+            // Get rarity color
+            const rarityColor = this.rarityColors[rarity] || '#888';
+            
+            // Format weapon info
+            weaponDiv.innerHTML = `
+                <span style="color: ${rarityColor};">${weaponName}</span> 
+                <span style="color: #00ff00;">Lv${level}/${maxLevel}</span>
+            `;
+            this.weaponList.appendChild(weaponDiv);
+        });
+    }
+    
+    /**
+     * Update passive display
+     */
+    updatePassiveDisplay(playerComp) {
+        if (!playerComp || !playerComp.passives || !this.passiveList) return;
+        
+        this.passiveList.innerHTML = '';
+        
+        // Get unique passives with stacks
+        const passiveMap = new Map();
+        playerComp.passives.forEach(passive => {
+            const key = passive.type || passive.id;
+            if (passiveMap.has(key)) {
+                passiveMap.get(key).stacks++;
+            } else {
+                passiveMap.set(key, {
+                    ...passive,
+                    stacks: 1
+                });
+            }
+        });
+        
+        // Display passives
+        passiveMap.forEach((passive, key) => {
+            const passiveDiv = document.createElement('div');
+            passiveDiv.className = 'passive-item';
+            
+            const passiveData = passive.data;
+            const name = passiveData?.name || passive.type || key;
+            const rarity = passiveData?.rarity || 'common';
+            const rarityColor = this.rarityColors[rarity] || '#888';
+            
+            const stackText = passive.stacks > 1 ? ` x${passive.stacks}` : '';
+            
+            passiveDiv.innerHTML = `<span style="color: ${rarityColor};">${name}${stackText}</span>`;
+            this.passiveList.appendChild(passiveDiv);
         });
     }
 
@@ -419,6 +530,8 @@ class UISystem {
         if (window.game?.gameState) {
             window.game.gameState.setState(GameStates.PAUSED);
         }
+        // Hide other screens first
+        this.hideAllScreens();
         if (this.pauseMenu) {
             this.pauseMenu.classList.add('active');
         }
@@ -603,18 +716,13 @@ class UISystem {
     }
 
     /**
-     * Handle ESC key for pause/unpause
+     * Check if a screen is currently active
+     * @param {string} screenId - ID of the screen to check
+     * @returns {boolean}
      */
-    handleEscapeKey(event) {
-        if (event.key === 'Escape') {
-            const state = window.game?.gameState?.currentState;
-            
-            if (state === GameStates.RUNNING) {
-                this.showPauseMenu();
-            } else if (state === GameStates.PAUSED) {
-                this.hidePauseMenu();
-            }
-        }
+    isScreenActive(screenId) {
+        const screen = document.getElementById(screenId);
+        return screen ? screen.classList.contains('active') : false;
     }
 
     /**
@@ -837,8 +945,16 @@ class UISystem {
      */
     renderBoostOptions(boosts, rerollsRemaining = 0) {
         this.boostOptions.innerHTML = '';
+        
+        // Filter out null/undefined boosts to prevent empty cards
+        const validBoosts = boosts.filter(boost => boost != null);
+        
+        if (validBoosts.length === 0) {
+            console.error('UISystem: No valid boosts to display!');
+            return;
+        }
 
-        boosts.forEach((boost, index) => {
+        validBoosts.forEach((boost, index) => {
             const card = document.createElement('div');
             card.className = `boost-card ${boost.rarity || 'common'}`;
             
@@ -933,44 +1049,49 @@ class UISystem {
     }
 
     /**
-     * Render end-of-run statistics
+     * Render end-of-run statistics (in French)
      */
     renderEndStats() {
         const stats = this.gameState.stats;
-        const noyaux = this.gameState.calculateNoyaux();
+        const credits = this.gameState.calculateNoyaux();
+        const waveNumber = window.game?.systems?.wave?.getWaveNumber() || 1;
 
         const minutes = Math.floor(stats.time / 60);
         const seconds = Math.floor(stats.time % 60);
 
         this.endStats.innerHTML = `
             <div class="stat-line">
-                <span>Survival Time:</span>
+                <span>Temps de Survie:</span>
                 <span style="color: #00ffff;">${minutes}:${seconds.toString().padStart(2, '0')}</span>
             </div>
             <div class="stat-line">
-                <span>Total Kills:</span>
+                <span>Vague Atteinte:</span>
+                <span style="color: #00ffff;">${waveNumber}</span>
+            </div>
+            <div class="stat-line">
+                <span>Ennemis Éliminés:</span>
                 <span style="color: #00ffff;">${stats.kills}</span>
             </div>
             <div class="stat-line">
-                <span>Final Score:</span>
+                <span>Score Final:</span>
                 <span style="color: #00ffff;">${stats.score}</span>
             </div>
             <div class="stat-line">
-                <span>Highest Level:</span>
+                <span>Niveau Maximum:</span>
                 <span style="color: #00ffff;">${stats.highestLevel}</span>
             </div>
             <div class="stat-line">
-                <span>Damage Dealt:</span>
+                <span>Dégâts Infligés:</span>
                 <span style="color: #ff6600;">${Math.floor(stats.damageDealt)}</span>
             </div>
             <div class="stat-line">
-                <span>Damage Taken:</span>
+                <span>Dégâts Subis:</span>
                 <span style="color: #ff0000;">${Math.floor(stats.damageTaken)}</span>
             </div>
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #00ffff;">
                 <div class="stat-line" style="font-size: 20px; font-weight: bold;">
-                    <span>Noyaux Earned:</span>
-                    <span style="color: #ffaa00;">⬡ ${noyaux}</span>
+                    <span>Crédits Gagnés:</span>
+                    <span style="color: #ffaa00;">⬡ ${credits}</span>
                 </div>
             </div>
         `;
@@ -1035,20 +1156,7 @@ class UISystem {
             if (el) el.style.display = 'block';
         });
         
-        // Show controls help
-        if (this.controlsHelp) {
-            this.controlsHelp.classList.add('active');
-            
-            // Auto-hide controls help after 10 seconds
-            if (this.controlsHelpTimer) {
-                clearTimeout(this.controlsHelpTimer);
-            }
-            this.controlsHelpTimer = setTimeout(() => {
-                if (this.controlsHelp) {
-                    this.controlsHelp.classList.remove('active');
-                }
-            }, 10000); // 10 seconds
-        }
+        // Don't show controls automatically - only on wave 1
     }
 
     /**
@@ -1241,36 +1349,61 @@ class UISystem {
     showWaveAnnouncement(waveNumber) {
         const announcement = document.createElement('div');
         announcement.style.position = 'fixed';
-        announcement.style.top = '50%';
+        announcement.style.top = '35%';  // Positioned slightly above center
         announcement.style.left = '50%';
         announcement.style.transform = 'translate(-50%, -50%)';
-        announcement.style.padding = '40px 80px';
-        announcement.style.background = 'rgba(10, 10, 26, 0.98)';
-        announcement.style.border = '4px solid #00FFFF';
-        announcement.style.borderRadius = '20px';
+        announcement.style.padding = '10px 30px';  // Compact padding
+        announcement.style.background = 'rgba(0, 0, 0, 0.3)';  // Very transparent
+        announcement.style.border = '2px solid rgba(0, 255, 255, 0.5)';  // Semi-transparent border
+        announcement.style.borderRadius = '8px';
         announcement.style.color = '#00FFFF';
-        announcement.style.fontSize = '72px';
+        announcement.style.fontSize = '28px';  // ~40% of original 72px
         announcement.style.fontWeight = 'bold';
-        announcement.style.textShadow = '0 0 30px #00FFFF, 0 0 60px #00FFFF';
+        announcement.style.textShadow = '0 0 10px #00FFFF';  // Subtle glow
         announcement.style.zIndex = '2000';
         announcement.style.pointerEvents = 'none';
         announcement.style.opacity = '0';
-        announcement.style.transition = 'opacity 0.3s ease-in';
-        announcement.textContent = `WAVE ${waveNumber}`;
+        announcement.style.transition = 'opacity 0.2s ease-in';
+        announcement.textContent = `VAGUE ${waveNumber}`;  // French: WAVE → VAGUE
 
         document.getElementById('ui').appendChild(announcement);
 
-        // Fade in
+        // Fade in quickly
         setTimeout(() => {
-            announcement.style.opacity = '1';
+            announcement.style.opacity = '0.9';  // Max 0.9 opacity for subtlety
         }, 50);
 
-        // Hold and fade out
+        // Hold briefly and fade out rapidly
         setTimeout(() => {
-            announcement.style.transition = 'opacity 0.5s ease-out';
+            announcement.style.transition = 'opacity 0.3s ease-out';
             announcement.style.opacity = '0';
-            setTimeout(() => announcement.remove(), 500);
-        }, 2000);
+            setTimeout(() => announcement.remove(), 300);
+        }, 1000);  // Disappears faster (1s instead of 1.5s)
+        
+        // Show controls on wave 1 only
+        if (waveNumber === 1 && !this.controlsShownThisGame) {
+            this.showControlsHelp();
+            this.controlsShownThisGame = true;
+        }
+    }
+    
+    /**
+     * Show controls help overlay
+     */
+    showControlsHelp() {
+        if (this.controlsHelp) {
+            this.controlsHelp.classList.add('active');
+            
+            // Auto-hide controls help after 10 seconds
+            if (this.controlsHelpTimer) {
+                clearTimeout(this.controlsHelpTimer);
+            }
+            this.controlsHelpTimer = setTimeout(() => {
+                if (this.controlsHelp) {
+                    this.controlsHelp.classList.remove('active');
+                }
+            }, 10000); // 10 seconds
+        }
     }
 
     /**
@@ -1279,5 +1412,158 @@ class UISystem {
     reset() {
         this.hideAllScreens();
         this.hideHUD();
+        // Reset controls flag for new game
+        this.controlsShownThisGame = false;
+    }
+    
+    /**
+     * Update weather warning display
+     */
+    updateWeatherWarning() {
+        if (!window.game || !window.game.systems || !window.game.systems.weather) return;
+        
+        const warningText = window.game.systems.weather.getWarningText();
+        
+        // Get or create warning element
+        let warningEl = document.getElementById('weatherWarning');
+        if (!warningEl) {
+            warningEl = document.createElement('div');
+            warningEl.id = 'weatherWarning';
+            warningEl.style.cssText = `
+                position: absolute;
+                top: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(255, 0, 0, 0.8);
+                border: 2px solid #ff0000;
+                padding: 15px 30px;
+                border-radius: 5px;
+                font-size: 24px;
+                font-weight: bold;
+                color: #fff;
+                text-shadow: 0 0 10px #ff0000;
+                animation: pulse 0.5s infinite alternate;
+                z-index: 1000;
+                display: none;
+            `;
+            document.getElementById('gameCanvas').parentElement.appendChild(warningEl);
+            
+            // Add CSS animation if not exists
+            if (!document.getElementById('weatherWarningStyle')) {
+                const style = document.createElement('style');
+                style.id = 'weatherWarningStyle';
+                style.textContent = `
+                    @keyframes pulse {
+                        from { opacity: 0.7; }
+                        to { opacity: 1.0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+        
+        if (warningText) {
+            warningEl.textContent = warningText;
+            warningEl.style.display = 'block';
+        } else {
+            warningEl.style.display = 'none';
+        }
+    }
+
+    /**
+     * Show name entry dialog for scoreboard
+     */
+    showNameEntryDialog() {
+        const dialog = document.getElementById('nameEntryDialog');
+        if (dialog) {
+            dialog.classList.add('active');
+            const input = document.getElementById('playerNameInput');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+        }
+    }
+
+    /**
+     * Hide name entry dialog
+     */
+    hideNameEntryDialog() {
+        const dialog = document.getElementById('nameEntryDialog');
+        if (dialog) {
+            dialog.classList.remove('active');
+        }
+    }
+
+    /**
+     * Show scoreboard screen
+     */
+    showScoreboard() {
+        this.hideAllScreens();
+        const scoreboardScreen = document.getElementById('scoreboardScreen');
+        if (scoreboardScreen) {
+            scoreboardScreen.classList.add('active');
+            this.renderScoreboard();
+        }
+    }
+
+    /**
+     * Hide scoreboard screen
+     */
+    hideScoreboard() {
+        const scoreboardScreen = document.getElementById('scoreboardScreen');
+        if (scoreboardScreen) {
+            scoreboardScreen.classList.remove('active');
+        }
+    }
+
+    /**
+     * Render scoreboard table
+     */
+    renderScoreboard() {
+        const scoreManager = window.game?.scoreManager;
+        const container = document.getElementById('scoreboardContainer');
+        
+        if (!container || !scoreManager) return;
+        
+        const scores = scoreManager.getTopScores(10);
+        
+        if (scores.length === 0) {
+            container.innerHTML = '<div class="scoreboard-empty">Aucun score enregistré</div>';
+            return;
+        }
+        
+        let html = `
+            <table class="scoreboard-table">
+                <thead>
+                    <tr>
+                        <th class="scoreboard-rank">#</th>
+                        <th class="scoreboard-name">Joueur</th>
+                        <th class="scoreboard-score">Score</th>
+                        <th class="scoreboard-wave">Vague</th>
+                        <th class="scoreboard-date">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        scores.forEach((score, index) => {
+            html += `
+                <tr>
+                    <td class="scoreboard-rank">${index + 1}</td>
+                    <td class="scoreboard-name">${score.playerName}</td>
+                    <td class="scoreboard-score">${score.score}</td>
+                    <td class="scoreboard-wave">V${score.wave}</td>
+                    <td class="scoreboard-date">${ScoreManager.formatDate(score.date)}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+        `;
+        
+        container.innerHTML = html;
     }
 }

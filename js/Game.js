@@ -3,6 +3,31 @@
  * @description Main game class that coordinates all systems and manages game loop
  */
 
+// Default stats blueprint - ALL stats must be defined to prevent undefined errors
+const DEFAULT_STATS = {
+    damage: 1,
+    damageMultiplier: 1,
+    fireRate: 1,
+    fireRateMultiplier: 1,
+    speed: 1,
+    speedMultiplier: 1,
+    maxHealth: 1,
+    armor: 0,
+    lifesteal: 0,
+    healthRegen: 0,
+    critChance: 0,
+    critDamage: 1.5,
+    luck: 0,
+    xpBonus: 1,
+    projectileSpeed: 1,
+    projectileSpeedMultiplier: 1,
+    range: 1,
+    rangeMultiplier: 1,
+    shield: 0,
+    shieldRegen: 0,
+    shieldRegenDelay: 3.0
+};
+
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
@@ -13,6 +38,7 @@ class Game {
         this.gameState = new GameState();
         this.saveManager = new SaveManager();
         this.audioManager = new AudioManager();
+        this.scoreManager = new ScoreManager();
         
         // Debug system
         this.debugOverlay = null;
@@ -34,7 +60,8 @@ class Game {
             pickup: new PickupSystem(this.world, this.gameState),
             render: new RenderSystem(this.canvas, this.world, this.gameState),
             ui: new UISystem(this.world, this.gameState),
-            wave: new WaveSystem(this.gameState)
+            wave: new WaveSystem(this.gameState),
+            weather: new WeatherSystem(this.world, this.canvas, this.audioManager)
         };
         
         // Synergy system (initialized when game starts)
@@ -61,6 +88,9 @@ class Game {
             this.audioManager.playWaveStart();
             this.systems.spawner.triggerWaveSpawns(this.gameState.stats.time);
         };
+        
+        // Give UI system reference to wave system for display updates
+        this.systems.ui.waveSystem = this.systems.wave;
         
         // Game loop
         this.lastTime = 0;
@@ -121,6 +151,35 @@ class Game {
         document.getElementById('returnMenuButton').addEventListener('click', () => {
             this.gameState.setState(GameStates.MENU);
             this.systems.ui.showScreen('menu');
+        });
+
+        // View scoreboard from game over
+        document.getElementById('viewScoreboardButton').addEventListener('click', () => {
+            this.systems.ui.showScoreboard();
+        });
+
+        // Scoreboard back button
+        document.getElementById('scoreboardBackButton').addEventListener('click', () => {
+            this.systems.ui.hideScoreboard();
+            this.systems.ui.showGameOver();
+        });
+
+        // Submit score with name
+        document.getElementById('submitScoreButton').addEventListener('click', () => {
+            this.submitScore();
+        });
+
+        // Skip score entry
+        document.getElementById('skipScoreButton').addEventListener('click', () => {
+            this.systems.ui.hideNameEntryDialog();
+            this.systems.ui.showGameOver();
+        });
+
+        // Allow Enter key to submit name
+        document.getElementById('playerNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.submitScore();
+            }
         });
 
         // Listen for ship selection
@@ -187,14 +246,30 @@ class Game {
             }
         });
 
-        // Pause/Resume with debounce
+        // Pause/Resume with ESC key
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !this.escapePressed) {
-                this.escapePressed = true;
-                setTimeout(() => { 
-                    this.escapePressed = false; 
-                }, 300); // 300ms debounce
+            if (e.key === 'Escape') {
+                // Prevent key repeat from triggering multiple times
+                if (e.repeat) return;
                 
+                // Check if we're in a sub-screen (commands or options)
+                const uiSystem = this.systems?.ui;
+                if (uiSystem?.isScreenActive('commandsScreen')) {
+                    // If commands screen is active, go back to pause menu
+                    uiSystem.showPauseMenu();
+                    return;
+                }
+                if (uiSystem?.isScreenActive('optionsScreen')) {
+                    // If options screen is active, go back based on return screen
+                    if (uiSystem.optionsReturnScreen === 'pause') {
+                        uiSystem.showPauseMenu();
+                    } else {
+                        uiSystem.showMainMenu();
+                    }
+                    return;
+                }
+                
+                // Normal pause/resume logic
                 if (this.gameState.isState(GameStates.RUNNING)) {
                     this.pauseGame();
                 } else if (this.gameState.isState(GameStates.PAUSED)) {
@@ -209,6 +284,11 @@ class Game {
             if (!audioInitialized) {
                 this.audioManager.init();
                 audioInitialized = true;
+                
+                // Start background music immediately after initialization
+                this.audioManager.startBackgroundMusic();
+                console.log('Audio initialized and music started');
+                
                 document.removeEventListener('click', initAudio);
                 document.removeEventListener('keydown', initAudio);
             }
@@ -241,6 +321,7 @@ class Game {
         this.systems.spawner.reset();
         this.systems.render.reset();
         this.systems.wave.reset();
+        this.systems.weather.reset();
         this.screenEffects.reset();
         
         // Hide menu, show game
@@ -281,16 +362,29 @@ class Game {
         
         this.player.addComponent('health', Components.Health(maxHealth, maxHealth));
         
+        // Add shield component (starts at 0)
+        this.player.addComponent('shield', Components.Shield(0, 0, 0));
+        
         const playerComp = Components.Player();
         playerComp.speed = shipData.baseStats.speed;
+        
+        // Initialize stats from DEFAULT_STATS blueprint to prevent undefined errors
+        playerComp.stats = structuredClone(DEFAULT_STATS);
+        
+        // Apply ship-specific stats (using metaDamage and metaXP from above)
         playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
+        playerComp.stats.damageMultiplier = shipData.baseStats.damageMultiplier * metaDamage;
         playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier;
+        playerComp.stats.fireRateMultiplier = shipData.baseStats.fireRateMultiplier;
         playerComp.stats.speed = shipData.baseStats.speed / 200; // Normalize speed
+        playerComp.stats.speedMultiplier = 1;
         playerComp.stats.maxHealth = 1;
         playerComp.stats.critChance = shipData.baseStats.critChance;
         playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
         playerComp.stats.lifesteal = shipData.baseStats.lifesteal;
+        playerComp.stats.healthRegen = shipData.baseStats.healthRegen || 0;
         playerComp.stats.xpBonus = metaXP;
+        playerComp.stats.armor = shipData.baseStats.armor || 0;
         
         this.player.addComponent('player', playerComp);
         
@@ -402,7 +496,13 @@ class Game {
         }
 
         // Recalculate stats
+        console.log(`Before recalculate - HP: ${health ? health.current + '/' + health.max : 'N/A'}`);
         this.recalculatePlayerStats();
+        
+        // Log after recalculation to verify
+        if (health) {
+            console.log(`After recalculate - HP: ${health.current}/${health.max}`);
+        }
     }
 
     recalculatePlayerStats() {
@@ -411,25 +511,81 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return;
 
-        // Reset stats to base
+        // Store old health and shield values before recalculation
+        const health = this.player.getComponent('health');
+        const shield = this.player.getComponent('shield');
+        const oldMaxHP = health ? health.max : 100;
+        const oldCurrentHP = health ? health.current : 100;
+        const oldMaxShield = shield ? shield.max : 0;
+        const oldCurrentShield = shield ? shield.current : 0;
+
+        // Reset stats to DEFAULT_STATS blueprint to prevent undefined errors
+        playerComp.stats = structuredClone(DEFAULT_STATS);
+        
+        // Apply ship-specific base stats
         const shipData = ShipData.getShipData(this.gameState.selectedShip);
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 
         playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
+        playerComp.stats.damageMultiplier = shipData.baseStats.damageMultiplier * metaDamage;
         playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier;
+        playerComp.stats.fireRateMultiplier = shipData.baseStats.fireRateMultiplier;
         playerComp.stats.speed = shipData.baseStats.speed / 200; // Normalize speed
+        playerComp.stats.speedMultiplier = 1;
         playerComp.stats.critChance = shipData.baseStats.critChance;
         playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
         playerComp.stats.lifesteal = shipData.baseStats.lifesteal;
+        playerComp.stats.healthRegen = shipData.baseStats.healthRegen || 0;
         playerComp.stats.xpBonus = metaXP;
         playerComp.stats.armor = shipData.baseStats.armor || 0;
         playerComp.stats.projectileSpeed = 1;
+        playerComp.stats.projectileSpeedMultiplier = 1;
         playerComp.stats.range = 1;
+        playerComp.stats.rangeMultiplier = 1;
+        playerComp.stats.shield = 0;
+        playerComp.stats.shieldRegen = 0;
+        playerComp.stats.shieldRegenDelay = 3.0;
 
         // Apply all passives
         for (const passive of playerComp.passives) {
             PassiveData.applyPassiveEffects(passive, playerComp.stats);
+        }
+        
+        // Recalculate max HP with ratio preservation
+        if (health) {
+            const metaHealth = this.saveData.upgrades.maxHealth * 10;
+            const baseMaxHP = shipData.baseStats.maxHealth + metaHealth;
+            const hpMultiplier = playerComp.stats.maxHealthMultiplier || 1;
+            const newMaxHP = Math.floor(baseMaxHP * hpMultiplier);
+            
+            console.log(`HP Calculation: base=${baseMaxHP}, multiplier=${hpMultiplier}, new=${newMaxHP}`);
+            
+            // Preserve HP ratio
+            const hpRatio = oldMaxHP > 0 ? oldCurrentHP / oldMaxHP : 1;
+            health.max = Math.max(1, newMaxHP);
+            health.current = Math.max(1, Math.min(Math.ceil(health.max * hpRatio), health.max));
+            
+            console.log(`Max HP recalculated: ${oldMaxHP} -> ${health.max}, Current: ${oldCurrentHP} -> ${health.current}`);
+        }
+        
+        // Update shield component based on stats with ratio preservation
+        if (shield && playerComp.stats.shield > 0) {
+            const newMaxShield = playerComp.stats.shield;
+            
+            // Preserve shield ratio
+            const shieldRatio = oldMaxShield > 0 ? oldCurrentShield / oldMaxShield : 1;
+            shield.max = newMaxShield;
+            shield.current = Math.max(0, Math.min(Math.ceil(shield.max * shieldRatio), shield.max));
+            shield.regen = playerComp.stats.shieldRegen;
+            shield.regenDelayMax = playerComp.stats.shieldRegenDelay;
+            
+            console.log(`Shield recalculated: ${oldMaxShield} -> ${shield.max}, Current: ${oldCurrentShield} -> ${shield.current}`);
+        } else if (shield) {
+            // No shield stats, reset shield
+            shield.current = 0;
+            shield.max = 0;
+            shield.regen = 0;
         }
         
         // Force synergy system to recalculate
@@ -490,17 +646,34 @@ class Game {
 
         // Generate remaining options (3 total, or 2 if keystone offered)
         const numOptions = keystoneOffered ? 2 : 3;
-        for (let i = 0; i < numOptions; i++) {
-            const boost = this.selectRandomBoost(luck, options, forceRare && i === 0);
+        let attempts = 0;
+        const maxAttempts = 100; // Prevent infinite loops
+        
+        while (options.length < (keystoneOffered ? 3 : 3) && attempts < maxAttempts) {
+            const constraintLevel = Math.floor(attempts / 20); // Relax constraints every 20 attempts
+            const boost = this.selectRandomBoost(luck, options, forceRare && options.length === (keystoneOffered ? 1 : 0), constraintLevel);
             if (boost) {
                 options.push(boost);
+                attempts = 0; // Reset attempts on success
+            } else {
+                attempts++;
+            }
+        }
+        
+        // Fallback: If still not enough options, try absolute last resort
+        while (options.length < (keystoneOffered ? 3 : 3)) {
+            const boost = this.selectRandomBoostLastResort(options);
+            if (boost) {
+                options.push(boost);
+            } else {
+                break; // No more options possible
             }
         }
 
         return options;
     }
 
-    selectRandomBoost(luck, existing, forceRare = false) {
+    selectRandomBoost(luck, existing, forceRare = false, constraintLevel = 0) {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return null;
 
@@ -508,11 +681,14 @@ class Game {
         const preferredTags = shipData.preferredTags || [];
         const bannedTags = shipData.bannedTags || [];
         
-        // 60% chance to use preferred tags, 40% for global pool
-        // FIX: Calculate ONCE per boost, not per rarity iteration
-        const usePreferred = Math.random() < 0.6 && preferredTags.length > 0;
-        
-        logger.debug('Game', `Selecting boost: usePreferred=${usePreferred}, preferredTags=${preferredTags.join(',')}`);
+        // Progressive constraint relaxation:
+        // 0: Use all constraints (preferred tags, rarity, banned tags)
+        // 1: Ignore preferred tags
+        // 2: Ignore rarity restrictions
+        // 3: Ignore banned tags (last resort)
+        const usePreferredTags = constraintLevel < 1;
+        const useRarityFilter = constraintLevel < 2;
+        const useBannedTags = constraintLevel < 3;
         
         // Try rarities in order based on luck, with fallbacks
         const rarities = ['legendary', 'epic', 'rare', 'common'];
@@ -529,25 +705,35 @@ class Game {
             else if (roll > 0.5) startIndex = 2; // rare
             else startIndex = 3; // common
         }
+        
+        // If not using rarity filter, try all rarities
+        if (!useRarityFilter) {
+            startIndex = 0;
+        }
 
         // Try each rarity starting from the rolled one
         for (let i = startIndex; i < rarities.length; i++) {
             const rarity = rarities[i];
+            
+            // 60% chance to use preferred tags, 40% for global pool (only if using preferred tags)
+            const usePreferred = usePreferredTags && Math.random() < 0.6;
             
             // Get available weapons with tag filtering
             const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
                 const weapon = WeaponData.WEAPONS[key];
                 const saveWeapon = this.saveData.weapons[weapon.id];
                 if (!saveWeapon || !saveWeapon.unlocked) return false;
-                if (weapon.rarity !== rarity) return false;
+                if (useRarityFilter && weapon.rarity !== rarity) return false;
                 
                 // Check if weapon already at max level
                 const existing = playerComp.weapons.find(w => w.type === weapon.id);
                 if (existing && existing.level >= weapon.maxLevel) return false;
                 
-                // Filter by banned tags
-                const hasBannedTag = weapon.tags?.some(t => bannedTags.includes(t));
-                if (hasBannedTag) return false;
+                // Filter by banned tags (unless relaxed)
+                if (useBannedTags) {
+                    const hasBannedTag = weapon.tags?.some(t => bannedTags.includes(t));
+                    if (hasBannedTag) return false;
+                }
                 
                 // If using preferred tags, check for match
                 if (usePreferred) {
@@ -562,15 +748,17 @@ class Game {
                 const passive = PassiveData.PASSIVES[key];
                 const savePassive = this.saveData.passives[passive.id];
                 if (!savePassive || !savePassive.unlocked) return false;
-                if (passive.rarity !== rarity) return false;
+                if (useRarityFilter && passive.rarity !== rarity) return false;
                 
                 // Check if passive already at maxStacks
                 const existing = playerComp.passives.find(p => p.id === passive.id);
                 if (existing && existing.stacks >= passive.maxStacks) return false;
                 
-                // Filter by banned tags
-                const hasBannedTag = passive.tags?.some(t => bannedTags.includes(t));
-                if (hasBannedTag) return false;
+                // Filter by banned tags (unless relaxed)
+                if (useBannedTags) {
+                    const hasBannedTag = passive.tags?.some(t => bannedTags.includes(t));
+                    if (hasBannedTag) return false;
+                }
                 
                 // If using preferred tags, check for match
                 if (usePreferred) {
@@ -653,6 +841,62 @@ class Game {
         // No options available at any rarity level
         return null;
     }
+    
+    /**
+     * Last resort boost selection - ignores all constraints except duplicates
+     */
+    selectRandomBoostLastResort(existing) {
+        const playerComp = this.player.getComponent('player');
+        if (!playerComp) return null;
+        
+        // Get ALL available weapons (not maxed)
+        const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
+            const weapon = WeaponData.WEAPONS[key];
+            const saveWeapon = this.saveData.weapons[weapon.id];
+            if (!saveWeapon || !saveWeapon.unlocked) return false;
+            
+            const existingWeapon = playerComp.weapons.find(w => w.type === weapon.id);
+            if (existingWeapon && existingWeapon.level >= weapon.maxLevel) return false;
+            
+            return true;
+        });
+        
+        // Get ALL available passives (not maxed)
+        const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
+            const passive = PassiveData.PASSIVES[key];
+            const savePassive = this.saveData.passives[passive.id];
+            if (!savePassive || !savePassive.unlocked) return false;
+            
+            const existingPassive = playerComp.passives.find(p => p.id === passive.id);
+            if (existingPassive && existingPassive.stacks >= passive.maxStacks) return false;
+            
+            return true;
+        });
+        
+        const all = [
+            ...availableWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
+            ...availablePassives.map(p => ({ type: 'passive', key: PassiveData.PASSIVES[p].id, data: PassiveData.PASSIVES[p] }))
+        ];
+        
+        // Filter out duplicates
+        const filtered = all.filter(item => {
+            return !existing.some(e => e.type === item.type && e.key === item.key);
+        });
+        
+        if (filtered.length > 0) {
+            const selected = MathUtils.randomChoice(filtered);
+            return {
+                type: selected.type,
+                key: selected.key,
+                name: selected.data.name,
+                description: selected.data.description,
+                rarity: selected.data.rarity,
+                color: selected.data.color
+            };
+        }
+        
+        return null;
+    }
 
     /**
      * Update music theme based on game intensity
@@ -705,12 +949,16 @@ class Game {
     }
 
     pauseGame() {
+        // Prevent double pause (PAUSED -> PAUSED)
+        if (this.gameState.isState(GameStates.PAUSED)) return;
+        
         if (this.gameState.isState(GameStates.RUNNING)) {
             this.gameState.setState(GameStates.PAUSED);
             this.running = false;
-            // Show pause menu UI
-            this.systems.ui.showPauseMenu();
-            logger.info('Game', 'Game paused - menu opened');
+            // Show pause UI
+            if (this.systems && this.systems.ui) {
+                this.systems.ui.showPauseMenu();
+            }
         }
     }
 
@@ -718,7 +966,10 @@ class Game {
         if (this.gameState.isState(GameStates.PAUSED) || this.gameState.isState(GameStates.LEVEL_UP)) {
             this.gameState.setState(GameStates.RUNNING);
             this.running = true;
-            this.systems.ui.showScreen('game');
+            if (this.systems && this.systems.ui) {
+                this.systems.ui.hidePauseMenu();
+                this.systems.ui.showScreen('game');
+            }
         }
     }
 
@@ -727,18 +978,62 @@ class Game {
         this.gameState.setState(GameStates.GAME_OVER);
         
         // Calculate rewards
-        const noyaux = this.gameState.calculateNoyaux();
-        this.saveManager.addNoyaux(noyaux, this.saveData);
+        const credits = this.gameState.calculateNoyaux();
+        this.saveManager.addNoyaux(credits, this.saveData);
         this.saveManager.updateStats(this.gameState.stats, this.saveData);
         
         // Stop background music
         this.audioManager.stopBackgroundMusic();
         
-        // Show game over screen
-        this.systems.ui.showGameOver();
+        // Check if score qualifies for leaderboard
+        const finalScore = this.gameState.stats.score;
+        if (this.scoreManager.qualifiesForLeaderboard(finalScore)) {
+            // Show name entry dialog
+            this.systems.ui.showNameEntryDialog();
+        } else {
+            // Show game over screen directly
+            this.systems.ui.showGameOver();
+        }
         
         // Play death sound
         this.audioManager.playSFX('death');
+    }
+
+    /**
+     * Submit score to leaderboard
+     */
+    submitScore() {
+        const nameInput = document.getElementById('playerNameInput');
+        const playerName = nameInput ? nameInput.value.trim() : '';
+        
+        if (!playerName) {
+            alert('Veuillez entrer un nom');
+            return;
+        }
+        
+        const stats = this.gameState.stats;
+        const waveNumber = this.systems.wave?.getWaveNumber() || 1;
+        
+        const scoreData = {
+            playerName: playerName,
+            score: stats.score,
+            time: stats.time,
+            kills: stats.kills,
+            level: stats.highestLevel,
+            wave: waveNumber
+        };
+        
+        const rank = this.scoreManager.addScore(scoreData);
+        
+        // Hide name entry and show game over
+        this.systems.ui.hideNameEntryDialog();
+        this.systems.ui.showGameOver();
+        
+        // Show a congratulations message if in top 3
+        if (rank > 0 && rank <= 3) {
+            const medals = ['🥇', '🥈', '🥉'];
+            alert(`Félicitations! Vous êtes ${rank}${rank === 1 ? 'er' : 'ème'}! ${medals[rank - 1]}`);
+        }
     }
 
     startRenderLoop() {
@@ -792,6 +1087,7 @@ class Game {
         this.systems.movement.update(deltaTime);
         this.systems.ai.update(deltaTime);
         this.systems.combat.update(deltaTime);
+        this.systems.weather.update(deltaTime);
         this.systems.collision.update(deltaTime);
         
         // Update spawner with wave spawn permission
@@ -808,6 +1104,21 @@ class Game {
                 health.invulnerableTime -= deltaTime;
                 if (health.invulnerableTime <= 0) {
                     health.invulnerable = false;
+                }
+            }
+            
+            // Update shield regeneration
+            const shield = this.player.getComponent('shield');
+            if (shield && shield.max > 0) {
+                // Update regen delay
+                if (shield.regenDelay > 0) {
+                    shield.regenDelay -= deltaTime;
+                } else {
+                    // Regenerate shield
+                    if (shield.current < shield.max && shield.regen > 0) {
+                        shield.current += shield.regen * deltaTime;
+                        shield.current = Math.min(shield.current, shield.max);
+                    }
                 }
             }
 

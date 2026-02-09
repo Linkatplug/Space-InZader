@@ -112,7 +112,7 @@ const PASSIVES = {
     effects: {
       critChance: 0.08,
       critMultiplier: 0.2,
-      lifesteal: 0.05
+      lifesteal: 0.03
     },
     maxStacks: 4,
     color: '#4169E1',
@@ -126,7 +126,7 @@ const PASSIVES = {
     description: 'Énergie vampirique puissante au prix de ta vitalité.',
     rarity: 'rare',
     effects: {
-      lifesteal: 0.15,
+      lifesteal: 0.08,
       maxHealthMultiplier: -0.1,
       damageMultiplier: 0.08
     },
@@ -278,7 +278,7 @@ const PASSIVES = {
     description: 'Récupère de la santé avec le temps.',
     rarity: 'common',
     effects: {
-      healthRegen: 0.5
+      healthRegen: 0.2
     },
     maxStacks: 6,
     color: '#00FA9A',
@@ -412,7 +412,7 @@ const PASSIVES = {
     description: 'Convertit les dégâts en santé.',
     rarity: 'uncommon',
     effects: {
-      lifesteal: 0.08
+      lifesteal: 0.04
     },
     maxStacks: 5,
     color: '#DC143C',
@@ -454,12 +454,12 @@ const PASSIVES = {
     id: 'execution',
     tags: ['on_hit', 'utility'],
     name: 'Exécution',
-    description: '+Dégâts sur ennemis à faible santé.',
+    description: '+Dégâts sur ennemis à faible santé. -5% dégâts de base.',
     rarity: 'rare',
     effects: {
       executeThreshold: 0.25,
       executeDamageBonus: 0.50,
-      damageMultiplier: 0.10
+      damageMultiplier: -0.05
     },
     maxStacks: 3,
     color: '#8B0000',
@@ -470,12 +470,13 @@ const PASSIVES = {
     id: 'fureur_combat',
     tags: ['on_kill', 'utility'],
     name: 'Fureur de Combat',
-    description: 'Stack de dégâts qui augmente avec les kills.',
+    description: 'Stack de dégâts qui augmente avec les kills. -5% santé max.',
     rarity: 'rare',
     effects: {
       furyPerKill: 0.02,
       furyMax: 0.50,
-      furyDecay: 0.01
+      furyDecay: 0.01,
+      maxHealthMultiplier: -0.05
     },
     maxStacks: 3,
     color: '#FF0000',
@@ -486,12 +487,13 @@ const PASSIVES = {
     id: 'predateur',
     tags: ['on_kill', 'xp', 'sustain'],
     name: 'Prédateur',
-    description: 'Bonus XP et santé sur kill.',
+    description: 'Bonus XP et santé sur kill. -5% vitesse de tir.',
     rarity: 'rare',
     effects: {
       xpMultiplier: 0.20,
       healOnKill: 2,
-      damageMultiplier: 0.12
+      damageMultiplier: 0.12,
+      fireRateMultiplier: -0.05
     },
     maxStacks: 3,
     color: '#FFD700',
@@ -502,12 +504,13 @@ const PASSIVES = {
     id: 'chaine_foudre',
     tags: ['on_hit', 'aoe'],
     name: 'Chaîne de Foudre',
-    description: 'Les attaques électriques sautent entre ennemis.',
+    description: 'Les attaques électriques sautent entre ennemis. -8% portée.',
     rarity: 'rare',
     effects: {
       chainLightning: 1,
       electricDamageBonus: 0.30,
-      chainRange: 150
+      chainRange: 150,
+      rangeMultiplier: -0.08
     },
     maxStacks: 4,
     color: '#00FFFF',
@@ -534,12 +537,13 @@ const PASSIVES = {
     id: 'lame_tournoyante',
     tags: ['aoe', 'melee', 'short_range'],
     name: 'Lame Tournoyante',
-    description: 'Dégâts de zone autour du vaisseau.',
+    description: 'Dégâts de zone autour du vaisseau. -10% portée.',
     rarity: 'rare',
     effects: {
       orbitDamage: 5,
       orbitRadius: 80,
-      orbitSpeed: 2.0
+      orbitSpeed: 2.0,
+      rangeMultiplier: -0.10
     },
     maxStacks: 4,
     color: '#FF00FF',
@@ -565,12 +569,13 @@ const PASSIVES = {
     id: 'survivant',
     tags: ['shield', 'regen', 'sustain'],
     name: 'Survivant',
-    description: 'Bouclier et régénération quand blessé.',
+    description: 'Bouclier et régénération quand blessé. -10% dégâts.',
     rarity: 'rare',
     effects: {
       lowHealthShield: 30,
       lowHealthRegen: 2.0,
-      lowHealthThreshold: 0.30
+      lowHealthThreshold: 0.30,
+      damageMultiplier: -0.10
     },
     maxStacks: 2,
     color: '#32CD32',
@@ -597,13 +602,14 @@ const PASSIVES = {
     id: 'arsenal_orbital',
     tags: ['summon', 'turret', 'aoe', 'fire_rate'],
     name: 'Arsenal Orbital',
-    description: 'Satellites armés tournent autour du vaisseau.',
+    description: 'Satellites armés tournent autour du vaisseau. -10% vitesse de déplacement.',
     rarity: 'epic',
     effects: {
       orbitCount: 2,
       orbitDamage: 15,
       orbitRadius: 120,
-      fireRateMultiplier: 0.15
+      fireRateMultiplier: 0.15,
+      speedMultiplier: -0.10
     },
     maxStacks: 2,
     color: '#9400D3',
@@ -614,12 +620,12 @@ const PASSIVES = {
     id: 'phoenix',
     tags: ['sustain', 'utility'],
     name: 'Phoenix',
-    description: 'Reviens à la vie une fois par vague.',
+    description: 'Reviens à la vie une fois par vague. -15% dégâts de base.',
     rarity: 'epic',
     effects: {
       revive: 1,
       reviveHealth: 0.50,
-      damageMultiplier: 0.20
+      damageMultiplier: -0.15
     },
     maxStacks: 1,
     color: '#FF4500',
@@ -646,13 +652,13 @@ const PASSIVES = {
     id: 'nexus_energie',
     tags: ['utility', 'fire_rate', 'speed', 'crit'],
     name: 'Nexus d\'Énergie',
-    description: 'Toutes les stats augmentent légèrement.',
+    description: 'Toutes les stats augmentent légèrement. -5% santé max.',
     rarity: 'epic',
     effects: {
       damageMultiplier: 0.15,
       fireRateMultiplier: 0.15,
       speedMultiplier: 0.15,
-      maxHealthMultiplier: 0.15,
+      maxHealthMultiplier: 0.10,
       critChance: 0.05
     },
     maxStacks: 2,
@@ -682,13 +688,14 @@ const PASSIVES = {
     id: 'gardien',
     tags: ['shield', 'armor', 'sustain'],
     name: 'Gardien',
-    description: 'Bouclier massif et armure renforcée.',
+    description: 'Bouclier massif et armure renforcée. -20% vitesse.',
     rarity: 'epic',
     effects: {
       shield: 100,
       shieldRegen: 5,
       armor: 5,
-      maxHealthMultiplier: 0.30
+      maxHealthMultiplier: 0.30,
+      speedMultiplier: -0.20
     },
     maxStacks: 2,
     color: '#4169E1',
@@ -699,13 +706,14 @@ const PASSIVES = {
     id: 'instinct_tueur',
     tags: ['on_kill', 'speed', 'sustain'],
     name: 'Instinct Tueur',
-    description: 'Bonus massif sur kill: vitesse, dégâts, heal.',
+    description: 'Bonus massif sur kill: vitesse, dégâts, heal. -10% santé max.',
     rarity: 'epic',
     effects: {
       killSpeedBoost: 0.20,
       killDamageBoost: 0.15,
       healOnKill: 5,
-      killBoostDuration: 3.0
+      killBoostDuration: 3.0,
+      maxHealthMultiplier: -0.10
     },
     maxStacks: 2,
     color: '#FF1493',
@@ -733,13 +741,13 @@ const PASSIVES = {
     id: 'siphon_vital',
     tags: ['vampire', 'regen', 'on_hit', 'sustain'],
     name: 'Siphon Vital',
-    description: 'Lifesteal extrême et régénération.',
+    description: 'Lifesteal extrême et régénération. -10% dégâts.',
     rarity: 'epic',
     effects: {
-      lifesteal: 0.25,
-      healthRegen: 2.0,
+      lifesteal: 0.12,
+      healthRegen: 0.8,
       maxHealthMultiplier: 0.20,
-      damageMultiplier: 0.10
+      damageMultiplier: -0.10
     },
     maxStacks: 2,
     color: '#DC143C',
@@ -893,7 +901,7 @@ const PASSIVES = {
     description: 'Lifesteal massif mais vitesse réduite.',
     rarity: 'epic',
     effects: {
-      lifesteal: 0.35,
+      lifesteal: 0.15,
       maxHealthMultiplier: 0.40,
       speedMultiplier: -0.20,
       damageMultiplier: 0.15
@@ -1070,6 +1078,194 @@ const PASSIVES = {
     maxStacks: 2,
     color: '#FF8C00',
     icon: '🔥'
+  },
+
+  // New passives with strategic maluses
+  BLOOD_PACT: {
+    id: 'blood_pact',
+    tags: ['vampire', 'risk', 'glass_cannon'],
+    name: 'Pacte de Sang',
+    description: 'Lifesteal puissant mais santé maximale réduite. -20% PV max.',
+    rarity: 'rare',
+    effects: {
+      lifesteal: 0.12,
+      maxHealthMultiplier: -0.20
+    },
+    maxStacks: 2,
+    color: '#8B0000',
+    icon: '🩸'
+  },
+
+  INFINITE_HUNGER: {
+    id: 'infinite_hunger',
+    tags: ['vampire', 'projectile', 'glass_cannon'],
+    name: 'Soif Infinie',
+    description: 'Lifesteal sur tous les projectiles. -30% dégâts.',
+    rarity: 'epic',
+    effects: {
+      lifesteal: 0.08,
+      projectileLifesteal: true,
+      damageMultiplier: -0.30
+    },
+    maxStacks: 1,
+    color: '#DC143C',
+    icon: '🧛'
+  },
+
+  UNSTABLE_CANNON: {
+    id: 'unstable_cannon',
+    tags: ['damage', 'glass_cannon', 'risk'],
+    name: 'Canon Instable',
+    description: '+40% dégâts mais +30% dégâts reçus. Haute puissance, haute fragilité.',
+    rarity: 'rare',
+    effects: {
+      damageMultiplier: 0.40,
+      damageTakenMultiplier: 0.30
+    },
+    maxStacks: 2,
+    color: '#FF4500',
+    icon: '💥'
+  },
+
+  DEVASTATING_CRIT: {
+    id: 'devastating_crit',
+    tags: ['crit', 'glass_cannon'],
+    name: 'Critique Dévastateur',
+    description: '+60% multiplicateur critique mais -15% chance de crit.',
+    rarity: 'rare',
+    effects: {
+      critMultiplier: 0.60,
+      critChance: -0.15
+    },
+    maxStacks: 2,
+    color: '#FFD700',
+    icon: '💫'
+  },
+
+  OVERHEATED_ENGINE: {
+    id: 'overheated_engine',
+    tags: ['heat', 'fire_rate', 'glass_cannon'],
+    name: 'Moteur Surchargé',
+    description: '+50% cadence de tir mais génère 50% de chaleur en plus.',
+    rarity: 'uncommon',
+    effects: {
+      fireRateMultiplier: 0.50,
+      heatGeneration: 0.50
+    },
+    maxStacks: 3,
+    color: '#FF6600',
+    icon: '⚡'
+  },
+
+  UNSTABLE_FUSION: {
+    id: 'unstable_fusion',
+    tags: ['explosive', 'aoe', 'glass_cannon'],
+    name: 'Fusion Instable',
+    description: 'Vos tirs explosent à l\'impact. 30% des dégâts d\'explosion vous affectent.',
+    rarity: 'epic',
+    effects: {
+      explosionChance: 1.0,
+      explosionRadius: 80,
+      explosionDamage: 0.50,
+      selfExplosionDamage: 0.30
+    },
+    maxStacks: 1,
+    color: '#FF8C00',
+    icon: '☢️'
+  },
+
+  SLOW_FIELD: {
+    id: 'slow_field',
+    tags: ['utility', 'slow', 'control'],
+    name: 'Champ Ralentissant',
+    description: 'Ralentit les ennemis de 35% mais vous aussi de 15%.',
+    rarity: 'rare',
+    effects: {
+      enemySlow: 0.35,
+      slowRadius: 200,
+      speedMultiplier: -0.15
+    },
+    maxStacks: 2,
+    color: '#4169E1',
+    icon: '🌀'
+  },
+
+  TUNNEL_VISION: {
+    id: 'tunnel_vision',
+    tags: ['range', 'projectile'],
+    name: 'Vision Tunnel',
+    description: '+50% portée mais -25% angle de dispersion.',
+    rarity: 'uncommon',
+    effects: {
+      rangeMultiplier: 0.50,
+      spreadAngleMultiplier: -0.25
+    },
+    maxStacks: 3,
+    color: '#9370DB',
+    icon: '👁️'
+  },
+
+  HEAVY_SHELL: {
+    id: 'heavy_shell',
+    tags: ['armor', 'sustain'],
+    name: 'Carapace Lourde',
+    description: '+4 armure mais -20% cadence de tir.',
+    rarity: 'uncommon',
+    effects: {
+      armor: 4,
+      fireRateMultiplier: -0.20
+    },
+    maxStacks: 3,
+    color: '#708090',
+    icon: '🛡️'
+  },
+
+  REACTIVE_SHIELD: {
+    id: 'reactive_shield',
+    tags: ['shield', 'sustain'],
+    name: 'Bouclier Réactif',
+    description: 'Double la régénération de bouclier mais désactive la régénération de santé.',
+    rarity: 'rare',
+    effects: {
+      shieldRegenMultiplier: 1.0,
+      healthRegenDisabled: true
+    },
+    maxStacks: 2,
+    color: '#00CED1',
+    icon: '🔰'
+  },
+
+  ALL_OR_NOTHING: {
+    id: 'all_or_nothing',
+    tags: ['risk', 'burst', 'glass_cannon'],
+    name: 'Tout ou Rien',
+    description: 'Double dégâts pendant 10s, puis 50% dégâts pendant 10s. Cycle continu.',
+    rarity: 'epic',
+    effects: {
+      burstDamageMultiplier: 1.0,
+      burstDuration: 10,
+      postBurstDamageMultiplier: -0.50,
+      postBurstDuration: 10
+    },
+    maxStacks: 1,
+    color: '#FF1493',
+    icon: '🎲'
+  },
+
+  LAST_BREATH: {
+    id: 'last_breath',
+    tags: ['risk', 'berserk', 'glass_cannon'],
+    name: 'Dernier Souffle',
+    description: 'Double dégâts sous 30% PV. Mort instantanée si vous tombez sous 10% PV.',
+    rarity: 'epic',
+    effects: {
+      lowHealthDamageMultiplier: 1.0,
+      lowHealthThreshold: 0.30,
+      instantDeathThreshold: 0.10
+    },
+    maxStacks: 1,
+    color: '#DC143C',
+    icon: '💀'
   }
 };
 
@@ -1167,39 +1363,60 @@ function getRandomPassive(luck = 0, exclude = []) {
 
 /**
  * Apply passive effects to player stats
- * This method is called by Game.recalculatePlayerStats() for each passive the player owns
- * @param {Object} passive - Passive object with {id, stacks} properties
+ * @param {Object} passive - Passive object with data and stacks properties
  * @param {Object} stats - Player stats object to modify
  */
 function applyPassiveEffects(passive, stats) {
-  const data = getPassiveData(passive.id);
-  if (!data) {
-    console.warn(`PassiveData: Unknown passive "${passive.id}"`);
+  if (!passive || !passive.data || !passive.data.effects) {
+    console.warn('Invalid passive data:', passive);
     return;
   }
-  
-  const stacks = Math.min(passive.stacks, data.maxStacks);
-  
-  // Apply each effect multiplied by stacks
-  for (const [effectKey, effectValue] of Object.entries(data.effects)) {
-    // Handle multiplier effects (e.g., damageMultiplier, fireRateMultiplier)
-    if (effectKey.endsWith('Multiplier')) {
-      const statKey = effectKey.replace('Multiplier', '');
-      if (stats[statKey] !== undefined) {
-        // Multiply: stat *= (1 + effect * stacks)
-        stats[statKey] *= (1 + effectValue * stacks);
-      } else {
-        console.warn(`PassiveData: Stat "${statKey}" not found for effect "${effectKey}"`);
-      }
-    } 
-    // Handle additive effects (e.g., armor, magnetRange)
+
+  const effects = passive.data.effects;
+  const stacks = passive.stacks || 1;
+
+  // Apply each effect from the passive
+  for (const [effectKey, effectValue] of Object.entries(effects)) {
+    const totalValue = effectValue * stacks;
+
+    // Handle multiplier effects (these modify existing stat values multiplicatively)
+    if (effectKey === 'damageMultiplier') {
+      stats.damage = (stats.damage || 1) * (1 + totalValue);
+    } else if (effectKey === 'fireRateMultiplier') {
+      stats.fireRate = (stats.fireRate || 1) * (1 + totalValue);
+    } else if (effectKey === 'speedMultiplier') {
+      stats.speed = (stats.speed || 1) * (1 + totalValue);
+    } else if (effectKey === 'maxHealthMultiplier') {
+      stats.maxHealth = (stats.maxHealth || 1) * (1 + totalValue);
+    } else if (effectKey === 'rangeMultiplier') {
+      stats.range = (stats.range || 1) * (1 + totalValue);
+    } else if (effectKey === 'projectileSpeedMultiplier') {
+      stats.projectileSpeed = (stats.projectileSpeed || 1) * (1 + totalValue);
+    } else if (effectKey === 'critMultiplier') {
+      stats.critDamage = (stats.critDamage || 1) * (1 + totalValue);
+    } else if (effectKey === 'xpMultiplier') {
+      stats.xpBonus = (stats.xpBonus || 1) * (1 + totalValue);
+    }
+    // Handle additive effects (these add to existing stat values)
+    else if (effectKey === 'critChance') {
+      stats.critChance = (stats.critChance || 0) + totalValue;
+    } else if (effectKey === 'lifesteal') {
+      stats.lifesteal = (stats.lifesteal || 0) + totalValue;
+    } else if (effectKey === 'armor') {
+      stats.armor = (stats.armor || 0) + totalValue;
+    } else if (effectKey === 'luck') {
+      stats.luck = (stats.luck || 0) + totalValue;
+    }
+    // Handle special effects that don't directly map to basic stats
+    // These are stored in stats for game systems to check and handle
     else {
-      if (stats[effectKey] !== undefined) {
-        stats[effectKey] += effectValue * stacks;
-      } else {
-        // Create stat if it doesn't exist
-        stats[effectKey] = effectValue * stacks;
-      }
+      // Store all other effects in stats for systems to consume
+      // This includes: electricDamageBonus, stunChance, piercing, ricochetChance,
+      // explosionChance, projectileCount, shield, healthRegen, executeThreshold,
+      // furyPerKill, healOnKill, chainLightning, slowChance, orbitDamage,
+      // revive, doubleShotChance, homingStrength, dashCooldownReduction,
+      // magnetRange, overheatReduction, and many others
+      stats[effectKey] = (stats[effectKey] || 0) + totalValue;
     }
   }
 }
