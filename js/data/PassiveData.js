@@ -652,15 +652,14 @@ const PASSIVES = {
     id: 'nexus_energie',
     tags: ['utility', 'fire_rate', 'speed', 'crit'],
     name: 'Nexus d\'Énergie',
-    description: 'Toutes les stats augmentent légèrement. -5% armure.',
+    description: 'Toutes les stats augmentent légèrement. -5% santé max.',
     rarity: 'epic',
     effects: {
       damageMultiplier: 0.15,
       fireRateMultiplier: 0.15,
       speedMultiplier: 0.15,
-      maxHealthMultiplier: 0.15,
-      critChance: 0.05,
-      armor: -2
+      maxHealthMultiplier: 0.10,
+      critChance: 0.05
     },
     maxStacks: 2,
     color: '#00FFFF',
