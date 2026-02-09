@@ -28,6 +28,12 @@ class UISystem {
         
         // Double-click protection for boost selection
         this._boostPicking = false;
+        
+        // Options return screen tracking
+        this.optionsReturnScreen = 'main';
+        
+        // Menu starfield animation ID
+        this.menuStarfieldAnim = null;
     }
 
     /**
@@ -40,6 +46,51 @@ class UISystem {
         this.gameOverScreen = document.getElementById('gameOverScreen');
         this.metaScreen = document.getElementById('metaScreen');
 
+        // Main menu elements
+        this.mainMenu = document.getElementById('mainMenu');
+        this.playBtn = document.getElementById('playBtn');
+        this.scoreboardBtn = document.getElementById('scoreboardBtn');
+        this.optionsBtn = document.getElementById('optionsBtn');
+        this.creditsBtn = document.getElementById('creditsBtn');
+        this.backToMainBtn = document.getElementById('backToMainBtn');
+
+        // Pause menu elements
+        this.pauseMenu = document.getElementById('pauseMenu');
+        this.resumeBtn = document.getElementById('resumeBtn');
+        this.commandsBtn = document.getElementById('commandsBtn');
+        this.pauseOptionsBtn = document.getElementById('pauseOptionsBtn');
+        this.quitBtn = document.getElementById('quitBtn');
+
+        // Commands screen elements
+        this.commandsScreen = document.getElementById('commandsScreen');
+        this.commandsBackBtn = document.getElementById('commandsBackBtn');
+
+        // Options screen elements
+        this.optionsScreen = document.getElementById('optionsScreen');
+        this.musicSlider = document.getElementById('musicSlider');
+        this.musicDown = document.getElementById('musicDown');
+        this.musicUp = document.getElementById('musicUp');
+        this.musicValue = document.getElementById('musicValue');
+        this.sfxSlider = document.getElementById('sfxSlider');
+        this.sfxDown = document.getElementById('sfxDown');
+        this.sfxUp = document.getElementById('sfxUp');
+        this.sfxValue = document.getElementById('sfxValue');
+        this.muteToggle = document.getElementById('muteToggle');
+        this.optionsBackBtn = document.getElementById('optionsBackBtn');
+
+        // Scoreboard screen elements
+        this.scoreboardScreen = document.getElementById('scoreboardScreen');
+        this.scoreList = document.getElementById('scoreList');
+        this.clearScoresBtn = document.getElementById('clearScoresBtn');
+        this.scoreboardBackBtn = document.getElementById('scoreboardBackBtn');
+
+        // Credits screen elements
+        this.creditsScreen = document.getElementById('creditsScreen');
+        this.creditsBackBtn = document.getElementById('creditsBackBtn');
+
+        // Menu starfield canvas
+        this.menuStarfield = document.getElementById('menuStarfield');
+
         // HUD elements
         this.timeDisplay = document.getElementById('timeDisplay');
         this.killsDisplay = document.getElementById('killsDisplay');
@@ -51,7 +102,7 @@ class UISystem {
         this.weaponSlots = document.getElementById('weaponSlots');
         this.controlsHelp = document.getElementById('controlsHelp');
 
-        // Menu elements
+        // Menu elements (ship selection)
         this.shipSelection = document.getElementById('shipSelection');
         this.startButton = document.getElementById('startButton');
         this.metaButton = document.getElementById('metaButton');
@@ -72,18 +123,104 @@ class UISystem {
      * Bind UI event handlers
      */
     bindEvents() {
+        // Ship selection screen
         if (this.startButton) {
             this.startButton.addEventListener('click', () => this.onStartGame());
         }
         if (this.metaButton) {
             this.metaButton.addEventListener('click', () => this.onShowMeta());
         }
+        
+        // Game over screen
         if (this.returnMenuButton) {
             this.returnMenuButton.addEventListener('click', () => this.onReturnToMenu());
         }
+        
+        // Meta screen
         if (this.backToMenuButton) {
             this.backToMenuButton.addEventListener('click', () => this.onBackToMenu());
         }
+
+        // Main menu buttons
+        if (this.playBtn) {
+            this.playBtn.addEventListener('click', () => this.showShipSelection());
+        }
+        if (this.scoreboardBtn) {
+            this.scoreboardBtn.addEventListener('click', () => this.showScoreboard());
+        }
+        if (this.optionsBtn) {
+            this.optionsBtn.addEventListener('click', () => this.showOptions('main'));
+        }
+        if (this.creditsBtn) {
+            this.creditsBtn.addEventListener('click', () => this.showCredits());
+        }
+
+        // Pause menu buttons
+        if (this.resumeBtn) {
+            this.resumeBtn.addEventListener('click', () => this.hidePauseMenu());
+        }
+        if (this.commandsBtn) {
+            this.commandsBtn.addEventListener('click', () => this.showCommands());
+        }
+        if (this.pauseOptionsBtn) {
+            this.pauseOptionsBtn.addEventListener('click', () => this.showOptions('pause'));
+        }
+        if (this.quitBtn) {
+            this.quitBtn.addEventListener('click', () => this.onQuitToMenu());
+        }
+
+        // Commands screen
+        if (this.commandsBackBtn) {
+            this.commandsBackBtn.addEventListener('click', () => this.showPauseMenu());
+        }
+
+        // Options screen - sliders
+        if (this.musicSlider) {
+            this.musicSlider.addEventListener('input', (e) => this.onMusicVolumeChange(e.target.value));
+        }
+        if (this.sfxSlider) {
+            this.sfxSlider.addEventListener('input', (e) => this.onSfxVolumeChange(e.target.value));
+        }
+
+        // Options screen - volume buttons
+        if (this.musicDown) {
+            this.musicDown.addEventListener('click', () => this.adjustMusicVolume(-10));
+        }
+        if (this.musicUp) {
+            this.musicUp.addEventListener('click', () => this.adjustMusicVolume(10));
+        }
+        if (this.sfxDown) {
+            this.sfxDown.addEventListener('click', () => this.adjustSfxVolume(-10));
+        }
+        if (this.sfxUp) {
+            this.sfxUp.addEventListener('click', () => this.adjustSfxVolume(10));
+        }
+
+        // Options screen - mute toggle
+        if (this.muteToggle) {
+            this.muteToggle.addEventListener('change', (e) => this.onMuteToggle(e.target.checked));
+        }
+
+        // Options screen - back button
+        if (this.optionsBackBtn) {
+            this.optionsBackBtn.addEventListener('click', () => this.onOptionsBack());
+        }
+
+        // Scoreboard screen
+        if (this.clearScoresBtn) {
+            this.clearScoresBtn.addEventListener('click', () => this.onClearScores());
+        }
+        if (this.scoreboardBackBtn) {
+            this.scoreboardBackBtn.addEventListener('click', () => this.showMainMenu());
+        }
+
+        // Credits screen
+        if (this.creditsBackBtn) {
+            this.creditsBackBtn.addEventListener('click', () => this.showMainMenu());
+        }
+
+        // ESC key for pause/unpause
+        document.addEventListener('keydown', (e) => this.handleEscapeKey(e));
     }
 
     /**
@@ -186,15 +323,345 @@ class UISystem {
     }
 
     /**
-     * Show main menu screen
+     * Show main menu and start starfield animation
      */
     showMainMenu() {
         this.hideAllScreens();
         this.hideHUD();
+        if (this.mainMenu) {
+            this.mainMenu.classList.add('active');
+        }
+        this.startMenuStarfield();
+        if (window.game?.audioManager) {
+            window.game.audioManager.switchTheme('calm');
+        }
+    }
+
+    /**
+     * Hide main menu
+     */
+    hideMainMenu() {
+        if (this.mainMenu) {
+            this.mainMenu.classList.remove('active');
+        }
+        this.stopMenuStarfield();
+    }
+
+    /**
+     * Show ship selection screen
+     */
+    showShipSelection() {
+        this.hideAllScreens();
         if (this.menuScreen) {
             this.menuScreen.classList.add('active');
         }
         this.renderShipSelection();
+    }
+
+    /**
+     * Show pause menu
+     */
+    showPauseMenu() {
+        if (window.game?.gameState) {
+            window.game.gameState.setState(GameStates.PAUSED);
+        }
+        if (this.pauseMenu) {
+            this.pauseMenu.classList.add('active');
+        }
+    }
+
+    /**
+     * Hide pause menu
+     */
+    hidePauseMenu() {
+        if (this.pauseMenu) {
+            this.pauseMenu.classList.remove('active');
+        }
+        if (window.game?.gameState?.currentState === GameStates.PAUSED) {
+            window.game.gameState.setState(GameStates.RUNNING);
+        }
+    }
+
+    /**
+     * Show commands screen
+     */
+    showCommands() {
+        this.hideAllScreens();
+        if (this.commandsScreen) {
+            this.commandsScreen.classList.add('active');
+        }
+    }
+
+    /**
+     * Show options screen
+     * @param {string} returnScreen - Screen to return to ('main', 'pause', etc.)
+     */
+    showOptions(returnScreen = 'main') {
+        this.optionsReturnScreen = returnScreen;
+        this.hideAllScreens();
+        if (this.optionsScreen) {
+            this.optionsScreen.classList.add('active');
+        }
+        this.loadOptionsValues();
+    }
+
+    /**
+     * Load current audio settings into options UI
+     */
+    loadOptionsValues() {
+        const audio = window.game?.audioManager;
+        if (audio) {
+            const musicVol = Math.round(audio.musicVolume * 100);
+            const sfxVol = Math.round(audio.sfxVolume * 100);
+            
+            if (this.musicSlider) this.musicSlider.value = musicVol;
+            if (this.musicValue) this.musicValue.textContent = musicVol + '%';
+            if (this.sfxSlider) this.sfxSlider.value = sfxVol;
+            if (this.sfxValue) this.sfxValue.textContent = sfxVol + '%';
+            if (this.muteToggle) this.muteToggle.checked = audio.muted;
+        }
+    }
+
+    /**
+     * Show scoreboard screen
+     */
+    showScoreboard() {
+        this.hideAllScreens();
+        if (this.scoreboardScreen) {
+            this.scoreboardScreen.classList.add('active');
+        }
+        this.renderScoreboard();
+    }
+
+    /**
+     * Render scoreboard entries
+     */
+    renderScoreboard() {
+        if (!this.scoreList) return;
+        
+        const saveManager = window.game?.saveManager;
+        if (!saveManager) {
+            this.scoreList.innerHTML = '<div style="color:#666;text-align:center;padding:40px;">SaveManager not available</div>';
+            return;
+        }
+        
+        const scores = saveManager.getTopScores(10);
+        this.scoreList.innerHTML = '';
+        
+        if (scores.length === 0) {
+            this.scoreList.innerHTML = '<div style="color:#666;text-align:center;padding:40px;">No scores yet. Play to set a record!</div>';
+            return;
+        }
+        
+        scores.forEach((entry, index) => {
+            const rank = index + 1;
+            const div = document.createElement('div');
+            div.className = `score-entry rank-${rank}`;
+            
+            const date = new Date(entry.date);
+            const timeStr = Math.floor(entry.time / 60) + ':' + String(Math.floor(entry.time % 60)).padStart(2, '0');
+            
+            div.innerHTML = `
+                <div class="score-header">
+                    <span>#${rank} - ${entry.class}</span>
+                    <span>${entry.score.toLocaleString()}</span>
+                </div>
+                <div class="score-details">
+                    Wave ${entry.wave} | ${entry.kills} kills | ${timeStr} | ${entry.bossKills} bosses
+                </div>
+                <div class="score-build">
+                    ${date.toLocaleDateString()} ${date.toLocaleTimeString()}
+                </div>
+            `;
+            
+            this.scoreList.appendChild(div);
+        });
+    }
+
+    /**
+     * Show credits screen
+     */
+    showCredits() {
+        this.hideAllScreens();
+        if (this.creditsScreen) {
+            this.creditsScreen.classList.add('active');
+        }
+    }
+
+    /**
+     * Start menu starfield animation
+     */
+    startMenuStarfield() {
+        const canvas = this.menuStarfield;
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const stars = [];
+        const starCount = 150;
+        
+        // Initialize stars
+        for (let i = 0; i < starCount; i++) {
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: Math.random() * canvas.height,
+                speed: 0.2 + Math.random() * 0.8,
+                size: 1 + Math.random() * 2,
+                opacity: 0.3 + Math.random() * 0.7
+            });
+        }
+        
+        const animate = () => {
+            if (!this.mainMenu || !this.mainMenu.classList.contains('active')) {
+                this.menuStarfieldAnim = null;
+                return;
+            }
+            
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            stars.forEach(star => {
+                star.y += star.speed;
+                if (star.y > canvas.height) {
+                    star.y = 0;
+                    star.x = Math.random() * canvas.width;
+                }
+                
+                ctx.fillStyle = `rgba(0, 255, 255, ${star.opacity})`;
+                ctx.fillRect(star.x, star.y, star.size, star.size);
+            });
+            
+            this.menuStarfieldAnim = requestAnimationFrame(animate);
+        };
+        
+        this.menuStarfieldAnim = requestAnimationFrame(animate);
+    }
+
+    /**
+     * Stop menu starfield animation
+     */
+    stopMenuStarfield() {
+        if (this.menuStarfieldAnim) {
+            cancelAnimationFrame(this.menuStarfieldAnim);
+            this.menuStarfieldAnim = null;
+        }
+    }
+
+    /**
+     * Handle ESC key for pause/unpause
+     */
+    handleEscapeKey(event) {
+        if (event.key === 'Escape') {
+            const state = window.game?.gameState?.currentState;
+            
+            if (state === GameStates.RUNNING) {
+                this.showPauseMenu();
+            } else if (state === GameStates.PAUSED) {
+                this.hidePauseMenu();
+            }
+        }
+    }
+
+    /**
+     * Handle music volume change
+     * @param {number} value - Volume value (0-100)
+     */
+    onMusicVolumeChange(value) {
+        const audio = window.game?.audioManager;
+        if (audio) {
+            audio.setMusicVolume(value / 100);
+            if (this.musicValue) {
+                this.musicValue.textContent = value + '%';
+            }
+        }
+    }
+
+    /**
+     * Handle SFX volume change
+     * @param {number} value - Volume value (0-100)
+     */
+    onSfxVolumeChange(value) {
+        const audio = window.game?.audioManager;
+        if (audio) {
+            audio.setSfxVolume(value / 100);
+            if (this.sfxValue) {
+                this.sfxValue.textContent = value + '%';
+            }
+        }
+    }
+
+    /**
+     * Adjust music volume by delta
+     * @param {number} delta - Volume change amount
+     */
+    adjustMusicVolume(delta) {
+        const audio = window.game?.audioManager;
+        if (audio && this.musicSlider) {
+            const currentVol = parseInt(this.musicSlider.value);
+            const newVol = Math.max(0, Math.min(100, currentVol + delta));
+            this.musicSlider.value = newVol;
+            this.onMusicVolumeChange(newVol);
+        }
+    }
+
+    /**
+     * Adjust SFX volume by delta
+     * @param {number} delta - Volume change amount
+     */
+    adjustSfxVolume(delta) {
+        const audio = window.game?.audioManager;
+        if (audio && this.sfxSlider) {
+            const currentVol = parseInt(this.sfxSlider.value);
+            const newVol = Math.max(0, Math.min(100, currentVol + delta));
+            this.sfxSlider.value = newVol;
+            this.onSfxVolumeChange(newVol);
+        }
+    }
+
+    /**
+     * Handle mute toggle
+     * @param {boolean} muted - Mute state
+     */
+    onMuteToggle(muted) {
+        const audio = window.game?.audioManager;
+        if (audio) {
+            audio.setMuted(muted);
+        }
+    }
+
+    /**
+     * Handle options back button
+     */
+    onOptionsBack() {
+        if (this.optionsReturnScreen === 'pause') {
+            this.showPauseMenu();
+        } else {
+            this.showMainMenu();
+        }
+    }
+
+    /**
+     * Handle clear scores button
+     */
+    onClearScores() {
+        const saveManager = window.game?.saveManager;
+        if (saveManager && confirm('Are you sure you want to clear all scores?')) {
+            saveManager.clearScores();
+            this.renderScoreboard();
+        }
+    }
+
+    /**
+     * Handle quit to menu from pause
+     */
+    onQuitToMenu() {
+        this.hidePauseMenu();
+        this.hideHUD();
+        this.gameState.setState(GameStates.MENU);
+        this.showMainMenu();
+        
+        // Dispatch event for game to handle
+        const event = new CustomEvent('returnToMenu');
+        document.dispatchEvent(event);
     }
 
     /**
@@ -446,10 +913,16 @@ class UISystem {
      * Hide all screens
      */
     hideAllScreens() {
+        if (this.mainMenu) this.mainMenu.classList.remove('active');
         if (this.menuScreen) this.menuScreen.classList.remove('active');
         if (this.levelUpScreen) this.levelUpScreen.classList.remove('active');
         if (this.gameOverScreen) this.gameOverScreen.classList.remove('active');
         if (this.metaScreen) this.metaScreen.classList.remove('active');
+        if (this.pauseMenu) this.pauseMenu.classList.remove('active');
+        if (this.commandsScreen) this.commandsScreen.classList.remove('active');
+        if (this.optionsScreen) this.optionsScreen.classList.remove('active');
+        if (this.scoreboardScreen) this.scoreboardScreen.classList.remove('active');
+        if (this.creditsScreen) this.creditsScreen.classList.remove('active');
     }
 
     /**

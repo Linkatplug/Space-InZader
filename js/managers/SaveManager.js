@@ -6,6 +6,7 @@
 class SaveManager {
     constructor() {
         this.saveKey = 'spaceInZader_save';
+        this.scoreboardKey = 'spaceInZader_scoreboard';
         this.defaultSave = this.createDefaultSave();
     }
 
@@ -172,5 +173,91 @@ class SaveManager {
             };
             reader.readAsText(file);
         });
+    }
+
+    /**
+     * Add a score entry to the scoreboard
+     * @param {Object} entry - Score entry
+     * @param {number} entry.kills - Number of kills
+     * @param {number} entry.time - Survival time in seconds
+     * @param {number} entry.wave - Wave reached
+     * @param {string} entry.class - Ship class used
+     * @param {number} entry.bossKills - Number of bosses killed
+     * @param {Array} entry.weapons - Weapons used
+     * @param {Array} entry.passives - Passives acquired
+     */
+    addScoreEntry(entry) {
+        try {
+            const score = this.calculateScore(entry);
+            const scoreEntry = {
+                score,
+                kills: entry.kills,
+                time: entry.time,
+                wave: entry.wave,
+                class: entry.class,
+                date: new Date().toISOString(),
+                bossKills: entry.bossKills || 0,
+                weapons: entry.weapons || [],
+                passives: entry.passives || []
+            };
+
+            const scoreboard = this.getTopScores(100); // Keep top 100
+            scoreboard.push(scoreEntry);
+            scoreboard.sort((a, b) => b.score - a.score);
+            
+            // Keep only top 100
+            const top100 = scoreboard.slice(0, 100);
+            localStorage.setItem(this.scoreboardKey, JSON.stringify(top100));
+            
+            return scoreboard.indexOf(scoreEntry) + 1; // Return rank (1-based)
+        } catch (e) {
+            console.error('Error adding score entry:', e);
+            return -1;
+        }
+    }
+
+    /**
+     * Calculate score from run stats
+     * @param {Object} stats - Run statistics
+     * @returns {number} Calculated score
+     */
+    calculateScore(stats) {
+        return Math.floor(
+            stats.kills * 10 +
+            stats.wave * 500 +
+            Math.floor(stats.time) +
+            (stats.bossKills || 0) * 2000
+        );
+    }
+
+    /**
+     * Get top scores
+     * @param {number} limit - Number of scores to return
+     * @returns {Array} Array of score entries
+     */
+    getTopScores(limit = 10) {
+        try {
+            const saved = localStorage.getItem(this.scoreboardKey);
+            if (saved) {
+                const scores = JSON.parse(saved);
+                return scores.slice(0, limit);
+            }
+        } catch (e) {
+            console.error('Error loading scoreboard:', e);
+        }
+        return [];
+    }
+
+    /**
+     * Clear all scores from scoreboard
+     */
+    clearScoreboard() {
+        try {
+            localStorage.removeItem(this.scoreboardKey);
+            return true;
+        } catch (e) {
+            console.error('Error clearing scoreboard:', e);
+            return false;
+        }
     }
 }

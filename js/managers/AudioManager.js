@@ -13,12 +13,17 @@ class AudioManager {
         this.sounds = {};
         this.musicVolume = 0.5;
         this.sfxVolume = 0.7;
+        this.muted = false;
+        this.previousMasterVolume = 1.0;
         
         // Music theme system
         this.currentTheme = 'calm';
         this.musicPlaying = false;
         this.currentMelodyIndex = 0;
         this.crossfading = false;
+        
+        // Load settings from localStorage
+        this.loadSettings();
     }
 
     /**
@@ -53,9 +58,10 @@ class AudioManager {
      */
     setMusicVolume(volume) {
         this.musicVolume = Math.max(0, Math.min(1, volume));
-        if (this.musicGain) {
+        if (this.musicGain && !this.muted) {
             this.musicGain.gain.value = this.musicVolume;
         }
+        this.saveSettings();
     }
 
     /**
@@ -64,8 +70,62 @@ class AudioManager {
      */
     setSFXVolume(volume) {
         this.sfxVolume = Math.max(0, Math.min(1, volume));
-        if (this.sfxGain) {
+        if (this.sfxGain && !this.muted) {
             this.sfxGain.gain.value = this.sfxVolume;
+        }
+        this.saveSettings();
+    }
+
+    /**
+     * Mute or unmute all audio
+     * @param {boolean} muted - Whether to mute
+     */
+    setMute(muted) {
+        this.muted = muted;
+        if (this.masterGain) {
+            if (muted) {
+                this.previousMasterVolume = this.masterGain.gain.value;
+                this.masterGain.gain.value = 0;
+            } else {
+                this.masterGain.gain.value = this.previousMasterVolume;
+                // Restore individual volumes
+                if (this.musicGain) this.musicGain.gain.value = this.musicVolume;
+                if (this.sfxGain) this.sfxGain.gain.value = this.sfxVolume;
+            }
+        }
+        this.saveSettings();
+    }
+
+    /**
+     * Save audio settings to localStorage
+     */
+    saveSettings() {
+        try {
+            const settings = {
+                musicVolume: this.musicVolume,
+                sfxVolume: this.sfxVolume,
+                muted: this.muted
+            };
+            localStorage.setItem('spaceInZader_audioSettings', JSON.stringify(settings));
+        } catch (e) {
+            console.warn('Failed to save audio settings:', e);
+        }
+    }
+
+    /**
+     * Load audio settings from localStorage
+     */
+    loadSettings() {
+        try {
+            const saved = localStorage.getItem('spaceInZader_audioSettings');
+            if (saved) {
+                const settings = JSON.parse(saved);
+                this.musicVolume = settings.musicVolume || 0.5;
+                this.sfxVolume = settings.sfxVolume || 0.7;
+                this.muted = settings.muted || false;
+            }
+        } catch (e) {
+            console.warn('Failed to load audio settings:', e);
         }
     }
 
