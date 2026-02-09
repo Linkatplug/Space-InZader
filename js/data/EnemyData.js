@@ -36,7 +36,7 @@ const ENEMIES = {
   DRONE_BASIQUE: {
     id: 'drone_basique',
     name: 'Drone Basique',
-    health: 20,
+    health: 30,
     damage: 10,
     speed: 100,
     xpValue: 5,
@@ -54,7 +54,7 @@ const ENEMIES = {
   CHASSEUR_RAPIDE: {
     id: 'chasseur_rapide',
     name: 'Chasseur Rapide',
-    health: 12,
+    health: 18,
     damage: 15,
     speed: 180,
     xpValue: 8,
@@ -72,7 +72,7 @@ const ENEMIES = {
   TANK: {
     id: 'tank',
     name: 'Tank',
-    health: 80,
+    health: 120,
     damage: 20,
     speed: 60,
     xpValue: 15,
@@ -90,7 +90,7 @@ const ENEMIES = {
   TIREUR: {
     id: 'tireur',
     name: 'Tireur',
-    health: 25,
+    health: 35,
     damage: 8,
     speed: 80,
     xpValue: 12,
@@ -113,7 +113,7 @@ const ENEMIES = {
   ELITE: {
     id: 'elite',
     name: 'Élite',
-    health: 150,
+    health: 220,
     damage: 25,
     speed: 120,
     xpValue: 40,
@@ -138,7 +138,7 @@ const ENEMIES = {
   BOSS: {
     id: 'boss',
     name: 'Boss',
-    health: 1000,
+    health: 1500,
     damage: 40,
     speed: 90,
     xpValue: 200,
