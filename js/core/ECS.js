@@ -112,6 +112,11 @@ function createCollision(radius) {
     return { radius };
 }
 
+// Collider component (legacy alias)
+function createCollider(radius) {
+    return createCollision(radius);
+}
+
 // Renderable component
 function createRenderable(color, size, shape = 'circle') {
     return { 
@@ -120,6 +125,11 @@ function createRenderable(color, size, shape = 'circle') {
         shape,
         rotation: 0
     };
+}
+
+// Sprite component
+function createSprite(sprite = null) {
+    return { sprite };
 }
 
 // Player component
@@ -234,6 +244,6 @@ const Components = {
     Pickup: createPickup,
     Particle: createParticle,
     Boss: createBoss,
-    Sprite: (sprite) => ({ sprite }),
-    Collider: (radius) => ({ radius })
+    Sprite: createSprite,
+    Collider: createCollider
 };
