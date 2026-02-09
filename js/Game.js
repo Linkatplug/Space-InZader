@@ -39,6 +39,14 @@ class Game {
             wave: new WaveSystem(this.gameState)
         };
         
+        // Synergy system (initialized when game starts)
+        this.synergySystem = null;
+        
+        // Keystone and reroll tracking
+        this.keystonesOffered = new Set();
+        this.rerollsRemaining = 2;
+        this.levelsUntilRareGuarantee = 4;
+        
         // Set particle system reference in collision system
         this.systems.collision.particleSystem = this.systems.particle;
         
@@ -166,6 +174,17 @@ class Game {
                 }
             }
         });
+        
+        // Listen for reroll event
+        window.addEventListener('rerollBoosts', (e) => {
+            if (this.rerollsRemaining > 0) {
+                this.rerollsRemaining--;
+                const boosts = this.generateBoostOptions();
+                this.gameState.pendingBoosts = boosts;
+                this.systems.ui.showLevelUp(boosts, this.rerollsRemaining);
+                logger.info('Game', `Rerolled boosts, ${this.rerollsRemaining} rerolls remaining`);
+            }
+        });
 
         // Pause/Resume
         window.addEventListener('keydown', (e) => {
@@ -198,8 +217,17 @@ class Game {
         this.gameState.resetStats();
         this.gameState.setState(GameStates.RUNNING);
         
+        // Reset keystone and reroll tracking
+        this.keystonesOffered.clear();
+        this.rerollsRemaining = 2;
+        this.levelsUntilRareGuarantee = 4;
+        
         // Create player
         this.createPlayer();
+        
+        // Initialize synergy system
+        this.synergySystem = new SynergySystem(this.world, this.player);
+        this.world.particleSystem = this.systems.particle;
         
         // Reset systems
         this.systems.spawner.reset();
@@ -325,17 +353,30 @@ class Game {
             return;
         }
 
-        const passiveData = PassiveData.getPassiveData(passiveType);
+        // Check if it's a keystone (try KeystoneData first)
+        let passiveData = KeystoneData.getKeystone(passiveType);
+        let isKeystone = !!passiveData;
+        
+        if (!passiveData) {
+            passiveData = PassiveData.getPassiveData(passiveType);
+        }
+        
         if (!passiveData) {
             logger.error('Game', `Invalid passive: ${passiveType}`);
             return;
+        }
+        
+        // Track keystone acquisition
+        if (isKeystone) {
+            this.keystonesOffered.add(passiveType);
+            logger.info('Game', `Acquired keystone: ${passiveType}`);
         }
 
         // Check if passive already exists
         const existing = playerComp.passives.find(p => p.type === passiveType);
         if (existing) {
-            // Stack passive
-            if (existing.stacks < passiveData.maxStacks) {
+            // Stack passive (keystones can't stack)
+            if (!isKeystone && existing.stacks < passiveData.maxStacks) {
                 existing.stacks++;
                 logger.info('Game', `Stacked ${passiveType} to ${existing.stacks}`);
             } else {
@@ -346,7 +387,8 @@ class Game {
             playerComp.passives.push({
                 type: passiveType,
                 data: passiveData,
-                stacks: 1
+                stacks: 1,
+                id: passiveType
             });
             logger.info('Game', `Added passive: ${passiveType}`);
         }
@@ -381,6 +423,11 @@ class Game {
         for (const passive of playerComp.passives) {
             PassiveData.applyPassiveEffects(passive, playerComp.stats);
         }
+        
+        // Force synergy system to recalculate
+        if (this.synergySystem) {
+            this.synergySystem.forceRecalculate();
+        }
 
         console.log('Player stats recalculated:', playerComp.stats);
     }
@@ -406,9 +453,37 @@ class Game {
         if (!playerComp) return options;
 
         const luck = playerComp.stats.luck;
+        const shipData = ShipData.getShipData(this.gameState.selectedShip);
+        
+        // Check if we should offer keystone
+        const keystone = KeystoneData.getKeystoneForClass(shipData.id);
+        let keystoneOffered = false;
+        if (keystone && !this.keystonesOffered.has(keystone.id)) {
+            // 25% chance to offer keystone if not yet obtained
+            if (Math.random() < 0.25) {
+                options.push({
+                    type: 'passive',
+                    key: keystone.id,
+                    data: keystone,
+                    isKeystone: true
+                });
+                keystoneOffered = true;
+            }
+        }
+        
+        // Determine if rare guarantee applies
+        let forceRare = false;
+        if (this.levelsUntilRareGuarantee <= 0) {
+            forceRare = true;
+            this.levelsUntilRareGuarantee = 4;
+        } else {
+            this.levelsUntilRareGuarantee--;
+        }
 
-        for (let i = 0; i < 3; i++) {
-            const boost = this.selectRandomBoost(luck, options);
+        // Generate remaining options (3 total, or 2 if keystone offered)
+        const numOptions = keystoneOffered ? 2 : 3;
+        for (let i = 0; i < numOptions; i++) {
+            const boost = this.selectRandomBoost(luck, options, forceRare && i === 0);
             if (boost) {
                 options.push(boost);
             }
@@ -417,7 +492,7 @@ class Game {
         return options;
     }
 
-    selectRandomBoost(luck, existing) {
+    selectRandomBoost(luck, existing, forceRare = false) {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return null;
 
@@ -428,14 +503,18 @@ class Game {
         // Try rarities in order based on luck, with fallbacks
         const rarities = ['legendary', 'epic', 'rare', 'common'];
         
-        // Determine starting rarity based on luck
-        const roll = Math.random() + luck * 0.1;
+        // Determine starting rarity based on luck or force rare
         let startIndex;
-        
-        if (roll > 0.95) startIndex = 0; // legendary
-        else if (roll > 0.8) startIndex = 1; // epic
-        else if (roll > 0.5) startIndex = 2; // rare
-        else startIndex = 3; // common
+        if (forceRare) {
+            startIndex = 2; // Force rare or better
+        } else {
+            const roll = Math.random() + luck * 0.1;
+            
+            if (roll > 0.95) startIndex = 0; // legendary
+            else if (roll > 0.8) startIndex = 1; // epic
+            else if (roll > 0.5) startIndex = 2; // rare
+            else startIndex = 3; // common
+        }
 
         // Try each rarity starting from the rolled one
         for (let i = startIndex; i < rarities.length; i++) {
@@ -644,6 +723,11 @@ class Game {
         // Update wave system
         this.systems.wave.update(deltaTime);
         this.systems.spawner.setWaveNumber(this.systems.wave.getWaveNumber());
+        
+        // Update synergy system
+        if (this.synergySystem) {
+            this.synergySystem.update(deltaTime);
+        }
         
         // Update all systems
         this.systems.movement.update(deltaTime);

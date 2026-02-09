@@ -45,18 +45,18 @@ const SHIPS = {
     name: 'Vampire',
     description: 'Sustain through lifesteal and critical strikes',
     baseStats: {
-      maxHealth: 70,
+      maxHealth: 80,
       healthRegen: 0.0,
-      damageMultiplier: 1.15,
-      fireRateMultiplier: 0.95,
-      speed: 215,
+      damageMultiplier: 1.0,
+      fireRateMultiplier: 1.0,
+      speed: 220 * 1.05,
       armor: 0,
       lifesteal: 0.15,
-      critChance: 0.10,
-      critMultiplier: 1.75,
+      critChance: 0.05,
+      critMultiplier: 1.5,
       magnetRange: 100,
-      dashCooldown: 2.2,
-      luck: 0.1
+      dashCooldown: 2.5,
+      luck: 0.0
     },
     startingWeapon: 'rayon_vampirique',
     preferredTags: ['vampire', 'on_hit', 'on_kill', 'crit', 'regen'],
@@ -77,16 +77,16 @@ const SHIPS = {
     name: 'Gunner',
     description: 'High fire rate, overheat mechanics',
     baseStats: {
-      maxHealth: 80,
-      healthRegen: 0.3,
-      damageMultiplier: 0.85,
-      fireRateMultiplier: 1.35,
+      maxHealth: 100,
+      healthRegen: 0.0,
+      damageMultiplier: 1.0,
+      fireRateMultiplier: 1.2,
       speed: 220,
-      armor: 1,
+      armor: 0,
       lifesteal: 0.0,
-      critChance: 0.08,
+      critChance: 0.05,
       critMultiplier: 1.5,
-      magnetRange: 80,
+      magnetRange: 100,
       dashCooldown: 2.5,
       luck: 0.0
     },
@@ -109,17 +109,17 @@ const SHIPS = {
     name: 'Fortress',
     description: 'High armor and area control',
     baseStats: {
-      maxHealth: 200,
-      healthRegen: 0.5,
-      damageMultiplier: 0.9,
-      fireRateMultiplier: 0.85,
-      speed: 180,
-      armor: 10,
+      maxHealth: 160,
+      healthRegen: 0.0,
+      damageMultiplier: 1.0,
+      fireRateMultiplier: 1.0,
+      speed: 220 * 0.85,
+      armor: 4,
       lifesteal: 0.0,
-      critChance: 0.03,
-      critMultiplier: 1.3,
-      magnetRange: 70,
-      dashCooldown: 4.0,
+      critChance: 0.05,
+      critMultiplier: 1.5,
+      magnetRange: 100,
+      dashCooldown: 2.5,
       luck: 0.0
     },
     startingWeapon: 'laser_frontal',
@@ -141,18 +141,18 @@ const SHIPS = {
     name: 'Dead Eye',
     description: 'Critical hits and precision',
     baseStats: {
-      maxHealth: 85,
-      healthRegen: 0.2,
-      damageMultiplier: 1.25,
-      fireRateMultiplier: 0.75,
-      speed: 205,
+      maxHealth: 90,
+      healthRegen: 0.0,
+      damageMultiplier: 1.0,
+      fireRateMultiplier: 1.0,
+      speed: 220,
       armor: 0,
       lifesteal: 0.0,
-      critChance: 0.15,
-      critMultiplier: 3.0,
-      magnetRange: 90,
-      dashCooldown: 2.0,
-      luck: 0.15
+      critChance: 0.08,
+      critMultiplier: 1.7,
+      magnetRange: 100 * 1.25,
+      dashCooldown: 2.5,
+      luck: 0.0
     },
     startingWeapon: 'laser_frontal',
     preferredTags: ['crit', 'range', 'piercing', 'slow'],
@@ -173,27 +173,27 @@ const SHIPS = {
     name: 'Engineer',
     description: 'Summons and turrets',
     baseStats: {
-      maxHealth: 90,
-      healthRegen: 0.4,
-      damageMultiplier: 0.7,
-      fireRateMultiplier: 0.9,
-      speed: 190,
-      armor: 2,
+      maxHealth: 110,
+      healthRegen: 0.0,
+      damageMultiplier: 1.0,
+      fireRateMultiplier: 1.0,
+      speed: 220,
+      armor: 0,
       lifesteal: 0.0,
       critChance: 0.05,
       critMultiplier: 1.5,
-      magnetRange: 110,
-      dashCooldown: 3.2,
-      luck: 0.05
+      magnetRange: 100,
+      dashCooldown: 2.5,
+      luck: 0.0
     },
     startingWeapon: 'orbes_orbitaux',
-    preferredTags: ['summon', 'turret', 'aoe', 'utility'],
+    preferredTags: ['summon', 'turret', 'utility', 'aoe'],
     bannedTags: ['vampire', 'glass_cannon'],
     preferredWeapons: ['tourelle_drone', 'orbes_orbitaux'],
     preferredPassives: ['arsenal_orbital'],
     keystoneId: 'machine_network',
     unlocked: false,
-    unlockCondition: { type: 'wave', value: 15 },
+    unlockCondition: { type: 'wave_reached', wave: 15 },
     color: '#00FF88',
     secondaryColor: '#00DD66',
     difficulty: 'medium',
@@ -205,18 +205,18 @@ const SHIPS = {
     name: 'Berserker',
     description: 'Melee fury and speed',
     baseStats: {
-      maxHealth: 90,
-      healthRegen: 0.1,
-      damageMultiplier: 1.3,
-      fireRateMultiplier: 1.1,
-      speed: 240,
+      maxHealth: 85,
+      healthRegen: 0.0,
+      damageMultiplier: 1.0,
+      fireRateMultiplier: 1.0,
+      speed: 220 * 1.15,
       armor: 0,
-      lifesteal: 0.05,
-      critChance: 0.12,
-      critMultiplier: 2.0,
-      magnetRange: 60,
-      dashCooldown: 1.5,
-      luck: 0.05
+      lifesteal: 0.0,
+      critChance: 0.05,
+      critMultiplier: 1.5,
+      magnetRange: 100,
+      dashCooldown: 2.5,
+      luck: 0.0
     },
     startingWeapon: 'lame_tournoyante',
     preferredTags: ['berserk', 'melee', 'speed', 'on_hit'],
@@ -225,7 +225,7 @@ const SHIPS = {
     preferredPassives: ['fureur_combat', 'berserker', 'execution'],
     keystoneId: 'rage_engine',
     unlocked: false,
-    unlockCondition: { type: 'blood_crit_count', value: 5 },
+    unlockCondition: { type: 'die_with_tags_count', tagsAnyOf: ['vampire', 'crit'], minCount: 5 },
     color: '#FF4444',
     secondaryColor: '#CC0000',
     difficulty: 'hard',
@@ -333,10 +333,15 @@ function isShipUnlocked(shipId, playerProgress) {
   if (!condition) return true;
   
   switch (condition.type) {
-    case 'wave':
-      return playerProgress.maxWave >= condition.value;
-    case 'blood_crit_count':
-      return playerProgress.bloodCritCount >= condition.value;
+    case 'wave_reached':
+      return playerProgress.maxWave >= condition.wave;
+    case 'die_with_tags_count':
+      const tagCount = playerProgress.dieWithTagsCounts || {};
+      let count = 0;
+      condition.tagsAnyOf.forEach(tag => {
+        count += tagCount[tag] || 0;
+      });
+      return count >= condition.minCount;
     default:
       return false;
   }
