@@ -82,29 +82,49 @@ class World {
 }
 
 /**
- * Common Components
+ * Common Component Factory Functions
+ * These functions create component data objects for entities
+ * Note: Kept as global functions for backward compatibility
  */
-const Components = {
-    Position: (x, y) => ({ x, y }),
-    Velocity: (vx, vy) => ({ vx, vy }),
-    
-    Health: (current, max) => ({ 
+
+// Position component
+function createPosition(x, y) {
+    return { x, y };
+}
+
+// Velocity component
+function createVelocity(vx, vy) {
+    return { vx, vy };
+}
+
+// Health component
+function createHealth(current, max) {
+    return { 
         current, 
         max,
         invulnerable: false,
         invulnerableTime: 0
-    }),
-    
-    Collision: (radius) => ({ radius }),
-    
-    Renderable: (color, size, shape = 'circle') => ({ 
+    };
+}
+
+// Collision component
+function createCollision(radius) {
+    return { radius };
+}
+
+// Renderable component
+function createRenderable(color, size, shape = 'circle') {
+    return { 
         color, 
         size, 
         shape,
         rotation: 0
-    }),
-    
-    Player: () => ({ 
+    };
+}
+
+// Player component
+function createPlayer() {
+    return { 
         speed: 250,
         level: 1,
         xp: 0,
@@ -125,9 +145,12 @@ const Components = {
             projectileSpeed: 1,
             range: 1
         }
-    }),
-    
-    Enemy: (aiType, baseHealth, damage, speed, xpValue) => ({ 
+    };
+}
+
+// Enemy component
+function createEnemy(aiType, baseHealth, damage, speed, xpValue) {
+    return { 
         aiType,
         baseHealth,
         damage,
@@ -135,18 +158,24 @@ const Components = {
         xpValue,
         attackCooldown: 0,
         target: null
-    }),
-    
-    Weapon: (type, level, data) => ({
+    };
+}
+
+// Weapon component
+function createWeapon(type, level, data) {
+    return {
         type,
         level,
         data,
         cooldown: 0,
         currentAmmo: data.ammo || Infinity,
         evolved: false
-    }),
-    
-    Projectile: (damage, speed, lifetime, owner, weaponType) => ({
+    };
+}
+
+// Projectile component
+function createProjectile(damage, speed, lifetime, owner, weaponType) {
+    return {
         damage,
         speed,
         lifetime,
@@ -155,28 +184,37 @@ const Components = {
         weaponType,
         piercing: 0,
         homing: false
-    }),
-    
-    Pickup: (type, value) => ({
+    };
+}
+
+// Pickup component
+function createPickup(type, value) {
+    return {
         type, // 'xp', 'health', 'noyaux'
         value,
         magnetRange: 150,
         collected: false
-    }),
-    
-    Particle: (lifetime, vx, vy, decay = 0.98) => ({
+    };
+}
+
+// Particle component
+function createParticle(lifetime, vx, vy, decay = 0.98) {
+    return {
         lifetime,
         maxLifetime: lifetime,
         vx,
         vy,
         decay,
         alpha: 1
-    }),
-    
-    Boss: (phase, patterns) => ({
+    };
+}
+
+// Boss component
+function createBoss(phase, patterns) {
+    return {
         phase,
         patterns,
         phaseTime: 0,
         nextPhaseHealth: 0.5
-    })
-};
+    };
+}

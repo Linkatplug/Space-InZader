@@ -3,8 +3,6 @@
  * @description Handles collision detection between entities
  */
 
-const BOSS_SIZE_THRESHOLD = 35;
-
 class CollisionSystem {
     constructor(world, gameState, audioManager, particleSystem = null) {
         this.world = world;

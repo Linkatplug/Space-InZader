@@ -3,8 +3,6 @@
  * @description Main game class that coordinates all systems and manages game loop
  */
 
-const BOSS_SIZE_THRESHOLD = 35;
-
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
