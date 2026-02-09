@@ -496,6 +496,7 @@ class Game {
         }
 
         // Recalculate stats
+        const health = this.player.getComponent('health');
         console.log(`Before recalculate - HP: ${health ? health.current + '/' + health.max : 'N/A'}`);
         this.recalculatePlayerStats();
         
