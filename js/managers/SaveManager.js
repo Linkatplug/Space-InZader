@@ -11,6 +11,9 @@ class SaveManager {
     }
 
     createDefaultSave() {
+        const weapons = this.buildWeaponUnlocks();
+        const passives = this.buildPassiveUnlocks();
+
         return {
             version: '1.0.0',
             meta: {
@@ -39,7 +42,20 @@ class SaveManager {
                 engineer: { unlocked: false },
                 berserker: { unlocked: false }
             },
-            weapons: {
+            weapons,
+            passives,
+            settings: {
+                musicVolume: 0.5,
+                sfxVolume: 0.7,
+                showFPS: false
+            },
+            achievements: []
+        };
+    }
+
+    buildWeaponUnlocks() {
+        if (typeof WeaponData === 'undefined' || !WeaponData.WEAPONS) {
+            return {
                 laser_frontal: { unlocked: true },
                 mitraille: { unlocked: true },
                 missiles_guides: { unlocked: true },
@@ -49,8 +65,31 @@ class SaveManager {
                 arc_electrique: { unlocked: false },
                 tourelle_drone: { unlocked: false },
                 lame_tournoyante: { unlocked: true }
-            },
-            passives: {
+            };
+        }
+
+        const weapons = {};
+        Object.values(WeaponData.WEAPONS).forEach((weapon) => {
+            weapons[weapon.id] = { unlocked: true };
+        });
+
+        const lockedWeapons = ['mines', 'arc_electrique', 'tourelle_drone'];
+        lockedWeapons.forEach((weaponId) => {
+            if (weapons[weaponId]) {
+                weapons[weaponId].unlocked = false;
+            }
+        });
+
+        if (!weapons.lame_tournoyante) {
+            weapons.lame_tournoyante = { unlocked: true };
+        }
+
+        return weapons;
+    }
+
+    buildPassiveUnlocks() {
+        if (typeof PassiveData === 'undefined' || !PassiveData.PASSIVES) {
+            return {
                 surchauffe: { unlocked: true },
                 radiateur: { unlocked: true },
                 sang_froid: { unlocked: true },
@@ -61,14 +100,22 @@ class SaveManager {
                 plating: { unlocked: true },
                 reacteur: { unlocked: true },
                 chance: { unlocked: false }
-            },
-            settings: {
-                musicVolume: 0.5,
-                sfxVolume: 0.7,
-                showFPS: false
-            },
-            achievements: []
-        };
+            };
+        }
+
+        const passives = {};
+        Object.values(PassiveData.PASSIVES).forEach((passive) => {
+            passives[passive.id] = { unlocked: true };
+        });
+
+        const lockedPassives = ['coeur_noir', 'bobines_tesla', 'focaliseur', 'mag_tractor', 'chance'];
+        lockedPassives.forEach((passiveId) => {
+            if (passives[passiveId]) {
+                passives[passiveId].unlocked = false;
+            }
+        });
+
+        return passives;
     }
 
     load() {

@@ -526,7 +526,7 @@ class Game {
             const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
                 const weapon = WeaponData.WEAPONS[key];
                 const saveWeapon = this.saveData.weapons?.[weapon.id];
-                if (saveWeapon && !saveWeapon.unlocked) return false;
+                if (!saveWeapon || !saveWeapon.unlocked) return false;
                 if (weapon.rarity !== rarity) return false;
                 
                 // Check if weapon already at max level
@@ -549,7 +549,7 @@ class Game {
             const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
                 const passive = PassiveData.PASSIVES[key];
                 const savePassive = this.saveData.passives?.[passive.id];
-                if (savePassive && !savePassive.unlocked) return false;
+                if (!savePassive || !savePassive.unlocked) return false;
                 if (passive.rarity !== rarity) return false;
                 
                 // Check if passive already at maxStacks
