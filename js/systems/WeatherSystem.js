@@ -89,7 +89,8 @@ class WeatherSystem {
         
         this.activeEvent = selectedEvent;
         this.showingWarning = true;
-        this.warningTimer = 2.0; // 2 second warning
+        // Longer warning for black holes (4s) to give players time to react
+        this.warningTimer = selectedEvent.type === 'black_hole' ? 4.0 : 2.0;
         
         // Play warning sound
         this.audioManager.playSFX('warning');
@@ -205,13 +206,20 @@ class WeatherSystem {
                 
                 if (distance < this.blackHolePullRadius && distance > 0) {
                     // Calculate pull force (stronger when closer)
-                    const pullStrength = (1 - distance / this.blackHolePullRadius) * 300;
+                    // Gentler initial pull - ramp up over 2 seconds
+                    const eventAge = blackHoleComp.age || 0;
+                    const pullMultiplier = Math.min(eventAge / 2.0, 1.0); // 0 to 1 over 2 seconds
+                    const basePullStrength = (1 - distance / this.blackHolePullRadius) * 300;
+                    const pullStrength = basePullStrength * (0.3 + 0.7 * pullMultiplier); // 30% min, 100% max
                     const pullX = (dx / distance) * pullStrength * deltaTime;
                     const pullY = (dy / distance) * pullStrength * deltaTime;
                     
                     // Apply pull to player velocity
                     playerVel.vx += pullX;
                     playerVel.vy += pullY;
+                    
+                    // Track age for pull ramping
+                    blackHoleComp.age = eventAge + deltaTime;
                     
                     // Damage if too close
                     if (distance < this.blackHoleDamageRadius) {

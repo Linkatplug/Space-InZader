@@ -496,7 +496,13 @@ class Game {
         }
 
         // Recalculate stats
+        console.log(`Before recalculate - HP: ${health ? health.current + '/' + health.max : 'N/A'}`);
         this.recalculatePlayerStats();
+        
+        // Log after recalculation to verify
+        if (health) {
+            console.log(`After recalculate - HP: ${health.current}/${health.max}`);
+        }
     }
 
     recalculatePlayerStats() {
@@ -552,6 +558,8 @@ class Game {
             const baseMaxHP = shipData.baseStats.maxHealth + metaHealth;
             const hpMultiplier = playerComp.stats.maxHealthMultiplier || 1;
             const newMaxHP = Math.floor(baseMaxHP * hpMultiplier);
+            
+            console.log(`HP Calculation: base=${baseMaxHP}, multiplier=${hpMultiplier}, new=${newMaxHP}`);
             
             // Preserve HP ratio
             const hpRatio = oldMaxHP > 0 ? oldCurrentHP / oldMaxHP : 1;
