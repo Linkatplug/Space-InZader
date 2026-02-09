@@ -13,6 +13,12 @@ class AudioManager {
         this.sounds = {};
         this.musicVolume = 0.5;
         this.sfxVolume = 0.7;
+        
+        // Music theme system
+        this.currentTheme = 'calm';
+        this.musicPlaying = false;
+        this.currentMelodyIndex = 0;
+        this.crossfading = false;
     }
 
     /**
@@ -299,6 +305,7 @@ class AudioManager {
         
         this.musicPlaying = true;
         this.currentMelodyIndex = 0;
+        this.currentTheme = 'calm'; // Start with calm theme
         this.playMusicLoop();
     }
 
@@ -318,61 +325,161 @@ class AudioManager {
     }
 
     /**
-     * Play continuous background music loop with variations
+     * Set music theme with crossfade
+     * @param {string} theme - Theme name ('calm', 'action', 'boss')
+     */
+    setMusicTheme(theme) {
+        if (!['calm', 'action', 'boss'].includes(theme)) {
+            console.warn('Invalid music theme:', theme);
+            return;
+        }
+        
+        if (this.currentTheme === theme || this.crossfading) return;
+        
+        logger.info('Audio', `Switching music theme: ${this.currentTheme} -> ${theme}`);
+        
+        // Crossfade: reduce current volume, change theme, restore volume
+        if (this.musicGain && this.initialized) {
+            this.crossfading = true;
+            const currentTime = this.context.currentTime;
+            const fadeDuration = 1.5;
+            
+            // Fade out
+            this.musicGain.gain.linearRampToValueAtTime(0.01, currentTime + fadeDuration);
+            
+            // Change theme and fade in
+            setTimeout(() => {
+                this.currentTheme = theme;
+                this.currentMelodyIndex = 0; // Reset melody index
+                
+                if (this.musicGain && this.context) {
+                    const nowTime = this.context.currentTime;
+                    this.musicGain.gain.setValueAtTime(0.01, nowTime);
+                    this.musicGain.gain.linearRampToValueAtTime(this.musicVolume, nowTime + fadeDuration);
+                }
+                
+                this.crossfading = false;
+            }, fadeDuration * 1000);
+        } else {
+            this.currentTheme = theme;
+        }
+    }
+
+    /**
+     * Get melodies for the current theme
+     * @returns {Array} Array of melody phrases
+     */
+    getThemeMelodies() {
+        const noteDur = 0.2;
+        const longDur = noteDur * 2;
+        
+        const themes = {
+            calm: [
+                // Calm 1: Gentle ascending
+                [
+                    { freq: 262, dur: longDur },     // C4
+                    { freq: 294, dur: noteDur },     // D4
+                    { freq: 330, dur: noteDur },     // E4
+                    { freq: 349, dur: longDur },     // F4
+                    { freq: 330, dur: noteDur },     // E4
+                    { freq: 294, dur: noteDur },     // D4
+                    { freq: 262, dur: longDur }      // C4
+                ],
+                // Calm 2: Ambient waves
+                [
+                    { freq: 392, dur: longDur },     // G4
+                    { freq: 349, dur: noteDur },     // F4
+                    { freq: 330, dur: noteDur },     // E4
+                    { freq: 294, dur: longDur },     // D4
+                    { freq: 330, dur: noteDur },     // E4
+                    { freq: 349, dur: noteDur },     // F4
+                    { freq: 392, dur: longDur }      // G4
+                ]
+            ],
+            action: [
+                // Action 1: Fast ascending arpeggio
+                [
+                    { freq: 262, dur: noteDur * 0.8 },  // C4
+                    { freq: 330, dur: noteDur * 0.8 },  // E4
+                    { freq: 392, dur: noteDur * 0.8 },  // G4
+                    { freq: 523, dur: noteDur * 0.8 },  // C5
+                    { freq: 392, dur: noteDur * 0.8 },  // G4
+                    { freq: 330, dur: noteDur * 0.8 },  // E4
+                    { freq: 294, dur: noteDur * 0.8 },  // D4
+                    { freq: 330, dur: noteDur * 0.8 }   // E4
+                ],
+                // Action 2: Intense rhythm
+                [
+                    { freq: 523, dur: noteDur * 0.6 },  // C5
+                    { freq: 494, dur: noteDur * 0.6 },  // B4
+                    { freq: 523, dur: noteDur * 0.6 },  // C5
+                    { freq: 587, dur: noteDur },        // D5
+                    { freq: 523, dur: noteDur * 0.6 },  // C5
+                    { freq: 494, dur: noteDur * 0.6 },  // B4
+                    { freq: 440, dur: noteDur },        // A4
+                    { freq: 392, dur: noteDur }         // G4
+                ],
+                // Action 3: Power chords
+                [
+                    { freq: 330, dur: noteDur * 0.7 },  // E4
+                    { freq: 330, dur: noteDur * 0.7 },  // E4
+                    { freq: 392, dur: noteDur * 0.7 },  // G4
+                    { freq: 440, dur: noteDur },        // A4
+                    { freq: 392, dur: noteDur * 0.7 },  // G4
+                    { freq: 392, dur: noteDur * 0.7 },  // G4
+                    { freq: 330, dur: noteDur * 0.7 },  // E4
+                    { freq: 294, dur: noteDur }         // D4
+                ]
+            ],
+            boss: [
+                // Boss 1: Ominous low tones
+                [
+                    { freq: 131, dur: longDur },        // C3
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 131, dur: noteDur },        // C3
+                    { freq: 117, dur: longDur },        // A#2
+                    { freq: 131, dur: noteDur },        // C3
+                    { freq: 147, dur: noteDur },        // D3
+                    { freq: 165, dur: longDur }         // E3
+                ],
+                // Boss 2: Epic rising tension
+                [
+                    { freq: 196, dur: noteDur },        // G3
+                    { freq: 220, dur: noteDur },        // A3
+                    { freq: 247, dur: noteDur },        // B3
+                    { freq: 262, dur: longDur },        // C4
+                    { freq: 247, dur: noteDur },        // B3
+                    { freq: 220, dur: noteDur },        // A3
+                    { freq: 196, dur: longDur }         // G3
+                ],
+                // Boss 3: Dramatic
+                [
+                    { freq: 262, dur: noteDur * 0.7 },  // C4
+                    { freq: 233, dur: noteDur * 0.7 },  // A#3
+                    { freq: 196, dur: noteDur * 0.7 },  // G3
+                    { freq: 175, dur: longDur },        // F3
+                    { freq: 196, dur: noteDur * 0.7 },  // G3
+                    { freq: 233, dur: noteDur * 0.7 },  // A#3
+                    { freq: 262, dur: longDur }         // C4
+                ]
+            ]
+        };
+        
+        return themes[this.currentTheme] || themes.calm;
+    }
+
+    /**
+     * Play continuous background music loop with theme variations
      */
     playMusicLoop() {
         if (!this.musicPlaying || !this.initialized) return;
 
         const now = this.context.currentTime;
-        const noteDuration = 0.2;
         
-        // Multiple melodic phrases to avoid repetition
-        const melodies = [
-            // Phrase 1: Ascending arpeggio
-            [
-                { freq: 262, dur: noteDuration },      // C4
-                { freq: 330, dur: noteDuration },      // E4
-                { freq: 392, dur: noteDuration },      // G4
-                { freq: 523, dur: noteDuration },      // C5
-                { freq: 392, dur: noteDuration },      // G4
-                { freq: 330, dur: noteDuration },      // E4
-                { freq: 294, dur: noteDuration },      // D4
-                { freq: 330, dur: noteDuration }       // E4
-            ],
-            // Phrase 2: Descending pattern
-            [
-                { freq: 523, dur: noteDuration },      // C5
-                { freq: 494, dur: noteDuration },      // B4
-                { freq: 440, dur: noteDuration },      // A4
-                { freq: 392, dur: noteDuration },      // G4
-                { freq: 440, dur: noteDuration },      // A4
-                { freq: 392, dur: noteDuration },      // G4
-                { freq: 330, dur: noteDuration },      // E4
-                { freq: 262, dur: noteDuration }       // C4
-            ],
-            // Phrase 3: Rhythmic bounce
-            [
-                { freq: 392, dur: noteDuration },      // G4
-                { freq: 330, dur: noteDuration },      // E4
-                { freq: 392, dur: noteDuration },      // G4
-                { freq: 330, dur: noteDuration },      // E4
-                { freq: 349, dur: noteDuration },      // F4
-                { freq: 294, dur: noteDuration },      // D4
-                { freq: 349, dur: noteDuration },      // F4
-                { freq: 294, dur: noteDuration }       // D4
-            ],
-            // Phrase 4: Spacey ambience
-            [
-                { freq: 262, dur: noteDuration * 2 },  // C4 (long)
-                { freq: 349, dur: noteDuration },      // F4
-                { freq: 392, dur: noteDuration },      // G4
-                { freq: 466, dur: noteDuration * 2 },  // A#4 (long)
-                { freq: 392, dur: noteDuration },      // G4
-                { freq: 330, dur: noteDuration }       // E4
-            ]
-        ];
-
-        // Rotate through melodies for variety
+        // Get melodies for current theme
+        const melodies = this.getThemeMelodies();
+        
+        // Rotate through melodies for variety (no immediate repetition)
         const melody = melodies[this.currentMelodyIndex];
         this.currentMelodyIndex = (this.currentMelodyIndex + 1) % melodies.length;
 
@@ -381,11 +488,14 @@ class AudioManager {
             const osc = this.context.createOscillator();
             const gain = this.context.createGain();
             
-            osc.type = 'square';
+            // Different waveform for boss theme
+            osc.type = this.currentTheme === 'boss' ? 'sawtooth' : 'square';
             osc.frequency.setValueAtTime(note.freq, time);
             
+            // Volume envelope
+            const vol = this.currentTheme === 'boss' ? 0.06 : 0.04;
             gain.gain.setValueAtTime(0, time);
-            gain.gain.linearRampToValueAtTime(0.04, time + 0.01);  // Slightly quieter
+            gain.gain.linearRampToValueAtTime(vol, time + 0.01);
             gain.gain.linearRampToValueAtTime(0, time + note.dur);
             
             osc.connect(gain);

@@ -486,6 +486,42 @@ class Game {
         return null;
     }
 
+    /**
+     * Update music theme based on game intensity
+     */
+    updateMusicTheme() {
+        if (!this.audioManager || !this.audioManager.initialized) return;
+
+        const enemies = this.world.getEntitiesByType('enemy');
+        const enemyCount = enemies.length;
+        const gameTime = this.gameState.gameTime;
+        
+        // Count boss/elite enemies
+        const bosses = enemies.filter(e => {
+            const enemyComp = e.getComponent('enemy');
+            return enemyComp && (enemyComp.type === 'boss' || enemyComp.type === 'elite');
+        });
+        
+        // Determine theme based on game state
+        let targetTheme = 'calm';
+        
+        if (bosses.length > 0) {
+            // Boss or elite present -> boss theme
+            targetTheme = 'boss';
+        } else if (enemyCount > 20 || gameTime > 180) {
+            // Many enemies or late game -> action theme
+            targetTheme = 'action';
+        } else if (enemyCount > 10 || gameTime > 60) {
+            // Some action -> action theme
+            targetTheme = 'action';
+        }
+        
+        // Switch theme if different (AudioManager handles crossfade)
+        if (this.audioManager.currentTheme !== targetTheme) {
+            this.audioManager.setMusicTheme(targetTheme);
+        }
+    }
+
     applyBoost(boost) {
         if (!boost) return;
 
