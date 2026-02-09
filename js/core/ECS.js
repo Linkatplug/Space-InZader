@@ -220,13 +220,21 @@ function createBoss(phase, patterns) {
 }
 
 // === Backward compatibility Components wrapper ===
-// DO NOT REMOVE: used by Game.createPlayer and systems
+// DO NOT REMOVE: used by Game.createPlayer and legacy systems
 const Components = {
-    Position: (x, y) => ({ x, y }),
-    Velocity: (vx, vy) => ({ vx, vy }),
-    Health: (current, max) => ({ current, max }),
+    Position: (x, y) => createPosition(x, y),
+    Velocity: (vx, vy) => createVelocity(vx, vy),
+    Health: (current, max) => createHealth(current, max),
+    Collision: (radius) => createCollision(radius),
+    Renderable: (color, size, shape = 'circle') => createRenderable(color, size, shape),
+    Player: () => createPlayer(),
+    Enemy: (aiType, baseHealth, damage, speed, xpValue) => createEnemy(aiType, baseHealth, damage, speed, xpValue),
+    Weapon: (type, level, data) => createWeapon(type, level, data),
+    Projectile: (damage, speed, lifetime, owner, weaponType) => createProjectile(damage, speed, lifetime, owner, weaponType),
+    Pickup: (type, value) => createPickup(type, value),
+    Particle: (lifetime, vx, vy, decay = 0.98) => createParticle(lifetime, vx, vy, decay),
+    Boss: (phase, patterns) => createBoss(phase, patterns),
+    // Legacy aliases (if needed)
     Sprite: (sprite) => ({ sprite }),
-    Collider: (radius) => ({ radius }),
-    Weapon: (id) => ({ id }),
-    Player: () => ({})
+    Collider: (radius) => createCollision(radius)
 };
