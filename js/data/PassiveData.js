@@ -1387,7 +1387,8 @@ function applyPassiveEffects(passive, stats) {
     } else if (effectKey === 'speedMultiplier') {
       stats.speed = (stats.speed || 1) * (1 + totalValue);
     } else if (effectKey === 'maxHealthMultiplier') {
-      stats.maxHealth = (stats.maxHealth || 1) * (1 + totalValue);
+      // Accumulate multiplier for HP calculation (base stats vs derived stats)
+      stats.maxHealthMultiplier = (stats.maxHealthMultiplier || 1) * (1 + totalValue);
     } else if (effectKey === 'rangeMultiplier') {
       stats.range = (stats.range || 1) * (1 + totalValue);
     } else if (effectKey === 'projectileSpeedMultiplier') {

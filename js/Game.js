@@ -12,6 +12,8 @@ const DEFAULT_STATS = {
     speed: 1,
     speedMultiplier: 1,
     maxHealth: 1,
+    maxHealthMultiplier: 1,
+    maxHealthAdd: 0,
     armor: 0,
     lifesteal: 0,
     healthRegen: 0,
@@ -553,21 +555,33 @@ class Game {
             PassiveData.applyPassiveEffects(passive, playerComp.stats);
         }
         
-        // Recalculate max HP with ratio preservation
+        // Recalculate max HP using base stats vs derived stats formula
         if (health) {
+            // Store old values
+            const oldMax = health.max;
+            const oldCurrent = health.current;
+            const ratio = oldMax > 0 ? oldCurrent / oldMax : 1;
+            
+            // Calculate base max HP (ship stats + meta upgrades)
             const metaHealth = this.saveData.upgrades.maxHealth * 10;
             const baseMaxHP = shipData.baseStats.maxHealth + metaHealth;
+            
+            // Get multiplier and flat additions from passives
             const hpMultiplier = playerComp.stats.maxHealthMultiplier || 1;
-            const newMaxHP = Math.floor(baseMaxHP * hpMultiplier);
+            const hpAdd = playerComp.stats.maxHealthAdd || 0;
             
-            console.log(`HP Calculation: base=${baseMaxHP}, multiplier=${hpMultiplier}, new=${newMaxHP}`);
+            // Calculate new max: floor(baseMaxHP * hpMultiplier + hpAdd), minimum 1
+            const newMax = Math.max(1, Math.floor(baseMaxHP * hpMultiplier + hpAdd));
             
-            // Preserve HP ratio
-            const hpRatio = oldMaxHP > 0 ? oldCurrentHP / oldMaxHP : 1;
-            health.max = Math.max(1, newMaxHP);
-            health.current = Math.max(1, Math.min(Math.ceil(health.max * hpRatio), health.max));
+            console.log(`HP Calculation: base=${baseMaxHP}, multiplier=${hpMultiplier}, add=${hpAdd}, newMax=${newMax}`);
             
-            console.log(`Max HP recalculated: ${oldMaxHP} -> ${health.max}, Current: ${oldCurrentHP} -> ${health.current}`);
+            // Apply new max
+            health.max = newMax;
+            
+            // Adjust current HP: clamp(ceil(newMax * ratio), 1, newMax)
+            health.current = Math.max(1, Math.min(Math.ceil(newMax * ratio), newMax));
+            
+            console.log(`Max HP recalculated: ${oldMax} -> ${health.max}, Current: ${oldCurrent} -> ${health.current}`);
         }
         
         // Update shield component based on stats with ratio preservation
