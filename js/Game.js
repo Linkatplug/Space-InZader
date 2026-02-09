@@ -274,7 +274,7 @@ class Game {
         const playerComp = Components.Player();
         playerComp.speed = shipData.baseStats.speed;
         playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
-        playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier;
+        playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier * BASE_FIRE_RATE_MULTIPLIER;
         playerComp.stats.speed = shipData.baseStats.speed / 200; // Normalize speed
         playerComp.stats.maxHealth = 1;
         playerComp.stats.critChance = shipData.baseStats.critChance;
@@ -407,7 +407,7 @@ class Game {
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 
         playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
-        playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier;
+        playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier * BASE_FIRE_RATE_MULTIPLIER;
         playerComp.stats.speed = shipData.baseStats.speed / 200; // Normalize speed
         playerComp.stats.critChance = shipData.baseStats.critChance;
         playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
@@ -499,7 +499,7 @@ class Game {
         const bannedTags = shipData.bannedTags || [];
         
         // Try rarities in order based on luck, with fallbacks
-        const rarities = ['legendary', 'epic', 'rare', 'common'];
+        const rarities = ['legendary', 'epic', 'rare', 'uncommon', 'common'];
         
         // Determine starting rarity based on luck or force rare
         let startIndex;
@@ -510,8 +510,9 @@ class Game {
             
             if (roll > 0.95) startIndex = 0; // legendary
             else if (roll > 0.8) startIndex = 1; // epic
-            else if (roll > 0.5) startIndex = 2; // rare
-            else startIndex = 3; // common
+            else if (roll > 0.6) startIndex = 2; // rare
+            else if (roll > 0.35) startIndex = 3; // uncommon
+            else startIndex = 4; // common
         }
 
         // Try each rarity starting from the rolled one
@@ -524,8 +525,8 @@ class Game {
             // Get available weapons with tag filtering
             const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
                 const weapon = WeaponData.WEAPONS[key];
-                const saveWeapon = this.saveData.weapons[weapon.id];
-                if (!saveWeapon || !saveWeapon.unlocked) return false;
+                const saveWeapon = this.saveData.weapons?.[weapon.id];
+                if (saveWeapon && !saveWeapon.unlocked) return false;
                 if (weapon.rarity !== rarity) return false;
                 
                 // Check if weapon already at max level
@@ -547,8 +548,8 @@ class Game {
             // Get available passives with tag filtering
             const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
                 const passive = PassiveData.PASSIVES[key];
-                const savePassive = this.saveData.passives[passive.id];
-                if (!savePassive || !savePassive.unlocked) return false;
+                const savePassive = this.saveData.passives?.[passive.id];
+                if (savePassive && !savePassive.unlocked) return false;
                 if (passive.rarity !== rarity) return false;
                 
                 // Check if passive already at maxStacks

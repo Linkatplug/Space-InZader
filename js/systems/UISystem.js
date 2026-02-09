@@ -18,6 +18,7 @@ class UISystem {
         // Rarity colors
         this.rarityColors = {
             common: '#888',
+            uncommon: '#44ff88',
             rare: '#4488ff',
             epic: '#aa44ff',
             legendary: '#ffaa00'

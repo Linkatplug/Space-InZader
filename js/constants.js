@@ -9,6 +9,7 @@ const BOSS_SIZE_THRESHOLD = 35;
 // Game balance constants
 const BASE_XP_TO_LEVEL = 100;
 const XP_SCALING_FACTOR = 1.5;
+const BASE_FIRE_RATE_MULTIPLIER = 0.8;
 
 // Difficulty scaling
 const DIFFICULTY_TIME_MULTIPLIER = 0.15;
