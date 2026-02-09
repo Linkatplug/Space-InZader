@@ -184,12 +184,34 @@ class Game {
             }
         });
 
-        // Pause/Resume
+        // Pause/Resume with ESC key
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.gameState.isState(GameStates.RUNNING)) {
-                this.pauseGame();
-            } else if (e.key === 'Escape' && this.gameState.isState(GameStates.PAUSED)) {
-                this.resumeGame();
+            if (e.key === 'Escape') {
+                // Check if we're in a sub-screen (commands or options)
+                const uiSystem = this.systems?.ui;
+                if (uiSystem) {
+                    // If commands screen is active, go back to pause menu
+                    if (uiSystem.isScreenActive('commandsScreen')) {
+                        uiSystem.showPauseMenu();
+                        return;
+                    }
+                    // If options screen is active, go back based on return screen
+                    if (uiSystem.isScreenActive('optionsScreen')) {
+                        if (uiSystem.optionsReturnScreen === 'pause') {
+                            uiSystem.showPauseMenu();
+                        } else {
+                            uiSystem.showMainMenu();
+                        }
+                        return;
+                    }
+                }
+                
+                // Normal pause/resume logic
+                if (this.gameState.isState(GameStates.RUNNING)) {
+                    this.pauseGame();
+                } else if (this.gameState.isState(GameStates.PAUSED)) {
+                    this.resumeGame();
+                }
             }
         });
 

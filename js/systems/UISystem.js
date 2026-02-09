@@ -218,9 +218,6 @@ class UISystem {
         if (this.creditsBackBtn) {
             this.creditsBackBtn.addEventListener('click', () => this.showMainMenu());
         }
-
-        // ESC key for pause/unpause
-        document.addEventListener('keydown', (e) => this.handleEscapeKey(e));
     }
 
     /**
@@ -603,17 +600,18 @@ class UISystem {
 
     /**
      * Handle ESC key for pause/unpause
+     * NOTE: ESC key handling is now done in Game.js to properly handle sub-screens
      */
-    handleEscapeKey(event) {
-        if (event.key === 'Escape') {
-            const state = window.game?.gameState?.currentState;
-            
-            if (state === GameStates.RUNNING) {
-                this.showPauseMenu();
-            } else if (state === GameStates.PAUSED) {
-                this.hidePauseMenu();
-            }
-        }
+    // handleEscapeKey method removed - handled in Game.js
+
+    /**
+     * Check if a screen is currently active
+     * @param {string} screenId - ID of the screen to check
+     * @returns {boolean}
+     */
+    isScreenActive(screenId) {
+        const screen = document.getElementById(screenId);
+        return screen ? screen.classList.contains('active') : false;
     }
 
     /**
