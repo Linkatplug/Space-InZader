@@ -321,6 +321,9 @@ class UISystem {
         
         // Update synergy display
         this.updateSynergyDisplay();
+        
+        // Update weather warning
+        this.updateWeatherWarning();
     }
     
     /**
@@ -1382,5 +1385,59 @@ class UISystem {
         this.hideHUD();
         // Reset controls flag for new game
         this.controlsShownThisGame = false;
+    }
+    
+    /**
+     * Update weather warning display
+     */
+    updateWeatherWarning() {
+        if (!window.game || !window.game.systems || !window.game.systems.weather) return;
+        
+        const warningText = window.game.systems.weather.getWarningText();
+        
+        // Get or create warning element
+        let warningEl = document.getElementById('weatherWarning');
+        if (!warningEl) {
+            warningEl = document.createElement('div');
+            warningEl.id = 'weatherWarning';
+            warningEl.style.cssText = `
+                position: absolute;
+                top: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(255, 0, 0, 0.8);
+                border: 2px solid #ff0000;
+                padding: 15px 30px;
+                border-radius: 5px;
+                font-size: 24px;
+                font-weight: bold;
+                color: #fff;
+                text-shadow: 0 0 10px #ff0000;
+                animation: pulse 0.5s infinite alternate;
+                z-index: 1000;
+                display: none;
+            `;
+            document.getElementById('gameCanvas').parentElement.appendChild(warningEl);
+            
+            // Add CSS animation if not exists
+            if (!document.getElementById('weatherWarningStyle')) {
+                const style = document.createElement('style');
+                style.id = 'weatherWarningStyle';
+                style.textContent = `
+                    @keyframes pulse {
+                        from { opacity: 0.7; }
+                        to { opacity: 1.0; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+        
+        if (warningText) {
+            warningEl.textContent = warningText;
+            warningEl.style.display = 'block';
+        } else {
+            warningEl.style.display = 'none';
+        }
     }
 }

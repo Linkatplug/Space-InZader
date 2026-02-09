@@ -23,6 +23,9 @@ class CollisionSystem {
         
         // Check player-enemy projectile collisions
         this.checkPlayerProjectileCollisions();
+        
+        // Check weather hazard collisions
+        this.checkWeatherHazardCollisions();
     }
 
     checkProjectileEnemyCollisions() {
@@ -457,6 +460,94 @@ class CollisionSystem {
         // Trigger level up screen
         if (window.game) {
             window.game.triggerLevelUp();
+        }
+    }
+    
+    /**
+     * Check collisions between player and weather hazards (meteors, black holes)
+     */
+    checkWeatherHazardCollisions() {
+        const player = this.world.getEntitiesByType('player')[0];
+        if (!player) return;
+        
+        const playerPos = player.getComponent('position');
+        const playerCol = player.getComponent('collision');
+        
+        if (!playerPos || !playerCol) return;
+        
+        // Check meteor collisions
+        const meteors = this.world.getEntitiesByType('meteor');
+        for (const meteor of meteors) {
+            const meteorPos = meteor.getComponent('position');
+            const meteorCol = meteor.getComponent('collision');
+            const meteorComp = meteor.getComponent('meteor');
+            
+            if (!meteorPos || !meteorCol || !meteorComp) continue;
+            
+            // Check if meteor hit bottom of screen
+            if (meteorPos.y > this.world.canvas?.height + 50) {
+                this.world.removeEntity(meteor.id);
+                continue;
+            }
+            
+            // Check collision with player
+            if (MathUtils.circleCollision(
+                playerPos.x, playerPos.y, playerCol.radius,
+                meteorPos.x, meteorPos.y, meteorCol.radius
+            )) {
+                // Damage player
+                this.damagePlayer(player, meteorComp.damage, 'meteor');
+                
+                // Create explosion effect
+                if (this.particleSystem) {
+                    this.particleSystem.createExplosion(
+                        meteorPos.x,
+                        meteorPos.y,
+                        meteorComp.size,
+                        '#8B4513',
+                        25
+                    );
+                }
+                
+                // Play impact sound
+                if (this.audioManager && this.audioManager.initialized) {
+                    this.audioManager.playSFX('explosion', 1.2);
+                }
+                
+                // Screen shake
+                if (this.screenEffects) {
+                    this.screenEffects.shake(6, 0.2);
+                }
+                
+                // Remove meteor
+                this.world.removeEntity(meteor.id);
+            }
+        }
+        
+        // Check black hole collisions
+        const blackHoles = this.world.getEntitiesByType('black_hole');
+        for (const blackHole of blackHoles) {
+            const blackHolePos = blackHole.getComponent('position');
+            const blackHoleCol = blackHole.getComponent('collision');
+            const blackHoleComp = blackHole.getComponent('black_hole');
+            
+            if (!blackHolePos || !blackHoleCol || !blackHoleComp) continue;
+            
+            const distance = MathUtils.distance(
+                playerPos.x, playerPos.y,
+                blackHolePos.x, blackHolePos.y
+            );
+            
+            // Damage if within damage radius
+            if (distance < blackHoleComp.damageRadius) {
+                // Apply damage over time
+                this.damagePlayer(player, blackHoleComp.damage, 'black_hole');
+                
+                // Visual feedback
+                if (this.screenEffects) {
+                    this.screenEffects.flash('#9400D3', 0.2, 0.1);
+                }
+            }
         }
     }
 }

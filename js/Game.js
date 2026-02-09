@@ -34,7 +34,8 @@ class Game {
             pickup: new PickupSystem(this.world, this.gameState),
             render: new RenderSystem(this.canvas, this.world, this.gameState),
             ui: new UISystem(this.world, this.gameState),
-            wave: new WaveSystem(this.gameState)
+            wave: new WaveSystem(this.gameState),
+            weather: new WeatherSystem(this.world, this.canvas, this.audioManager)
         };
         
         // Synergy system (initialized when game starts)
@@ -256,6 +257,7 @@ class Game {
         this.systems.spawner.reset();
         this.systems.render.reset();
         this.systems.wave.reset();
+        this.systems.weather.reset();
         this.screenEffects.reset();
         
         // Hide menu, show game
@@ -785,6 +787,7 @@ class Game {
         this.systems.movement.update(deltaTime);
         this.systems.ai.update(deltaTime);
         this.systems.combat.update(deltaTime);
+        this.systems.weather.update(deltaTime);
         this.systems.collision.update(deltaTime);
         
         // Update spawner with wave spawn permission
