@@ -637,10 +637,10 @@
                 <div class="main-menu-container">
                     <h1 class="game-title">SPACE INZADER</h1>
                     <div class="main-menu-buttons">
-                        <button class="menu-btn" id="playBtn">PLAY</button>
-                        <button class="menu-btn" id="scoreboardBtn">SCOREBOARD</button>
+                        <button class="menu-btn" id="playBtn">JOUER</button>
+                        <button class="menu-btn" id="scoreboardBtn">CLASSEMENT</button>
                         <button class="menu-btn" id="optionsBtn">OPTIONS</button>
-                        <button class="menu-btn" id="creditsBtn">CREDITS</button>
+                        <button class="menu-btn" id="creditsBtn">CRÉDITS</button>
                     </div>
                     <div class="menu-footer">
                         <div>v1.0 | ESC = Pause</div>
@@ -652,21 +652,21 @@
 
             <!-- Ship Selection -->
             <div class="menu-screen" id="menuScreen">
-                <h1 class="title">SELECT YOUR CLASS</h1>
+                <h1 class="title">SÉLECTIONNEZ VOTRE CLASSE</h1>
                 <div class="ship-selection" id="shipSelection"></div>
-                <button class="button" id="startButton">START GAME</button>
-                <button class="button" id="backToMainBtn">BACK</button>
+                <button class="button" id="startButton">COMMENCER</button>
+                <button class="button" id="backToMainBtn">RETOUR</button>
             </div>
 
             <!-- Pause Menu -->
             <div id="pauseMenu" class="screen overlay">
                 <div class="pause-container">
-                    <h2>PAUSED</h2>
+                    <h2>PAUSE</h2>
                     <div class="main-menu-buttons">
-                        <button class="menu-btn" id="resumeBtn">RESUME</button>
-                        <button class="menu-btn" id="commandsBtn">COMMANDS</button>
+                        <button class="menu-btn" id="resumeBtn">REPRENDRE</button>
+                        <button class="menu-btn" id="commandsBtn">COMMANDES</button>
                         <button class="menu-btn" id="pauseOptionsBtn">OPTIONS</button>
-                        <button class="menu-btn" id="quitBtn">QUIT TO MENU</button>
+                        <button class="menu-btn" id="quitBtn">QUITTER AU MENU</button>
                     </div>
                 </div>
             </div>
@@ -674,14 +674,14 @@
             <!-- Commands Screen -->
             <div id="commandsScreen" class="screen overlay">
                 <div class="commands-container">
-                    <h2>COMMANDS</h2>
+                    <h2>COMMANDES</h2>
                     <div class="command-list">
-                        <div>WASD / ZQSD - Move</div>
-                        <div>Auto-fire at enemies</div>
+                        <div>WASD / ZQSD - Déplacer</div>
+                        <div>Tir automatique sur les ennemis</div>
                         <div>ESC - Pause</div>
-                        <div>Mouse - Navigate menus</div>
+                        <div>Souris - Naviguer dans les menus</div>
                     </div>
-                    <button class="menu-btn" id="commandsBackBtn">BACK</button>
+                    <button class="menu-btn" id="commandsBackBtn">RETOUR</button>
                 </div>
             </div>
 
@@ -690,35 +690,35 @@
                 <div class="options-container">
                     <h2>OPTIONS</h2>
                     <div class="option-row">
-                        <label>Music Volume</label>
+                        <label>Volume Musique</label>
                         <button class="vol-btn" id="musicDown">-</button>
                         <input type="range" id="musicSlider" min="0" max="100" value="50">
                         <button class="vol-btn" id="musicUp">+</button>
                         <span id="musicValue">50%</span>
                     </div>
                     <div class="option-row">
-                        <label>SFX Volume</label>
+                        <label>Volume Effets</label>
                         <button class="vol-btn" id="sfxDown">-</button>
                         <input type="range" id="sfxSlider" min="0" max="100" value="50">
                         <button class="vol-btn" id="sfxUp">+</button>
                         <span id="sfxValue">50%</span>
                     </div>
                     <div class="option-row">
-                        <label>Mute All</label>
+                        <label>Tout Couper</label>
                         <input type="checkbox" id="muteToggle">
                     </div>
-                    <button class="menu-btn" id="optionsBackBtn">BACK</button>
+                    <button class="menu-btn" id="optionsBackBtn">RETOUR</button>
                 </div>
             </div>
 
             <!-- Scoreboard Screen -->
             <div id="scoreboardScreen" class="screen">
                 <div class="scoreboard-container">
-                    <h2>TOP RUNS</h2>
+                    <h2>MEILLEURS SCORES</h2>
                     <div id="scoreList" class="score-list"></div>
                     <div class="main-menu-buttons">
-                        <button class="menu-btn" id="clearScoresBtn">CLEAR SCORES</button>
-                        <button class="menu-btn" id="scoreboardBackBtn">BACK</button>
+                        <button class="menu-btn" id="clearScoresBtn">EFFACER SCORES</button>
+                        <button class="menu-btn" id="scoreboardBackBtn">RETOUR</button>
                     </div>
                 </div>
             </div>
@@ -726,21 +726,21 @@
             <!-- Credits Screen -->
             <div id="creditsScreen" class="screen overlay">
                 <div class="commands-container">
-                    <h2>CREDITS</h2>
+                    <h2>CRÉDITS</h2>
                     <div class="command-list">
-                        <div>Created by: Space InZader Team</div>
-                        <div>Engine: JavaScript + Canvas</div>
+                        <div>Créé par: Space InZader Team</div>
+                        <div>Moteur: JavaScript + Canvas</div>
                         <div>Audio: Web Audio API</div>
                         <div>Version: 1.0</div>
                     </div>
-                    <button class="menu-btn" id="creditsBackBtn">BACK</button>
+                    <button class="menu-btn" id="creditsBackBtn">RETOUR</button>
                 </div>
             </div>
 
             <!-- Level Up Screen -->
             <div class="level-up-screen" id="levelUpScreen">
-                <h2 class="title" style="font-size: 36px;">LEVEL UP!</h2>
-                <p style="font-size: 20px; margin-bottom: 20px;">Choose one upgrade:</p>
+                <h2 class="title" style="font-size: 36px;">NIVEAU SUPÉRIEUR !</h2>
+                <p style="font-size: 20px; margin-bottom: 20px;">Choisissez une amélioration :</p>
                 <div class="boost-options" id="boostOptions"></div>
             </div>
 
@@ -748,20 +748,20 @@
             <div class="game-over-screen" id="gameOverScreen">
                 <h2 class="title" style="font-size: 48px;">GAME OVER</h2>
                 <div class="stats-panel" id="endStats"></div>
-                <button class="button" id="returnMenuButton">RETURN TO MENU</button>
+                <button class="button" id="returnMenuButton">RETOUR AU MENU</button>
             </div>
 
             <!-- Meta Progression Screen -->
             <div class="meta-screen" id="metaScreen">
-                <h2 class="title" style="font-size: 36px;">UPGRADES</h2>
+                <h2 class="title" style="font-size: 36px;">AMÉLIORATIONS</h2>
                 <div class="stats-panel" id="metaUpgrades"></div>
-                <button class="button" id="backToMenuButton">BACK TO MENU</button>
-                <button class="button" id="metaButton">UPGRADES</button>
+                <button class="button" id="backToMenuButton">RETOUR AU MENU</button>
+                <button class="button" id="metaButton">AMÉLIORATIONS</button>
             </div>
 
             <!-- In-Game HUD -->
             <div class="hud hud-top-left" id="hudTopLeft">
-                <div>Time: <span id="timeDisplay">0:00</span></div>
+                <div>Temps: <span id="timeDisplay">0:00</span></div>
             </div>
             <div class="hud hud-top-center" id="hudTopCenter">
                 <div>Kills: <span id="killsDisplay">0</span> | Score: <span id="scoreDisplay">0</span></div>
@@ -770,14 +770,14 @@
                 <div class="health-bar">
                     <div class="health-fill" id="healthFill"></div>
                 </div>
-                <div style="margin-top: 5px;">HP: <span id="hpDisplay">100/100</span></div>
+                <div style="margin-top: 5px;">PV: <span id="hpDisplay">100/100</span></div>
                 <div class="shield-bar" id="shieldBar" style="display: none;">
                     <div class="shield-fill" id="shieldFill"></div>
                 </div>
-                <div id="shieldDisplay" style="margin-top: 3px; display: none;">SHIELD: <span id="shieldValue">0/0</span></div>
+                <div id="shieldDisplay" style="margin-top: 3px; display: none;">BOUCLIER: <span id="shieldValue">0/0</span></div>
             </div>
             <div class="hud hud-bottom-center" id="hudBottomCenter">
-                <div>Level: <span id="levelDisplay">1</span></div>
+                <div>Niveau: <span id="levelDisplay">1</span></div>
                 <div class="xp-bar">
                     <div class="xp-fill" id="xpFill"></div>
                 </div>
