@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>JS Test</title>
+</head>
+<body>
+    <h1>Loading Scripts...</h1>
+    <div id="status"></div>
+    
+    <script>
+        const status = document.getElementById('status');
+        
+        function log(msg) {
+            console.log(msg);
+            status.innerHTML += msg + '<br>';
+        }
+        
+        log('Starting...');
+        window.addEventListener('DOMContentLoaded', () => {
+            log('DOMContentLoaded fired');
+        });
+    </script>
+    
+    <script src="js/utils/Math.js"></script>
+    <script>log('Math.js loaded');</script>
+    
+    <script src="js/core/ECS.js"></script>
+    <script>log('ECS.js loaded');</script>
+    
+    <script src="js/core/GameState.js"></script>
+    <script>log('GameState.js loaded');</script>
+    
+    <script src="js/data/WeaponData.js"></script>
+    <script>log('WeaponData.js loaded, keys: ' + Object.keys(WeaponData || {}).join(', '));</script>
+    
+    <script src="js/data/PassiveData.js"></script>
+    <script>log('PassiveData.js loaded');</script>
+    
+    <script src="js/data/ShipData.js"></script>
+    <script>log('ShipData.js loaded');</script>
+    
+    <script src="js/data/EnemyData.js"></script>
+    <script>log('EnemyData.js loaded');</script>
+    
+    <script>
+        log('All data loaded successfully!');
+        if (typeof WeaponData !== 'undefined') {
+            log('WeaponData is available');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test New Weapons and Passives</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a1a;
+            color: #00ffff;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #00ffff;
+            border-radius: 5px;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .weapon, .passive {
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(0, 255, 255, 0.1);
+        }
+        .malus {
+            color: #ff6666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Space InZader - New Content Test</h1>
+    
+    <div class="test-section">
+        <h2>Weapon Data Validation</h2>
+        <div id="weaponTests"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Passive Data Validation</h2>
+        <div id="passiveTests"></div>
+    </div>
+    
+    <script src="js/data/WeaponData.js"></script>
+    <script src="js/data/PassiveData.js"></script>
+    <script>
+        // Test new weapons
+        const newWeapons = [
+            'RAILGUN',
+            'LANCE_FLAMMES',
+            'CANON_GRAVITATIONNEL',
+            'TOURELLE_AUTONOME',
+            'LAMES_FANTOMES',
+            'DRONE_KAMIKAZE'
+        ];
+        
+        // Test new passives
+        const newPassives = [
+            'BLOOD_PACT',
+            'INFINITE_HUNGER',
+            'UNSTABLE_CANNON',
+            'DEVASTATING_CRIT',
+            'OVERHEATED_ENGINE',
+            'UNSTABLE_FUSION',
+            'SLOW_FIELD',
+            'TUNNEL_VISION',
+            'HEAVY_SHELL',
+            'REACTIVE_SHIELD',
+            'ALL_OR_NOTHING',
+            'LAST_BREATH'
+        ];
+        
+        const weaponTestsDiv = document.getElementById('weaponTests');
+        const passiveTestsDiv = document.getElementById('passiveTests');
+        
+        // Test weapons
+        let weaponsPassed = 0;
+        let weaponsFailed = 0;
+        
+        newWeapons.forEach(weaponKey => {
+            const weapon = WEAPONS[weaponKey];
+            const div = document.createElement('div');
+            div.className = 'weapon';
+            
+            if (weapon) {
+                weaponsPassed++;
+                div.innerHTML = `
+                    <span class="success">✓</span> <strong>${weapon.name}</strong> (${weapon.rarity})
+                    <br>ID: ${weapon.id}
+                    <br>Type: ${weapon.type}
+                    <br>Tags: ${weapon.tags.join(', ')}
+                    <br>Base Damage: ${weapon.baseDamage}, Fire Rate: ${weapon.fireRate}
+                    ${weapon.malus ? '<br><span class="malus">Maluses: ' + JSON.stringify(weapon.malus) + '</span>' : ''}
+                `;
+            } else {
+                weaponsFailed++;
+                div.innerHTML = `<span class="error">✗</span> ${weaponKey} - NOT FOUND`;
+            }
+            
+            weaponTestsDiv.appendChild(div);
+        });
+        
+        // Test passives
+        let passivesPassed = 0;
+        let passivesFailed = 0;
+        
+        newPassives.forEach(passiveKey => {
+            const passive = PASSIVES[passiveKey];
+            const div = document.createElement('div');
+            div.className = 'passive';
+            
+            if (passive) {
+                passivesPassed++;
+                div.innerHTML = `
+                    <span class="success">✓</span> <strong>${passive.name}</strong> ${passive.icon} (${passive.rarity})
+                    <br>ID: ${passive.id}
+                    <br>Tags: ${passive.tags.join(', ')}
+                    <br>Effects: ${JSON.stringify(passive.effects)}
+                    <br>Max Stacks: ${passive.maxStacks}
+                `;
+            } else {
+                passivesFailed++;
+                div.innerHTML = `<span class="error">✗</span> ${passiveKey} - NOT FOUND`;
+            }
+            
+            passiveTestsDiv.appendChild(div);
+        });
+        
+        // Summary
+        const summary = document.createElement('div');
+        summary.className = 'test-section';
+        summary.innerHTML = `
+            <h2>Test Summary</h2>
+            <p><strong>Weapons:</strong> ${weaponsPassed} passed, ${weaponsFailed} failed</p>
+            <p><strong>Passives:</strong> ${passivesPassed} passed, ${passivesFailed} failed</p>
+            <p class="${(weaponsFailed === 0 && passivesFailed === 0) ? 'success' : 'error'}">
+                <strong>${(weaponsFailed === 0 && passivesFailed === 0) ? '✓ ALL TESTS PASSED!' : '✗ SOME TESTS FAILED'}</strong>
+            </p>
+        `;
+        document.body.insertBefore(summary, document.body.firstChild);
+        
+        console.log('Weapons test:', weaponsPassed, 'passed', weaponsFailed, 'failed');
+        console.log('Passives test:', passivesPassed, 'passed', passivesFailed, 'failed');
+    </script>
+</body>
+</html>
