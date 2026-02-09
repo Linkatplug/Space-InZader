@@ -111,6 +111,15 @@ class UISystem {
         this.shieldDisplay = document.getElementById('shieldDisplay');
         this.shieldValue = document.getElementById('shieldValue');
         
+        // Stats display elements
+        this.statDamage = document.getElementById('statDamage');
+        this.statFireRate = document.getElementById('statFireRate');
+        this.statSpeed = document.getElementById('statSpeed');
+        this.statArmor = document.getElementById('statArmor');
+        this.statLifesteal = document.getElementById('statLifesteal');
+        this.statRegen = document.getElementById('statRegen');
+        this.statCrit = document.getElementById('statCrit');
+        
         // Weapon and passive status elements
         this.weaponList = document.getElementById('weaponList');
         this.passiveList = document.getElementById('passiveList');
@@ -270,6 +279,18 @@ class UISystem {
             this.levelDisplay.textContent = playerComp.level;
             const xpPercent = (playerComp.xp / playerComp.xpRequired) * 100;
             this.xpFill.style.width = `${Math.min(100, xpPercent)}%`;
+            
+            // Update real-time stats display
+            if (playerComp.stats) {
+                const stats = playerComp.stats;
+                this.statDamage.textContent = `${Math.round(stats.damageMultiplier * 100)}%`;
+                this.statFireRate.textContent = `${Math.round(stats.fireRateMultiplier * 100)}%`;
+                this.statSpeed.textContent = `${Math.round(stats.speed)}`;
+                this.statArmor.textContent = `${Math.round(stats.armor)}`;
+                this.statLifesteal.textContent = `${Math.round(stats.lifesteal * 100)}%`;
+                this.statRegen.textContent = `${stats.healthRegen.toFixed(1)}/s`;
+                this.statCrit.textContent = `${Math.round(stats.critChance * 100)}%`;
+            }
         }
 
         if (health) {
@@ -1296,22 +1317,22 @@ class UISystem {
     showWaveAnnouncement(waveNumber) {
         const announcement = document.createElement('div');
         announcement.style.position = 'fixed';
-        announcement.style.top = '50%';
+        announcement.style.top = '20%';  // Moved up from center
         announcement.style.left = '50%';
         announcement.style.transform = 'translate(-50%, -50%)';
-        announcement.style.padding = '40px 80px';
-        announcement.style.background = 'rgba(10, 10, 26, 0.98)';
-        announcement.style.border = '4px solid #00FFFF';
-        announcement.style.borderRadius = '20px';
+        announcement.style.padding = '15px 40px';  // Reduced from 40px 80px
+        announcement.style.background = 'rgba(0, 0, 0, 0.4)';  // Much more transparent
+        announcement.style.border = '2px solid rgba(0, 255, 255, 0.6)';  // Thinner, semi-transparent
+        announcement.style.borderRadius = '10px';
         announcement.style.color = '#00FFFF';
-        announcement.style.fontSize = '72px';
+        announcement.style.fontSize = '36px';  // Reduced from 72px
         announcement.style.fontWeight = 'bold';
-        announcement.style.textShadow = '0 0 30px #00FFFF, 0 0 60px #00FFFF';
+        announcement.style.textShadow = '0 0 15px #00FFFF';  // Reduced glow
         announcement.style.zIndex = '2000';
         announcement.style.pointerEvents = 'none';
         announcement.style.opacity = '0';
         announcement.style.transition = 'opacity 0.3s ease-in';
-        announcement.textContent = `WAVE ${waveNumber}`;
+        announcement.textContent = `VAGUE ${waveNumber}`;  // French: WAVE → VAGUE
 
         document.getElementById('ui').appendChild(announcement);
 
@@ -1320,12 +1341,12 @@ class UISystem {
             announcement.style.opacity = '1';
         }, 50);
 
-        // Hold and fade out
+        // Hold and fade out (faster)
         setTimeout(() => {
-            announcement.style.transition = 'opacity 0.5s ease-out';
+            announcement.style.transition = 'opacity 0.4s ease-out';
             announcement.style.opacity = '0';
-            setTimeout(() => announcement.remove(), 500);
-        }, 2000);
+            setTimeout(() => announcement.remove(), 400);
+        }, 1500);  // Reduced from 2000ms to 1500ms
         
         // Show controls on wave 1 only
         if (waveNumber === 1 && !this.controlsShownThisGame) {
