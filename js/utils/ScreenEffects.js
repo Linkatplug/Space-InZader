@@ -100,11 +100,11 @@ class ScreenEffects {
     }
 
     /**
-     * Get current shake offset
+     * Get current shake offset (returns direct reference for performance)
      * @returns {{x: number, y: number}} Shake offset
      */
     getShakeOffset() {
-        return { ...this.shakeOffset };
+        return this.shakeOffset;
     }
 
     /**

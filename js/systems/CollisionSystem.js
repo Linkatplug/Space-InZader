@@ -3,6 +3,8 @@
  * @description Handles collision detection between entities
  */
 
+const BOSS_SIZE_THRESHOLD = 35;
+
 class CollisionSystem {
     constructor(world, gameState, audioManager, particleSystem = null) {
         this.world = world;
@@ -192,7 +194,7 @@ class CollisionSystem {
         this.gameState.stats.damageDealt += damage;
         
         // Check if this is a boss (large size)
-        const isBoss = renderable && renderable.size >= 35;
+        const isBoss = renderable && renderable.size >= BOSS_SIZE_THRESHOLD;
         
         // Apply lifesteal if attacker is player
         if (attacker && attacker.type === 'player') {

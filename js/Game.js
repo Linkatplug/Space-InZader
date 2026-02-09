@@ -3,6 +3,8 @@
  * @description Main game class that coordinates all systems and manages game loop
  */
 
+const BOSS_SIZE_THRESHOLD = 35;
+
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
@@ -513,10 +515,10 @@ class Game {
         const enemyCount = enemies.length;
         const gameTime = this.gameState.stats.time;
         
-        // Count boss/elite enemies (size >= 35 is boss)
+        // Count boss/elite enemies (size >= BOSS_SIZE_THRESHOLD is boss)
         const bosses = enemies.filter(e => {
             const renderable = e.getComponent('renderable');
-            return renderable && renderable.size >= 35;
+            return renderable && renderable.size >= BOSS_SIZE_THRESHOLD;
         });
         
         // Determine theme based on game state
