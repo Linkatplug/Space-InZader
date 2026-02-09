@@ -422,6 +422,8 @@ class Game {
         if (!playerComp) return null;
 
         const shipData = ShipData.getShipData(this.gameState.selectedShip);
+        const preferredTags = shipData.preferredTags || [];
+        const bannedTags = shipData.bannedTags || [];
         
         // Try rarities in order based on luck, with fallbacks
         const rarities = ['legendary', 'epic', 'rare', 'common'];
@@ -439,7 +441,10 @@ class Game {
         for (let i = startIndex; i < rarities.length; i++) {
             const rarity = rarities[i];
             
-            // Get available weapons (60% preferred, 40% global)
+            // 60% chance to use preferred tags, 40% for global pool
+            const usePreferred = Math.random() < 0.6;
+            
+            // Get available weapons with tag filtering
             const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
                 const weapon = WeaponData.WEAPONS[key];
                 const saveWeapon = this.saveData.weapons[weapon.id];
@@ -450,15 +455,19 @@ class Game {
                 const existing = playerComp.weapons.find(w => w.type === weapon.id);
                 if (existing && existing.level >= weapon.maxLevel) return false;
                 
-                // 60% chance for preferred weapons, 40% for all weapons
-                if (shipData.preferredWeapons && shipData.preferredWeapons.includes(weapon.id)) {
-                    return Math.random() < 0.85; // Higher chance for preferred
-                } else {
-                    return Math.random() < 0.4; // Lower chance for non-preferred
+                // Filter by banned tags
+                const hasBannedTag = weapon.tags?.some(t => bannedTags.includes(t));
+                if (hasBannedTag) return false;
+                
+                // If using preferred tags, check for match
+                if (usePreferred) {
+                    return weapon.tags?.some(t => preferredTags.includes(t));
                 }
+                
+                return true;
             });
 
-            // Get available passives (60% preferred, 40% global)
+            // Get available passives with tag filtering
             const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
                 const passive = PassiveData.PASSIVES[key];
                 const savePassive = this.saveData.passives[passive.id];
@@ -469,12 +478,16 @@ class Game {
                 const existing = playerComp.passives.find(p => p.id === passive.id);
                 if (existing && existing.stacks >= passive.maxStacks) return false;
                 
-                // 60% chance for preferred passives, 40% for all passives
-                if (shipData.preferredPassives && shipData.preferredPassives.includes(passive.id)) {
-                    return Math.random() < 0.85; // Higher chance for preferred
-                } else {
-                    return Math.random() < 0.4; // Lower chance for non-preferred
+                // Filter by banned tags
+                const hasBannedTag = passive.tags?.some(t => bannedTags.includes(t));
+                if (hasBannedTag) return false;
+                
+                // If using preferred tags, check for match
+                if (usePreferred) {
+                    return passive.tags?.some(t => preferredTags.includes(t));
                 }
+                
+                return true;
             });
 
             const all = [

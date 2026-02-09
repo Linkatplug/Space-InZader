@@ -19,7 +19,9 @@ class SaveManager {
                 totalPlaytime: 0,
                 runsCompleted: 0,
                 highestLevel: 1,
-                bossesDefeated: 0
+                bossesDefeated: 0,
+                maxWave: 0,
+                bloodCritCount: 0
             },
             upgrades: {
                 maxHealth: 0,        // +10 HP per level
@@ -30,20 +32,23 @@ class SaveManager {
                 banishUnlock: false  // Unlock banish in level-up
             },
             ships: {
-                defenseur: { unlocked: true },
+                vampire: { unlocked: true },
                 mitrailleur: { unlocked: true },
-                equilibre: { unlocked: true },
-                vampire: { unlocked: false } // Unlock with Noyaux
+                tank: { unlocked: true },
+                sniper: { unlocked: true },
+                engineer: { unlocked: false },
+                berserker: { unlocked: false }
             },
             weapons: {
                 laser_frontal: { unlocked: true },
                 mitraille: { unlocked: true },
                 missiles_guides: { unlocked: true },
                 orbes_orbitaux: { unlocked: true },
-                rayon_vampirique: { unlocked: false },
+                rayon_vampirique: { unlocked: true },
                 mines: { unlocked: false },
                 arc_electrique: { unlocked: false },
-                tourelle_drone: { unlocked: false }
+                tourelle_drone: { unlocked: false },
+                lame_tournoyante: { unlocked: true }
             },
             passives: {
                 surchauffe: { unlocked: true },
@@ -135,6 +140,9 @@ class SaveManager {
         saveData.meta.totalPlaytime += gameStats.time;
         saveData.meta.runsCompleted++;
         saveData.meta.highestLevel = Math.max(saveData.meta.highestLevel, gameStats.highestLevel);
+        saveData.meta.maxWave = Math.max(saveData.meta.maxWave || 0, gameStats.wave || 0);
+        saveData.meta.bossesDefeated += gameStats.bossKills || 0;
+        saveData.meta.bloodCritCount = Math.max(saveData.meta.bloodCritCount || 0, gameStats.bloodCritCount || 0);
         
         this.save(saveData);
     }

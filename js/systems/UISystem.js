@@ -674,22 +674,40 @@ class UISystem {
 
         // Get ships from ShipData
         const ships = ShipData && ShipData.getAllShips ? ShipData.getAllShips() : this.getDefaultShips();
+        const saveData = window.game?.saveData || {};
+        const progress = saveData.meta || { maxWave: 0, bloodCritCount: 0 };
 
         ships.forEach(ship => {
             const card = document.createElement('div');
             card.className = 'ship-card';
             card.dataset.shipId = ship.id;
+            
+            // Check if ship is locked
+            const isLocked = !ship.unlocked && ship.unlockCondition;
+            if (isLocked) {
+                card.classList.add('locked');
+            }
 
-            // Select first ship by default
-            if (!this.selectedShipId && ships.indexOf(ship) === 0) {
+            // Select first unlocked ship by default
+            if (!this.selectedShipId && !isLocked) {
                 this.selectedShipId = ship.id;
                 card.classList.add('selected');
                 // Dispatch ship selected event for default selection
                 window.dispatchEvent(new CustomEvent('shipSelected', { 
                     detail: { ship: ship.id } 
                 }));
-            } else if (this.selectedShipId === ship.id) {
+            } else if (this.selectedShipId === ship.id && !isLocked) {
                 card.classList.add('selected');
+            }
+
+            let unlockText = '';
+            if (isLocked) {
+                const cond = ship.unlockCondition;
+                if (cond.type === 'wave') {
+                    unlockText = `<div style="color:#ff4444;font-size:11px;margin-top:8px;">🔒 Reach Wave ${cond.value}</div>`;
+                } else if (cond.type === 'blood_crit_count') {
+                    unlockText = `<div style="color:#ff4444;font-size:11px;margin-top:8px;">🔒 Get ${cond.value} Blood Crits</div>`;
+                }
             }
 
             card.innerHTML = `
@@ -703,9 +721,12 @@ class UISystem {
                     <div>SPD: ${ship.baseStats.speed}</div>
                     <div>Difficulty: ${ship.difficulty.toUpperCase()}</div>
                 </div>
+                ${unlockText}
             `;
 
             card.addEventListener('click', () => {
+                if (isLocked) return; // Can't select locked ships
+                
                 document.querySelectorAll('.ship-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 this.selectedShipId = ship.id;
