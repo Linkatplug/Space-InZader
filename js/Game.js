@@ -580,23 +580,49 @@ class Game {
 
         // Generate remaining options (3 total, or 2 if keystone offered)
         const numOptions = keystoneOffered ? 2 : 3;
-        for (let i = 0; i < numOptions; i++) {
-            const boost = this.selectRandomBoost(luck, options, forceRare && i === 0);
+        let attempts = 0;
+        const maxAttempts = 100; // Prevent infinite loops
+        
+        while (options.length < (keystoneOffered ? 3 : 3) && attempts < maxAttempts) {
+            const constraintLevel = Math.floor(attempts / 20); // Relax constraints every 20 attempts
+            const boost = this.selectRandomBoost(luck, options, forceRare && options.length === (keystoneOffered ? 1 : 0), constraintLevel);
             if (boost) {
                 options.push(boost);
+                attempts = 0; // Reset attempts on success
+            } else {
+                attempts++;
+            }
+        }
+        
+        // Fallback: If still not enough options, try absolute last resort
+        while (options.length < (keystoneOffered ? 3 : 3)) {
+            const boost = this.selectRandomBoostLastResort(options);
+            if (boost) {
+                options.push(boost);
+            } else {
+                break; // No more options possible
             }
         }
 
         return options;
     }
 
-    selectRandomBoost(luck, existing, forceRare = false) {
+    selectRandomBoost(luck, existing, forceRare = false, constraintLevel = 0) {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return null;
 
         const shipData = ShipData.getShipData(this.gameState.selectedShip);
         const preferredTags = shipData.preferredTags || [];
         const bannedTags = shipData.bannedTags || [];
+        
+        // Progressive constraint relaxation:
+        // 0: Use all constraints (preferred tags, rarity, banned tags)
+        // 1: Ignore preferred tags
+        // 2: Ignore rarity restrictions
+        // 3: Ignore banned tags (last resort)
+        const usePreferredTags = constraintLevel < 1;
+        const useRarityFilter = constraintLevel < 2;
+        const useBannedTags = constraintLevel < 3;
         
         // Try rarities in order based on luck, with fallbacks
         const rarities = ['legendary', 'epic', 'rare', 'common'];
@@ -613,28 +639,35 @@ class Game {
             else if (roll > 0.5) startIndex = 2; // rare
             else startIndex = 3; // common
         }
+        
+        // If not using rarity filter, try all rarities
+        if (!useRarityFilter) {
+            startIndex = 0;
+        }
 
         // Try each rarity starting from the rolled one
         for (let i = startIndex; i < rarities.length; i++) {
             const rarity = rarities[i];
             
-            // 60% chance to use preferred tags, 40% for global pool
-            const usePreferred = Math.random() < 0.6;
+            // 60% chance to use preferred tags, 40% for global pool (only if using preferred tags)
+            const usePreferred = usePreferredTags && Math.random() < 0.6;
             
             // Get available weapons with tag filtering
             const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
                 const weapon = WeaponData.WEAPONS[key];
                 const saveWeapon = this.saveData.weapons[weapon.id];
                 if (!saveWeapon || !saveWeapon.unlocked) return false;
-                if (weapon.rarity !== rarity) return false;
+                if (useRarityFilter && weapon.rarity !== rarity) return false;
                 
                 // Check if weapon already at max level
                 const existing = playerComp.weapons.find(w => w.type === weapon.id);
                 if (existing && existing.level >= weapon.maxLevel) return false;
                 
-                // Filter by banned tags
-                const hasBannedTag = weapon.tags?.some(t => bannedTags.includes(t));
-                if (hasBannedTag) return false;
+                // Filter by banned tags (unless relaxed)
+                if (useBannedTags) {
+                    const hasBannedTag = weapon.tags?.some(t => bannedTags.includes(t));
+                    if (hasBannedTag) return false;
+                }
                 
                 // If using preferred tags, check for match
                 if (usePreferred) {
@@ -649,15 +682,17 @@ class Game {
                 const passive = PassiveData.PASSIVES[key];
                 const savePassive = this.saveData.passives[passive.id];
                 if (!savePassive || !savePassive.unlocked) return false;
-                if (passive.rarity !== rarity) return false;
+                if (useRarityFilter && passive.rarity !== rarity) return false;
                 
                 // Check if passive already at maxStacks
                 const existing = playerComp.passives.find(p => p.id === passive.id);
                 if (existing && existing.stacks >= passive.maxStacks) return false;
                 
-                // Filter by banned tags
-                const hasBannedTag = passive.tags?.some(t => bannedTags.includes(t));
-                if (hasBannedTag) return false;
+                // Filter by banned tags (unless relaxed)
+                if (useBannedTags) {
+                    const hasBannedTag = passive.tags?.some(t => bannedTags.includes(t));
+                    if (hasBannedTag) return false;
+                }
                 
                 // If using preferred tags, check for match
                 if (usePreferred) {
@@ -692,6 +727,62 @@ class Game {
         }
 
         // No options available at any rarity level
+        return null;
+    }
+    
+    /**
+     * Last resort boost selection - ignores all constraints except duplicates
+     */
+    selectRandomBoostLastResort(existing) {
+        const playerComp = this.player.getComponent('player');
+        if (!playerComp) return null;
+        
+        // Get ALL available weapons (not maxed)
+        const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
+            const weapon = WeaponData.WEAPONS[key];
+            const saveWeapon = this.saveData.weapons[weapon.id];
+            if (!saveWeapon || !saveWeapon.unlocked) return false;
+            
+            const existingWeapon = playerComp.weapons.find(w => w.type === weapon.id);
+            if (existingWeapon && existingWeapon.level >= weapon.maxLevel) return false;
+            
+            return true;
+        });
+        
+        // Get ALL available passives (not maxed)
+        const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
+            const passive = PassiveData.PASSIVES[key];
+            const savePassive = this.saveData.passives[passive.id];
+            if (!savePassive || !savePassive.unlocked) return false;
+            
+            const existingPassive = playerComp.passives.find(p => p.id === passive.id);
+            if (existingPassive && existingPassive.stacks >= passive.maxStacks) return false;
+            
+            return true;
+        });
+        
+        const all = [
+            ...availableWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
+            ...availablePassives.map(p => ({ type: 'passive', key: PassiveData.PASSIVES[p].id, data: PassiveData.PASSIVES[p] }))
+        ];
+        
+        // Filter out duplicates
+        const filtered = all.filter(item => {
+            return !existing.some(e => e.type === item.type && e.key === item.key);
+        });
+        
+        if (filtered.length > 0) {
+            const selected = MathUtils.randomChoice(filtered);
+            return {
+                type: selected.type,
+                key: selected.key,
+                name: selected.data.name,
+                description: selected.data.description,
+                rarity: selected.data.rarity,
+                color: selected.data.color
+            };
+        }
+        
         return null;
     }
 

@@ -944,8 +944,16 @@ class UISystem {
      */
     renderBoostOptions(boosts, rerollsRemaining = 0) {
         this.boostOptions.innerHTML = '';
+        
+        // Filter out null/undefined boosts to prevent empty cards
+        const validBoosts = boosts.filter(boost => boost != null);
+        
+        if (validBoosts.length === 0) {
+            console.error('UISystem: No valid boosts to display!');
+            return;
+        }
 
-        boosts.forEach((boost, index) => {
+        validBoosts.forEach((boost, index) => {
             const card = document.createElement('div');
             card.className = `boost-card ${boost.rarity || 'common'}`;
             
