@@ -25,6 +25,9 @@ class UISystem {
         
         // Selected ship
         this.selectedShipId = null;
+        
+        // Double-click protection for boost selection
+        this._boostPicking = false;
     }
 
     /**
@@ -327,12 +330,36 @@ class UISystem {
      * @param {number} index - Boost index
      */
     onBoostSelected(boost, index) {
+        // Double-click protection
+        if (this._boostPicking) {
+            logger.warn('UISystem', 'Boost selection already in progress, ignoring');
+            return;
+        }
+        
+        // Lock boost selection
+        this._boostPicking = true;
+        
+        // Disable pointer events on all boost cards immediately
+        const cards = document.querySelectorAll('.boost-card');
+        cards.forEach(card => {
+            card.style.pointerEvents = 'none';
+            card.style.opacity = '0.5';
+        });
+        
+        logger.info('UISystem', `Boost selected: ${boost?.name || 'unknown'}`);
+        
         // Dispatch custom event for game to handle
         const event = new CustomEvent('boostSelected', { detail: { boost, index } });
         window.dispatchEvent(event);
 
         // Hide level up screen
         this.levelUpScreen.classList.remove('active');
+        
+        // Unlock after 250ms (safety delay)
+        setTimeout(() => {
+            this._boostPicking = false;
+            logger.debug('UISystem', 'Boost selection unlocked');
+        }, 250);
     }
 
     /**

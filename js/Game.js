@@ -102,10 +102,52 @@ class Game {
             this.gameState.selectedShip = e.detail.ship;
         });
 
-        // Listen for boost selection
+        // Listen for boost selection - BULLETPROOF handler
         window.addEventListener('boostSelected', (e) => {
-            this.applyBoost(e.detail.boost);
-            this.resumeGame();
+            try {
+                // Safety guards
+                if (!e || !e.detail) {
+                    logger.error('Game', 'Invalid boostSelected event - no detail');
+                    return;
+                }
+                
+                const boost = e.detail.boost;
+                
+                if (!boost) {
+                    logger.error('Game', 'Invalid boostSelected event - no boost');
+                    return;
+                }
+                
+                if (!boost.type) {
+                    logger.error('Game', 'Invalid boost - missing type', boost);
+                    return;
+                }
+                
+                if (!boost.key) {
+                    logger.error('Game', 'Invalid boost - missing key', boost);
+                    return;
+                }
+                
+                // Apply the boost
+                this.applyBoost(boost);
+                
+            } catch (error) {
+                logger.error('Game', 'Error applying boost', error);
+                console.error('Boost application error:', error);
+            } finally {
+                // ALWAYS resume game, no matter what happened
+                try {
+                    this.gameState.setState(GameStates.RUNNING);
+                    this.running = true;
+                    this.systems.ui.showScreen('game');
+                    logger.info('Game', 'Game resumed after boost selection');
+                } catch (resumeError) {
+                    logger.error('Game', 'Critical error resuming game', resumeError);
+                    console.error('Resume error:', resumeError);
+                    // Last resort - force state
+                    this.running = true;
+                }
+            }
         });
 
         // Pause/Resume
@@ -210,14 +252,20 @@ class Game {
     }
 
     addWeaponToPlayer(weaponType) {
-        if (!this.player) return;
+        if (!this.player) {
+            logger.warn('Game', 'Cannot add weapon - no player');
+            return;
+        }
         
         const playerComp = this.player.getComponent('player');
-        if (!playerComp) return;
+        if (!playerComp) {
+            logger.warn('Game', 'Cannot add weapon - no player component');
+            return;
+        }
 
         const weaponData = WeaponData.getWeaponData(weaponType);
         if (!weaponData) {
-            console.error('Invalid weapon:', weaponType);
+            logger.error('Game', `Invalid weapon: ${weaponType}`);
             return;
         }
 
@@ -227,7 +275,9 @@ class Game {
             // Level up weapon
             if (existing.level < weaponData.maxLevel) {
                 existing.level++;
-                console.log(`Leveled up ${weaponType} to level ${existing.level}`);
+                logger.info('Game', `Leveled up ${weaponType} to level ${existing.level}`);
+            } else {
+                logger.warn('Game', `Weapon ${weaponType} already at max level`);
             }
         } else {
             // Add new weapon
@@ -238,21 +288,27 @@ class Game {
                 cooldown: 0,
                 evolved: false
             });
-            console.log(`Added weapon: ${weaponType}`);
+            logger.info('Game', `Added weapon: ${weaponType}`);
         }
 
         this.systems.ui.updateHUD();
     }
 
     addPassiveToPlayer(passiveType) {
-        if (!this.player) return;
+        if (!this.player) {
+            logger.warn('Game', 'Cannot add passive - no player');
+            return;
+        }
         
         const playerComp = this.player.getComponent('player');
-        if (!playerComp) return;
+        if (!playerComp) {
+            logger.warn('Game', 'Cannot add passive - no player component');
+            return;
+        }
 
         const passiveData = PassiveData.getPassiveData(passiveType);
         if (!passiveData) {
-            console.error('Invalid passive:', passiveType);
+            logger.error('Game', `Invalid passive: ${passiveType}`);
             return;
         }
 
@@ -262,7 +318,9 @@ class Game {
             // Stack passive
             if (existing.stacks < passiveData.maxStacks) {
                 existing.stacks++;
-                console.log(`Stacked ${passiveType} to ${existing.stacks}`);
+                logger.info('Game', `Stacked ${passiveType} to ${existing.stacks}`);
+            } else {
+                logger.warn('Game', `Passive ${passiveType} already at max stacks`);
             }
         } else {
             // Add new passive
@@ -271,7 +329,7 @@ class Game {
                 data: passiveData,
                 stacks: 1
             });
-            console.log(`Added passive: ${passiveType}`);
+            logger.info('Game', `Added passive: ${passiveType}`);
         }
 
         // Recalculate stats
