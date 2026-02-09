@@ -296,6 +296,9 @@ class Game {
         
         this.player.addComponent('health', Components.Health(maxHealth, maxHealth));
         
+        // Add shield component (starts at 0)
+        this.player.addComponent('shield', Components.Shield(0, 0, 0));
+        
         const playerComp = Components.Player();
         playerComp.speed = shipData.baseStats.speed;
         playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
@@ -441,10 +444,30 @@ class Game {
         playerComp.stats.armor = shipData.baseStats.armor || 0;
         playerComp.stats.projectileSpeed = 1;
         playerComp.stats.range = 1;
+        playerComp.stats.shield = 0;
+        playerComp.stats.shieldRegen = 0;
+        playerComp.stats.shieldRegenDelay = 3.0;
 
         // Apply all passives
         for (const passive of playerComp.passives) {
             PassiveData.applyPassiveEffects(passive, playerComp.stats);
+        }
+        
+        // Update shield component based on stats
+        const shield = this.player.getComponent('shield');
+        if (shield && playerComp.stats.shield > 0) {
+            shield.max = playerComp.stats.shield;
+            shield.regen = playerComp.stats.shieldRegen;
+            shield.regenDelayMax = playerComp.stats.shieldRegenDelay;
+            // Don't reduce current shield, but cap it
+            if (shield.current > shield.max) {
+                shield.current = shield.max;
+            }
+        } else if (shield) {
+            // No shield stats, reset shield
+            shield.current = 0;
+            shield.max = 0;
+            shield.regen = 0;
         }
         
         // Force synergy system to recalculate
@@ -778,6 +801,21 @@ class Game {
                 health.invulnerableTime -= deltaTime;
                 if (health.invulnerableTime <= 0) {
                     health.invulnerable = false;
+                }
+            }
+            
+            // Update shield regeneration
+            const shield = this.player.getComponent('shield');
+            if (shield && shield.max > 0) {
+                // Update regen delay
+                if (shield.regenDelay > 0) {
+                    shield.regenDelay -= deltaTime;
+                } else {
+                    // Regenerate shield
+                    if (shield.current < shield.max && shield.regen > 0) {
+                        shield.current += shield.regen * deltaTime;
+                        shield.current = Math.min(shield.current, shield.max);
+                    }
                 }
             }
 

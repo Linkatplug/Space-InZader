@@ -236,24 +236,44 @@ class CollisionSystem {
 
     damagePlayer(player, damage) {
         const health = player.getComponent('health');
+        const shield = player.getComponent('shield');
         const playerComp = player.getComponent('player');
         
         if (!health || !playerComp) return;
 
-        // Apply armor reduction
-        const actualDamage = Math.max(1, damage - playerComp.stats.armor);
-        health.current -= actualDamage;
-        this.gameState.stats.damageTaken += actualDamage;
+        let remainingDamage = damage;
         
-        // Play hit sound
-        if (this.audioManager && this.audioManager.initialized) {
-            this.audioManager.playSFX('hit', 1.2);
+        // Shield absorbs damage first
+        if (shield && shield.current > 0) {
+            const shieldDamage = Math.min(shield.current, remainingDamage);
+            shield.current -= shieldDamage;
+            remainingDamage -= shieldDamage;
+            
+            // Reset shield regen delay when damaged
+            shield.regenDelay = shield.regenDelayMax;
+            
+            // Visual feedback for shield hit
+            if (this.screenEffects && shieldDamage > 0) {
+                this.screenEffects.flash('#00FFFF', 0.2, 0.1);
+            }
         }
         
-        // Screen shake and flash on hit
-        if (this.screenEffects) {
-            this.screenEffects.shake(5, 0.2);
-            this.screenEffects.flash('#FF0000', 0.3, 0.15);
+        // Remaining damage goes to health (with armor reduction)
+        if (remainingDamage > 0) {
+            const actualDamage = Math.max(1, remainingDamage - playerComp.stats.armor);
+            health.current -= actualDamage;
+            this.gameState.stats.damageTaken += actualDamage;
+            
+            // Play hit sound
+            if (this.audioManager && this.audioManager.initialized) {
+                this.audioManager.playSFX('hit', 1.2);
+            }
+            
+            // Screen shake and flash on health hit
+            if (this.screenEffects) {
+                this.screenEffects.shake(5, 0.2);
+                this.screenEffects.flash('#FF0000', 0.3, 0.15);
+            }
         }
 
         if (health.current <= 0) {

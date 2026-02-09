@@ -107,6 +107,17 @@ function createHealth(current, max) {
     };
 }
 
+// Shield component
+function createShield(current, max, regen) {
+    return {
+        current,
+        max,
+        regen: regen || 0, // Shield regen per second
+        regenDelay: 0, // Time since last damage before regen starts
+        regenDelayMax: 3.0 // Seconds to wait before regen starts
+    };
+}
+
 // Collision component
 function createCollision(radius) {
     return { radius };
@@ -230,6 +241,13 @@ const Components = {
         invulnerable: false,
         invulnerableTime: 0
     }),
+    Shield: (current, max, regen) => ({
+        current,
+        max,
+        regen: regen || 0,
+        regenDelay: 0,
+        regenDelayMax: 3.0
+    }),
     Sprite: (sprite) => ({ sprite }),
     Collider: (radius) => ({ radius }),
     Collision: (radius) => ({ radius }), // Alias for Collider
@@ -253,7 +271,10 @@ const Components = {
             xpBonus: 1,
             armor: 0,
             projectileSpeed: 1,
-            range: 1
+            range: 1,
+            shield: 0,
+            shieldRegen: 0,
+            shieldRegenDelay: 3.0
         }
     }),
     Renderable: (color, size, shape = 'circle') => ({ 
