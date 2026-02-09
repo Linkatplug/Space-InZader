@@ -267,6 +267,13 @@ class CollisionSystem {
         const pos = enemy.getComponent('position');
         const renderable = enemy.getComponent('renderable');
         
+        // Explosion system constants
+        const EXPLOSION_FRIENDLY_FIRE_MULTIPLIER = 0.5;
+        const EXPLOSION_VISUAL_SCALE = 0.6;
+        const EXPLOSION_PARTICLE_COUNT = 40;
+        const EXPLOSION_SHAKE_INTENSITY = 8;
+        const EXPLOSION_SHAKE_DURATION = 0.3;
+        
         if (enemyComp && pos) {
             // Handle explosive enemies - deal area damage
             if (enemyComp.isExplosive && enemyComp.attackPattern?.type === 'explode') {
@@ -286,7 +293,7 @@ class CollisionSystem {
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
                         if (distance < explosionRadius) {
-                            const damageFalloff = 1 - (distance / explosionRadius);
+                            const damageFalloff = Math.max(0, Math.min(1, 1 - (distance / explosionRadius)));
                             this.damagePlayer(player, explosionDamage * damageFalloff);
                         }
                     }
@@ -303,8 +310,9 @@ class CollisionSystem {
                         const distance = Math.sqrt(dx * dx + dy * dy);
                         
                         if (distance < explosionRadius) {
-                            const damageFalloff = 1 - (distance / explosionRadius);
-                            this.damageEnemy(nearbyEnemy, explosionDamage * damageFalloff * 0.5); // Reduced friendly fire
+                            const damageFalloff = Math.max(0, Math.min(1, 1 - (distance / explosionRadius)));
+                            // Reduced friendly fire
+                            this.damageEnemy(nearbyEnemy, explosionDamage * damageFalloff * EXPLOSION_FRIENDLY_FIRE_MULTIPLIER);
                         }
                     }
                 }
@@ -312,12 +320,18 @@ class CollisionSystem {
                 // Enhanced visual effect for explosion
                 if (this.particleSystem) {
                     const explosionColor = enemyComp.attackPattern.explosionColor || '#FF4500';
-                    this.particleSystem.createExplosion(pos.x, pos.y, explosionRadius * 0.6, explosionColor, 40);
+                    this.particleSystem.createExplosion(
+                        pos.x, 
+                        pos.y, 
+                        explosionRadius * EXPLOSION_VISUAL_SCALE, 
+                        explosionColor, 
+                        EXPLOSION_PARTICLE_COUNT
+                    );
                 }
                 
                 // Screen shake for explosion
                 if (this.screenEffects) {
-                    this.screenEffects.shake(8, 0.3);
+                    this.screenEffects.shake(EXPLOSION_SHAKE_INTENSITY, EXPLOSION_SHAKE_DURATION);
                     this.screenEffects.flash(enemyComp.attackPattern.explosionColor || '#FF4500', 0.4, 0.2);
                 }
             }

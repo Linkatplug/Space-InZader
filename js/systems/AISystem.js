@@ -453,6 +453,10 @@ class AISystem {
         
         if (!enemyPos || !playerPos || !enemyVel || !enemyComp) return;
 
+        // Kamikaze behavior constants
+        const KAMIKAZE_BOOST_DISTANCE = 300;
+        const KAMIKAZE_BOOST_MULTIPLIER = 0.5;
+
         // Calculate direction to player
         const dx = playerPos.x - enemyPos.x;
         const dy = playerPos.y - enemyPos.y;
@@ -460,7 +464,7 @@ class AISystem {
         
         if (distance > 0) {
             // Speed boost as it gets closer (more aggressive)
-            const speedBoost = 1 + (1 - Math.min(distance / 300, 1)) * 0.5;
+            const speedBoost = 1 + (1 - Math.min(distance / KAMIKAZE_BOOST_DISTANCE, 1)) * KAMIKAZE_BOOST_MULTIPLIER;
             const speed = enemyComp.speed * speedBoost;
             
             // Direct charge at player
