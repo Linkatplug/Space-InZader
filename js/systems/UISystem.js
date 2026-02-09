@@ -416,6 +416,8 @@ class UISystem {
         if (window.game?.gameState) {
             window.game.gameState.setState(GameStates.PAUSED);
         }
+        // Hide other screens first
+        this.hideAllScreens();
         if (this.pauseMenu) {
             this.pauseMenu.classList.add('active');
         }

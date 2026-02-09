@@ -219,6 +219,174 @@ const WEAPONS = {
       { damage: 2.3, projectileCount: 3, duration: 30 },
       { damage: 2.6, projectileCount: 3, duration: 35 }
     ]
+  },
+
+  // New weapons with strategic maluses
+  RAILGUN: {
+    id: 'railgun',
+    tags: ['projectile', 'piercing', 'crit', 'heat', 'glass_cannon'],
+    name: 'Railgun',
+    description: 'Canon électromagnétique dévastateur. Pénétration infinie mais surchauffe rapide. -40% cadence de tir.',
+    baseDamage: 80,
+    fireRate: 0.4,
+    projectileSpeed: 2000,
+    maxLevel: 8,
+    rarity: 'rare',
+    color: '#00CCFF',
+    type: 'railgun',
+    levels: [
+      { damage: 1.0, projectileCount: 1, piercing: 999 },
+      { damage: 1.3, projectileCount: 1, piercing: 999 },
+      { damage: 1.6, projectileCount: 1, piercing: 999 },
+      { damage: 2.0, projectileCount: 1, piercing: 999 },
+      { damage: 2.4, projectileCount: 2, piercing: 999 },
+      { damage: 2.8, projectileCount: 2, piercing: 999 },
+      { damage: 3.3, projectileCount: 2, piercing: 999 },
+      { damage: 4.0, projectileCount: 2, piercing: 999 }
+    ],
+    malus: {
+      heatGeneration: 2.0,
+      fireRateMultiplier: 0.6
+    }
+  },
+
+  LANCE_FLAMMES: {
+    id: 'flamethrower',
+    tags: ['heat', 'aoe', 'dot', 'short_range', 'glass_cannon'],
+    name: 'Lance-Flammes',
+    description: 'Projette un cône de flammes. Haute cadence mais désactive les critiques. Courte portée.',
+    baseDamage: 5,
+    fireRate: 10.0,
+    projectileSpeed: 300,
+    maxLevel: 8,
+    rarity: 'uncommon',
+    color: '#FF6600',
+    type: 'flamethrower',
+    levels: [
+      { damage: 1.0, projectileCount: 5, area: 30 },
+      { damage: 1.15, projectileCount: 6, area: 35 },
+      { damage: 1.3, projectileCount: 7, area: 40 },
+      { damage: 1.5, projectileCount: 8, area: 45 },
+      { damage: 1.7, projectileCount: 9, area: 50 },
+      { damage: 2.0, projectileCount: 10, area: 55 },
+      { damage: 2.3, projectileCount: 11, area: 60 },
+      { damage: 2.7, projectileCount: 12, area: 65 }
+    ],
+    malus: {
+      critDisabled: true,
+      heatGeneration: 3.0,
+      rangeMultiplier: 0.5
+    }
+  },
+
+  CANON_GRAVITATIONNEL: {
+    id: 'gravity_cannon',
+    tags: ['aoe', 'control', 'utility', 'slow'],
+    name: 'Canon Gravitationnel',
+    description: 'Tire des orbes qui attirent les ennemis... et vous aussi! Zone d\'attraction.',
+    baseDamage: 25,
+    fireRate: 0.8,
+    projectileSpeed: 400,
+    maxLevel: 8,
+    rarity: 'rare',
+    color: '#9932CC',
+    type: 'gravity',
+    levels: [
+      { damage: 1.0, projectileCount: 1, area: 120 },
+      { damage: 1.2, projectileCount: 1, area: 140 },
+      { damage: 1.4, projectileCount: 1, area: 160 },
+      { damage: 1.7, projectileCount: 2, area: 180 },
+      { damage: 2.0, projectileCount: 2, area: 200 },
+      { damage: 2.3, projectileCount: 2, area: 220 },
+      { damage: 2.7, projectileCount: 3, area: 240 },
+      { damage: 3.2, projectileCount: 3, area: 260 }
+    ],
+    malus: {
+      playerAttraction: 0.4
+    }
+  },
+
+  TOURELLE_AUTONOME: {
+    id: 'auto_turret',
+    tags: ['summon', 'turret', 'support', 'utility'],
+    name: 'Tourelle Autonome',
+    description: 'Déploie une tourelle fixe puissante. Stationnaire mais efficace.',
+    baseDamage: 18,
+    fireRate: 1.5,
+    projectileSpeed: 750,
+    maxLevel: 8,
+    rarity: 'uncommon',
+    color: '#00FF88',
+    type: 'static_turret',
+    levels: [
+      { damage: 1.0, projectileCount: 1, duration: 20 },
+      { damage: 1.2, projectileCount: 1, duration: 24 },
+      { damage: 1.5, projectileCount: 2, duration: 28 },
+      { damage: 1.8, projectileCount: 2, duration: 32 },
+      { damage: 2.1, projectileCount: 2, duration: 36 },
+      { damage: 2.5, projectileCount: 3, duration: 40 },
+      { damage: 2.9, projectileCount: 3, duration: 45 },
+      { damage: 3.5, projectileCount: 3, duration: 50 }
+    ],
+    malus: {
+      stationary: true,
+      maxSummons: 1
+    }
+  },
+
+  LAMES_FANTOMES: {
+    id: 'phantom_blades',
+    tags: ['melee', 'orbit', 'aoe', 'short_range'],
+    name: 'Lames Fantômes',
+    description: 'Lames orbitales éthérées. -40% dégâts contre les boss.',
+    baseDamage: 20,
+    fireRate: 0,
+    projectileSpeed: 0,
+    maxLevel: 8,
+    rarity: 'rare',
+    color: '#9370DB',
+    type: 'orbit_melee',
+    levels: [
+      { damage: 1.0, projectileCount: 2, area: 90 },
+      { damage: 1.2, projectileCount: 2, area: 95 },
+      { damage: 1.5, projectileCount: 3, area: 100 },
+      { damage: 1.8, projectileCount: 3, area: 105 },
+      { damage: 2.1, projectileCount: 4, area: 110 },
+      { damage: 2.5, projectileCount: 4, area: 115 },
+      { damage: 2.9, projectileCount: 5, area: 120 },
+      { damage: 3.5, projectileCount: 5, area: 130 }
+    ],
+    malus: {
+      bossDamageMultiplier: 0.6
+    }
+  },
+
+  DRONE_KAMIKAZE: {
+    id: 'kamikaze_drone',
+    tags: ['summon', 'explosive', 'burst', 'glass_cannon'],
+    name: 'Drone Kamikaze',
+    description: 'Drone explosif suicide. Énormes dégâts de zone mais 20% auto-dégâts.',
+    baseDamage: 120,
+    fireRate: 0.125,
+    projectileSpeed: 250,
+    maxLevel: 8,
+    rarity: 'epic',
+    color: '#FF0000',
+    type: 'kamikaze',
+    levels: [
+      { damage: 1.0, projectileCount: 1, area: 150 },
+      { damage: 1.3, projectileCount: 1, area: 170 },
+      { damage: 1.6, projectileCount: 1, area: 190 },
+      { damage: 2.0, projectileCount: 1, area: 210 },
+      { damage: 2.4, projectileCount: 2, area: 230 },
+      { damage: 2.9, projectileCount: 2, area: 250 },
+      { damage: 3.5, projectileCount: 2, area: 280 },
+      { damage: 4.2, projectileCount: 2, area: 320 }
+    ],
+    malus: {
+      selfDamage: 0.2,
+      cooldown: 8.0
+    }
   }
 };
 

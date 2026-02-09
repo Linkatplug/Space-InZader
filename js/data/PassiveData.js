@@ -1078,6 +1078,194 @@ const PASSIVES = {
     maxStacks: 2,
     color: '#FF8C00',
     icon: '🔥'
+  },
+
+  // New passives with strategic maluses
+  BLOOD_PACT: {
+    id: 'blood_pact',
+    tags: ['vampire', 'risk', 'glass_cannon'],
+    name: 'Pacte de Sang',
+    description: 'Lifesteal puissant mais santé maximale réduite. -20% PV max.',
+    rarity: 'rare',
+    effects: {
+      lifesteal: 0.25,
+      maxHealthMultiplier: -0.20
+    },
+    maxStacks: 2,
+    color: '#8B0000',
+    icon: '🩸'
+  },
+
+  INFINITE_HUNGER: {
+    id: 'infinite_hunger',
+    tags: ['vampire', 'projectile', 'glass_cannon'],
+    name: 'Soif Infinie',
+    description: 'Lifesteal sur tous les projectiles. -30% dégâts.',
+    rarity: 'epic',
+    effects: {
+      lifesteal: 0.15,
+      projectileLifesteal: true,
+      damageMultiplier: -0.30
+    },
+    maxStacks: 1,
+    color: '#DC143C',
+    icon: '🧛'
+  },
+
+  UNSTABLE_CANNON: {
+    id: 'unstable_cannon',
+    tags: ['damage', 'glass_cannon', 'risk'],
+    name: 'Canon Instable',
+    description: '+40% dégâts mais +30% dégâts reçus. Haute puissance, haute fragilité.',
+    rarity: 'rare',
+    effects: {
+      damageMultiplier: 0.40,
+      damageTakenMultiplier: 0.30
+    },
+    maxStacks: 2,
+    color: '#FF4500',
+    icon: '💥'
+  },
+
+  DEVASTATING_CRIT: {
+    id: 'devastating_crit',
+    tags: ['crit', 'glass_cannon'],
+    name: 'Critique Dévastateur',
+    description: '+60% multiplicateur critique mais -15% chance de crit.',
+    rarity: 'rare',
+    effects: {
+      critMultiplier: 0.60,
+      critChance: -0.15
+    },
+    maxStacks: 2,
+    color: '#FFD700',
+    icon: '💫'
+  },
+
+  OVERHEATED_ENGINE: {
+    id: 'overheated_engine',
+    tags: ['heat', 'fire_rate', 'glass_cannon'],
+    name: 'Moteur Surchargé',
+    description: '+50% cadence de tir mais génère 50% de chaleur en plus.',
+    rarity: 'uncommon',
+    effects: {
+      fireRateMultiplier: 0.50,
+      heatGeneration: 0.50
+    },
+    maxStacks: 3,
+    color: '#FF6600',
+    icon: '⚡'
+  },
+
+  UNSTABLE_FUSION: {
+    id: 'unstable_fusion',
+    tags: ['explosive', 'aoe', 'glass_cannon'],
+    name: 'Fusion Instable',
+    description: 'Vos tirs explosent à l\'impact. 30% des dégâts d\'explosion vous affectent.',
+    rarity: 'epic',
+    effects: {
+      explosionChance: 1.0,
+      explosionRadius: 80,
+      explosionDamage: 0.50,
+      selfExplosionDamage: 0.30
+    },
+    maxStacks: 1,
+    color: '#FF8C00',
+    icon: '☢️'
+  },
+
+  SLOW_FIELD: {
+    id: 'slow_field',
+    tags: ['utility', 'slow', 'control'],
+    name: 'Champ Ralentissant',
+    description: 'Ralentit les ennemis de 35% mais vous aussi de 15%.',
+    rarity: 'rare',
+    effects: {
+      enemySlow: 0.35,
+      slowRadius: 200,
+      speedMultiplier: -0.15
+    },
+    maxStacks: 2,
+    color: '#4169E1',
+    icon: '🌀'
+  },
+
+  TUNNEL_VISION: {
+    id: 'tunnel_vision',
+    tags: ['range', 'projectile'],
+    name: 'Vision Tunnel',
+    description: '+50% portée mais -25% angle de dispersion.',
+    rarity: 'uncommon',
+    effects: {
+      rangeMultiplier: 0.50,
+      spreadAngleMultiplier: -0.25
+    },
+    maxStacks: 3,
+    color: '#9370DB',
+    icon: '👁️'
+  },
+
+  HEAVY_SHELL: {
+    id: 'heavy_shell',
+    tags: ['armor', 'sustain'],
+    name: 'Carapace Lourde',
+    description: '+4 armure mais -20% cadence de tir.',
+    rarity: 'uncommon',
+    effects: {
+      armor: 4,
+      fireRateMultiplier: -0.20
+    },
+    maxStacks: 3,
+    color: '#708090',
+    icon: '🛡️'
+  },
+
+  REACTIVE_SHIELD: {
+    id: 'reactive_shield',
+    tags: ['shield', 'sustain'],
+    name: 'Bouclier Réactif',
+    description: 'Double la régénération de bouclier mais désactive la régénération de santé.',
+    rarity: 'rare',
+    effects: {
+      shieldRegenMultiplier: 1.0,
+      healthRegenDisabled: true
+    },
+    maxStacks: 2,
+    color: '#00CED1',
+    icon: '🔰'
+  },
+
+  ALL_OR_NOTHING: {
+    id: 'all_or_nothing',
+    tags: ['risk', 'burst', 'glass_cannon'],
+    name: 'Tout ou Rien',
+    description: 'Double dégâts pendant 10s, puis 50% dégâts pendant 10s. Cycle continu.',
+    rarity: 'epic',
+    effects: {
+      burstDamageMultiplier: 1.0,
+      burstDuration: 10,
+      postBurstDamageMultiplier: -0.50,
+      postBurstDuration: 10
+    },
+    maxStacks: 1,
+    color: '#FF1493',
+    icon: '🎲'
+  },
+
+  LAST_BREATH: {
+    id: 'last_breath',
+    tags: ['risk', 'berserk', 'glass_cannon'],
+    name: 'Dernier Souffle',
+    description: 'Double dégâts sous 30% PV. Mort instantanée si vous tombez sous 10% PV.',
+    rarity: 'epic',
+    effects: {
+      lowHealthDamageMultiplier: 1.0,
+      lowHealthThreshold: 0.30,
+      instantDeathThreshold: 0.10
+    },
+    maxStacks: 1,
+    color: '#DC143C',
+    icon: '💀'
   }
 };
 
