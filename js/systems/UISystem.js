@@ -431,8 +431,9 @@ class UISystem {
         if (this.pauseMenu) {
             this.pauseMenu.classList.remove('active');
         }
-        if (window.game?.gameState?.currentState === GameStates.PAUSED) {
-            window.game.gameState.setState(GameStates.RUNNING);
+        // Resume the game properly
+        if (window.game && window.game.gameState.isState(GameStates.PAUSED)) {
+            window.game.resumeGame();
         }
     }
 

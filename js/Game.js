@@ -45,6 +45,9 @@ class Game {
         this.rerollsRemaining = 2;
         this.levelsUntilRareGuarantee = 4;
         
+        // ESC key debounce protection
+        this.escapePressed = false;
+        
         // Set particle system reference in collision system
         this.systems.collision.particleSystem = this.systems.particle;
         
@@ -184,12 +187,19 @@ class Game {
             }
         });
 
-        // Pause/Resume
+        // Pause/Resume with debounce
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.gameState.isState(GameStates.RUNNING)) {
-                this.pauseGame();
-            } else if (e.key === 'Escape' && this.gameState.isState(GameStates.PAUSED)) {
-                this.resumeGame();
+            if (e.key === 'Escape' && !this.escapePressed) {
+                this.escapePressed = true;
+                setTimeout(() => { 
+                    this.escapePressed = false; 
+                }, 300); // 300ms debounce
+                
+                if (this.gameState.isState(GameStates.RUNNING)) {
+                    this.pauseGame();
+                } else if (this.gameState.isState(GameStates.PAUSED)) {
+                    this.resumeGame();
+                }
             }
         });
 
