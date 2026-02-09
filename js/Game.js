@@ -14,6 +14,9 @@ class Game {
         this.saveManager = new SaveManager();
         this.audioManager = new AudioManager();
         
+        // Debug system
+        this.debugOverlay = null;
+        
         // Load save data
         this.saveData = this.saveManager.load();
         
@@ -46,7 +49,10 @@ class Game {
     }
 
     init() {
-        console.log('Initializing Space InZader...');
+        logger.info('Game', 'Initializing Space InZader...');
+        
+        // Initialize debug overlay
+        this.debugOverlay = new DebugOverlay(this);
         
         // Apply volume settings
         this.audioManager.setMusicVolume(this.saveData.settings.musicVolume);
@@ -126,7 +132,7 @@ class Game {
     }
 
     startGame() {
-        console.log('Starting game with ship:', this.gameState.selectedShip);
+        logger.info('Game', 'Starting game with ship: ' + this.gameState.selectedShip);
         
         // Reset world and stats
         this.world.clear();
@@ -145,6 +151,8 @@ class Game {
         
         // Start background music
         this.audioManager.startBackgroundMusic();
+        
+        logger.info('Game', 'Game started successfully');
         
         // Start game loop
         this.running = true;
@@ -301,6 +309,7 @@ class Game {
     }
 
     triggerLevelUp() {
+        logger.info('Game', 'Player leveled up!');
         this.gameState.setState(GameStates.LEVEL_UP);
         
         // Generate 3 random boosts
@@ -395,13 +404,15 @@ class Game {
     applyBoost(boost) {
         if (!boost) return;
 
+        logger.info('Game', `Applying boost: ${boost.type} - ${boost.name}`);
+
         if (boost.type === 'weapon') {
             this.addWeaponToPlayer(boost.key);
         } else if (boost.type === 'passive') {
             this.addPassiveToPlayer(boost.key);
         }
 
-        console.log('Applied boost:', boost);
+        logger.debug('Game', 'Boost applied successfully', boost);
     }
 
     pauseGame() {
@@ -446,12 +457,27 @@ class Game {
             const deltaTime = (currentTime - this.lastTime) / 1000;
             this.lastTime = currentTime;
             
-            // Always render
+            // Track render time
+            const renderStart = performance.now();
             this.systems.render.render(deltaTime);
+            const renderEnd = performance.now();
+            if (this.debugOverlay) {
+                this.debugOverlay.setRenderTime(renderEnd - renderStart);
+            }
             
             // Only update game logic if running
             if (this.running && this.gameState.isState(GameStates.RUNNING)) {
+                const updateStart = performance.now();
                 this.update(Math.min(deltaTime, 0.1)); // Cap delta to prevent spiral of death
+                const updateEnd = performance.now();
+                if (this.debugOverlay) {
+                    this.debugOverlay.setUpdateTime(updateEnd - updateStart);
+                }
+            }
+            
+            // Update debug overlay
+            if (this.debugOverlay) {
+                this.debugOverlay.update();
             }
         };
         
