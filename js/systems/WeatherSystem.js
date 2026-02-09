@@ -259,6 +259,9 @@ class WeatherSystem {
      * End the current event
      */
     endEvent() {
+        // Guard: Don't try to end an event if there isn't one active
+        if (!this.activeEvent) return;
+        
         logger.info('WeatherSystem', `Ending event: ${this.activeEvent.type}`);
         
         if (this.activeEvent.type === 'meteor_storm') {
