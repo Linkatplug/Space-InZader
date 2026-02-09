@@ -3,6 +3,31 @@
  * @description Main game class that coordinates all systems and manages game loop
  */
 
+// Default stats blueprint - ALL stats must be defined to prevent undefined errors
+const DEFAULT_STATS = {
+    damage: 1,
+    damageMultiplier: 1,
+    fireRate: 1,
+    fireRateMultiplier: 1,
+    speed: 1,
+    speedMultiplier: 1,
+    maxHealth: 1,
+    armor: 0,
+    lifesteal: 0,
+    healthRegen: 0,
+    critChance: 0,
+    critDamage: 1.5,
+    luck: 0,
+    xpBonus: 1,
+    projectileSpeed: 1,
+    projectileSpeedMultiplier: 1,
+    range: 1,
+    rangeMultiplier: 1,
+    shield: 0,
+    shieldRegen: 0,
+    shieldRegenDelay: 3.0
+};
+
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
@@ -188,6 +213,9 @@ class Game {
         // Pause/Resume with ESC key
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
+                // Prevent key repeat from triggering multiple times
+                if (e.repeat) return;
+                
                 // Check if we're in a sub-screen (commands or options)
                 const uiSystem = this.systems?.ui;
                 if (uiSystem?.isScreenActive('commandsScreen')) {
@@ -303,15 +331,24 @@ class Game {
         
         const playerComp = Components.Player();
         playerComp.speed = shipData.baseStats.speed;
+        
+        // Initialize stats from DEFAULT_STATS blueprint to prevent undefined errors
+        playerComp.stats = structuredClone(DEFAULT_STATS);
+        
+        // Apply ship-specific stats (using metaDamage and metaXP from above)
         playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
+        playerComp.stats.damageMultiplier = shipData.baseStats.damageMultiplier * metaDamage;
         playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier;
+        playerComp.stats.fireRateMultiplier = shipData.baseStats.fireRateMultiplier;
         playerComp.stats.speed = shipData.baseStats.speed / 200; // Normalize speed
+        playerComp.stats.speedMultiplier = 1;
         playerComp.stats.maxHealth = 1;
         playerComp.stats.critChance = shipData.baseStats.critChance;
         playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
         playerComp.stats.lifesteal = shipData.baseStats.lifesteal;
         playerComp.stats.healthRegen = shipData.baseStats.healthRegen || 0;
         playerComp.stats.xpBonus = metaXP;
+        playerComp.stats.armor = shipData.baseStats.armor || 0;
         
         this.player.addComponent('player', playerComp);
         
@@ -432,14 +469,20 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return;
 
-        // Reset stats to base
+        // Reset stats to DEFAULT_STATS blueprint to prevent undefined errors
+        playerComp.stats = structuredClone(DEFAULT_STATS);
+        
+        // Apply ship-specific base stats
         const shipData = ShipData.getShipData(this.gameState.selectedShip);
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 
         playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
+        playerComp.stats.damageMultiplier = shipData.baseStats.damageMultiplier * metaDamage;
         playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier;
+        playerComp.stats.fireRateMultiplier = shipData.baseStats.fireRateMultiplier;
         playerComp.stats.speed = shipData.baseStats.speed / 200; // Normalize speed
+        playerComp.stats.speedMultiplier = 1;
         playerComp.stats.critChance = shipData.baseStats.critChance;
         playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
         playerComp.stats.lifesteal = shipData.baseStats.lifesteal;
@@ -447,7 +490,9 @@ class Game {
         playerComp.stats.xpBonus = metaXP;
         playerComp.stats.armor = shipData.baseStats.armor || 0;
         playerComp.stats.projectileSpeed = 1;
+        playerComp.stats.projectileSpeedMultiplier = 1;
         playerComp.stats.range = 1;
+        playerComp.stats.rangeMultiplier = 1;
         playerComp.stats.shield = 0;
         playerComp.stats.shieldRegen = 0;
         playerComp.stats.shieldRegenDelay = 3.0;
@@ -698,6 +743,9 @@ class Game {
     }
 
     pauseGame() {
+        // Prevent double pause (PAUSED -> PAUSED)
+        if (this.gameState.isState(GameStates.PAUSED)) return;
+        
         if (this.gameState.isState(GameStates.RUNNING)) {
             this.gameState.setState(GameStates.PAUSED);
             this.running = false;

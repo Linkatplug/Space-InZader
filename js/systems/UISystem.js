@@ -280,16 +280,24 @@ class UISystem {
             const xpPercent = (playerComp.xp / playerComp.xpRequired) * 100;
             this.xpFill.style.width = `${Math.min(100, xpPercent)}%`;
             
-            // Update real-time stats display
+            // Update real-time stats display with safe access (nullish coalescing)
             if (playerComp.stats) {
                 const stats = playerComp.stats;
-                this.statDamage.textContent = `${Math.round(stats.damageMultiplier * 100)}%`;
-                this.statFireRate.textContent = `${Math.round(stats.fireRateMultiplier * 100)}%`;
-                this.statSpeed.textContent = `${Math.round(stats.speed)}`;
-                this.statArmor.textContent = `${Math.round(stats.armor)}`;
-                this.statLifesteal.textContent = `${Math.round(stats.lifesteal * 100)}%`;
-                this.statRegen.textContent = `${stats.healthRegen.toFixed(1)}/s`;
-                this.statCrit.textContent = `${Math.round(stats.critChance * 100)}%`;
+                const damageMultiplier = stats.damageMultiplier ?? 1;
+                const fireRateMultiplier = stats.fireRateMultiplier ?? 1;
+                const speed = stats.speed ?? 1;
+                const armor = stats.armor ?? 0;
+                const lifesteal = stats.lifesteal ?? 0;
+                const healthRegen = stats.healthRegen ?? 0;
+                const critChance = stats.critChance ?? 0;
+                
+                this.statDamage.textContent = `${Math.round(damageMultiplier * 100)}%`;
+                this.statFireRate.textContent = `${Math.round(fireRateMultiplier * 100)}%`;
+                this.statSpeed.textContent = `${Math.round(speed)}`;
+                this.statArmor.textContent = `${Math.round(armor)}`;
+                this.statLifesteal.textContent = `${Math.round(lifesteal * 100)}%`;
+                this.statRegen.textContent = `${healthRegen.toFixed(1)}/s`;
+                this.statCrit.textContent = `${Math.round(critChance * 100)}%`;
             }
         }
 
