@@ -599,12 +599,6 @@ class UISystem {
     }
 
     /**
-     * Handle ESC key for pause/unpause
-     * NOTE: ESC key handling is now done in Game.js to properly handle sub-screens
-     */
-    // handleEscapeKey method removed - handled in Game.js
-
-    /**
      * Check if a screen is currently active
      * @param {string} screenId - ID of the screen to check
      * @returns {boolean}

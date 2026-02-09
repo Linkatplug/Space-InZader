@@ -189,21 +189,19 @@ class Game {
             if (e.key === 'Escape') {
                 // Check if we're in a sub-screen (commands or options)
                 const uiSystem = this.systems?.ui;
-                if (uiSystem) {
+                if (uiSystem?.isScreenActive('commandsScreen')) {
                     // If commands screen is active, go back to pause menu
-                    if (uiSystem.isScreenActive('commandsScreen')) {
-                        uiSystem.showPauseMenu();
-                        return;
-                    }
+                    uiSystem.showPauseMenu();
+                    return;
+                }
+                if (uiSystem?.isScreenActive('optionsScreen')) {
                     // If options screen is active, go back based on return screen
-                    if (uiSystem.isScreenActive('optionsScreen')) {
-                        if (uiSystem.optionsReturnScreen === 'pause') {
-                            uiSystem.showPauseMenu();
-                        } else {
-                            uiSystem.showMainMenu();
-                        }
-                        return;
+                    if (uiSystem.optionsReturnScreen === 'pause') {
+                        uiSystem.showPauseMenu();
+                    } else {
+                        uiSystem.showMainMenu();
                     }
+                    return;
                 }
                 
                 // Normal pause/resume logic
