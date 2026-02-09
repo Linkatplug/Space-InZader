@@ -14,10 +14,15 @@ class SpawnerSystem {
         this.spawnTimer = 0;
         this.maxEnemiesOnScreen = 150;
         
-        // Boss tracking
+        // Wave tracking
+        this.waveNumber = 1;
+        this.bossSpawnedThisWave = false;
+        this.eliteSpawnedThisWave = false;
+        
+        // Boss tracking (legacy time-based)
         this.bossSpawned = {
-            15: false,  // 15 minute boss
-            20: false   // 20 minute boss
+            15: false,
+            20: false
         };
         
         // Difficulty scaling
@@ -27,12 +32,10 @@ class SpawnerSystem {
     /**
      * Update spawn system
      * @param {number} deltaTime - Time elapsed since last frame
+     * @param {boolean} canSpawn - Whether spawning is allowed (from WaveSystem)
      */
-    update(deltaTime) {
+    update(deltaTime, canSpawn = true) {
         const gameTime = this.gameState.stats.time;
-        
-        // Check for boss spawns at specific times
-        this.checkBossSpawns(gameTime);
         
         // Get current wave configuration
         const wave = this.getCurrentWave(gameTime);
@@ -44,8 +47,8 @@ class SpawnerSystem {
         // Update spawn timer
         this.spawnTimer += deltaTime;
         
-        // Spawn enemies when timer expires and we have budget
-        if (this.spawnTimer >= wave.spawnInterval) {
+        // Spawn enemies when timer expires and we have budget (and spawning is allowed)
+        if (canSpawn && this.spawnTimer >= wave.spawnInterval) {
             this.spawnTimer = 0;
             this.spawnEnemies(wave, gameTime);
         }
@@ -72,8 +75,9 @@ class SpawnerSystem {
     /**
      * Spawn boss enemy
      * @param {number} gameTime - Current game time
+     * @param {string} bossType - Type of boss to spawn
      */
-    spawnBoss(gameTime) {
+    spawnBoss(gameTime, bossType = 'boss') {
         const player = this.world.getEntitiesByType('player')[0];
         if (!player) return;
 
@@ -81,10 +85,80 @@ class SpawnerSystem {
         const spawnPos = this.getSpawnPosition(playerPos.x, playerPos.y);
         
         // Get boss data and scale it
-        const bossData = this.getEnemyData('boss');
+        const bossData = this.getEnemyData(bossType);
         const scaledData = this.scaleEnemyStats(bossData, gameTime);
         
         this.createEnemy(spawnPos.x, spawnPos.y, scaledData, true);
+        
+        logger.info('SpawnerSystem', `Boss spawned: ${bossType} at wave ${this.waveNumber}`);
+    }
+
+    /**
+     * Spawn elite enemy
+     * @param {number} gameTime - Current game time
+     */
+    spawnElite(gameTime) {
+        const player = this.world.getEntitiesByType('player')[0];
+        if (!player) return;
+
+        const playerPos = player.getComponent('position');
+        const spawnPos = this.getSpawnPosition(playerPos.x, playerPos.y);
+        
+        // Spawn elite with extra scaling
+        const eliteData = this.getEnemyData('elite');
+        const scaledData = this.scaleEnemyStats(eliteData, gameTime);
+        
+        this.createEnemy(spawnPos.x, spawnPos.y, scaledData, false);
+        
+        logger.info('SpawnerSystem', `Elite spawned at wave ${this.waveNumber}`);
+    }
+
+    /**
+     * Calculate difficulty multipliers based on game time and wave
+     * @param {number} gameTime - Current game time in seconds
+     * @param {number} waveNumber - Current wave number
+     * @returns {{enemyCountMult: number, enemyHealthMult: number, enemySpeedMult: number}}
+     */
+    calculateDifficultyMultipliers(gameTime, waveNumber) {
+        const timeMinutes = gameTime / 60;
+        
+        // Multipliers with soft caps
+        const enemyCountMult = Math.min(3.0, 1 + (timeMinutes * 0.15));
+        const enemyHealthMult = Math.min(4.0, 1 + (waveNumber * 0.12));
+        const enemySpeedMult = Math.min(2.0, 1 + (waveNumber * 0.05));
+        
+        return { enemyCountMult, enemyHealthMult, enemySpeedMult };
+    }
+
+    /**
+     * Set wave number from WaveSystem
+     * @param {number} waveNumber - Current wave number
+     */
+    setWaveNumber(waveNumber) {
+        if (this.waveNumber !== waveNumber) {
+            this.waveNumber = waveNumber;
+            this.bossSpawnedThisWave = false;
+            this.eliteSpawnedThisWave = false;
+        }
+    }
+
+    /**
+     * Trigger wave-based spawns (boss/elite)
+     * @param {number} gameTime - Current game time
+     */
+    triggerWaveSpawns(gameTime) {
+        // Check for boss spawn (every 10 waves)
+        if (this.waveNumber % 10 === 0 && !this.bossSpawnedThisWave) {
+            const bossTypes = ['boss', 'tank_boss', 'swarm_boss', 'sniper_boss'];
+            const bossType = bossTypes[Math.floor(this.waveNumber / 10) % bossTypes.length];
+            this.spawnBoss(gameTime, bossType);
+            this.bossSpawnedThisWave = true;
+        }
+        // Check for elite spawn (every 5 waves)
+        else if (this.waveNumber % 5 === 0 && !this.eliteSpawnedThisWave) {
+            this.spawnElite(gameTime);
+            this.eliteSpawnedThisWave = true;
+        }
     }
 
     /**
@@ -370,19 +444,27 @@ class SpawnerSystem {
      * @returns {Object} Scaled enemy data
      */
     scaleEnemyStats(enemyData, gameTime) {
-        // Exponential scaling: +30% every 5 minutes
+        // Get multipliers from wave and time
+        const multipliers = this.calculateDifficultyMultipliers(gameTime, this.waveNumber);
+        
+        // Exponential scaling: +30% every 5 minutes (legacy)
         const timeFactor = 1 + (gameTime / 300) * 0.3;
-        const scaling = timeFactor * this.difficultyMultiplier;
+        
+        // Combine all scalings
+        const healthScaling = multipliers.enemyHealthMult * this.difficultyMultiplier;
+        const damageScaling = timeFactor * this.difficultyMultiplier;
+        const speedScaling = multipliers.enemySpeedMult;
 
         const scaled = { ...enemyData };
-        scaled.health = Math.floor(enemyData.health * scaling);
-        scaled.damage = Math.floor(enemyData.damage * scaling);
+        scaled.health = Math.floor(enemyData.health * healthScaling);
+        scaled.damage = Math.floor(enemyData.damage * damageScaling);
+        scaled.speed = Math.floor(enemyData.speed * speedScaling);
         scaled.xpValue = Math.floor(enemyData.xpValue * timeFactor);
         
         if (scaled.attackPattern.damage) {
             scaled.attackPattern = {
                 ...scaled.attackPattern,
-                damage: Math.floor(scaled.attackPattern.damage * scaling)
+                damage: Math.floor(scaled.attackPattern.damage * damageScaling)
             };
         }
 
@@ -450,6 +532,9 @@ class SpawnerSystem {
     reset() {
         this.spawnBudget = 0;
         this.spawnTimer = 0;
+        this.waveNumber = 1;
+        this.bossSpawnedThisWave = false;
+        this.eliteSpawnedThisWave = false;
         this.bossSpawned = {
             15: false,
             20: false

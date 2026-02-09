@@ -17,6 +17,9 @@ class Game {
         // Debug system
         this.debugOverlay = null;
         
+        // Screen effects
+        this.screenEffects = new ScreenEffects(this.canvas);
+        
         // Load save data
         this.saveData = this.saveManager.load();
         
@@ -24,17 +27,29 @@ class Game {
         this.systems = {
             movement: new MovementSystem(this.world, this.canvas),
             particle: new ParticleSystem(this.world),
-            collision: new CollisionSystem(this.world, this.gameState, this.audioManager, null), // Will set particle system below
+            collision: new CollisionSystem(this.world, this.gameState, this.audioManager, null),
             combat: new CombatSystem(this.world, this.gameState, this.audioManager),
             ai: new AISystem(this.world, this.canvas),
             spawner: new SpawnerSystem(this.world, this.gameState, this.canvas),
             pickup: new PickupSystem(this.world, this.gameState),
             render: new RenderSystem(this.canvas, this.world, this.gameState),
-            ui: new UISystem(this.world, this.gameState)
+            ui: new UISystem(this.world, this.gameState),
+            wave: new WaveSystem(this.gameState)
         };
         
         // Set particle system reference in collision system
         this.systems.collision.particleSystem = this.systems.particle;
+        
+        // Set screen effects reference
+        this.systems.collision.screenEffects = this.screenEffects;
+        this.systems.render.screenEffects = this.screenEffects;
+        
+        // Connect wave system to UI
+        this.systems.wave.onWaveStart = (waveNumber) => {
+            this.systems.ui.showWaveAnnouncement(waveNumber);
+            this.audioManager.playWaveStart();
+            this.systems.spawner.triggerWaveSpawns(this.gameState.stats.time);
+        };
         
         // Game loop
         this.lastTime = 0;
@@ -187,6 +202,8 @@ class Game {
         // Reset systems
         this.systems.spawner.reset();
         this.systems.render.reset();
+        this.systems.wave.reset();
+        this.screenEffects.reset();
         
         // Hide menu, show game
         this.systems.ui.showScreen('game');
@@ -494,19 +511,19 @@ class Game {
 
         const enemies = this.world.getEntitiesByType('enemy');
         const enemyCount = enemies.length;
-        const gameTime = this.gameState.gameTime;
+        const gameTime = this.gameState.stats.time;
         
-        // Count boss/elite enemies
+        // Count boss/elite enemies (size >= 35 is boss)
         const bosses = enemies.filter(e => {
-            const enemyComp = e.getComponent('enemy');
-            return enemyComp && (enemyComp.type === 'boss' || enemyComp.type === 'elite');
+            const renderable = e.getComponent('renderable');
+            return renderable && renderable.size >= 35;
         });
         
         // Determine theme based on game state
         let targetTheme = 'calm';
         
         if (bosses.length > 0) {
-            // Boss or elite present -> boss theme
+            // Boss present -> boss theme
             targetTheme = 'boss';
         } else if (enemyCount > 20 || gameTime > 180) {
             // Many enemies or late game -> action theme
@@ -609,14 +626,22 @@ class Game {
         // Update game time
         this.gameState.stats.time += deltaTime;
         
+        // Update wave system
+        this.systems.wave.update(deltaTime);
+        this.systems.spawner.setWaveNumber(this.systems.wave.getWaveNumber());
+        
         // Update all systems
         this.systems.movement.update(deltaTime);
         this.systems.ai.update(deltaTime);
         this.systems.combat.update(deltaTime);
         this.systems.collision.update(deltaTime);
-        this.systems.spawner.update(deltaTime);
+        
+        // Update spawner with wave spawn permission
+        this.systems.spawner.update(deltaTime, this.systems.wave.canSpawn());
+        
         this.systems.pickup.update(deltaTime);
         this.systems.particle.update(deltaTime);
+        this.screenEffects.update(deltaTime);
         
         // Update invulnerability
         if (this.player) {

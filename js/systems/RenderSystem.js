@@ -11,6 +11,9 @@ class RenderSystem {
         this.world = world;
         this.gameState = gameState;
         
+        // Screen effects reference (set from Game.js)
+        this.screenEffects = null;
+        
         // Starfield background
         this.stars = [];
         this.initStarfield();
@@ -67,9 +70,26 @@ class RenderSystem {
             this.gameState.isState(GameStates.LEVEL_UP) ||
             this.gameState.isState(GameStates.PAUSED)) {
             
+            // Save context for screen shake
+            this.ctx.save();
+            
+            // Apply screen shake if available
+            if (this.screenEffects) {
+                this.screenEffects.applyShake(this.ctx);
+            }
+            
             this.renderStarfield(deltaTime);
             this.renderEntities();
+            
+            // Restore context after shake
+            this.ctx.restore();
+            
             this.renderBossHealthBar();
+            
+            // Render flash overlay on top
+            if (this.screenEffects) {
+                this.screenEffects.renderFlash(this.ctx);
+            }
         }
     }
 

@@ -185,10 +185,14 @@ class CollisionSystem {
 
     damageEnemy(enemy, damage, attacker = null) {
         const health = enemy.getComponent('health');
+        const renderable = enemy.getComponent('renderable');
         if (!health) return;
 
         health.current -= damage;
         this.gameState.stats.damageDealt += damage;
+        
+        // Check if this is a boss (large size)
+        const isBoss = renderable && renderable.size >= 35;
         
         // Apply lifesteal if attacker is player
         if (attacker && attacker.type === 'player') {
@@ -201,13 +205,28 @@ class CollisionSystem {
                 if (newHealth > playerHealth.current) {
                     playerHealth.current = newHealth;
                     logger.debug('Combat', `Lifesteal healed ${healAmount.toFixed(1)} HP`);
+                    
+                    // Lifesteal sound
+                    if (this.audioManager && this.audioManager.initialized) {
+                        this.audioManager.playLifesteal();
+                    }
                 }
             }
         }
         
         // Play hit sound
         if (this.audioManager && this.audioManager.initialized) {
-            this.audioManager.playSFX('hit', MathUtils.randomFloat(0.9, 1.1));
+            if (isBoss) {
+                this.audioManager.playBossHit();
+                
+                // Boss hit screen shake
+                if (this.screenEffects) {
+                    this.screenEffects.shake(3, 0.1);
+                    this.screenEffects.flash('#FFFFFF', 0.15, 0.08);
+                }
+            } else {
+                this.audioManager.playSFX('hit', MathUtils.randomFloat(0.9, 1.1));
+            }
         }
 
         if (health.current <= 0) {
@@ -229,6 +248,12 @@ class CollisionSystem {
         // Play hit sound
         if (this.audioManager && this.audioManager.initialized) {
             this.audioManager.playSFX('hit', 1.2);
+        }
+        
+        // Screen shake and flash on hit
+        if (this.screenEffects) {
+            this.screenEffects.shake(5, 0.2);
+            this.screenEffects.flash('#FF0000', 0.3, 0.15);
         }
 
         if (health.current <= 0) {

@@ -298,6 +298,105 @@ class AudioManager {
     }
 
     /**
+     * Play critical hit sound
+     */
+    playCrit() {
+        if (!this.initialized || !this.context) return;
+
+        const now = this.context.currentTime;
+        const osc = this.context.createOscillator();
+        const gain = this.context.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(1200, now + 0.08);
+
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(now);
+        osc.stop(now + 0.15);
+    }
+
+    /**
+     * Play lifesteal sound
+     */
+    playLifesteal() {
+        if (!this.initialized || !this.context) return;
+
+        const now = this.context.currentTime;
+        const osc = this.context.createOscillator();
+        const gain = this.context.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.linearRampToValueAtTime(450, now + 0.12);
+
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(now);
+        osc.stop(now + 0.12);
+    }
+
+    /**
+     * Play boss hit sound
+     */
+    playBossHit() {
+        if (!this.initialized || !this.context) return;
+
+        const now = this.context.currentTime;
+        const osc = this.context.createOscillator();
+        const gain = this.context.createGain();
+
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(now);
+        osc.stop(now + 0.2);
+    }
+
+    /**
+     * Play wave start sound
+     */
+    playWaveStart() {
+        if (!this.initialized || !this.context) return;
+
+        const now = this.context.currentTime;
+        const osc = this.context.createOscillator();
+        const gain = this.context.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(400, now);
+        osc.frequency.exponentialRampToValueAtTime(600, now + 0.1);
+        osc.frequency.setValueAtTime(600, now + 0.1);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.2);
+
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.setValueAtTime(0.3, now + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(now);
+        osc.stop(now + 0.3);
+    }
+
+    /**
      * Start background music loop
      */
     startBackgroundMusic() {

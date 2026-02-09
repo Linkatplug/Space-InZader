@@ -681,6 +681,295 @@ const PASSIVES = {
     maxStacks: 1,
     color: '#4682B4',
     icon: '⌛'
+  },
+
+  EXPLOSION_CHAIN: {
+    id: 'explosion_chain',
+    name: 'Réaction en Chaîne',
+    description: 'Les ennemis explosent en mourant, infligeant des dégâts de zone.',
+    rarity: 'rare',
+    effects: {
+      explosionOnKill: true,
+      explosionRadius: 80,
+      explosionDamage: 30
+    },
+    maxStacks: 3,
+    color: '#FF4500',
+    icon: '💥'
+  },
+
+  AIM_ASSIST: {
+    id: 'aim_assist',
+    name: 'Guidage Automatique',
+    description: 'Vos projectiles suivent légèrement les ennemis.',
+    rarity: 'rare',
+    effects: {
+      homingStrength: 0.3,
+      rangeMultiplier: 0.15
+    },
+    maxStacks: 2,
+    color: '#00CED1',
+    icon: '🎯'
+  },
+
+  DASH_MASTERY: {
+    id: 'dash_mastery',
+    name: 'Maîtrise du Dash',
+    description: 'Dash amélioré avec invincibilité.',
+    rarity: 'rare',
+    effects: {
+      dashCooldownReduction: 0.25,
+      dashDistance: 0.30,
+      dashInvincibility: 0.5
+    },
+    maxStacks: 2,
+    color: '#9370DB',
+    icon: '⚡'
+  },
+
+  THORNS: {
+    id: 'thorns',
+    name: 'Épines',
+    description: 'Renvoie des dégâts aux ennemis qui vous touchent.',
+    rarity: 'uncommon',
+    effects: {
+      reflectDamage: 0.25,
+      armor: 2
+    },
+    maxStacks: 4,
+    color: '#8B4513',
+    icon: '🌵'
+  },
+
+  SPEED_BURST: {
+    id: 'speed_burst',
+    name: 'Rafale de Vitesse',
+    description: 'Gain de vitesse temporaire après un kill.',
+    rarity: 'uncommon',
+    effects: {
+      speedBurstOnKill: 0.40,
+      speedBurstDuration: 2.0
+    },
+    maxStacks: 3,
+    color: '#32CD32',
+    icon: '💨'
+  },
+
+  XP_MAGNET: {
+    id: 'xp_magnet',
+    name: 'Aimant d\'XP',
+    description: 'Augmente considérablement la portée de collecte.',
+    rarity: 'common',
+    effects: {
+      magnetRange: 150,
+      xpMultiplier: 0.10
+    },
+    maxStacks: 3,
+    color: '#FFD700',
+    icon: '🧲'
+  },
+
+  BERSERKER: {
+    id: 'berserker',
+    name: 'Berserker',
+    description: 'Plus de dégâts à faible santé.',
+    rarity: 'rare',
+    effects: {
+      lowHealthDamageBonus: 0.50,
+      lowHealthThreshold: 0.30
+    },
+    maxStacks: 2,
+    color: '#8B0000',
+    icon: '😡'
+  },
+
+  GLASS_CANNON: {
+    id: 'glass_cannon',
+    name: 'Canon de Verre',
+    description: 'Énormes dégâts mais santé réduite.',
+    rarity: 'epic',
+    effects: {
+      damageMultiplier: 0.60,
+      fireRateMultiplier: 0.30,
+      maxHealthMultiplier: -0.30
+    },
+    maxStacks: 1,
+    color: '#FF1493',
+    icon: '💎'
+  },
+
+  VAMPIRE_LORD: {
+    id: 'vampire_lord',
+    name: 'Seigneur Vampire',
+    description: 'Lifesteal massif mais vitesse réduite.',
+    rarity: 'epic',
+    effects: {
+      lifesteal: 0.35,
+      maxHealthMultiplier: 0.40,
+      speedMultiplier: -0.20,
+      damageMultiplier: 0.15
+    },
+    maxStacks: 1,
+    color: '#8B0000',
+    icon: '🧛'
+  },
+
+  CRIT_MASTER: {
+    id: 'crit_master',
+    name: 'Maître Critique',
+    description: 'Critique chance et dégâts augmentés.',
+    rarity: 'rare',
+    effects: {
+      critChance: 0.15,
+      critMultiplier: 0.50
+    },
+    maxStacks: 3,
+    color: '#FFD700',
+    icon: '⭐'
+  },
+
+  RAPID_FIRE: {
+    id: 'rapid_fire',
+    name: 'Tir Rapide',
+    description: 'Cadence de tir drastiquement augmentée.',
+    rarity: 'uncommon',
+    effects: {
+      fireRateMultiplier: 0.35,
+      overheatReduction: -0.15
+    },
+    maxStacks: 4,
+    color: '#FF6347',
+    icon: '🔫'
+  },
+
+  PENETRATING_SHOTS: {
+    id: 'penetrating_shots',
+    name: 'Tirs Pénétrants',
+    description: 'Vos projectiles traversent les ennemis.',
+    rarity: 'rare',
+    effects: {
+      piercing: 2,
+      damageMultiplier: 0.20
+    },
+    maxStacks: 2,
+    color: '#4169E1',
+    icon: '➡️'
+  },
+
+  SHIELD_GENERATOR: {
+    id: 'shield_generator',
+    name: 'Générateur de Bouclier',
+    description: 'Régénère un bouclier périodique.',
+    rarity: 'rare',
+    effects: {
+      shieldAmount: 25,
+      shieldRegenTime: 10.0,
+      maxHealthMultiplier: 0.15
+    },
+    maxStacks: 2,
+    color: '#00BFFF',
+    icon: '🛡️'
+  },
+
+  MULTISHOT: {
+    id: 'multishot',
+    name: 'Tir Multiple',
+    description: 'Tire plusieurs projectiles à la fois.',
+    rarity: 'epic',
+    effects: {
+      extraProjectiles: 2,
+      damageMultiplier: -0.15,
+      fireRateMultiplier: -0.10
+    },
+    maxStacks: 2,
+    color: '#FF69B4',
+    icon: '🔷'
+  },
+
+  SLOW_AURA: {
+    id: 'slow_aura',
+    name: 'Aura Ralentissante',
+    description: 'Les ennemis proches sont ralentis.',
+    rarity: 'uncommon',
+    effects: {
+      auraSlowAmount: 0.20,
+      auraRadius: 150
+    },
+    maxStacks: 3,
+    color: '#4682B4',
+    icon: '❄️'
+  },
+
+  LUCKY_CLOVER: {
+    id: 'lucky_clover',
+    name: 'Trèfle Porte-Bonheur',
+    description: 'Augmente votre chance pour les drops et critiques.',
+    rarity: 'uncommon',
+    effects: {
+      luck: 15,
+      critChance: 0.05,
+      xpMultiplier: 0.15
+    },
+    maxStacks: 4,
+    color: '#00FF00',
+    icon: '🍀'
+  },
+
+  ENERGY_SHIELD: {
+    id: 'energy_shield',
+    name: 'Bouclier Énergétique',
+    description: 'Absorbe les dégâts périodiquement.',
+    rarity: 'rare',
+    effects: {
+      damageAbsorption: 0.15,
+      armor: 5
+    },
+    maxStacks: 2,
+    color: '#00FFFF',
+    icon: '🔵'
+  },
+
+  RAGE_MODE: {
+    id: 'rage_mode',
+    name: 'Mode Rage',
+    description: 'Les kills augmentent temporairement les dégâts.',
+    rarity: 'rare',
+    effects: {
+      rageStackDamage: 0.08,
+      rageMaxStacks: 10,
+      rageDuration: 5.0
+    },
+    maxStacks: 2,
+    color: '#DC143C',
+    icon: '😤'
+  },
+
+  DODGE_MASTER: {
+    id: 'dodge_master',
+    name: 'Maître de l\'Esquive',
+    description: 'Chance d\'esquiver complètement les dégâts.',
+    rarity: 'epic',
+    effects: {
+      dodgeChance: 0.15,
+      speedMultiplier: 0.20
+    },
+    maxStacks: 2,
+    color: '#9370DB',
+    icon: '👻'
+  },
+
+  OVERCHARGE: {
+    id: 'overcharge',
+    name: 'Surcharge',
+    description: 'Les dégâts augmentent avec la surchauffe.',
+    rarity: 'rare',
+    effects: {
+      overheatDamageBonus: 0.50,
+      overheatReduction: 0.20
+    },
+    maxStacks: 2,
+    color: '#FF8C00',
+    icon: '🔥'
   }
 };
 

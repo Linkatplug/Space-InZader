@@ -668,6 +668,45 @@ class UISystem {
     }
 
     /**
+     * Show wave announcement
+     * @param {number} waveNumber - Current wave number
+     */
+    showWaveAnnouncement(waveNumber) {
+        const announcement = document.createElement('div');
+        announcement.style.position = 'fixed';
+        announcement.style.top = '50%';
+        announcement.style.left = '50%';
+        announcement.style.transform = 'translate(-50%, -50%)';
+        announcement.style.padding = '40px 80px';
+        announcement.style.background = 'rgba(10, 10, 26, 0.98)';
+        announcement.style.border = '4px solid #00FFFF';
+        announcement.style.borderRadius = '20px';
+        announcement.style.color = '#00FFFF';
+        announcement.style.fontSize = '72px';
+        announcement.style.fontWeight = 'bold';
+        announcement.style.textShadow = '0 0 30px #00FFFF, 0 0 60px #00FFFF';
+        announcement.style.zIndex = '2000';
+        announcement.style.pointerEvents = 'none';
+        announcement.style.opacity = '0';
+        announcement.style.transition = 'opacity 0.3s ease-in';
+        announcement.textContent = `WAVE ${waveNumber}`;
+
+        document.getElementById('ui').appendChild(announcement);
+
+        // Fade in
+        setTimeout(() => {
+            announcement.style.opacity = '1';
+        }, 50);
+
+        // Hold and fade out
+        setTimeout(() => {
+            announcement.style.transition = 'opacity 0.5s ease-out';
+            announcement.style.opacity = '0';
+            setTimeout(() => announcement.remove(), 500);
+        }, 2000);
+    }
+
+    /**
      * Reset UI state
      */
     reset() {
