@@ -454,12 +454,12 @@ const PASSIVES = {
     id: 'execution',
     tags: ['on_hit', 'utility'],
     name: 'Exécution',
-    description: '+Dégâts sur ennemis à faible santé.',
+    description: '+Dégâts sur ennemis à faible santé. -5% dégâts de base.',
     rarity: 'rare',
     effects: {
       executeThreshold: 0.25,
       executeDamageBonus: 0.50,
-      damageMultiplier: 0.10
+      damageMultiplier: -0.05
     },
     maxStacks: 3,
     color: '#8B0000',
@@ -470,12 +470,13 @@ const PASSIVES = {
     id: 'fureur_combat',
     tags: ['on_kill', 'utility'],
     name: 'Fureur de Combat',
-    description: 'Stack de dégâts qui augmente avec les kills.',
+    description: 'Stack de dégâts qui augmente avec les kills. -5% santé max.',
     rarity: 'rare',
     effects: {
       furyPerKill: 0.02,
       furyMax: 0.50,
-      furyDecay: 0.01
+      furyDecay: 0.01,
+      maxHealthMultiplier: -0.05
     },
     maxStacks: 3,
     color: '#FF0000',
@@ -486,12 +487,13 @@ const PASSIVES = {
     id: 'predateur',
     tags: ['on_kill', 'xp', 'sustain'],
     name: 'Prédateur',
-    description: 'Bonus XP et santé sur kill.',
+    description: 'Bonus XP et santé sur kill. -5% vitesse de tir.',
     rarity: 'rare',
     effects: {
       xpMultiplier: 0.20,
       healOnKill: 2,
-      damageMultiplier: 0.12
+      damageMultiplier: 0.12,
+      fireRateMultiplier: -0.05
     },
     maxStacks: 3,
     color: '#FFD700',
@@ -502,12 +504,13 @@ const PASSIVES = {
     id: 'chaine_foudre',
     tags: ['on_hit', 'aoe'],
     name: 'Chaîne de Foudre',
-    description: 'Les attaques électriques sautent entre ennemis.',
+    description: 'Les attaques électriques sautent entre ennemis. -8% portée.',
     rarity: 'rare',
     effects: {
       chainLightning: 1,
       electricDamageBonus: 0.30,
-      chainRange: 150
+      chainRange: 150,
+      rangeMultiplier: -0.08
     },
     maxStacks: 4,
     color: '#00FFFF',
@@ -534,12 +537,13 @@ const PASSIVES = {
     id: 'lame_tournoyante',
     tags: ['aoe', 'melee', 'short_range'],
     name: 'Lame Tournoyante',
-    description: 'Dégâts de zone autour du vaisseau.',
+    description: 'Dégâts de zone autour du vaisseau. -10% portée.',
     rarity: 'rare',
     effects: {
       orbitDamage: 5,
       orbitRadius: 80,
-      orbitSpeed: 2.0
+      orbitSpeed: 2.0,
+      rangeMultiplier: -0.10
     },
     maxStacks: 4,
     color: '#FF00FF',
@@ -565,12 +569,13 @@ const PASSIVES = {
     id: 'survivant',
     tags: ['shield', 'regen', 'sustain'],
     name: 'Survivant',
-    description: 'Bouclier et régénération quand blessé.',
+    description: 'Bouclier et régénération quand blessé. -10% dégâts.',
     rarity: 'rare',
     effects: {
       lowHealthShield: 30,
       lowHealthRegen: 2.0,
-      lowHealthThreshold: 0.30
+      lowHealthThreshold: 0.30,
+      damageMultiplier: -0.10
     },
     maxStacks: 2,
     color: '#32CD32',
@@ -597,13 +602,14 @@ const PASSIVES = {
     id: 'arsenal_orbital',
     tags: ['summon', 'turret', 'aoe', 'fire_rate'],
     name: 'Arsenal Orbital',
-    description: 'Satellites armés tournent autour du vaisseau.',
+    description: 'Satellites armés tournent autour du vaisseau. -10% vitesse de déplacement.',
     rarity: 'epic',
     effects: {
       orbitCount: 2,
       orbitDamage: 15,
       orbitRadius: 120,
-      fireRateMultiplier: 0.15
+      fireRateMultiplier: 0.15,
+      speedMultiplier: -0.10
     },
     maxStacks: 2,
     color: '#9400D3',
@@ -614,12 +620,12 @@ const PASSIVES = {
     id: 'phoenix',
     tags: ['sustain', 'utility'],
     name: 'Phoenix',
-    description: 'Reviens à la vie une fois par vague.',
+    description: 'Reviens à la vie une fois par vague. -15% dégâts de base.',
     rarity: 'epic',
     effects: {
       revive: 1,
       reviveHealth: 0.50,
-      damageMultiplier: 0.20
+      damageMultiplier: -0.15
     },
     maxStacks: 1,
     color: '#FF4500',
@@ -646,14 +652,15 @@ const PASSIVES = {
     id: 'nexus_energie',
     tags: ['utility', 'fire_rate', 'speed', 'crit'],
     name: 'Nexus d\'Énergie',
-    description: 'Toutes les stats augmentent légèrement.',
+    description: 'Toutes les stats augmentent légèrement. -5% armure.',
     rarity: 'epic',
     effects: {
       damageMultiplier: 0.15,
       fireRateMultiplier: 0.15,
       speedMultiplier: 0.15,
       maxHealthMultiplier: 0.15,
-      critChance: 0.05
+      critChance: 0.05,
+      armor: -2
     },
     maxStacks: 2,
     color: '#00FFFF',
@@ -682,13 +689,14 @@ const PASSIVES = {
     id: 'gardien',
     tags: ['shield', 'armor', 'sustain'],
     name: 'Gardien',
-    description: 'Bouclier massif et armure renforcée.',
+    description: 'Bouclier massif et armure renforcée. -20% vitesse.',
     rarity: 'epic',
     effects: {
       shield: 100,
       shieldRegen: 5,
       armor: 5,
-      maxHealthMultiplier: 0.30
+      maxHealthMultiplier: 0.30,
+      speedMultiplier: -0.20
     },
     maxStacks: 2,
     color: '#4169E1',
@@ -699,13 +707,14 @@ const PASSIVES = {
     id: 'instinct_tueur',
     tags: ['on_kill', 'speed', 'sustain'],
     name: 'Instinct Tueur',
-    description: 'Bonus massif sur kill: vitesse, dégâts, heal.',
+    description: 'Bonus massif sur kill: vitesse, dégâts, heal. -10% santé max.',
     rarity: 'epic',
     effects: {
       killSpeedBoost: 0.20,
       killDamageBoost: 0.15,
       healOnKill: 5,
-      killBoostDuration: 3.0
+      killBoostDuration: 3.0,
+      maxHealthMultiplier: -0.10
     },
     maxStacks: 2,
     color: '#FF1493',
@@ -733,13 +742,13 @@ const PASSIVES = {
     id: 'siphon_vital',
     tags: ['vampire', 'regen', 'on_hit', 'sustain'],
     name: 'Siphon Vital',
-    description: 'Lifesteal extrême et régénération.',
+    description: 'Lifesteal extrême et régénération. -10% dégâts.',
     rarity: 'epic',
     effects: {
       lifesteal: 0.25,
       healthRegen: 2.0,
       maxHealthMultiplier: 0.20,
-      damageMultiplier: 0.10
+      damageMultiplier: -0.10
     },
     maxStacks: 2,
     color: '#DC143C',

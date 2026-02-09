@@ -650,6 +650,9 @@ class Game {
             this.gameState.setState(GameStates.PAUSED);
             this.running = false;
             // Show pause UI
+            if (this.systems && this.systems.ui) {
+                this.systems.ui.showPauseMenu();
+            }
         }
     }
 
@@ -657,7 +660,10 @@ class Game {
         if (this.gameState.isState(GameStates.PAUSED) || this.gameState.isState(GameStates.LEVEL_UP)) {
             this.gameState.setState(GameStates.RUNNING);
             this.running = true;
-            this.systems.ui.showScreen('game');
+            if (this.systems && this.systems.ui) {
+                this.systems.ui.hidePauseMenu();
+                this.systems.ui.showScreen('game');
+            }
         }
     }
 
