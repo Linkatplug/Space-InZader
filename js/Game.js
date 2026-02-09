@@ -38,6 +38,7 @@ class Game {
         this.gameState = new GameState();
         this.saveManager = new SaveManager();
         this.audioManager = new AudioManager();
+        this.scoreManager = new ScoreManager();
         
         // Debug system
         this.debugOverlay = null;
@@ -150,6 +151,35 @@ class Game {
         document.getElementById('returnMenuButton').addEventListener('click', () => {
             this.gameState.setState(GameStates.MENU);
             this.systems.ui.showScreen('menu');
+        });
+
+        // View scoreboard from game over
+        document.getElementById('viewScoreboardButton').addEventListener('click', () => {
+            this.systems.ui.showScoreboard();
+        });
+
+        // Scoreboard back button
+        document.getElementById('scoreboardBackButton').addEventListener('click', () => {
+            this.systems.ui.hideScoreboard();
+            this.systems.ui.showGameOver();
+        });
+
+        // Submit score with name
+        document.getElementById('submitScoreButton').addEventListener('click', () => {
+            this.submitScore();
+        });
+
+        // Skip score entry
+        document.getElementById('skipScoreButton').addEventListener('click', () => {
+            this.systems.ui.hideNameEntryDialog();
+            this.systems.ui.showGameOver();
+        });
+
+        // Allow Enter key to submit name
+        document.getElementById('playerNameInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.submitScore();
+            }
         });
 
         // Listen for ship selection
@@ -940,18 +970,62 @@ class Game {
         this.gameState.setState(GameStates.GAME_OVER);
         
         // Calculate rewards
-        const noyaux = this.gameState.calculateNoyaux();
-        this.saveManager.addNoyaux(noyaux, this.saveData);
+        const credits = this.gameState.calculateNoyaux();
+        this.saveManager.addNoyaux(credits, this.saveData);
         this.saveManager.updateStats(this.gameState.stats, this.saveData);
         
         // Stop background music
         this.audioManager.stopBackgroundMusic();
         
-        // Show game over screen
-        this.systems.ui.showGameOver();
+        // Check if score qualifies for leaderboard
+        const finalScore = this.gameState.stats.score;
+        if (this.scoreManager.qualifiesForLeaderboard(finalScore)) {
+            // Show name entry dialog
+            this.systems.ui.showNameEntryDialog();
+        } else {
+            // Show game over screen directly
+            this.systems.ui.showGameOver();
+        }
         
         // Play death sound
         this.audioManager.playSFX('death');
+    }
+
+    /**
+     * Submit score to leaderboard
+     */
+    submitScore() {
+        const nameInput = document.getElementById('playerNameInput');
+        const playerName = nameInput ? nameInput.value.trim() : '';
+        
+        if (!playerName) {
+            alert('Veuillez entrer un nom');
+            return;
+        }
+        
+        const stats = this.gameState.stats;
+        const waveNumber = this.systems.wave?.getWaveNumber() || 1;
+        
+        const scoreData = {
+            playerName: playerName,
+            score: stats.score,
+            time: stats.time,
+            kills: stats.kills,
+            level: stats.highestLevel,
+            wave: waveNumber
+        };
+        
+        const rank = this.scoreManager.addScore(scoreData);
+        
+        // Hide name entry and show game over
+        this.systems.ui.hideNameEntryDialog();
+        this.systems.ui.showGameOver();
+        
+        // Show a congratulations message if in top 3
+        if (rank > 0 && rank <= 3) {
+            const medals = ['🥇', '🥈', '🥉'];
+            alert(`Félicitations! Vous êtes ${rank}${rank === 1 ? 'er' : 'ème'}! ${medals[rank - 1]}`);
+        }
     }
 
     startRenderLoop() {

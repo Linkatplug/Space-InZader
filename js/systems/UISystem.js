@@ -1049,44 +1049,49 @@ class UISystem {
     }
 
     /**
-     * Render end-of-run statistics
+     * Render end-of-run statistics (in French)
      */
     renderEndStats() {
         const stats = this.gameState.stats;
-        const noyaux = this.gameState.calculateNoyaux();
+        const credits = this.gameState.calculateNoyaux();
+        const waveNumber = window.game?.systems?.wave?.getWaveNumber() || 1;
 
         const minutes = Math.floor(stats.time / 60);
         const seconds = Math.floor(stats.time % 60);
 
         this.endStats.innerHTML = `
             <div class="stat-line">
-                <span>Survival Time:</span>
+                <span>Temps de Survie:</span>
                 <span style="color: #00ffff;">${minutes}:${seconds.toString().padStart(2, '0')}</span>
             </div>
             <div class="stat-line">
-                <span>Total Kills:</span>
+                <span>Vague Atteinte:</span>
+                <span style="color: #00ffff;">${waveNumber}</span>
+            </div>
+            <div class="stat-line">
+                <span>Ennemis Éliminés:</span>
                 <span style="color: #00ffff;">${stats.kills}</span>
             </div>
             <div class="stat-line">
-                <span>Final Score:</span>
+                <span>Score Final:</span>
                 <span style="color: #00ffff;">${stats.score}</span>
             </div>
             <div class="stat-line">
-                <span>Highest Level:</span>
+                <span>Niveau Maximum:</span>
                 <span style="color: #00ffff;">${stats.highestLevel}</span>
             </div>
             <div class="stat-line">
-                <span>Damage Dealt:</span>
+                <span>Dégâts Infligés:</span>
                 <span style="color: #ff6600;">${Math.floor(stats.damageDealt)}</span>
             </div>
             <div class="stat-line">
-                <span>Damage Taken:</span>
+                <span>Dégâts Subis:</span>
                 <span style="color: #ff0000;">${Math.floor(stats.damageTaken)}</span>
             </div>
             <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #00ffff;">
                 <div class="stat-line" style="font-size: 20px; font-weight: bold;">
-                    <span>Noyaux Earned:</span>
-                    <span style="color: #ffaa00;">⬡ ${noyaux}</span>
+                    <span>Crédits Gagnés:</span>
+                    <span style="color: #ffaa00;">⬡ ${credits}</span>
                 </div>
             </div>
         `;
@@ -1463,5 +1468,102 @@ class UISystem {
         } else {
             warningEl.style.display = 'none';
         }
+    }
+
+    /**
+     * Show name entry dialog for scoreboard
+     */
+    showNameEntryDialog() {
+        const dialog = document.getElementById('nameEntryDialog');
+        if (dialog) {
+            dialog.classList.add('active');
+            const input = document.getElementById('playerNameInput');
+            if (input) {
+                input.value = '';
+                input.focus();
+            }
+        }
+    }
+
+    /**
+     * Hide name entry dialog
+     */
+    hideNameEntryDialog() {
+        const dialog = document.getElementById('nameEntryDialog');
+        if (dialog) {
+            dialog.classList.remove('active');
+        }
+    }
+
+    /**
+     * Show scoreboard screen
+     */
+    showScoreboard() {
+        this.hideAllScreens();
+        const scoreboardScreen = document.getElementById('scoreboardScreen');
+        if (scoreboardScreen) {
+            scoreboardScreen.classList.add('active');
+            this.renderScoreboard();
+        }
+    }
+
+    /**
+     * Hide scoreboard screen
+     */
+    hideScoreboard() {
+        const scoreboardScreen = document.getElementById('scoreboardScreen');
+        if (scoreboardScreen) {
+            scoreboardScreen.classList.remove('active');
+        }
+    }
+
+    /**
+     * Render scoreboard table
+     */
+    renderScoreboard() {
+        const scoreManager = window.game?.scoreManager;
+        const container = document.getElementById('scoreboardContainer');
+        
+        if (!container || !scoreManager) return;
+        
+        const scores = scoreManager.getTopScores(10);
+        
+        if (scores.length === 0) {
+            container.innerHTML = '<div class="scoreboard-empty">Aucun score enregistré</div>';
+            return;
+        }
+        
+        let html = `
+            <table class="scoreboard-table">
+                <thead>
+                    <tr>
+                        <th class="scoreboard-rank">#</th>
+                        <th class="scoreboard-name">Joueur</th>
+                        <th class="scoreboard-score">Score</th>
+                        <th class="scoreboard-wave">Vague</th>
+                        <th class="scoreboard-date">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        scores.forEach((score, index) => {
+            html += `
+                <tr>
+                    <td class="scoreboard-rank">${index + 1}</td>
+                    <td class="scoreboard-name">${score.playerName}</td>
+                    <td class="scoreboard-score">${score.score}</td>
+                    <td class="scoreboard-wave">V${score.wave}</td>
+                    <td class="scoreboard-date">${ScoreManager.formatDate(score.date)}</td>
+                </tr>
+            `;
+        });
+        
+        html += `
+                </tbody>
+            </table>
+        `;
+        
+        container.innerHTML = html;
     }
 }

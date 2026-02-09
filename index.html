@@ -342,6 +342,133 @@
             justify-content: space-between;
         }
 
+        /* Name Entry Dialog */
+        .name-entry-dialog {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 26, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            pointer-events: all;
+        }
+
+        .name-entry-dialog.active {
+            display: flex;
+        }
+
+        .dialog-content {
+            background: rgba(10, 10, 26, 0.95);
+            border: 3px solid #ffaa00;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255, 170, 0, 0.5);
+            text-align: center;
+        }
+
+        .name-input {
+            width: 300px;
+            padding: 15px;
+            font-size: 20px;
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ffff;
+            color: #00ffff;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        .name-input:focus {
+            outline: none;
+            border-color: #ffaa00;
+            box-shadow: 0 0 10px rgba(255, 170, 0, 0.5);
+        }
+
+        /* Scoreboard */
+        .scoreboard-container {
+            background: rgba(10, 10, 26, 0.9);
+            border: 2px solid #00ffff;
+            padding: 20px;
+            margin: 20px;
+            max-width: 700px;
+            width: 100%;
+        }
+
+        .scoreboard-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .scoreboard-table th {
+            color: #ffaa00;
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid #00ffff;
+            font-size: 14px;
+        }
+
+        .scoreboard-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            font-size: 14px;
+        }
+
+        .scoreboard-rank {
+            color: #ffaa00;
+            font-weight: bold;
+            width: 50px;
+        }
+
+        .scoreboard-name {
+            color: #00ffff;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .scoreboard-score {
+            color: #00ff00;
+            font-weight: bold;
+            width: 100px;
+        }
+
+        .scoreboard-wave {
+            color: #00ffff;
+            width: 80px;
+        }
+
+        .scoreboard-date {
+            color: #888;
+            width: 100px;
+            font-size: 12px;
+        }
+
+        .scoreboard-table tr:nth-child(1) td {
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .scoreboard-table tr:nth-child(2) td {
+            color: #c0c0c0;
+            font-weight: bold;
+        }
+
+        .scoreboard-table tr:nth-child(3) td {
+            color: #cd7f32;
+            font-weight: bold;
+        }
+
+        .scoreboard-empty {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+            font-style: italic;
+        }
+
         .controls-help {
             position: absolute;
             bottom: 20px;
@@ -792,10 +919,37 @@
             </div>
 
             <!-- Game Over Screen -->
+            <!-- Name Entry Dialog -->
+            <div class="name-entry-dialog" id="nameEntryDialog">
+                <div class="dialog-content">
+                    <h3 class="title" style="font-size: 32px;">NOUVEAU RECORD!</h3>
+                    <p style="color: #00ffff; margin: 20px 0;">Entrez votre nom:</p>
+                    <input type="text" id="playerNameInput" class="name-input" maxlength="20" placeholder="Votre nom">
+                    <div style="margin-top: 20px;">
+                        <button class="button" id="submitScoreButton">VALIDER</button>
+                        <button class="button" id="skipScoreButton">PASSER</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scoreboard Screen -->
+            <div class="scoreboard-screen screen overlay" id="scoreboardScreen">
+                <div style="position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center;">
+                    <h2 class="title" style="font-size: 48px;">🏆 CLASSEMENT 🏆</h2>
+                    <div class="scoreboard-container" id="scoreboardContainer">
+                        <!-- Populated by JavaScript -->
+                    </div>
+                    <button class="button" id="scoreboardBackButton">RETOUR</button>
+                </div>
+            </div>
+
             <div class="game-over-screen" id="gameOverScreen">
                 <h2 class="title" style="font-size: 48px;">GAME OVER</h2>
                 <div class="stats-panel" id="endStats"></div>
-                <button class="button" id="returnMenuButton">RETOUR AU MENU</button>
+                <div style="margin-top: 20px;">
+                    <button class="button" id="viewScoreboardButton">VOIR LE CLASSEMENT</button>
+                    <button class="button" id="returnMenuButton">RETOUR AU MENU</button>
+                </div>
             </div>
 
             <!-- Meta Progression Screen -->
@@ -918,6 +1072,7 @@
     <script src="js/systems/SynergySystem.js"></script>
     <script src="js/systems/WeatherSystem.js"></script>
     <script src="js/managers/SaveManager.js"></script>
+    <script src="js/managers/ScoreManager.js"></script>
     <script src="js/managers/AudioManager.js"></script>
     <script src="js/Game.js"></script>
     <script src="js/main.js"></script>
