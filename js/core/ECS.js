@@ -224,9 +224,81 @@ function createBoss(phase, patterns) {
 const Components = {
     Position: (x, y) => ({ x, y }),
     Velocity: (vx, vy) => ({ vx, vy }),
-    Health: (current, max) => ({ current, max }),
+    Health: (current, max) => ({ 
+        current, 
+        max,
+        invulnerable: false,
+        invulnerableTime: 0
+    }),
     Sprite: (sprite) => ({ sprite }),
     Collider: (radius) => ({ radius }),
+    Collision: (radius) => ({ radius }), // Alias for Collider
     Weapon: (id) => ({ id }),
-    Player: () => ({})
+    Player: () => ({ 
+        speed: 250,
+        level: 1,
+        xp: 0,
+        xpRequired: 100,
+        weapons: [],
+        passives: [],
+        stats: {
+            damage: 1,
+            fireRate: 1,
+            speed: 1,
+            maxHealth: 1,
+            critChance: 0,
+            critDamage: 1.5,
+            lifesteal: 0,
+            luck: 0,
+            xpBonus: 1,
+            armor: 0,
+            projectileSpeed: 1,
+            range: 1
+        }
+    }),
+    Renderable: (color, size, shape = 'circle') => ({ 
+        color, 
+        size, 
+        shape,
+        rotation: 0
+    }),
+    Projectile: (damage, speed, lifetime, owner, weaponType) => ({
+        damage,
+        speed,
+        lifetime,
+        maxLifetime: lifetime,
+        owner,
+        weaponType,
+        piercing: 0,
+        homing: false
+    }),
+    Pickup: (type, value) => ({
+        type,
+        value,
+        magnetRange: 150,
+        collected: false
+    }),
+    Particle: (lifetime, vx, vy, decay = 0.98) => ({
+        lifetime,
+        maxLifetime: lifetime,
+        vx,
+        vy,
+        decay,
+        alpha: 1
+    }),
+    Enemy: (aiType, baseHealth, damage, speed, xpValue) => ({ 
+        aiType,
+        baseHealth,
+        damage,
+        speed,
+        xpValue,
+        attackCooldown: 0,
+        target: null
+    }),
+    Boss: (phase, patterns) => ({
+        phase,
+        patterns,
+        phaseTime: 0,
+        nextPhaseHealth: 0.5
+    })
 };
