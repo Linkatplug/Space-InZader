@@ -39,7 +39,7 @@ class CollisionSystem {
         this.checkPlayerProjectileCollisions();
         
         // Check weather hazard collisions
-        this.checkWeatherHazardCollisions();
+        this.checkWeatherHazardCollisions(deltaTime);
     }
 
     checkProjectileEnemyCollisions() {
@@ -602,8 +602,9 @@ class CollisionSystem {
     
     /**
      * Check collisions between player and weather hazards (meteors, black holes)
+     * @param {number} deltaTime - Time elapsed since last frame
      */
-    checkWeatherHazardCollisions() {
+    checkWeatherHazardCollisions(deltaTime) {
         const player = this.world.getEntitiesByType('player')[0];
         const enemies = this.world.getEntitiesByType('enemy');
         
@@ -704,7 +705,11 @@ class CollisionSystem {
             
             if (!blackHolePos || !blackHoleCol || !blackHoleComp) continue;
             
-            // Damage player if within damage radius
+            // Check if grace period has passed
+            const isActive = blackHoleComp.age > blackHoleComp.gracePeriod;
+            if (!isActive) continue; // Don't damage during grace period
+            
+            // Damage player if within damage radius (throttled to 0.5s intervals)
             if (player) {
                 const playerPos = player.getComponent('position');
                 if (playerPos) {
@@ -714,18 +719,34 @@ class CollisionSystem {
                     );
                     
                     if (distance < blackHoleComp.damageRadius) {
-                        // Apply damage over time
-                        this.damagePlayer(player, blackHoleComp.damage, 'black_hole');
+                        // Update damage timer only when in damage radius
+                        blackHoleComp.lastPlayerDamageTime += deltaTime;
                         
-                        // Visual feedback
-                        if (this.screenEffects) {
-                            this.screenEffects.flash('#9400D3', 0.2, 0.1);
+                        // Apply damage every 0.5 seconds
+                        if (blackHoleComp.lastPlayerDamageTime >= 0.5) {
+                            // Scale damage based on distance - closer to center = more damage
+                            // At center (distance=0): 3x damage, at edge (distance=damageRadius): 1x damage
+                            const distanceFactor = Math.max(0, Math.min(1, 1 - (distance / blackHoleComp.damageRadius)));
+                            const damageMultiplier = 1 + (distanceFactor * 2); // 1x to 3x multiplier
+                            const scaledDamage = blackHoleComp.damage * damageMultiplier;
+                            
+                            this.damagePlayer(player, scaledDamage, 'black_hole');
+                            blackHoleComp.lastPlayerDamageTime = 0;
+                            
+                            // Visual feedback - more intense closer to center
+                            if (this.screenEffects) {
+                                const flashIntensity = 0.1 + (distanceFactor * 0.2); // 0.1 to 0.3
+                                this.screenEffects.flash('#9400D3', 0.2, flashIntensity);
+                            }
                         }
+                    } else {
+                        // Reset timer when player exits damage radius
+                        blackHoleComp.lastPlayerDamageTime = 0;
                     }
                 }
             }
             
-            // Damage enemies within damage radius
+            // Damage enemies within damage radius (throttled to 0.5s intervals per enemy)
             for (const enemy of enemies) {
                 const enemyPos = enemy.getComponent('position');
                 if (!enemyPos) continue;
@@ -736,8 +757,29 @@ class CollisionSystem {
                 );
                 
                 if (distance < blackHoleComp.damageRadius) {
-                    // Apply reduced damage to enemies
-                    this.damageEnemy(enemy, blackHoleComp.damage * 0.5);
+                    // Initialize timer for this enemy if not exists
+                    if (!blackHoleComp.lastEnemyDamageTime[enemy.id]) {
+                        blackHoleComp.lastEnemyDamageTime[enemy.id] = 0; // Start at 0 for consistent timing
+                    }
+                    
+                    // Update timer
+                    blackHoleComp.lastEnemyDamageTime[enemy.id] += deltaTime;
+                    
+                    // Apply damage every 0.5 seconds
+                    if (blackHoleComp.lastEnemyDamageTime[enemy.id] >= 0.5) {
+                        // Scale damage based on distance - closer to center = more damage
+                        const distanceFactor = Math.max(0, Math.min(1, 1 - (distance / blackHoleComp.damageRadius)));
+                        const damageMultiplier = 1 + (distanceFactor * 2); // 1x to 3x multiplier
+                        const scaledDamage = blackHoleComp.damage * 0.5 * damageMultiplier;
+                        
+                        this.damageEnemy(enemy, scaledDamage);
+                        blackHoleComp.lastEnemyDamageTime[enemy.id] = 0;
+                    }
+                } else {
+                    // Reset timer when enemy exits damage radius to prevent memory accumulation
+                    if (blackHoleComp.lastEnemyDamageTime[enemy.id]) {
+                        delete blackHoleComp.lastEnemyDamageTime[enemy.id];
+                    }
                 }
             }
         }
