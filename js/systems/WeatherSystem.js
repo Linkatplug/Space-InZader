@@ -277,6 +277,51 @@ class WeatherSystem {
                 enemyVel.vy += pullY;
             }
         }
+        
+        // Pull and destroy XP pickups
+        const pickups = this.world.getEntitiesByType('pickup');
+        const destroyRadius = this.blackHoleDamageRadius * 1.5; // 120 pixels destroy radius
+        
+        for (const pickup of pickups) {
+            const pickupComp = pickup.getComponent('pickup');
+            if (!pickupComp || pickupComp.type !== 'xp') continue;
+            
+            const pickupPos = pickup.getComponent('position');
+            const pickupVel = pickup.getComponent('velocity');
+            
+            if (!pickupPos || !pickupVel) continue;
+            
+            const dx = blackHolePos.x - pickupPos.x;
+            const dy = blackHolePos.y - pickupPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Pull XP orbs (faster than player)
+            if (distance < this.blackHolePullRadius && distance > 0) {
+                const pullStrength = (1 - distance / this.blackHolePullRadius) * 500; // Stronger than player
+                const pullX = (dx / distance) * pullStrength * deltaTime;
+                const pullY = (dy / distance) * pullStrength * deltaTime;
+                
+                pickupVel.vx += pullX;
+                pickupVel.vy += pullY;
+            }
+            
+            // Destroy XP if too close to black hole
+            if (distance < destroyRadius) {
+                // Create destruction particles
+                this.world.createParticles({
+                    x: pickupPos.x,
+                    y: pickupPos.y,
+                    count: 8,
+                    color: '#00ff00', // XP orb green color
+                    speed: 50,
+                    lifetime: 0.5,
+                    size: 3
+                });
+                
+                // Remove the pickup
+                this.world.removeEntity(pickup.id);
+            }
+        }
     }
     
     /**
@@ -303,6 +348,34 @@ class WeatherSystem {
     }
     
     /**
+     * Start magnetic storm event
+     */
+    startMagneticStorm() {
+        // Random weapon disable duration 2-6 seconds
+        this.magneticStormTimer = 2 + Math.random() * 4;
+        this.gameState.weaponDisabled = true;
+        
+        logger.info('WeatherSystem', `Magnetic storm disabling weapons for ${this.magneticStormTimer.toFixed(1)}s`);
+    }
+    
+    /**
+     * Update magnetic storm event
+     * @param {number} deltaTime - Time elapsed
+     */
+    updateMagneticStorm(deltaTime) {
+        // Update weapon disable timer
+        if (this.magneticStormTimer !== undefined && this.magneticStormTimer > 0) {
+            this.magneticStormTimer -= deltaTime;
+            
+            // Re-enable weapons when timer expires
+            if (this.magneticStormTimer <= 0) {
+                this.gameState.weaponDisabled = false;
+                logger.info('WeatherSystem', 'Magnetic storm ended - weapons re-enabled');
+            }
+        }
+    }
+    
+    /**
      * End the current event
      */
     endEvent() {
@@ -321,6 +394,10 @@ class WeatherSystem {
                 this.world.removeEntity(this.blackHoleEntity.id);
                 this.blackHoleEntity = null;
             }
+        } else if (this.activeEvent.type === 'magnetic_storm') {
+            // Re-enable weapons
+            this.gameState.weaponDisabled = false;
+            this.magneticStormTimer = 0;
         }
         
         this.activeEvent = null;
@@ -349,6 +426,24 @@ class WeatherSystem {
             return 'ALERTE: TEMPÊTE DE MÉTÉORITES APPROCHE!';
         } else if (this.activeEvent.type === 'black_hole') {
             return 'ALERTE: ANOMALIE GRAVITATIONNELLE DÉTECTÉE!';
+        } else if (this.activeEvent.type === 'magnetic_storm') {
+            return 'ALERTE: TEMPÊTE MAGNÉTIQUE APPROCHE!';
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get magnetic storm status text (during active event)
+     * @returns {string|null} Status text or null
+     */
+    getMagneticStormStatus() {
+        if (!this.activeEvent || this.activeEvent.type !== 'magnetic_storm' || this.showingWarning) {
+            return null;
+        }
+        
+        if (this.gameState.weaponDisabled && this.magneticStormTimer > 0) {
+            return `TEMPÊTE MAGNÉTIQUE: ARMES OFF (${Math.ceil(this.magneticStormTimer)}s)`;
         }
         
         return null;
@@ -385,5 +480,7 @@ class WeatherSystem {
         this.showingWarning = false;
         this.meteorSpawnTimer = 0;
         this.blackHoleEntity = null;
+        this.magneticStormTimer = 0;
+        this.gameState.weaponDisabled = false;
     }
 }

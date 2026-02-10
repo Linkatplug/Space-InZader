@@ -43,6 +43,11 @@ class CombatSystem {
         // Update cooldown
         weapon.cooldown -= deltaTime;
 
+        // Check if weapons are disabled by weather event (magnetic storm)
+        if (this.gameState && this.gameState.weaponDisabled) {
+            return; // Don't fire weapons during magnetic storm
+        }
+
         // Fire when cooldown is ready
         if (weapon.cooldown <= 0) {
             const playerStats = player.getComponent('player').stats;

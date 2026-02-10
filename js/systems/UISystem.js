@@ -391,6 +391,9 @@ class UISystem {
         // Update weather warning
         this.updateWeatherWarning();
         
+        // Update magnetic storm status (during active event)
+        this.updateMagneticStormStatus();
+        
         // Update stats overlay (deltas)
         this.updateStatsOverlay(playerComp, health);
     }
@@ -1549,6 +1552,46 @@ class UISystem {
             warningEl.style.display = 'block';
         } else {
             warningEl.style.display = 'none';
+        }
+    }
+    
+    /**
+     * Update magnetic storm status display (during active event)
+     */
+    updateMagneticStormStatus() {
+        if (!window.game || !window.game.systems || !window.game.systems.weather) return;
+        
+        const statusText = window.game.systems.weather.getMagneticStormStatus();
+        
+        // Get or create status element
+        let statusEl = document.getElementById('magneticStormStatus');
+        if (!statusEl) {
+            statusEl = document.createElement('div');
+            statusEl.id = 'magneticStormStatus';
+            statusEl.style.cssText = `
+                position: absolute;
+                top: 150px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(100, 0, 255, 0.8);
+                border: 2px solid #6600ff;
+                padding: 10px 20px;
+                border-radius: 5px;
+                font-size: 18px;
+                font-weight: bold;
+                color: #fff;
+                text-shadow: 0 0 10px #6600ff;
+                z-index: 999;
+                display: none;
+            `;
+            document.getElementById('gameCanvas').parentElement.appendChild(statusEl);
+        }
+        
+        if (statusText) {
+            statusEl.textContent = statusText;
+            statusEl.style.display = 'block';
+        } else {
+            statusEl.style.display = 'none';
         }
     }
 
