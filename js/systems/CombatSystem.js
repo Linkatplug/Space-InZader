@@ -89,8 +89,8 @@ class CombatSystem {
                     break;
                 case 'beam':
                 case 'railgun':
-                    // Deep sound for beam/railgun
-                    this.audioManager.playSFX('laser', MathUtils.randomFloat(0.7, 0.9));
+                    // Calm, deep sound for beam/railgun - much softer
+                    this.audioManager.playSFX('laser', MathUtils.randomFloat(0.4, 0.6));
                     break;
                 case 'mine':
                 case 'turret':

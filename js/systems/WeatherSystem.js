@@ -28,9 +28,9 @@ class WeatherSystem {
         this.meteorSpawnTimer = 0;
         this.meteorSpawnInterval = 0.3; // Spawn meteor every 0.3s during storm
         
-        // Black hole configuration
+        // Black hole configuration - DOUBLED for much stronger attraction
         this.blackHoleEntity = null;
-        this.blackHolePullRadius = 400;
+        this.blackHolePullRadius = 800; // Doubled from 400
         this.blackHoleDamageRadius = 80;
         
         // Performance limits
@@ -222,7 +222,7 @@ class WeatherSystem {
                     // Gentler initial pull - ramp up over 2 seconds
                     const eventAge = blackHoleComp.age || 0;
                     const pullMultiplier = Math.min(eventAge / 2.0, 1.0); // 0 to 1 over 2 seconds
-                    const basePullStrength = (1 - distance / this.blackHolePullRadius) * 300;
+                    const basePullStrength = (1 - distance / this.blackHolePullRadius) * 600; // DOUBLED from 300
                     const pullStrength = basePullStrength * (0.3 + 0.7 * pullMultiplier); // 30% min, 100% max
                     const pullX = (dx / distance) * pullStrength * deltaTime;
                     const pullY = (dy / distance) * pullStrength * deltaTime;
@@ -281,7 +281,7 @@ class WeatherSystem {
         
         // Pull and destroy XP pickups
         const pickups = this.world.getEntitiesByType('pickup');
-        const destroyRadius = this.blackHoleDamageRadius * 1.5; // 120 pixels destroy radius
+        const destroyRadius = 240; // DOUBLED from 120 - Destroy XP closer to black hole center
         
         for (const pickup of pickups) {
             const pickupComp = pickup.getComponent('pickup');
@@ -298,7 +298,7 @@ class WeatherSystem {
             
             // Pull XP orbs (faster than player)
             if (distance < this.blackHolePullRadius && distance > 0) {
-                const pullStrength = (1 - distance / this.blackHolePullRadius) * 500; // Stronger than player
+                const pullStrength = (1 - distance / this.blackHolePullRadius) * 1000; // DOUBLED from 500 - Stronger than player
                 const pullX = (dx / distance) * pullStrength * deltaTime;
                 const pullY = (dy / distance) * pullStrength * deltaTime;
                 
@@ -356,6 +356,21 @@ class WeatherSystem {
         this.magneticStormTimer = 2 + Math.random() * 4;
         this.gameState.weaponDisabled = true;
         
+        // Initialize storm visual effects
+        this.magneticStormLightningTimer = 0;
+        this.magneticStormParticles = [];
+        
+        // Create storm particles (nebula effect)
+        for (let i = 0; i < 20; i++) {
+            this.magneticStormParticles.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                vx: (Math.random() - 0.5) * 50,
+                vy: (Math.random() - 0.5) * 50,
+                size: 2 + Math.random() * 3
+            });
+        }
+        
         logger.info('WeatherSystem', `Magnetic storm disabling weapons for ${this.magneticStormTimer.toFixed(1)}s`);
     }
     
@@ -367,6 +382,50 @@ class WeatherSystem {
         // Update weapon disable timer
         if (this.magneticStormTimer !== undefined && this.magneticStormTimer > 0) {
             this.magneticStormTimer -= deltaTime;
+            
+            // Draw visual effects (fog, lightning, nebula particles)
+            const canvas = this.canvas;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw purple fog overlay with pulsing effect
+            const pulseFactor = Math.sin(Date.now() / 1000 * Math.PI); // 2-second pulse period
+            const fogIntensity = 0.15 * (1 + 0.3 * pulseFactor);
+            ctx.fillStyle = `rgba(150, 0, 255, ${fogIntensity})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Lightning flashes
+            if (!this.magneticStormLightningTimer) {
+                this.magneticStormLightningTimer = 0.3 + Math.random() * 0.5;
+            }
+            
+            this.magneticStormLightningTimer -= deltaTime;
+            if (this.magneticStormLightningTimer <= 0) {
+                // Flash effect
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                this.magneticStormLightningTimer = 0.3 + Math.random() * 0.5;
+            }
+            
+            // Update and draw storm particles (nebula effect)
+            if (this.magneticStormParticles) {
+                ctx.fillStyle = 'rgba(200, 100, 255, 0.6)';
+                for (const particle of this.magneticStormParticles) {
+                    // Update position
+                    particle.x += particle.vx * deltaTime;
+                    particle.y += particle.vy * deltaTime;
+                    
+                    // Wrap around screen
+                    if (particle.x < 0) particle.x = canvas.width;
+                    if (particle.x > canvas.width) particle.x = 0;
+                    if (particle.y < 0) particle.y = canvas.height;
+                    if (particle.y > canvas.height) particle.y = 0;
+                    
+                    // Draw particle
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
             
             // Re-enable weapons when timer expires
             if (this.magneticStormTimer <= 0) {
