@@ -13,6 +13,10 @@ class TouchControls {
         this.joystickDirection = { x: 0, y: 0 };
         this.fireButtonPressed = false;
         
+        // Joystick configuration constants
+        this.JOYSTICK_INNER_RADIUS = 30; // Half of inner circle size (60px / 2)
+        this.JOYSTICK_DEAD_ZONE = 5; // Minimum distance to register movement
+        
         // Touch identifiers
         this.joystickTouchId = null;
         this.fireButtonTouchId = null;
@@ -203,7 +207,7 @@ class TouchControls {
         if (!this.joystickActive) return;
         
         const rect = this.joystick.getBoundingClientRect();
-        const maxDistance = rect.width / 2 - 30; // Account for inner circle size
+        const maxDistance = rect.width / 2 - this.JOYSTICK_INNER_RADIUS;
         
         // Calculate relative position
         const dx = touch.clientX - this.joystickCenter.x;
@@ -218,8 +222,8 @@ class TouchControls {
         this.joystickPosition.x = Math.cos(angle) * clampedDistance;
         this.joystickPosition.y = Math.sin(angle) * clampedDistance;
         
-        // Calculate normalized direction
-        if (distance > 5) { // Dead zone
+        // Calculate normalized direction with dead zone
+        if (distance > this.JOYSTICK_DEAD_ZONE) {
             this.joystickDirection.x = dx / distance;
             this.joystickDirection.y = dy / distance;
         } else {
