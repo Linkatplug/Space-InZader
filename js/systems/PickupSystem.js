@@ -64,8 +64,10 @@ class PickupSystem {
         const dy = playerPos.y - pickupPos.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Magnet attraction
-        const magnetRange = pickupComp.magnetRange * (1 + playerComp.stats.luck * 0.5);
+        // Magnet attraction - use player's magnetRange stat plus bonus from luck
+        const baseMagnetRange = pickupComp.magnetRange || 100; // Default base range
+        const playerMagnetBonus = playerComp.stats.magnetRange || 0; // Bonus from passives
+        const magnetRange = (baseMagnetRange + playerMagnetBonus) * (1 + playerComp.stats.luck * 0.5);
         
         if (distance < magnetRange && !pickupComp.collected) {
             // Pull towards player

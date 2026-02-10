@@ -38,6 +38,12 @@ class UISystem {
         
         // Controls help tracking
         this.controlsShownThisGame = false;
+        
+        // Stats overlay toggle state
+        this.statsOverlayVisible = true;
+        
+        // Track missing stats warnings to avoid spam
+        this.missingStatsWarned = new Set();
     }
 
     /**
@@ -113,6 +119,12 @@ class UISystem {
         this.shieldDisplay = document.getElementById('shieldDisplay');
         this.shieldValue = document.getElementById('shieldValue');
         
+        // Heat/Overheat elements
+        this.heatBar = document.getElementById('heatBar');
+        this.heatFill = document.getElementById('heatFill');
+        this.heatDisplay = document.getElementById('heatDisplay');
+        this.heatValue = document.getElementById('heatValue');
+        
         // Stats display elements
         this.statDamage = document.getElementById('statDamage');
         this.statFireRate = document.getElementById('statFireRate');
@@ -125,6 +137,9 @@ class UISystem {
         // Weapon and passive status elements
         this.weaponList = document.getElementById('weaponList');
         this.passiveList = document.getElementById('passiveList');
+        
+        // Stats overlay panel
+        this.statsOverlayPanel = document.getElementById('statsOverlayPanel');
 
         // Menu elements (ship selection)
         this.shipSelection = document.getElementById('shipSelection');
@@ -177,6 +192,11 @@ class UISystem {
         }
         if (this.creditsBtn) {
             this.creditsBtn.addEventListener('click', () => this.showCredits());
+        }
+
+        // Back button from ship selection
+        if (this.backToMainBtn) {
+            this.backToMainBtn.addEventListener('click', () => this.showMainMenu());
         }
 
         // Pause menu buttons
@@ -242,6 +262,16 @@ class UISystem {
         if (this.creditsBackBtn) {
             this.creditsBackBtn.addEventListener('click', () => this.showMainMenu());
         }
+        
+        // Stats overlay toggle with 'A' key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'a' || e.key === 'A') {
+                // Only toggle if game is running
+                if (this.gameState && (this.gameState.currentState === GameStates.RUNNING || this.gameState.currentState === GameStates.LEVEL_UP)) {
+                    this.toggleStatsOverlay();
+                }
+            }
+        });
     }
 
     /**
@@ -327,6 +357,32 @@ class UISystem {
             this.shieldBar.style.display = 'none';
             this.shieldDisplay.style.display = 'none';
         }
+        
+        // Update heat/overheat gauge
+        if (this.heatBar && this.heatFill && this.heatDisplay) {
+            const heat = playerComp?.heat ?? 0;
+            const heatMax = playerComp?.heatMax ?? 100;
+            
+            if (heatMax > 0 && heat > 0) {
+                this.heatBar.style.display = 'block';
+                this.heatDisplay.style.display = 'block';
+                this.heatValue.textContent = `${Math.ceil(heat)}/${heatMax}`;
+                const heatPercent = (heat / heatMax) * 100;
+                this.heatFill.style.width = `${Math.max(0, Math.min(100, heatPercent))}%`;
+                
+                // Change color based on heat level
+                if (heatPercent >= 80) {
+                    this.heatFill.style.background = 'linear-gradient(to right, #ff4444, #ff0000)';
+                } else if (heatPercent >= 50) {
+                    this.heatFill.style.background = 'linear-gradient(to right, #ffaa00, #ff6600)';
+                } else {
+                    this.heatFill.style.background = 'linear-gradient(to right, #ffcc00, #ff9900)';
+                }
+            } else {
+                this.heatBar.style.display = 'none';
+                this.heatDisplay.style.display = 'none';
+            }
+        }
 
         // Update weapon display
         this.updateWeaponDisplay(playerComp);
@@ -339,6 +395,12 @@ class UISystem {
         
         // Update weather warning
         this.updateWeatherWarning();
+        
+        // Update magnetic storm status (during active event)
+        this.updateMagneticStormStatus();
+        
+        // Update stats overlay (deltas)
+        this.updateStatsOverlay(playerComp, health);
     }
     
     /**
@@ -607,43 +669,71 @@ class UISystem {
     renderScoreboard() {
         if (!this.scoreList) return;
         
-        const saveManager = window.game?.saveManager;
-        if (!saveManager) {
-            this.scoreList.innerHTML = '<div style="color:#666;text-align:center;padding:40px;">SaveManager not available</div>';
+        const scoreManager = window.game?.scoreManager;
+        if (!scoreManager) {
+            this.scoreList.innerHTML = '<div style="color:#666;text-align:center;padding:40px;font-size:20px;">Score Manager not available</div>';
             return;
         }
         
-        const scores = saveManager.getTopScores(10);
-        this.scoreList.innerHTML = '';
+        const scores = scoreManager.getTopScores(10);
         
         if (scores.length === 0) {
-            this.scoreList.innerHTML = '<div style="color:#666;text-align:center;padding:40px;">No scores yet. Play to set a record!</div>';
+            this.scoreList.innerHTML = '<div style="color:#0ff;text-align:center;padding:40px;font-size:22px;text-shadow:0 0 10px #0ff;">Aucun score enregistré.<br><br>Jouez pour établir un record!</div>';
             return;
         }
+        
+        // Create table structure
+        let tableHTML = `
+            <table style="width:100%;border-collapse:collapse;font-size:20px;">
+                <thead>
+                    <tr style="border-bottom:2px solid #0ff;color:#0ff;text-shadow:0 0 10px #0ff;">
+                        <th style="padding:10px;text-align:left;">Rang</th>
+                        <th style="padding:10px;text-align:left;">Nom</th>
+                        <th style="padding:10px;text-align:right;">Score</th>
+                        <th style="padding:10px;text-align:center;">Vague</th>
+                        <th style="padding:10px;text-align:center;">Temps</th>
+                        <th style="padding:10px;text-align:right;">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
         
         scores.forEach((entry, index) => {
             const rank = index + 1;
-            const div = document.createElement('div');
-            div.className = `score-entry rank-${rank}`;
-            
             const date = new Date(entry.date);
             const timeStr = Math.floor(entry.time / 60) + ':' + String(Math.floor(entry.time % 60)).padStart(2, '0');
             
-            div.innerHTML = `
-                <div class="score-header">
-                    <span>#${rank} - ${entry.class}</span>
-                    <span>${entry.score.toLocaleString()}</span>
-                </div>
-                <div class="score-details">
-                    Wave ${entry.wave} | ${entry.kills} kills | ${timeStr} | ${entry.bossKills} bosses
-                </div>
-                <div class="score-build">
-                    ${date.toLocaleDateString()} ${date.toLocaleTimeString()}
-                </div>
+            // Color based on rank
+            let rankColor = '#fff';
+            if (rank === 1) rankColor = '#ffd700'; // Gold
+            else if (rank === 2) rankColor = '#c0c0c0'; // Silver
+            else if (rank === 3) rankColor = '#cd7f32'; // Bronze
+            else rankColor = '#0ff'; // Cyan for others
+            
+            const rowStyle = `
+                border-bottom:1px solid #333;
+                color:${rankColor};
+                text-shadow:0 0 5px ${rankColor};
             `;
             
-            this.scoreList.appendChild(div);
+            tableHTML += `
+                <tr style="${rowStyle}">
+                    <td style="padding:12px;text-align:left;font-weight:bold;">#${rank}</td>
+                    <td style="padding:12px;text-align:left;">${entry.playerName}</td>
+                    <td style="padding:12px;text-align:right;font-weight:bold;">${entry.score.toLocaleString()}</td>
+                    <td style="padding:12px;text-align:center;">${entry.wave}</td>
+                    <td style="padding:12px;text-align:center;">${timeStr}</td>
+                    <td style="padding:12px;text-align:right;font-size:16px;">${date.toLocaleDateString()}</td>
+                </tr>
+            `;
         });
+        
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+        
+        this.scoreList.innerHTML = tableHTML;
     }
 
     /**
@@ -1469,6 +1559,46 @@ class UISystem {
             warningEl.style.display = 'none';
         }
     }
+    
+    /**
+     * Update magnetic storm status display (during active event)
+     */
+    updateMagneticStormStatus() {
+        if (!window.game || !window.game.systems || !window.game.systems.weather) return;
+        
+        const statusText = window.game.systems.weather.getMagneticStormStatus();
+        
+        // Get or create status element
+        let statusEl = document.getElementById('magneticStormStatus');
+        if (!statusEl) {
+            statusEl = document.createElement('div');
+            statusEl.id = 'magneticStormStatus';
+            statusEl.style.cssText = `
+                position: absolute;
+                top: 150px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(100, 0, 255, 0.8);
+                border: 2px solid #6600ff;
+                padding: 10px 20px;
+                border-radius: 5px;
+                font-size: 18px;
+                font-weight: bold;
+                color: #fff;
+                text-shadow: 0 0 10px #6600ff;
+                z-index: 999;
+                display: none;
+            `;
+            document.getElementById('gameCanvas').parentElement.appendChild(statusEl);
+        }
+        
+        if (statusText) {
+            statusEl.textContent = statusText;
+            statusEl.style.display = 'block';
+        } else {
+            statusEl.style.display = 'none';
+        }
+    }
 
     /**
      * Show name entry dialog for scoreboard
@@ -1565,5 +1695,173 @@ class UISystem {
         `;
         
         container.innerHTML = html;
+    }
+    
+    /**
+     * Toggle stats overlay visibility
+     */
+    toggleStatsOverlay() {
+        this.statsOverlayVisible = !this.statsOverlayVisible;
+        if (this.statsOverlayPanel) {
+            this.statsOverlayPanel.style.display = this.statsOverlayVisible ? 'block' : 'none';
+        }
+    }
+    
+    /**
+     * Update stats overlay with delta calculations
+     * @param {Object} playerComp - Player component with stats and baseStats
+     * @param {Object} health - Health component
+     */
+    updateStatsOverlay(playerComp, health) {
+        if (!this.statsOverlayPanel || !this.statsOverlayVisible || !playerComp) return;
+        
+        const stats = playerComp.stats || {};
+        const baseStats = playerComp.baseStats || {};
+        
+        // Helper function to get stat with fallback
+        const getStat = (statName, defaultValue = 0) => {
+            const value = stats[statName];
+            if (value === undefined || value === null) {
+                // Warn once per stat
+                if (!this.missingStatsWarned.has(statName)) {
+                    console.warn(`[UISystem] Missing stat: ${statName}, using default ${defaultValue}`);
+                    this.missingStatsWarned.add(statName);
+                }
+                return defaultValue;
+            }
+            return value;
+        };
+        
+        const getBaseStat = (statName, defaultValue = 0) => {
+            return baseStats[statName] !== undefined ? baseStats[statName] : defaultValue;
+        };
+        
+        // Calculate deltas and format display
+        const statsList = [
+            {
+                label: 'Damage',
+                current: getStat('damageMultiplier', 1),
+                base: getBaseStat('damageMultiplier', 1),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Fire Rate',
+                current: getStat('fireRateMultiplier', 1),
+                base: getBaseStat('fireRateMultiplier', 1),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Speed',
+                current: getStat('speed', 1),
+                base: getBaseStat('speed', 1),
+                format: 'number',
+                multiplier: 1
+            },
+            {
+                label: 'Max HP',
+                current: health ? health.max : 100,
+                base: getBaseStat('maxHealth', 100),
+                format: 'number',
+                multiplier: 1
+            },
+            {
+                label: 'Armor',
+                current: getStat('armor', 0),
+                base: getBaseStat('armor', 0),
+                format: 'number',
+                multiplier: 1
+            },
+            {
+                label: 'Crit Chance',
+                current: getStat('critChance', 0),
+                base: getBaseStat('critChance', 0),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Crit Damage',
+                current: getStat('critDamage', 1.5),
+                base: getBaseStat('critDamage', 1.5),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Lifesteal',
+                current: getStat('lifesteal', 0),
+                base: getBaseStat('lifesteal', 0),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Health Regen',
+                current: getStat('healthRegen', 0),
+                base: getBaseStat('healthRegen', 0),
+                format: 'decimal',
+                suffix: '/s',
+                multiplier: 1
+            },
+            {
+                label: 'Range',
+                current: getStat('rangeMultiplier', 1),
+                base: getBaseStat('rangeMultiplier', 1),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Projectile Speed',
+                current: getStat('projectileSpeedMultiplier', 1),
+                base: getBaseStat('projectileSpeedMultiplier', 1),
+                format: 'percent',
+                multiplier: 100
+            }
+        ];
+        
+        // Build HTML
+        let html = '<div class="stats-overlay-title">PLAYER STATS</div>';
+        
+        statsList.forEach(stat => {
+            const current = stat.current * stat.multiplier;
+            const base = stat.base * stat.multiplier;
+            const delta = current - base;
+            
+            // Format values
+            let currentStr;
+            let deltaStr;
+            
+            if (stat.format === 'percent') {
+                currentStr = `${Math.round(current)}%`;
+                deltaStr = delta === 0 ? '±0%' : `${delta > 0 ? '+' : ''}${Math.round(delta)}%`;
+            } else if (stat.format === 'decimal') {
+                currentStr = `${current.toFixed(1)}${stat.suffix || ''}`;
+                deltaStr = delta === 0 ? '±0' : `${delta > 0 ? '+' : ''}${delta.toFixed(1)}${stat.suffix || ''}`;
+            } else {
+                currentStr = `${Math.round(current)}`;
+                deltaStr = delta === 0 ? '±0' : `${delta > 0 ? '+' : ''}${Math.round(delta)}`;
+            }
+            
+            // Determine color
+            let deltaColor;
+            if (delta > 0) {
+                deltaColor = '#0f0'; // Green
+            } else if (delta < 0) {
+                deltaColor = '#f33'; // Red
+            } else {
+                deltaColor = '#888'; // Gray
+            }
+            
+            html += `
+                <div class="stats-overlay-row">
+                    <span class="stats-overlay-label">${stat.label}:</span>
+                    <span class="stats-overlay-value">${currentStr}</span>
+                    <span class="stats-overlay-delta" style="color: ${deltaColor}">${deltaStr}</span>
+                </div>
+            `;
+        });
+        
+        html += '<div class="stats-overlay-hint">Press [A] to toggle</div>';
+        
+        this.statsOverlayPanel.innerHTML = html;
     }
 }

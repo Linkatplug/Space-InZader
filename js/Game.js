@@ -4,28 +4,64 @@
  */
 
 // Default stats blueprint - ALL stats must be defined to prevent undefined errors
+// Base Stats: Core stats from ship + meta progression
+// Derived Stats: Calculated from passives/synergies (multipliers apply to base)
 const DEFAULT_STATS = {
+    // === CORE DAMAGE STATS ===
     damage: 1,
     damageMultiplier: 1,
+    
+    // === FIRE RATE STATS ===
     fireRate: 1,
     fireRateMultiplier: 1,
+    
+    // === MOVEMENT STATS ===
     speed: 1,
     speedMultiplier: 1,
+    
+    // === HEALTH STATS ===
     maxHealth: 1,
-    armor: 0,
-    lifesteal: 0,
+    maxHealthMultiplier: 1,
+    maxHealthAdd: 0,
     healthRegen: 0,
+    
+    // === DEFENSE STATS ===
+    armor: 0,
+    shield: 0,
+    shieldRegen: 0,
+    shieldRegenDelay: 3.0,
+    dodgeChance: 0,
+    
+    // === LIFESTEAL & SUSTAIN ===
+    lifesteal: 0,
+    
+    // === CRITICAL STATS ===
     critChance: 0,
     critDamage: 1.5,
+    
+    // === UTILITY STATS ===
     luck: 0,
     xpBonus: 1,
+    magnetRange: 0,
+    
+    // === PROJECTILE STATS ===
     projectileSpeed: 1,
     projectileSpeedMultiplier: 1,
     range: 1,
     rangeMultiplier: 1,
-    shield: 0,
-    shieldRegen: 0,
-    shieldRegenDelay: 3.0
+    piercing: 0,
+    
+    // === SPECIAL EFFECTS (defaults for passives) ===
+    overheatReduction: 0,
+    explosionChance: 0,
+    explosionDamage: 0,
+    explosionRadius: 0,
+    stunChance: 0,
+    reflectDamage: 0,
+    projectileCount: 0,
+    ricochetChance: 0,
+    chainLightning: 0,
+    slowChance: 0
 };
 
 class Game {
@@ -61,7 +97,7 @@ class Game {
             render: new RenderSystem(this.canvas, this.world, this.gameState),
             ui: new UISystem(this.world, this.gameState),
             wave: new WaveSystem(this.gameState),
-            weather: new WeatherSystem(this.world, this.canvas, this.audioManager)
+            weather: new WeatherSystem(this.world, this.canvas, this.audioManager, this.gameState)
         };
         
         // Synergy system (initialized when game starts)
@@ -386,6 +422,22 @@ class Game {
         playerComp.stats.xpBonus = metaXP;
         playerComp.stats.armor = shipData.baseStats.armor || 0;
         
+        // Store base stats snapshot for delta calculations in UI
+        // This represents ship stats + meta progression before any passives
+        playerComp.baseStats = {
+            damageMultiplier: playerComp.stats.damageMultiplier,
+            fireRateMultiplier: playerComp.stats.fireRateMultiplier,
+            speed: playerComp.stats.speed,
+            maxHealth: maxHealth,
+            armor: playerComp.stats.armor,
+            critChance: playerComp.stats.critChance,
+            critDamage: playerComp.stats.critDamage,
+            lifesteal: playerComp.stats.lifesteal,
+            healthRegen: playerComp.stats.healthRegen,
+            rangeMultiplier: 1,
+            projectileSpeedMultiplier: 1
+        };
+        
         this.player.addComponent('player', playerComp);
         
         this.player.addComponent('renderable', Components.Renderable(
@@ -496,6 +548,7 @@ class Game {
         }
 
         // Recalculate stats
+        const health = this.player.getComponent('health');
         console.log(`Before recalculate - HP: ${health ? health.current + '/' + health.max : 'N/A'}`);
         this.recalculatePlayerStats();
         
@@ -552,21 +605,33 @@ class Game {
             PassiveData.applyPassiveEffects(passive, playerComp.stats);
         }
         
-        // Recalculate max HP with ratio preservation
+        // Recalculate max HP using base stats vs derived stats formula
         if (health) {
+            // Store old values
+            const oldMax = health.max;
+            const oldCurrent = health.current;
+            const ratio = oldMax > 0 ? oldCurrent / oldMax : 1;
+            
+            // Calculate base max HP (ship stats + meta upgrades)
             const metaHealth = this.saveData.upgrades.maxHealth * 10;
             const baseMaxHP = shipData.baseStats.maxHealth + metaHealth;
+            
+            // Get multiplier and flat additions from passives
             const hpMultiplier = playerComp.stats.maxHealthMultiplier || 1;
-            const newMaxHP = Math.floor(baseMaxHP * hpMultiplier);
+            const hpAdd = playerComp.stats.maxHealthAdd || 0;
             
-            console.log(`HP Calculation: base=${baseMaxHP}, multiplier=${hpMultiplier}, new=${newMaxHP}`);
+            // Calculate new max: floor(baseMaxHP * hpMultiplier + hpAdd), minimum 1
+            const newMax = Math.max(1, Math.floor(baseMaxHP * hpMultiplier + hpAdd));
             
-            // Preserve HP ratio
-            const hpRatio = oldMaxHP > 0 ? oldCurrentHP / oldMaxHP : 1;
-            health.max = Math.max(1, newMaxHP);
-            health.current = Math.max(1, Math.min(Math.ceil(health.max * hpRatio), health.max));
+            console.log(`HP Calculation: base=${baseMaxHP}, multiplier=${hpMultiplier}, add=${hpAdd}, newMax=${newMax}`);
             
-            console.log(`Max HP recalculated: ${oldMaxHP} -> ${health.max}, Current: ${oldCurrentHP} -> ${health.current}`);
+            // Apply new max
+            health.max = newMax;
+            
+            // Adjust current HP: clamp(ceil(newMax * ratio), 1, newMax)
+            health.current = Math.max(1, Math.min(Math.ceil(newMax * ratio), newMax));
+            
+            console.log(`Max HP recalculated: ${oldMax} -> ${health.max}, Current: ${oldCurrent} -> ${health.current}`);
         }
         
         // Update shield component based on stats with ratio preservation
@@ -593,7 +658,110 @@ class Game {
             this.synergySystem.forceRecalculate();
         }
 
+        // Apply soft caps to prevent infinite stacking
+        this.applySoftCaps(playerComp.stats);
+        
+        // Validate stats and log warnings
+        this.validateStats(playerComp.stats);
+
         console.log('Player stats recalculated:', playerComp.stats);
+    }
+    
+    /**
+     * Apply soft caps to stats to prevent infinite stacking
+     * @param {Object} stats - Player stats object
+     */
+    applySoftCaps(stats) {
+        // Lifesteal cap at 50% to prevent invincibility
+        if (stats.lifesteal > 0.5) {
+            console.warn(`Lifesteal capped at 50% (was ${(stats.lifesteal * 100).toFixed(1)}%)`);
+            stats.lifesteal = 0.5;
+        }
+        
+        // Health regen cap at 10/s to prevent trivializing damage
+        if (stats.healthRegen > 10) {
+            console.warn(`Health regen capped at 10/s (was ${stats.healthRegen.toFixed(1)}/s)`);
+            stats.healthRegen = 10;
+        }
+        
+        // Fire rate minimum 0.1 (max 10x speed) to prevent freeze
+        if (stats.fireRate < 0.1) {
+            console.warn(`Fire rate capped at minimum 0.1 (was ${stats.fireRate.toFixed(2)})`);
+            stats.fireRate = 0.1;
+        }
+        
+        // Fire rate maximum 10 to prevent performance issues
+        if (stats.fireRate > 10) {
+            console.warn(`Fire rate capped at 10 (was ${stats.fireRate.toFixed(2)})`);
+            stats.fireRate = 10;
+        }
+        
+        // Speed minimum 0.2 to prevent getting stuck
+        if (stats.speed < 0.2) {
+            console.warn(`Speed capped at minimum 0.2 (was ${stats.speed.toFixed(2)})`);
+            stats.speed = 0.2;
+        }
+        
+        // Speed maximum 5 to prevent control issues
+        if (stats.speed > 5) {
+            console.warn(`Speed capped at 5 (was ${stats.speed.toFixed(2)})`);
+            stats.speed = 5;
+        }
+        
+        // Crit chance cap at 100%
+        if (stats.critChance > 1.0) {
+            console.warn(`Crit chance capped at 100% (was ${(stats.critChance * 100).toFixed(1)}%)`);
+            stats.critChance = 1.0;
+        }
+        
+        // Dodge chance cap at 75% to maintain some risk
+        if (stats.dodgeChance > 0.75) {
+            console.warn(`Dodge chance capped at 75% (was ${(stats.dodgeChance * 100).toFixed(1)}%)`);
+            stats.dodgeChance = 0.75;
+        }
+    }
+    
+    /**
+     * Validate stats for sanity and log warnings for extreme values
+     * @param {Object} stats - Player stats object
+     */
+    validateStats(stats) {
+        const warnings = [];
+        
+        // Check for undefined stats (critical error)
+        for (const [key, value] of Object.entries(stats)) {
+            if (value === undefined) {
+                warnings.push(`CRITICAL: Stat '${key}' is undefined!`);
+            }
+        }
+        
+        // Check for extreme values
+        if (stats.damageMultiplier > 10) {
+            warnings.push(`Very high damage multiplier: ${stats.damageMultiplier.toFixed(2)}x`);
+        }
+        
+        if (stats.fireRateMultiplier > 5) {
+            warnings.push(`Very high fire rate multiplier: ${stats.fireRateMultiplier.toFixed(2)}x`);
+        }
+        
+        if (stats.speedMultiplier > 3) {
+            warnings.push(`Very high speed multiplier: ${stats.speedMultiplier.toFixed(2)}x`);
+        }
+        
+        if (stats.lifesteal > 0.3) {
+            warnings.push(`High lifesteal: ${(stats.lifesteal * 100).toFixed(1)}%`);
+        }
+        
+        if (stats.healthRegen > 5) {
+            warnings.push(`High health regen: ${stats.healthRegen.toFixed(1)}/s`);
+        }
+        
+        // Log all warnings grouped
+        if (warnings.length > 0) {
+            console.group('%c⚠️ Stats Validation Warnings', 'color: #ffaa00; font-weight: bold;');
+            warnings.forEach(w => console.warn(w));
+            console.groupEnd();
+        }
     }
 
     triggerLevelUp() {
@@ -982,8 +1150,8 @@ class Game {
         this.saveManager.addNoyaux(credits, this.saveData);
         this.saveManager.updateStats(this.gameState.stats, this.saveData);
         
-        // Stop background music
-        this.audioManager.stopBackgroundMusic();
+        // Keep background music playing (instead of stopping it)
+        // Music will continue seamlessly from gameplay to game over screen
         
         // Check if score qualifies for leaderboard
         const finalScore = this.gameState.stats.score;

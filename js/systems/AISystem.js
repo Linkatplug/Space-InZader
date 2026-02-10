@@ -248,7 +248,7 @@ class AISystem {
     }
 
     /**
-     * Boss AI - Multi-phase attack patterns
+     * Boss AI - Multi-phase attack patterns with lasers and bullets
      * @param {Entity} enemy - Enemy entity
      * @param {Entity} player - Player entity
      * @param {number} deltaTime - Time elapsed
@@ -262,58 +262,225 @@ class AISystem {
         
         if (!enemyPos || !playerPos || !enemyComp || !health || !boss) return;
 
-        // Update phase time
-        boss.phaseTime += deltaTime;
+        // Initialize boss-specific timers if needed
+        if (!boss.burstCooldown) boss.burstCooldown = 0;
+        if (!boss.laserCooldown) boss.laserCooldown = 0;
+        if (!boss.telegraphTimer) boss.telegraphTimer = 0;
+        if (!boss.minionCooldown) boss.minionCooldown = 0;
+        if (!boss.isEnraged) boss.isEnraged = false;
 
-        // Determine current phase based on health
+        // Update cooldowns
+        boss.burstCooldown -= deltaTime;
+        boss.laserCooldown -= deltaTime;
+        boss.telegraphTimer -= deltaTime;
+        boss.minionCooldown -= deltaTime;
+
+        // Determine current phase based on health (60% threshold)
         const healthPercent = health.current / health.max;
-        
-        if (healthPercent > 0.66) {
-            // Phase 1 - Chase and shoot
-            this.aggressiveAI(enemy, player, deltaTime);
-            
-            if (boss.phaseTime > 0.5) {
-                this.bossShootPattern(enemy, player, 'single');
-                boss.phaseTime = 0;
+        const wasEnraged = boss.isEnraged;
+        boss.isEnraged = healthPercent <= 0.6;
+
+        // Flash effect when entering enraged phase
+        if (boss.isEnraged && !wasEnraged) {
+            const renderable = enemy.getComponent('renderable');
+            if (renderable) {
+                renderable.flash = 1.0;
             }
-        } else if (healthPercent > 0.33) {
-            // Phase 2 - Strafe and spiral shots
+            // Play warning sound
+            if (window.game && window.game.audioManager) {
+                window.game.audioManager.playSfx('electric', 0.5, 0.8);
+            }
+        }
+
+        // Phase-based cooldowns
+        const burstInterval = boss.isEnraged ? 1.5 : 2.5;
+        const laserInterval = boss.isEnraged ? 2.5 : 4.0;
+        const minionInterval = 5.0;
+
+        // Movement behavior
+        if (healthPercent > 0.6) {
+            // Phase 1 - Moderate kiting
             this.kiteAI(enemy, player, deltaTime);
-            
-            if (boss.phaseTime > 0.3) {
-                this.bossShootPattern(enemy, player, 'spiral');
-                boss.phaseTime = 0;
-            }
         } else {
-            // Phase 3 - Enraged - Fast movement and spread shots
+            // Phase 2 - Aggressive movement
             const dx = playerPos.x - enemyPos.x;
             const dy = playerPos.y - enemyPos.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance > 200) {
+            if (distance > 250) {
                 // Charge at player
                 const normalized = MathUtils.normalize(dx, dy);
-                enemyPos.x += normalized.x * enemyComp.speed * 1.5 * deltaTime;
-                enemyPos.y += normalized.y * enemyComp.speed * 1.5 * deltaTime;
+                const speedMult = 1.3;
+                enemyPos.x += normalized.x * enemyComp.speed * speedMult * deltaTime;
+                enemyPos.y += normalized.y * enemyComp.speed * speedMult * deltaTime;
             } else {
-                // Retreat and shoot
+                // Retreat and attack
                 const normalized = MathUtils.normalize(-dx, -dy);
-                enemyPos.x += normalized.x * enemyComp.speed * deltaTime;
-                enemyPos.y += normalized.y * enemyComp.speed * deltaTime;
-            }
-            
-            if (boss.phaseTime > 0.2) {
-                this.bossShootPattern(enemy, player, 'spread');
-                boss.phaseTime = 0;
+                enemyPos.x += normalized.x * enemyComp.speed * 0.8 * deltaTime;
+                enemyPos.y += normalized.y * enemyComp.speed * 0.8 * deltaTime;
             }
         }
 
-        // Update rotation
+        // Pattern A: Burst Bullets (12-projectile fan spread)
+        if (boss.burstCooldown <= 0) {
+            // Telegraph attack
+            boss.telegraphTimer = 0.5;
+            const renderable = enemy.getComponent('renderable');
+            if (renderable) {
+                renderable.flash = 0.8;
+            }
+            // Play telegraph sound
+            if (window.game && window.game.audioManager) {
+                window.game.audioManager.playSfx('electric', 0.3, 1.2);
+            }
+            
+            // Schedule attack after telegraph
+            setTimeout(() => {
+                this.bossBurstBullets(enemy, player);
+            }, 500);
+            
+            boss.burstCooldown = burstInterval;
+        }
+
+        // Pattern B: Laser Sweep
+        if (boss.laserCooldown <= 0) {
+            // Telegraph attack
+            boss.telegraphTimer = 0.5;
+            const renderable = enemy.getComponent('renderable');
+            if (renderable) {
+                renderable.flash = 1.0;
+            }
+            // Play telegraph sound
+            if (window.game && window.game.audioManager) {
+                window.game.audioManager.playSfx('laser', 0.4, 0.7);
+            }
+            
+            // Schedule attack after telegraph
+            setTimeout(() => {
+                this.bossLaserSweep(enemy);
+            }, 500);
+            
+            boss.laserCooldown = laserInterval;
+        }
+
+        // Phase 2 only: Spawn minions
+        if (boss.isEnraged && boss.minionCooldown <= 0) {
+            this.bossSpawnMinions(enemy);
+            boss.minionCooldown = minionInterval;
+        }
+
+        // Update rotation to face player
         const renderable = enemy.getComponent('renderable');
         if (renderable) {
             const dx = playerPos.x - enemyPos.x;
             const dy = playerPos.y - enemyPos.y;
             renderable.rotation = Math.atan2(dy, dx);
+        }
+    }
+
+    /**
+     * Boss burst bullet pattern - 12 projectiles in fan
+     * @param {Entity} enemy - Boss entity
+     * @param {Entity} player - Player entity
+     */
+    bossBurstBullets(enemy, player) {
+        const enemyPos = enemy.getComponent('position');
+        const playerPos = player.getComponent('position');
+        const enemyComp = enemy.getComponent('enemy');
+        
+        if (!enemyPos || !playerPos || !enemyComp) return;
+
+        const attackPattern = enemyComp.attackPattern || {};
+        const baseAngle = MathUtils.angle(enemyPos.x, enemyPos.y, playerPos.x, playerPos.y);
+        const spreadAngle = Math.PI / 4; // 45 degrees
+        const count = 12;
+
+        for (let i = 0; i < count; i++) {
+            const offset = (i - (count - 1) / 2) * (spreadAngle / (count - 1));
+            const angle = baseAngle + offset;
+            
+            this.createEnemyProjectile(
+                enemyPos.x,
+                enemyPos.y,
+                angle,
+                attackPattern.damage || 30,
+                attackPattern.projectileSpeed || 350,
+                5.0,
+                enemy.id,
+                '#FF00FF' // Magenta
+            );
+        }
+    }
+
+    /**
+     * Boss laser sweep pattern - rotating beam
+     * @param {Entity} enemy - Boss entity
+     */
+    bossLaserSweep(enemy) {
+        const enemyPos = enemy.getComponent('position');
+        const enemyComp = enemy.getComponent('enemy');
+        
+        if (!enemyPos || !enemyComp) return;
+
+        const attackPattern = enemyComp.attackPattern || {};
+        const startAngle = Math.random() * Math.PI * 2; // Random starting angle
+
+        // Create laser as a special projectile
+        const laser = this.createEnemyProjectile(
+            enemyPos.x,
+            enemyPos.y,
+            startAngle,
+            10, // Damage per tick
+            0, // No forward movement
+            1.5, // Duration 1.5 seconds
+            enemy.id,
+            '#FF0000', // Red
+            'laser' // Special type
+        );
+
+        // Mark as laser and set properties
+        if (laser) {
+            const projComp = laser.getComponent('projectile');
+            if (projComp) {
+                projComp.isLaser = true;
+                projComp.laserLength = 600;
+                projComp.laserRotationSpeed = 2.0; // radians per second
+                projComp.damageTick = 0.1; // Damage every 0.1s
+                projComp.lastDamageTick = 0;
+                projComp.ownerPos = { x: enemyPos.x, y: enemyPos.y }; // Stay at boss position
+            }
+
+            // Make it look like a laser
+            const renderable = laser.getComponent('renderable');
+            if (renderable) {
+                renderable.shape = 'line';
+                renderable.size = 600; // Length
+                renderable.shadowBlur = 20;
+            }
+        }
+    }
+
+    /**
+     * Boss spawn minion enemies
+     * @param {Entity} enemy - Boss entity
+     */
+    bossSpawnMinions(enemy) {
+        const enemyPos = enemy.getComponent('position');
+        if (!enemyPos) return;
+
+        // Spawn 2 elite enemies
+        const spawnOffsets = [
+            { x: 60, y: 0 },
+            { x: -60, y: 0 }
+        ];
+
+        for (const offset of spawnOffsets) {
+            const spawnX = enemyPos.x + offset.x;
+            const spawnY = enemyPos.y + offset.y;
+
+            if (window.game && window.game.spawner) {
+                window.game.spawner.spawnEnemyAtPosition('elite', spawnX, spawnY);
+            }
         }
     }
 
@@ -538,7 +705,7 @@ class AISystem {
      * @param {string} color - Projectile color
      * @returns {Entity} Created projectile
      */
-    createEnemyProjectile(x, y, angle, damage, speed, lifetime, owner, color) {
+    createEnemyProjectile(x, y, angle, damage, speed, lifetime, owner, color, type = 'normal') {
         const projectile = this.world.createEntity('projectile');
         
         projectile.addComponent('position', Components.Position(x, y));

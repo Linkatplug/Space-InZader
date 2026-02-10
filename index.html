@@ -284,6 +284,71 @@
             margin: 2px 0;
             color: #ccccff;
         }
+        
+        /* Stats Overlay Panel (Left Side) */
+        .stats-overlay-panel {
+            position: fixed;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(10, 10, 26, 0.9);
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            padding: 12px;
+            min-width: 280px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            z-index: 900;
+            transition: opacity 0.3s;
+        }
+        
+        .stats-overlay-title {
+            color: #00ffff;
+            font-weight: bold;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 10px;
+            text-shadow: 0 0 5px #00ffff;
+            border-bottom: 1px solid #00ffff;
+            padding-bottom: 5px;
+        }
+        
+        .stats-overlay-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 4px 0;
+            padding: 2px 0;
+        }
+        
+        .stats-overlay-label {
+            color: #aaa;
+            min-width: 120px;
+        }
+        
+        .stats-overlay-value {
+            color: #fff;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: right;
+        }
+        
+        .stats-overlay-delta {
+            font-size: 11px;
+            min-width: 70px;
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .stats-overlay-hint {
+            color: #666;
+            font-size: 10px;
+            text-align: center;
+            margin-top: 8px;
+            padding-top: 5px;
+            border-top: 1px solid #333;
+        }
 
         .health-bar {
             width: 200px;
@@ -902,10 +967,12 @@
                 <div class="commands-container">
                     <h2>CRÉDITS</h2>
                     <div class="command-list">
-                        <div>Créé par: Space InZader Team</div>
-                        <div>Moteur: JavaScript + Canvas</div>
+                        <div>Créé par: LinkAtPlug</div>
+                        <div><a href="https://www.linkatplug.be" target="_blank" style="color: #0ff; text-decoration: underline;">https://www.linkatplug.be</a></div>
+                        <div>LNK Compagnie</div>
+                        <div style="margin-top: 20px;">Moteur: JavaScript + Canvas</div>
                         <div>Audio: Web Audio API</div>
-                        <div>Version: 1.0</div>
+                        <div style="margin-top: 20px;">Version: V 444719.00</div>
                     </div>
                     <button class="menu-btn" id="creditsBackBtn">RETOUR</button>
                 </div>
@@ -1033,6 +1100,9 @@
                 </div>
             </div>
             
+            <!-- Stats Overlay Panel (Left Side) -->
+            <div class="stats-overlay-panel" id="statsOverlayPanel"></div>
+            
             <!-- Controls Help -->
             <div class="controls-help" id="controlsHelp">
                 <h4>🎮 CONTRÔLES</h4>
@@ -1074,6 +1144,9 @@
     <script src="js/managers/SaveManager.js"></script>
     <script src="js/managers/ScoreManager.js"></script>
     <script src="js/managers/AudioManager.js"></script>
+    <!-- Dev Tools -->
+    <script src="js/dev/ContentAuditor.js"></script>
+    <script src="js/dev/DevTools.js"></script>
     <script src="js/Game.js"></script>
     <script src="js/main.js"></script>
 </body>

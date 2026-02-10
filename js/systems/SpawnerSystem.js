@@ -122,10 +122,46 @@ class SpawnerSystem {
     calculateDifficultyMultipliers(gameTime, waveNumber) {
         const timeMinutes = gameTime / 60;
         
-        // Multipliers with soft caps (augmentés pour plus de difficulté)
-        const enemyCountMult = Math.min(4.0, 1 + (timeMinutes * 0.20));
-        const enemyHealthMult = Math.min(5.0, 1 + (waveNumber * 0.15));
-        const enemySpeedMult = Math.min(2.0, 1 + (waveNumber * 0.05));
+        // Early game easing curve (waves 1-6): smoother progression
+        let enemyCountMult, enemyHealthMult, enemySpeedMult;
+        
+        if (waveNumber <= 6) {
+            // Linear interpolation from easier values to normal
+            const t = (waveNumber - 1) / 5; // 0.0 at wave 1, 1.0 at wave 6
+            
+            // Base count multiplier from time, but eased for early waves
+            const baseCountMult = Math.min(4.0, 1 + (timeMinutes * 0.20));
+            const earlyCountEasing = 0.6 + (0.4 * t); // 0.6 -> 1.0
+            enemyCountMult = baseCountMult * earlyCountEasing;
+            
+            // Health easing: 0.7 -> 1.0 over waves 1-6
+            const normalHealthMult = Math.min(5.0, 1 + (waveNumber * 0.15));
+            const earlyHealthEasing = 0.7 + (0.3 * t);
+            enemyHealthMult = normalHealthMult * earlyHealthEasing;
+            
+            // Speed easing: 0.85 -> 1.0 over waves 1-6
+            const normalSpeedMult = Math.min(2.0, 1 + (waveNumber * 0.05));
+            const earlySpeedEasing = 0.85 + (0.15 * t);
+            enemySpeedMult = normalSpeedMult * earlySpeedEasing;
+            
+            // Debug logging (optional - can be enabled via console: window.debugDifficulty = true)
+            if (window.debugDifficulty) {
+                console.log(`[Wave ${waveNumber}] Difficulty: Count=${enemyCountMult.toFixed(2)}, Health=${enemyHealthMult.toFixed(2)}, Speed=${enemySpeedMult.toFixed(2)}`);
+            }
+        } else {
+            // Normal scaling from wave 7+
+            // WAVE 8+ DIFFICULTY RAMP: Increased speed, HP, count, and special enemies
+            const wave8Bonus = waveNumber >= 8 ? (waveNumber - 7) : 0;
+            
+            enemyCountMult = Math.min(4.0, 1 + (timeMinutes * 0.20) + (wave8Bonus * 0.06)); // +6% per wave after 8
+            enemyHealthMult = Math.min(5.0, 1 + (waveNumber * 0.15) + (wave8Bonus * 0.05)); // +5% HP per wave after 8
+            enemySpeedMult = Math.min(2.0, 1 + (waveNumber * 0.05) + (wave8Bonus * 0.03)); // +3% speed per wave after 8
+            
+            // Debug logging
+            if (window.debugDifficulty) {
+                console.log(`[Wave ${waveNumber}] Difficulty: Count=${enemyCountMult.toFixed(2)}, Health=${enemyHealthMult.toFixed(2)}, Speed=${enemySpeedMult.toFixed(2)} ${wave8Bonus > 0 ? `(+WAVE8 RAMP)` : ''}`);
+            }
+        }
         
         return { enemyCountMult, enemyHealthMult, enemySpeedMult };
     }

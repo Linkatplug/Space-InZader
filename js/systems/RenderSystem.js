@@ -291,11 +291,45 @@ class RenderSystem {
             const pos = player.getComponent('position');
             const render = player.getComponent('renderable');
             const health = player.getComponent('health');
+            const playerComp = player.getComponent('player');
             
             if (!pos || !render) return;
 
             this.ctx.save();
             this.ctx.translate(pos.x, pos.y);
+
+            // Render blade halo if active
+            if (playerComp && playerComp.bladeHalo) {
+                const orbitRadius = playerComp.stats.orbitRadius || 60;
+                const haloAngle = playerComp.bladeHalo.angle;
+                
+                this.ctx.save();
+                this.ctx.globalAlpha = 0.25;
+                this.ctx.strokeStyle = '#00ffff'; // Cyan
+                this.ctx.lineWidth = 3;
+                this.ctx.shadowBlur = 15;
+                this.ctx.shadowColor = '#00ffff';
+                
+                // Draw rotating halo circle
+                this.ctx.beginPath();
+                this.ctx.arc(0, 0, orbitRadius, 0, Math.PI * 2);
+                this.ctx.stroke();
+                
+                // Draw rotating blade markers (4 blades)
+                this.ctx.globalAlpha = 0.6;
+                for (let i = 0; i < 4; i++) {
+                    const angle = haloAngle + (i * Math.PI / 2);
+                    const x = Math.cos(angle) * orbitRadius;
+                    const y = Math.sin(angle) * orbitRadius;
+                    
+                    this.ctx.fillStyle = '#00ffff';
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, 4, 0, Math.PI * 2);
+                    this.ctx.fill();
+                }
+                
+                this.ctx.restore();
+            }
 
             // Invulnerability flashing
             if (health && health.invulnerable && health.invulnerableTime > 0) {
@@ -364,6 +398,17 @@ class RenderSystem {
 
             case 'star':
                 this.drawStar(size);
+                break;
+
+            case 'line':
+                // Draw a line for beam weapons (railgun)
+                this.ctx.lineWidth = 3;
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = color;
+                this.ctx.beginPath();
+                this.ctx.moveTo(-size / 2, 0);
+                this.ctx.lineTo(size / 2, 0);
+                this.ctx.stroke();
                 break;
 
             default:

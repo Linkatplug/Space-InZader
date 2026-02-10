@@ -4,15 +4,17 @@
  */
 
 class WeatherSystem {
-    constructor(world, canvas, audioManager) {
+    constructor(world, canvas, audioManager, gameState) {
         this.world = world;
         this.canvas = canvas;
         this.audioManager = audioManager;
+        this.gameState = gameState;
         
         // Event configuration
         this.events = [
-            { type: 'meteor_storm', weight: 0.6, duration: 8 },
-            { type: 'black_hole', weight: 0.4, duration: 12 }
+            { type: 'meteor_storm', weight: 0.5, duration: 15 }, // Changed: 15s average (12-18s random)
+            { type: 'black_hole', weight: 0.3, duration: 12 },
+            { type: 'magnetic_storm', weight: 0.2, duration: 5 } // New: Magnetic storm disables weapons
         ];
         
         // Event state
@@ -26,9 +28,9 @@ class WeatherSystem {
         this.meteorSpawnTimer = 0;
         this.meteorSpawnInterval = 0.3; // Spawn meteor every 0.3s during storm
         
-        // Black hole configuration
+        // Black hole configuration - DOUBLED for much stronger attraction
         this.blackHoleEntity = null;
-        this.blackHolePullRadius = 400;
+        this.blackHolePullRadius = 800; // Doubled from 400
         this.blackHoleDamageRadius = 80;
         
         // Performance limits
@@ -102,10 +104,17 @@ class WeatherSystem {
      * Activate the event after warning
      */
     activateEvent() {
-        this.eventTimer = this.activeEvent.duration;
+        // Random duration variation for meteor storm (12-18s)
+        if (this.activeEvent.type === 'meteor_storm') {
+            this.eventTimer = 12 + Math.random() * 6; // 12-18 seconds
+        } else {
+            this.eventTimer = this.activeEvent.duration;
+        }
         
         if (this.activeEvent.type === 'black_hole') {
             this.spawnBlackHole();
+        } else if (this.activeEvent.type === 'magnetic_storm') {
+            this.startMagneticStorm();
         }
         
         // Play event start sound
@@ -113,6 +122,8 @@ class WeatherSystem {
             this.audioManager.playSFX('meteor_warning');
         } else if (this.activeEvent.type === 'black_hole') {
             this.audioManager.playSFX('black_hole_spawn');
+        } else if (this.activeEvent.type === 'magnetic_storm') {
+            this.audioManager.playSFX('electric');
         }
     }
     
@@ -125,6 +136,8 @@ class WeatherSystem {
             this.updateMeteorStorm(deltaTime);
         } else if (this.activeEvent.type === 'black_hole') {
             this.updateBlackHole(deltaTime);
+        } else if (this.activeEvent.type === 'magnetic_storm') {
+            this.updateMagneticStorm(deltaTime);
         }
     }
     
@@ -209,7 +222,7 @@ class WeatherSystem {
                     // Gentler initial pull - ramp up over 2 seconds
                     const eventAge = blackHoleComp.age || 0;
                     const pullMultiplier = Math.min(eventAge / 2.0, 1.0); // 0 to 1 over 2 seconds
-                    const basePullStrength = (1 - distance / this.blackHolePullRadius) * 300;
+                    const basePullStrength = (1 - distance / this.blackHolePullRadius) * 1200; // DOUBLED AGAIN from 600 for much stronger pull
                     const pullStrength = basePullStrength * (0.3 + 0.7 * pullMultiplier); // 30% min, 100% max
                     const pullX = (dx / distance) * pullStrength * deltaTime;
                     const pullY = (dy / distance) * pullStrength * deltaTime;
@@ -221,7 +234,7 @@ class WeatherSystem {
                     // Track age for pull ramping
                     blackHoleComp.age = eventAge + deltaTime;
                     
-                    // Damage if too close
+                    // Damage if too close (handled by collision system)
                     if (distance < this.blackHoleDamageRadius) {
                         const health = player.getComponent('health');
                         if (health && !blackHoleComp.lastDamageTime) {
@@ -236,6 +249,78 @@ class WeatherSystem {
                         }
                     }
                 }
+            }
+        }
+        
+        // Apply gravitational pull to enemies
+        const enemies = this.world.getEntitiesByType('enemy');
+        for (const enemy of enemies) {
+            const enemyPos = enemy.getComponent('position');
+            const enemyVel = enemy.getComponent('velocity');
+            
+            if (!enemyPos || !enemyVel) continue;
+            
+            const dx = blackHolePos.x - enemyPos.x;
+            const dy = blackHolePos.y - enemyPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < this.blackHolePullRadius && distance > 0) {
+                // Calculate pull force (same as player but slightly weaker)
+                const eventAge = blackHoleComp.age || 0;
+                const pullMultiplier = Math.min(eventAge / 2.0, 1.0);
+                const basePullStrength = (1 - distance / this.blackHolePullRadius) * 250; // Slightly weaker than player
+                const pullStrength = basePullStrength * (0.3 + 0.7 * pullMultiplier);
+                const pullX = (dx / distance) * pullStrength * deltaTime;
+                const pullY = (dy / distance) * pullStrength * deltaTime;
+                
+                // Apply pull to enemy velocity
+                enemyVel.vx += pullX;
+                enemyVel.vy += pullY;
+            }
+        }
+        
+        // Pull and destroy XP pickups
+        const pickups = this.world.getEntitiesByType('pickup');
+        const destroyRadius = 240; // DOUBLED from 120 - Destroy XP closer to black hole center
+        
+        for (const pickup of pickups) {
+            const pickupComp = pickup.getComponent('pickup');
+            if (!pickupComp || pickupComp.type !== 'xp') continue;
+            
+            const pickupPos = pickup.getComponent('position');
+            const pickupVel = pickup.getComponent('velocity');
+            
+            if (!pickupPos || !pickupVel) continue;
+            
+            const dx = blackHolePos.x - pickupPos.x;
+            const dy = blackHolePos.y - pickupPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Pull XP orbs (faster than player)
+            if (distance < this.blackHolePullRadius && distance > 0) {
+                const pullStrength = (1 - distance / this.blackHolePullRadius) * 1000; // DOUBLED from 500 - Stronger than player
+                const pullX = (dx / distance) * pullStrength * deltaTime;
+                const pullY = (dy / distance) * pullStrength * deltaTime;
+                
+                pickupVel.vx += pullX;
+                pickupVel.vy += pullY;
+            }
+            
+            // Destroy XP if too close to black hole
+            if (distance < destroyRadius) {
+                // Create destruction particles
+                this.world.createParticles({
+                    x: pickupPos.x,
+                    y: pickupPos.y,
+                    count: 8,
+                    color: '#00ff00', // XP orb green color
+                    speed: 50,
+                    lifetime: 0.5,
+                    size: 3
+                });
+                
+                // Remove the pickup
+                this.world.removeEntity(pickup.id);
             }
         }
     }
@@ -264,6 +349,93 @@ class WeatherSystem {
     }
     
     /**
+     * Start magnetic storm event
+     */
+    startMagneticStorm() {
+        // Random weapon disable duration 2-6 seconds
+        this.magneticStormTimer = 2 + Math.random() * 4;
+        this.gameState.weaponDisabled = true;
+        
+        // Initialize storm visual effects
+        this.magneticStormLightningTimer = 0;
+        this.magneticStormParticles = [];
+        
+        // Create storm particles (nebula effect)
+        for (let i = 0; i < 20; i++) {
+            this.magneticStormParticles.push({
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                vx: (Math.random() - 0.5) * 50,
+                vy: (Math.random() - 0.5) * 50,
+                size: 2 + Math.random() * 3
+            });
+        }
+        
+        logger.info('WeatherSystem', `Magnetic storm disabling weapons for ${this.magneticStormTimer.toFixed(1)}s`);
+    }
+    
+    /**
+     * Update magnetic storm event
+     * @param {number} deltaTime - Time elapsed
+     */
+    updateMagneticStorm(deltaTime) {
+        // Update weapon disable timer
+        if (this.magneticStormTimer !== undefined && this.magneticStormTimer > 0) {
+            this.magneticStormTimer -= deltaTime;
+            
+            // Draw visual effects (fog, lightning, nebula particles)
+            const canvas = this.canvas;
+            const ctx = canvas.getContext('2d');
+            
+            // Draw purple fog overlay with pulsing effect
+            const pulseFactor = Math.sin(Date.now() / 1000 * Math.PI); // 2-second pulse period
+            const fogIntensity = 0.15 * (1 + 0.3 * pulseFactor);
+            ctx.fillStyle = `rgba(150, 0, 255, ${fogIntensity})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Lightning flashes
+            if (!this.magneticStormLightningTimer) {
+                this.magneticStormLightningTimer = 0.3 + Math.random() * 0.5;
+            }
+            
+            this.magneticStormLightningTimer -= deltaTime;
+            if (this.magneticStormLightningTimer <= 0) {
+                // Flash effect
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                this.magneticStormLightningTimer = 0.3 + Math.random() * 0.5;
+            }
+            
+            // Update and draw storm particles (nebula effect)
+            if (this.magneticStormParticles) {
+                ctx.fillStyle = 'rgba(200, 100, 255, 0.6)';
+                for (const particle of this.magneticStormParticles) {
+                    // Update position
+                    particle.x += particle.vx * deltaTime;
+                    particle.y += particle.vy * deltaTime;
+                    
+                    // Wrap around screen
+                    if (particle.x < 0) particle.x = canvas.width;
+                    if (particle.x > canvas.width) particle.x = 0;
+                    if (particle.y < 0) particle.y = canvas.height;
+                    if (particle.y > canvas.height) particle.y = 0;
+                    
+                    // Draw particle
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            // Re-enable weapons when timer expires
+            if (this.magneticStormTimer <= 0) {
+                this.gameState.weaponDisabled = false;
+                logger.info('WeatherSystem', 'Magnetic storm ended - weapons re-enabled');
+            }
+        }
+    }
+    
+    /**
      * End the current event
      */
     endEvent() {
@@ -282,6 +454,10 @@ class WeatherSystem {
                 this.world.removeEntity(this.blackHoleEntity.id);
                 this.blackHoleEntity = null;
             }
+        } else if (this.activeEvent.type === 'magnetic_storm') {
+            // Re-enable weapons
+            this.gameState.weaponDisabled = false;
+            this.magneticStormTimer = 0;
         }
         
         this.activeEvent = null;
@@ -310,6 +486,24 @@ class WeatherSystem {
             return 'ALERTE: TEMPÊTE DE MÉTÉORITES APPROCHE!';
         } else if (this.activeEvent.type === 'black_hole') {
             return 'ALERTE: ANOMALIE GRAVITATIONNELLE DÉTECTÉE!';
+        } else if (this.activeEvent.type === 'magnetic_storm') {
+            return 'ALERTE: TEMPÊTE MAGNÉTIQUE APPROCHE!';
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get magnetic storm status text (during active event)
+     * @returns {string|null} Status text or null
+     */
+    getMagneticStormStatus() {
+        if (!this.activeEvent || this.activeEvent.type !== 'magnetic_storm' || this.showingWarning) {
+            return null;
+        }
+        
+        if (this.gameState.weaponDisabled && this.magneticStormTimer > 0) {
+            return `TEMPÊTE MAGNÉTIQUE: ARMES OFF (${Math.ceil(this.magneticStormTimer)}s)`;
         }
         
         return null;
@@ -346,5 +540,7 @@ class WeatherSystem {
         this.showingWarning = false;
         this.meteorSpawnTimer = 0;
         this.blackHoleEntity = null;
+        this.magneticStormTimer = 0;
+        this.gameState.weaponDisabled = false;
     }
 }

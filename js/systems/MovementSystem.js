@@ -28,16 +28,67 @@ class MovementSystem {
             this.updatePlayerMovement(player, deltaTime);
         }
 
-        // Update all entities with velocity
+        // Update orbital and laser projectiles
+        const projectiles = this.world.getEntitiesByType('projectile');
+        for (const projectile of projectiles) {
+            const projComp = projectile.getComponent('projectile');
+            if (projComp && projComp.orbital) {
+                this.updateOrbitalProjectile(projectile, deltaTime);
+            } else if (projComp && projComp.isLaser) {
+                this.updateLaserProjectile(projectile, deltaTime);
+            }
+        }
+
+        // Update all entities with velocity (non-orbital/non-laser projectiles and others)
         const movingEntities = this.world.getEntitiesWithComponent('velocity');
         for (const entity of movingEntities) {
-            this.updateEntityPosition(entity, deltaTime);
+            const projComp = entity.getComponent('projectile');
+            // Skip orbital and laser projectiles as they're updated above
+            if (!(projComp && (projComp.orbital || projComp.isLaser))) {
+                this.updateEntityPosition(entity, deltaTime);
+            }
         }
+    }
+
+    /**
+     * Update orbital projectile position to rotate around player
+     * @param {Entity} entity - Orbital projectile entity
+     * @param {number} deltaTime - Time since last frame
+     */
+    updateOrbitalProjectile(entity, deltaTime) {
+        const projComp = entity.getComponent('projectile');
+        const pos = entity.getComponent('position');
+        
+        if (!projComp || !pos) return;
+        
+        // Find owner (player)
+        const owner = this.world.getEntity(projComp.owner);
+        if (!owner) {
+            this.world.removeEntity(entity.id);
+            return;
+        }
+        
+        const ownerPos = owner.getComponent('position');
+        if (!ownerPos) return;
+        
+        // Initialize orbital angle if not set
+        if (projComp.orbitalAngle === undefined) {
+            projComp.orbitalAngle = (projComp.orbitalIndex / projComp.orbitalCount) * Math.PI * 2;
+        }
+        
+        // Update angle
+        projComp.orbitalAngle += (projComp.orbitalSpeed || 2.0) * deltaTime;
+        
+        // Calculate new position
+        const radius = projComp.orbitalRadius || 100;
+        pos.x = ownerPos.x + Math.cos(projComp.orbitalAngle) * radius;
+        pos.y = ownerPos.y + Math.sin(projComp.orbitalAngle) * radius;
     }
 
     updatePlayerMovement(player, deltaTime) {
         const pos = player.getComponent('position');
         const playerComp = player.getComponent('player');
+        const vel = player.getComponent('velocity');
         
         if (!pos || !playerComp) return;
 
@@ -50,8 +101,11 @@ class MovementSystem {
         if (this.keys['a'] || this.keys['q']) dx -= 1;
         if (this.keys['d']) dx += 1;
 
+        // Check if player is actively moving
+        const hasInput = (dx !== 0 || dy !== 0);
+
         // Normalize diagonal movement
-        if (dx !== 0 || dy !== 0) {
+        if (hasInput) {
             const normalized = MathUtils.normalize(dx, dy);
             dx = normalized.x;
             dy = normalized.y;
@@ -61,6 +115,23 @@ class MovementSystem {
         const speed = playerComp.speed * playerComp.stats.speed;
         pos.x += dx * speed * deltaTime;
         pos.y += dy * speed * deltaTime;
+
+        // Apply drag/friction to player velocity (if exists)
+        // This prevents drift from black hole or other forces
+        if (vel) {
+            // Use stronger drag when not actively moving
+            const dragCoeff = hasInput ? 3.0 : 8.0;
+            
+            // Apply drag: vel *= (1 - dragCoeff * deltaTime)
+            const dragFactor = Math.max(0, 1 - dragCoeff * deltaTime);
+            vel.vx *= dragFactor;
+            vel.vy *= dragFactor;
+            
+            // Clamp small velocities to zero to stop drift completely
+            const velocityThreshold = 0.5;
+            if (Math.abs(vel.vx) < velocityThreshold) vel.vx = 0;
+            if (Math.abs(vel.vy) < velocityThreshold) vel.vy = 0;
+        }
 
         // Keep player in bounds
         const collision = player.getComponent('collision');

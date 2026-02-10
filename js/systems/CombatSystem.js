@@ -25,6 +25,9 @@ class CombatSystem {
             for (const weaponData of playerComp.weapons) {
                 this.updateWeapon(player, weaponData, deltaTime);
             }
+            
+            // Update blade halo if active
+            this.updateBladeHalo(player, playerComp, deltaTime);
         }
     }
 
@@ -39,6 +42,11 @@ class CombatSystem {
 
         // Update cooldown
         weapon.cooldown -= deltaTime;
+
+        // Check if weapons are disabled by weather event (magnetic storm)
+        if (this.gameState && this.gameState.weaponDisabled) {
+            return; // Don't fire weapons during magnetic storm
+        }
 
         // Fire when cooldown is ready
         if (weapon.cooldown <= 0) {
@@ -67,7 +75,8 @@ class CombatSystem {
                     this.audioManager.playSFX('laser', MathUtils.randomFloat(0.9, 1.1));
                     break;
                 case 'spread':
-                    // Minigun needs more variety - vary between 0.6 and 1.2
+                case 'flamethrower':
+                    // Minigun/flamethrower needs more variety - vary between 0.6 and 1.2
                     this.audioManager.playSFX('laser', MathUtils.randomFloat(0.6, 1.2));
                     break;
                 case 'homing':
@@ -77,6 +86,31 @@ class CombatSystem {
                 case 'chain':
                 case 'storm':
                     this.audioManager.playSFX('electric', MathUtils.randomFloat(0.9, 1.1));
+                    break;
+                case 'beam':
+                case 'railgun':
+                    // Calm, deep sound for beam/railgun - much softer
+                    this.audioManager.playSFX('laser', MathUtils.randomFloat(0.4, 0.6));
+                    break;
+                case 'mine':
+                case 'turret':
+                    this.audioManager.playSFX('laser', MathUtils.randomFloat(1.0, 1.2));
+                    break;
+                case 'orbital':
+                    // Orbitals are passive, only play sound occasionally
+                    if (Math.random() < 0.1) {
+                        this.audioManager.playSFX('laser', MathUtils.randomFloat(0.8, 1.0));
+                    }
+                    break;
+                case 'gravity_field':
+                    // Gravitational hum - low pitch
+                    if (Math.random() < 0.2) {
+                        this.audioManager.playSFX('laser', MathUtils.randomFloat(0.5, 0.7));
+                    }
+                    break;
+                default:
+                    // Default fallback sound
+                    this.audioManager.playSFX('laser', 1.0);
                     break;
             }
         }
@@ -118,6 +152,12 @@ class CombatSystem {
             case 'storm':
                 this.fireStorm(player, weapon);
                 break;
+            case 'railgun':
+                this.fireRailgun(player, weapon);
+                break;
+            case 'flamethrower':
+                this.fireFlamethrower(player, weapon);
+                break;
         }
     }
 
@@ -144,6 +184,7 @@ class CombatSystem {
             const offset = (i - (projectileCount - 1) / 2) * spread;
             const finalAngle = angle + offset;
             
+            const piercing = Math.max(levelData.piercing || 0, playerComp.stats.piercing || 0);
             this.createProjectile(
                 pos.x, pos.y,
                 finalAngle,
@@ -152,7 +193,7 @@ class CombatSystem {
                 3.0 * playerComp.stats.range,
                 player.id,
                 weapon.type,
-                levelData.piercing || 0,
+                piercing,
                 weapon.data.color
             );
         }
@@ -181,6 +222,7 @@ class CombatSystem {
             const offset = (i - (projectileCount - 1) / 2) * (spreadAngle / projectileCount);
             const angle = baseAngle + offset;
             
+            const piercing = Math.max(levelData.piercing || 0, playerComp.stats.piercing || 0);
             this.createProjectile(
                 pos.x, pos.y,
                 angle,
@@ -189,7 +231,7 @@ class CombatSystem {
                 2.0 * playerComp.stats.range,
                 player.id,
                 weapon.type,
-                0,
+                piercing,
                 weapon.data.color
             );
         }
@@ -215,6 +257,7 @@ class CombatSystem {
             const targetPos = target.getComponent('position');
             const angle = MathUtils.angle(pos.x, pos.y, targetPos.x, targetPos.y);
             
+            const piercing = Math.max(levelData.piercing || 0, playerComp.stats.piercing || 0);
             const projectile = this.createProjectile(
                 pos.x, pos.y,
                 angle,
@@ -223,7 +266,7 @@ class CombatSystem {
                 5.0 * playerComp.stats.range,
                 player.id,
                 weapon.type,
-                0,
+                piercing,
                 weapon.data.color
             );
             
@@ -300,6 +343,7 @@ class CombatSystem {
         const angle = MathUtils.angle(pos.x, pos.y, targetPos.x, targetPos.y);
         
         // Create beam projectile
+        const piercing = Math.max(levelData.piercing || 0, playerComp.stats.piercing || 0);
         this.createProjectile(
             pos.x, pos.y,
             angle,
@@ -308,7 +352,7 @@ class CombatSystem {
             0.05,
             player.id,
             weapon.type,
-            levelData.piercing || 0,
+            piercing,
             weapon.data.color
         );
     }
@@ -329,6 +373,7 @@ class CombatSystem {
             const angle = Math.random() * Math.PI * 2;
             const speed = weapon.data.projectileSpeed * 0.5;
             
+            const piercing = Math.max(levelData.piercing || 0, playerComp.stats.piercing || 0);
             const mine = this.createProjectile(
                 pos.x, pos.y,
                 angle,
@@ -337,7 +382,7 @@ class CombatSystem {
                 levelData.duration || 10,
                 player.id,
                 weapon.type,
-                0,
+                piercing,
                 weapon.data.color
             );
             
@@ -363,6 +408,7 @@ class CombatSystem {
         const targetPos = target.getComponent('position');
         const angle = MathUtils.angle(pos.x, pos.y, targetPos.x, targetPos.y);
         
+        const piercing = Math.max(levelData.piercing || 0, playerComp.stats.piercing || 0);
         const projectile = this.createProjectile(
             pos.x, pos.y,
             angle,
@@ -371,7 +417,7 @@ class CombatSystem {
             1.0 * playerComp.stats.range,
             player.id,
             weapon.type,
-            0,
+            piercing,
             weapon.data.color
         );
         
@@ -437,6 +483,7 @@ class CombatSystem {
             const targetPos = target.getComponent('position');
             const angle = MathUtils.angle(pos.x, pos.y, targetPos.x, targetPos.y);
             
+            const piercing = Math.max(levelData.piercing || 0, playerComp.stats.piercing || 0);
             const projectile = this.createProjectile(
                 pos.x, pos.y,
                 angle,
@@ -445,7 +492,7 @@ class CombatSystem {
                 8.0 * playerComp.stats.range,
                 player.id,
                 weapon.type,
-                0,
+                piercing,
                 weapon.data.color
             );
             
@@ -520,6 +567,7 @@ class CombatSystem {
             const targetPos = target.getComponent('position');
             const angle = MathUtils.angle(pos.x, pos.y, targetPos.x, targetPos.y);
             
+            const piercing = Math.max(levelData.piercing || 0, playerComp.stats.piercing || 0);
             const projectile = this.createProjectile(
                 pos.x, pos.y,
                 angle,
@@ -528,7 +576,7 @@ class CombatSystem {
                 2.0 * playerComp.stats.range,
                 player.id,
                 weapon.type,
-                0,
+                piercing,
                 weapon.data.color
             );
             
@@ -537,6 +585,92 @@ class CombatSystem {
             projComp.chainCount = stats.chainCount;
             projComp.chainRange = stats.area;
             projComp.chained = [target.id];
+        }
+    }
+
+    /**
+     * Fire railgun - piercing beam weapon
+     * @param {Entity} player - Player entity
+     * @param {Object} weapon - Weapon component
+     */
+    fireRailgun(player, weapon) {
+        const pos = player.getComponent('position');
+        const playerComp = player.getComponent('player');
+        const levelData = weapon.data.levels[weapon.level - 1];
+        
+        const target = this.findNearestEnemy(pos.x, pos.y);
+        if (!target) return;
+
+        const targetPos = target.getComponent('position');
+        const angle = MathUtils.angle(pos.x, pos.y, targetPos.x, targetPos.y);
+        
+        const projectileCount = levelData.projectileCount || 1;
+        
+        for (let i = 0; i < projectileCount; i++) {
+            const offset = (i - (projectileCount - 1) / 2) * 0.1;
+            const finalAngle = angle + offset;
+            
+            // Create long, fast piercing projectile (beam-like)
+            const piercing = Math.max(levelData.piercing || 0, playerComp.stats.piercing || 0);
+            const projectile = this.createProjectile(
+                pos.x, pos.y,
+                finalAngle,
+                weapon.data.baseDamage * levelData.damage * playerComp.stats.damage,
+                weapon.data.projectileSpeed * playerComp.stats.projectileSpeed,
+                1.5 * playerComp.stats.range, // Shorter lifetime but very fast
+                player.id,
+                weapon.type,
+                levelData.piercing || 999,
+                weapon.data.color
+            );
+            
+            // Make it look like a beam - elongated projectile
+            const renderable = projectile.getComponent('renderable');
+            if (renderable) {
+                renderable.shape = 'line';
+                renderable.size = 30; // Length of the beam visual
+            }
+        }
+    }
+
+    /**
+     * Fire flamethrower - cone of fire projectiles
+     * @param {Entity} player - Player entity
+     * @param {Object} weapon - Weapon component
+     */
+    fireFlamethrower(player, weapon) {
+        const pos = player.getComponent('position');
+        const playerComp = player.getComponent('player');
+        const levelData = weapon.data.levels[weapon.level - 1];
+        
+        const target = this.findNearestEnemy(pos.x, pos.y);
+        if (!target) return;
+
+        const targetPos = target.getComponent('position');
+        const baseAngle = MathUtils.angle(pos.x, pos.y, targetPos.x, targetPos.y);
+        
+        const projectileCount = levelData.projectileCount || 5;
+        const spreadAngle = (levelData.area || 30) * (Math.PI / 180);
+
+        for (let i = 0; i < projectileCount; i++) {
+            const offset = (i - (projectileCount - 1) / 2) * (spreadAngle / projectileCount);
+            const angle = baseAngle + offset;
+            
+            // Shorter range due to malus
+            const range = 2.0 * playerComp.stats.range * (weapon.data.malus?.rangeMultiplier || 1);
+            
+            const piercing = Math.max(levelData.piercing || 0, playerComp.stats.piercing || 0);
+            this.createProjectile(
+                pos.x, pos.y,
+                angle,
+                weapon.data.baseDamage * levelData.damage * playerComp.stats.damage,
+                weapon.data.projectileSpeed * playerComp.stats.projectileSpeed,
+                range,
+                player.id,
+                weapon.type,
+                piercing,
+                weapon.data.color
+            );
         }
     }
 
@@ -557,13 +691,23 @@ class CombatSystem {
     createProjectile(x, y, angle, damage, speed, lifetime, owner, weaponType, piercing, color) {
         const projectile = this.world.createEntity('projectile');
         
+        // Get player stats for size modifier
+        const ownerEntity = this.world.getEntity(owner);
+        const ownerComp = ownerEntity ? ownerEntity.getComponent('player') : null;
+        const sizeMultiplier = ownerComp && ownerComp.stats.projectileSizeMultiplier ? ownerComp.stats.projectileSizeMultiplier : 1;
+        const sizeAdd = ownerComp && ownerComp.stats.projectileSizeAdd ? ownerComp.stats.projectileSizeAdd : 0;
+        
+        // Calculate final projectile size
+        const baseSize = 5;
+        const finalSize = baseSize * sizeMultiplier + sizeAdd;
+        
         projectile.addComponent('position', Components.Position(x, y));
         projectile.addComponent('velocity', Components.Velocity(
             Math.cos(angle) * speed,
             Math.sin(angle) * speed
         ));
-        projectile.addComponent('collision', Components.Collision(5));
-        projectile.addComponent('renderable', Components.Renderable(color, 5, 'circle'));
+        projectile.addComponent('collision', Components.Collision(finalSize));
+        projectile.addComponent('renderable', Components.Renderable(color, finalSize, 'circle'));
         projectile.addComponent('projectile', Components.Projectile(
             damage,
             speed,
@@ -629,5 +773,71 @@ class CombatSystem {
             .map(e => e.enemy);
 
         return sorted;
+    }
+    
+    /**
+     * Update spinning blade halo (Lame Tournoyante)
+     * @param {Entity} player - Player entity
+     * @param {Object} playerComp - Player component
+     * @param {number} deltaTime - Time elapsed
+     */
+    updateBladeHalo(player, playerComp, deltaTime) {
+        // Check if player has blade halo passive (orbitDamage from stats)
+        const orbitDamage = playerComp.stats.orbitDamage || 0;
+        const orbitRadius = playerComp.stats.orbitRadius || 60;
+        
+        if (orbitDamage <= 0) {
+            // No blade halo active
+            if (playerComp.bladeHalo) {
+                delete playerComp.bladeHalo;
+            }
+            return;
+        }
+        
+        // Initialize blade halo state if needed
+        if (!playerComp.bladeHalo) {
+            playerComp.bladeHalo = {
+                angle: 0,
+                lastTickTime: 0,
+                tickRate: 0.25 // 4 ticks per second
+            };
+        }
+        
+        const halo = playerComp.bladeHalo;
+        
+        // Update rotation
+        halo.angle += deltaTime * 3.0; // Rotation speed
+        if (halo.angle > Math.PI * 2) {
+            halo.angle -= Math.PI * 2;
+        }
+        
+        // Update damage tick
+        halo.lastTickTime += deltaTime;
+        if (halo.lastTickTime >= halo.tickRate) {
+            halo.lastTickTime = 0;
+            
+            // Apply damage to nearby enemies
+            const playerPos = player.getComponent('position');
+            if (!playerPos) return;
+            
+            const enemies = this.world.getEntitiesByType('enemy');
+            const damagePerTick = orbitDamage * halo.tickRate * playerComp.stats.damageMultiplier;
+            
+            for (const enemy of enemies) {
+                const enemyPos = enemy.getComponent('position');
+                if (!enemyPos) continue;
+                
+                const dist = MathUtils.distance(playerPos.x, playerPos.y, enemyPos.x, enemyPos.y);
+                if (dist <= orbitRadius) {
+                    const enemyHealth = enemy.getComponent('health');
+                    if (enemyHealth) {
+                        enemyHealth.current -= damagePerTick;
+                        if (enemyHealth.current <= 0) {
+                            this.world.removeEntity(enemy.id);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
