@@ -464,6 +464,53 @@ class CollisionSystem {
                         this.audioManager.playSFX('electric', 1.0);
                     }
                 }
+                
+                // Chain Explosions (Réaction en Chaîne)
+                // Check if player has explosionOnKill stat AND enemy wasn't killed by explosion (prevent infinite cascade)
+                if (playerComp && playerComp.stats.explosionOnKill && !enemyComp.killedByExplosion) {
+                    // Get explosion parameters from player stats
+                    const explosionRadius = playerComp.stats.explosionRadius || 80;
+                    const explosionDamage = (playerComp.stats.explosionDamage || 30) * playerComp.stats.damageMultiplier;
+                    
+                    // Create explosion visual effect
+                    if (this.particleSystem) {
+                        const color = renderable ? renderable.color : '#ff6600';
+                        const particleCount = 20;
+                        this.particleSystem.createExplosion(pos.x, pos.y, explosionRadius * 0.5, color, particleCount);
+                    }
+                    
+                    // Play explosion sound
+                    if (this.audioManager && this.audioManager.initialized) {
+                        this.audioManager.playSFX('explosion', 0.8);
+                    }
+                    
+                    // Deal AOE damage to nearby enemies
+                    const allEnemies = this.world.getEntitiesByType('enemy');
+                    for (const nearbyEnemy of allEnemies) {
+                        if (nearbyEnemy.id === enemy.id) continue; // Skip the killed enemy
+                        
+                        const nearbyPos = nearbyEnemy.getComponent('position');
+                        if (nearbyPos) {
+                            const dx = nearbyPos.x - pos.x;
+                            const dy = nearbyPos.y - pos.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < explosionRadius) {
+                                // Damage falls off with distance
+                                const falloff = 1 - (distance / explosionRadius) * 0.5; // 50-100% damage based on distance
+                                const finalDamage = explosionDamage * falloff;
+                                
+                                // Mark enemy as killed by explosion to prevent infinite chain
+                                const nearbyEnemyComp = nearbyEnemy.getComponent('enemy');
+                                if (nearbyEnemyComp) {
+                                    nearbyEnemyComp.killedByExplosion = true;
+                                }
+                                
+                                this.damageEnemy(nearbyEnemy, finalDamage, player);
+                            }
+                        }
+                    }
+                }
             }
             
             // Update stats
