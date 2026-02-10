@@ -12,6 +12,7 @@ class DevTools {
         this.currentTab = 'weapons';
         this.searchTerm = '';
         this.container = null;
+        this.godModeEnabled = false; // Track invincibility state
         
         this.setupKeyBindings();
         this.createUI();
@@ -234,6 +235,7 @@ class DevTools {
         const player = this.game.world.getEntitiesByType('player')[0];
         const playerComp = player?.getComponent('player');
         const health = player?.getComponent('health');
+        const waveNumber = this.game.systems.wave?.getWaveNumber() || 1;
         
         const statsHtml = playerComp ? `
             <div class="stats-grid">
@@ -246,10 +248,16 @@ class DevTools {
             </div>
         ` : '<p>No player found</p>';
         
+        const godModeButtonStyle = this.godModeEnabled ? 
+            'background: rgba(0, 255, 0, 0.2); border-color: #00ff00;' : '';
+        
         return `
             <div class="devtools-utilities">
                 <div class="utility-section">
                     <h3>Player Control</h3>
+                    <button class="devtools-btn" style="${godModeButtonStyle}" onclick="window.devTools.toggleGodMode()">
+                        ${this.godModeEnabled ? '🛡️ God Mode: ON' : '💀 God Mode: OFF'}
+                    </button>
                     <button class="devtools-btn" onclick="window.devTools.spawnDummy()">
                         Spawn Dummy Enemy
                     </button>
@@ -264,6 +272,29 @@ class DevTools {
                     </button>
                     <button class="devtools-btn" onclick="window.devTools.clearAll()">
                         Clear Weapons/Passives
+                    </button>
+                </div>
+                
+                <div class="utility-section">
+                    <h3>Wave Control</h3>
+                    <p style="margin: 10px 0; color: #aaa; font-size: 14px;">Current Wave: ${waveNumber}</p>
+                    <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                        <input type="number" 
+                               id="waveInput" 
+                               min="1" 
+                               max="999" 
+                               value="${waveNumber}"
+                               style="flex: 1; padding: 10px; background: rgba(0, 0, 0, 0.5); border: 2px solid rgba(0, 255, 255, 0.3); color: #00ffff; font-family: 'Courier New', monospace; font-size: 14px;"
+                               placeholder="Wave number">
+                        <button class="devtools-btn" style="width: auto; margin: 0;" onclick="window.devTools.jumpToWave(document.getElementById('waveInput').value)">
+                            🚀 Jump to Wave
+                        </button>
+                    </div>
+                    <button class="devtools-btn" onclick="window.devTools.jumpToWave(${waveNumber + 1})">
+                        ⏭️ Skip to Next Wave
+                    </button>
+                    <button class="devtools-btn" onclick="window.devTools.jumpToWave(${waveNumber + 5})">
+                        ⏩ Skip +5 Waves
                     </button>
                 </div>
                 
@@ -291,6 +322,7 @@ class DevTools {
                 <div class="utility-section">
                     <h3>Player Info</h3>
                     ${health ? `<p>HP: ${health.current} / ${health.max}</p>` : ''}
+                    ${health && this.godModeEnabled ? `<p style="color: #00ff00;">🛡️ INVINCIBLE</p>` : ''}
                     ${playerComp ? `<p>Level: ${playerComp.level}</p>` : ''}
                     ${playerComp ? `<p>XP: ${playerComp.xp} / ${playerComp.xpToLevel}</p>` : ''}
                     ${playerComp ? `<p>Weapons: ${playerComp.weapons.length}</p>` : ''}
@@ -617,6 +649,76 @@ class DevTools {
         const eventType = weatherSystem.activeEvent.type;
         weatherSystem.endEvent();
         console.log(`%c[DevTools] Ended weather event: ${eventType}`, 'color: #00ff00');
+    }
+    
+    /**
+     * Toggle god mode (invincibility)
+     */
+    toggleGodMode() {
+        this.godModeEnabled = !this.godModeEnabled;
+        
+        const player = this.game.world.getEntitiesByType('player')[0];
+        if (!player) {
+            console.error('[DevTools] No player found');
+            return;
+        }
+        
+        const health = player.getComponent('health');
+        if (health) {
+            if (this.godModeEnabled) {
+                // Enable god mode - make player permanently invulnerable
+                health.godMode = true;
+                console.log('%c[DevTools] God Mode ENABLED - Player is now invincible! 🛡️', 'color: #00ff00; font-weight: bold; font-size: 14px');
+            } else {
+                // Disable god mode
+                health.godMode = false;
+                console.log('%c[DevTools] God Mode DISABLED - Player can take damage again', 'color: #ffaa00; font-weight: bold');
+            }
+            this.render();
+        }
+    }
+    
+    /**
+     * Jump to a specific wave
+     * @param {number} waveNumber - Target wave number
+     */
+    jumpToWave(waveNumber) {
+        const targetWave = parseInt(waveNumber);
+        
+        if (isNaN(targetWave) || targetWave < 1) {
+            console.error('[DevTools] Invalid wave number:', waveNumber);
+            alert('Please enter a valid wave number (1 or higher)');
+            return;
+        }
+        
+        const waveSystem = this.game.systems.wave;
+        if (!waveSystem) {
+            console.error('[DevTools] Wave system not found');
+            return;
+        }
+        
+        // Update wave system
+        waveSystem.waveNumber = targetWave;
+        waveSystem.waveTimer = 0;
+        waveSystem.isPaused = false;
+        waveSystem.pauseTimer = 0;
+        waveSystem.shouldSpawn = true;
+        
+        // Trigger wave announcement
+        if (waveSystem.onWaveStart) {
+            waveSystem.onWaveStart(targetWave);
+        }
+        
+        // Clear existing enemies for clean slate
+        const enemies = this.game.world.getEntitiesByType('enemy');
+        enemies.forEach(enemy => {
+            this.game.world.removeEntity(enemy);
+        });
+        
+        console.log(`%c[DevTools] Jumped to wave ${targetWave}! 🚀`, 'color: #00ff00; font-weight: bold; font-size: 14px');
+        
+        // Refresh UI to show new wave number
+        this.render();
     }
 }
 

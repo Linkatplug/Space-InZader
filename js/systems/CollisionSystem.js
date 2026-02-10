@@ -107,7 +107,7 @@ class CollisionSystem {
             const playerHealth = player.getComponent('health');
             
             if (!playerPos || !playerCol || !playerHealth) continue;
-            if (playerHealth.invulnerable) continue;
+            if (playerHealth.invulnerable || playerHealth.godMode) continue;
 
             for (const enemy of enemies) {
                 const enemyPos = enemy.getComponent('position');
@@ -182,7 +182,7 @@ class CollisionSystem {
             const playerHealth = player.getComponent('health');
             
             if (!playerPos || !playerCol || !playerHealth) continue;
-            if (playerHealth.invulnerable) continue;
+            if (playerHealth.invulnerable || playerHealth.godMode) continue;
 
             for (const projectile of projectiles) {
                 const projPos = projectile.getComponent('position');
@@ -270,6 +270,9 @@ class CollisionSystem {
         const playerComp = player.getComponent('player');
         
         if (!health || !playerComp) return;
+        
+        // God mode check - no damage taken
+        if (health.godMode) return;
 
         let remainingDamage = damage;
         
