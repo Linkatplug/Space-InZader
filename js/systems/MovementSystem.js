@@ -4,10 +4,11 @@
  */
 
 class MovementSystem {
-    constructor(world, canvas) {
+    constructor(world, canvas, touchControls = null) {
         this.world = world;
         this.canvas = canvas;
         this.keys = {};
+        this.touchControls = touchControls;
         this.setupInputHandlers();
     }
 
@@ -95,11 +96,18 @@ class MovementSystem {
         let dx = 0;
         let dy = 0;
 
-        // WASD or ZQSD movement
-        if (this.keys['w'] || this.keys['z']) dy -= 1;
-        if (this.keys['s']) dy += 1;
-        if (this.keys['a'] || this.keys['q']) dx -= 1;
-        if (this.keys['d']) dx += 1;
+        // Check for touch input first (mobile)
+        if (this.touchControls && this.touchControls.isEnabled()) {
+            const touchDir = this.touchControls.getDirection();
+            dx = touchDir.x;
+            dy = touchDir.y;
+        } else {
+            // WASD or ZQSD movement (keyboard)
+            if (this.keys['w'] || this.keys['z']) dy -= 1;
+            if (this.keys['s']) dy += 1;
+            if (this.keys['a'] || this.keys['q']) dx -= 1;
+            if (this.keys['d']) dx += 1;
+        }
 
         // Check if player is actively moving
         const hasInput = (dx !== 0 || dy !== 0);

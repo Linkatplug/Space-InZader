@@ -76,6 +76,9 @@ class Game {
         this.audioManager = new AudioManager();
         this.scoreManager = new ScoreManager();
         
+        // Touch controls for mobile
+        this.touchControls = typeof TouchControls !== 'undefined' ? new TouchControls(this.canvas) : null;
+        
         // Debug system
         this.debugOverlay = null;
         
@@ -87,7 +90,7 @@ class Game {
         
         // Game systems
         this.systems = {
-            movement: new MovementSystem(this.world, this.canvas),
+            movement: new MovementSystem(this.world, this.canvas, this.touchControls),
             particle: new ParticleSystem(this.world),
             collision: new CollisionSystem(this.world, this.gameState, this.audioManager, null),
             combat: new CombatSystem(this.world, this.gameState, this.audioManager),
