@@ -288,7 +288,7 @@ class AISystem {
             }
             // Play warning sound
             if (window.game && window.game.audioManager) {
-                window.game.audioManager.playSfx('electric', 0.5, 0.8);
+                window.game.audioManager.playSFX('electric', 0.5, 0.8);
             }
         }
 
@@ -331,7 +331,7 @@ class AISystem {
             }
             // Play telegraph sound
             if (window.game && window.game.audioManager) {
-                window.game.audioManager.playSfx('electric', 0.3, 1.2);
+                window.game.audioManager.playSFX('electric', 0.3, 1.2);
             }
             
             // Schedule attack after telegraph
@@ -352,7 +352,7 @@ class AISystem {
             }
             // Play telegraph sound
             if (window.game && window.game.audioManager) {
-                window.game.audioManager.playSfx('laser', 0.4, 0.7);
+                window.game.audioManager.playSFX('laser', 0.4, 0.7);
             }
             
             // Schedule attack after telegraph
