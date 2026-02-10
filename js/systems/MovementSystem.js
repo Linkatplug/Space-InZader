@@ -28,11 +28,59 @@ class MovementSystem {
             this.updatePlayerMovement(player, deltaTime);
         }
 
-        // Update all entities with velocity
+        // Update orbital projectiles
+        const projectiles = this.world.getEntitiesByType('projectile');
+        for (const projectile of projectiles) {
+            const projComp = projectile.getComponent('projectile');
+            if (projComp && projComp.orbital) {
+                this.updateOrbitalProjectile(projectile, deltaTime);
+            }
+        }
+
+        // Update all entities with velocity (non-orbital projectiles and others)
         const movingEntities = this.world.getEntitiesWithComponent('velocity');
         for (const entity of movingEntities) {
-            this.updateEntityPosition(entity, deltaTime);
+            const projComp = entity.getComponent('projectile');
+            // Skip orbital projectiles as they're updated above
+            if (!(projComp && projComp.orbital)) {
+                this.updateEntityPosition(entity, deltaTime);
+            }
         }
+    }
+
+    /**
+     * Update orbital projectile position to rotate around player
+     * @param {Entity} entity - Orbital projectile entity
+     * @param {number} deltaTime - Time since last frame
+     */
+    updateOrbitalProjectile(entity, deltaTime) {
+        const projComp = entity.getComponent('projectile');
+        const pos = entity.getComponent('position');
+        
+        if (!projComp || !pos) return;
+        
+        // Find owner (player)
+        const owner = this.world.getEntityById(projComp.owner);
+        if (!owner) {
+            this.world.removeEntity(entity.id);
+            return;
+        }
+        
+        const ownerPos = owner.getComponent('position');
+        if (!ownerPos) return;
+        
+        // Initialize orbital angle if not set
+        if (projComp.orbitalAngle === undefined) {
+            projComp.orbitalAngle = (projComp.orbitalIndex / projComp.orbitalCount) * Math.PI * 2;
+        }
+        
+        // Update angle
+        projComp.orbitalAngle += (projComp.orbitalSpeed || 2.0) * deltaTime;
+        
+        // Calculate new position
+        const radius = projComp.orbitalRadius || 100;
+        pos.x = ownerPos.x + Math.cos(projComp.orbitalAngle) * radius;
+        pos.y = ownerPos.y + Math.sin(projComp.orbitalAngle) * radius;
     }
 
     updatePlayerMovement(player, deltaTime) {

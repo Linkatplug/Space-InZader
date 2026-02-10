@@ -366,6 +366,17 @@ class RenderSystem {
                 this.drawStar(size);
                 break;
 
+            case 'line':
+                // Draw a line for beam weapons (railgun)
+                this.ctx.lineWidth = 3;
+                this.ctx.shadowBlur = 10;
+                this.ctx.shadowColor = color;
+                this.ctx.beginPath();
+                this.ctx.moveTo(-size / 2, 0);
+                this.ctx.lineTo(size / 2, 0);
+                this.ctx.stroke();
+                break;
+
             default:
                 // Default to circle
                 this.ctx.beginPath();

@@ -67,7 +67,8 @@ class CombatSystem {
                     this.audioManager.playSFX('laser', MathUtils.randomFloat(0.9, 1.1));
                     break;
                 case 'spread':
-                    // Minigun needs more variety - vary between 0.6 and 1.2
+                case 'flamethrower':
+                    // Minigun/flamethrower needs more variety - vary between 0.6 and 1.2
                     this.audioManager.playSFX('laser', MathUtils.randomFloat(0.6, 1.2));
                     break;
                 case 'homing':
@@ -77,6 +78,31 @@ class CombatSystem {
                 case 'chain':
                 case 'storm':
                     this.audioManager.playSFX('electric', MathUtils.randomFloat(0.9, 1.1));
+                    break;
+                case 'beam':
+                case 'railgun':
+                    // Deep sound for beam/railgun
+                    this.audioManager.playSFX('laser', MathUtils.randomFloat(0.7, 0.9));
+                    break;
+                case 'mine':
+                case 'turret':
+                    this.audioManager.playSFX('laser', MathUtils.randomFloat(1.0, 1.2));
+                    break;
+                case 'orbital':
+                    // Orbitals are passive, only play sound occasionally
+                    if (Math.random() < 0.1) {
+                        this.audioManager.playSFX('laser', MathUtils.randomFloat(0.8, 1.0));
+                    }
+                    break;
+                case 'gravity_field':
+                    // Gravitational hum - low pitch
+                    if (Math.random() < 0.2) {
+                        this.audioManager.playSFX('laser', MathUtils.randomFloat(0.5, 0.7));
+                    }
+                    break;
+                default:
+                    // Default fallback sound
+                    this.audioManager.playSFX('laser', 1.0);
                     break;
             }
         }
@@ -117,6 +143,12 @@ class CombatSystem {
                 break;
             case 'storm':
                 this.fireStorm(player, weapon);
+                break;
+            case 'railgun':
+                this.fireRailgun(player, weapon);
+                break;
+            case 'flamethrower':
+                this.fireFlamethrower(player, weapon);
                 break;
         }
     }
@@ -537,6 +569,90 @@ class CombatSystem {
             projComp.chainCount = stats.chainCount;
             projComp.chainRange = stats.area;
             projComp.chained = [target.id];
+        }
+    }
+
+    /**
+     * Fire railgun - piercing beam weapon
+     * @param {Entity} player - Player entity
+     * @param {Object} weapon - Weapon component
+     */
+    fireRailgun(player, weapon) {
+        const pos = player.getComponent('position');
+        const playerComp = player.getComponent('player');
+        const levelData = weapon.data.levels[weapon.level - 1];
+        
+        const target = this.findNearestEnemy(pos.x, pos.y);
+        if (!target) return;
+
+        const targetPos = target.getComponent('position');
+        const angle = MathUtils.angle(pos.x, pos.y, targetPos.x, targetPos.y);
+        
+        const projectileCount = levelData.projectileCount || 1;
+        
+        for (let i = 0; i < projectileCount; i++) {
+            const offset = (i - (projectileCount - 1) / 2) * 0.1;
+            const finalAngle = angle + offset;
+            
+            // Create long, fast piercing projectile (beam-like)
+            const projectile = this.createProjectile(
+                pos.x, pos.y,
+                finalAngle,
+                weapon.data.baseDamage * levelData.damage * playerComp.stats.damage,
+                weapon.data.projectileSpeed * playerComp.stats.projectileSpeed,
+                1.5 * playerComp.stats.range, // Shorter lifetime but very fast
+                player.id,
+                weapon.type,
+                levelData.piercing || 999,
+                weapon.data.color
+            );
+            
+            // Make it look like a beam - elongated projectile
+            const renderable = projectile.getComponent('renderable');
+            if (renderable) {
+                renderable.shape = 'line';
+                renderable.size = 30; // Length of the beam visual
+            }
+        }
+    }
+
+    /**
+     * Fire flamethrower - cone of fire projectiles
+     * @param {Entity} player - Player entity
+     * @param {Object} weapon - Weapon component
+     */
+    fireFlamethrower(player, weapon) {
+        const pos = player.getComponent('position');
+        const playerComp = player.getComponent('player');
+        const levelData = weapon.data.levels[weapon.level - 1];
+        
+        const target = this.findNearestEnemy(pos.x, pos.y);
+        if (!target) return;
+
+        const targetPos = target.getComponent('position');
+        const baseAngle = MathUtils.angle(pos.x, pos.y, targetPos.x, targetPos.y);
+        
+        const projectileCount = levelData.projectileCount || 5;
+        const spreadAngle = (levelData.area || 30) * (Math.PI / 180);
+
+        for (let i = 0; i < projectileCount; i++) {
+            const offset = (i - (projectileCount - 1) / 2) * (spreadAngle / projectileCount);
+            const angle = baseAngle + offset;
+            
+            // Shorter range due to malus
+            const range = 2.0 * playerComp.stats.range * (weapon.data.malus?.rangeMultiplier || 1);
+            
+            this.createProjectile(
+                pos.x, pos.y,
+                angle,
+                weapon.data.baseDamage * levelData.damage * playerComp.stats.damage,
+                weapon.data.projectileSpeed * playerComp.stats.projectileSpeed,
+                range,
+                player.id,
+                weapon.type,
+                0,
+                weapon.data.color
+            );
         }
     }
 
