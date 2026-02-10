@@ -76,6 +76,9 @@ class Game {
         this.audioManager = new AudioManager();
         this.scoreManager = new ScoreManager();
         
+        // Multiplayer manager
+        this.multiplayerManager = new MultiplayerManager(this);
+        
         // Debug system
         this.debugOverlay = null;
         
@@ -331,10 +334,40 @@ class Game {
         };
         document.addEventListener('click', initAudio);
         document.addEventListener('keydown', initAudio);
+
+        // Multiplayer menu listeners
+        document.getElementById('multiplayerBtn')?.addEventListener('click', () => {
+            this.showMultiplayerMenu();
+        });
+
+        document.getElementById('hostGameBtn')?.addEventListener('click', () => {
+            this.hostMultiplayerGame();
+        });
+
+        document.getElementById('joinGameBtn')?.addEventListener('click', () => {
+            document.getElementById('joinRoomDiv').style.display = 'block';
+        });
+
+        document.getElementById('confirmJoinBtn')?.addEventListener('click', () => {
+            this.joinMultiplayerGame();
+        });
+
+        document.getElementById('cancelJoinBtn')?.addEventListener('click', () => {
+            document.getElementById('joinRoomDiv').style.display = 'none';
+        });
+
+        document.getElementById('multiplayerBackBtn')?.addEventListener('click', () => {
+            this.hideMultiplayerMenu();
+        });
     }
 
     startGame() {
         logger.info('Game', 'Starting game with ship: ' + this.gameState.selectedShip);
+        
+        // If hosting multiplayer, notify server
+        if (this.multiplayerManager.isHost && this.multiplayerManager.multiplayerEnabled) {
+            this.multiplayerManager.startMultiplayerGame();
+        }
         
         // Reset world and stats
         this.world.clear();
@@ -1301,5 +1334,128 @@ class Game {
         
         // Update UI
         this.systems.ui.updateHUD();
+        
+        // Send player position to multiplayer if connected
+        if (this.multiplayerManager.multiplayerEnabled && this.player) {
+            const pos = this.player.getComponent('position');
+            const vel = this.player.getComponent('velocity');
+            if (pos && vel) {
+                this.multiplayerManager.sendPlayerPosition(
+                    { x: pos.x, y: pos.y },
+                    { vx: vel.vx, vy: vel.vy }
+                );
+            }
+        }
+        
+        // Process multiplayer events
+        if (this.multiplayerManager.multiplayerEnabled) {
+            this.multiplayerManager.processEventQueue();
+        }
+    }
+
+    /**
+     * Show multiplayer menu
+     */
+    showMultiplayerMenu() {
+        // Connect to server
+        if (!this.multiplayerManager.connected) {
+            this.multiplayerManager.connect();
+            
+            // Update status
+            setTimeout(() => {
+                const statusEl = document.getElementById('connectionStatus');
+                if (statusEl) {
+                    if (this.multiplayerManager.connected) {
+                        statusEl.textContent = 'Connecté au serveur ✓';
+                        statusEl.style.color = '#00ff00';
+                    } else {
+                        statusEl.textContent = 'Échec de connexion - Vérifiez que le serveur est démarré';
+                        statusEl.style.color = '#ff0000';
+                    }
+                }
+            }, 1000);
+        } else {
+            const statusEl = document.getElementById('connectionStatus');
+            if (statusEl) {
+                statusEl.textContent = 'Connecté au serveur ✓';
+                statusEl.style.color = '#00ff00';
+            }
+        }
+        
+        // Show multiplayer menu
+        document.getElementById('mainMenu').style.display = 'none';
+        document.getElementById('multiplayerMenu').style.display = 'flex';
+    }
+
+    /**
+     * Hide multiplayer menu
+     */
+    hideMultiplayerMenu() {
+        document.getElementById('multiplayerMenu').style.display = 'none';
+        document.getElementById('mainMenu').style.display = 'flex';
+        document.getElementById('joinRoomDiv').style.display = 'none';
+    }
+
+    /**
+     * Host a multiplayer game
+     */
+    hostMultiplayerGame() {
+        if (!this.multiplayerManager.connected) {
+            alert('Non connecté au serveur');
+            return;
+        }
+
+        if (!this.gameState.selectedShip) {
+            // Show ship selection
+            this.hideMultiplayerMenu();
+            this.gameState.setState(GameStates.MENU);
+            this.systems.ui.showScreen('menu');
+            return;
+        }
+
+        // Create room
+        this.multiplayerManager.createRoom(
+            'Joueur 1',
+            this.gameState.selectedShip
+        );
+
+        // Hide multiplayer menu
+        this.hideMultiplayerMenu();
+    }
+
+    /**
+     * Join a multiplayer game
+     */
+    joinMultiplayerGame() {
+        const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+        const playerName = document.getElementById('playerNameInput2').value.trim() || 'Joueur 2';
+
+        if (!roomCode) {
+            alert('Entrez un code de partie');
+            return;
+        }
+
+        if (!this.multiplayerManager.connected) {
+            alert('Non connecté au serveur');
+            return;
+        }
+
+        if (!this.gameState.selectedShip) {
+            // Show ship selection
+            this.hideMultiplayerMenu();
+            this.gameState.setState(GameStates.MENU);
+            this.systems.ui.showScreen('menu');
+            return;
+        }
+
+        // Join room
+        this.multiplayerManager.joinRoom(
+            roomCode,
+            playerName,
+            this.gameState.selectedShip
+        );
+
+        // Hide multiplayer menu
+        this.hideMultiplayerMenu();
     }
 }

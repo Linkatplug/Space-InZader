@@ -2,6 +2,8 @@
 
 A fully playable **roguelite space shooter** web game inspired by Space Invaders and Vampire Survivors. Built with vanilla JavaScript and HTML5 Canvas.
 
+**✨ Nouveau : Mode Multijoueur Coopératif à 2 joueurs !** [Guide Multijoueur](MULTIPLAYER.md)
+
 ![Menu Screenshot](https://github.com/user-attachments/assets/f5370b5d-ecba-4307-8fa3-eebbc7d24cf3)
 
 ## 🎮 Features
@@ -37,14 +39,19 @@ A fully playable **roguelite space shooter** web game inspired by Space Invaders
 
 ## 🚀 How to Play
 
+### Solo Mode
 1. **Open `index.html`** in a modern web browser
 2. **Select a ship** from the four available options
 3. **Click START GAME** to begin
-4. **Move** with WASD or ZQSD keys
-5. **Weapons auto-fire** at the nearest enemy
-6. **Collect green XP orbs** to level up
-7. **Choose upgrades** when you level up
-8. **Survive** as long as possible!
+
+### Multiplayer Mode (2 Players Co-op)
+1. **Start the server**: `npm install && npm start`
+2. **Open** `http://localhost:3000` in two browsers
+3. **Player 1**: Click MULTIPLAYER → CREATE GAME → Share room code
+4. **Player 2**: Click MULTIPLAYER → JOIN GAME → Enter room code
+5. **Start!** When both players are ready
+
+📖 [Full Multiplayer Guide](MULTIPLAYER.md)
 
 ### Controls
 - **WASD** or **ZQSD** - Move player

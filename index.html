@@ -1122,7 +1122,8 @@
                 <div class="main-menu-container">
                     <h1 class="game-title">SPACE INZADER</h1>
                     <div class="main-menu-buttons">
-                        <button class="menu-btn" id="playBtn">JOUER</button>
+                        <button class="menu-btn" id="playBtn">SOLO</button>
+                        <button class="menu-btn" id="multiplayerBtn">MULTIJOUEUR</button>
                         <button class="menu-btn" id="scoreboardBtn">CLASSEMENT</button>
                         <button class="menu-btn" id="optionsBtn">OPTIONS</button>
                         <button class="menu-btn" id="creditsBtn">CRÉDITS</button>
@@ -1141,6 +1142,38 @@
                 <div class="ship-selection" id="shipSelection"></div>
                 <button class="button" id="startButton">COMMENCER</button>
                 <button class="button" id="backToMainBtn">RETOUR</button>
+            </div>
+
+            <!-- Multiplayer Menu -->
+            <div id="multiplayerMenu" class="screen overlay" style="display: none;">
+                <div style="background: rgba(10, 10, 26, 0.95); border: 2px solid #00ffff; padding: 40px; border-radius: 10px; max-width: 600px;">
+                    <h2 style="text-align: center; margin-bottom: 30px; font-size: 36px; text-shadow: 0 0 20px #00ffff;">MULTIJOUEUR</h2>
+                    <p style="text-align: center; margin-bottom: 20px; color: #00ffff;">Mode coopératif à 2 joueurs</p>
+                    
+                    <div class="main-menu-buttons" style="margin: 20px 0;">
+                        <button class="menu-btn" id="hostGameBtn">CRÉER UNE PARTIE</button>
+                        <button class="menu-btn" id="joinGameBtn">REJOINDRE UNE PARTIE</button>
+                        <button class="menu-btn" id="multiplayerBackBtn">RETOUR</button>
+                    </div>
+
+                    <div id="joinRoomDiv" style="display: none; margin-top: 30px;">
+                        <p style="margin-bottom: 10px;">Entrez le code de la partie :</p>
+                        <input type="text" id="roomCodeInput" placeholder="CODE" maxlength="6" 
+                            style="width: 100%; padding: 15px; font-size: 24px; text-align: center; 
+                            background: rgba(0, 255, 255, 0.1); border: 2px solid #00ffff; color: #00ffff; 
+                            font-family: 'Courier New', monospace; text-transform: uppercase; margin-bottom: 15px;">
+                        <input type="text" id="playerNameInput2" placeholder="Nom du joueur" 
+                            style="width: 100%; padding: 10px; font-size: 18px; 
+                            background: rgba(0, 255, 255, 0.1); border: 2px solid #00ffff; color: #00ffff; 
+                            font-family: 'Courier New', monospace; margin-bottom: 15px;">
+                        <button class="button" id="confirmJoinBtn" style="width: 100%;">REJOINDRE</button>
+                        <button class="button" id="cancelJoinBtn" style="width: 100%; margin-top: 10px; background: #666;">ANNULER</button>
+                    </div>
+
+                    <div id="serverStatus" style="margin-top: 20px; padding: 15px; background: rgba(0, 0, 0, 0.5); border-radius: 5px; text-align: center;">
+                        <span id="connectionStatus">Connexion au serveur...</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Pause Menu -->
@@ -1390,6 +1423,9 @@
     <script src="js/managers/SaveManager.js"></script>
     <script src="js/managers/ScoreManager.js"></script>
     <script src="js/managers/AudioManager.js"></script>
+    <!-- Socket.IO for multiplayer -->
+    <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+    <script src="js/managers/MultiplayerManager.js"></script>
     <!-- Dev Tools -->
     <script src="js/dev/ContentAuditor.js"></script>
     <script src="js/dev/DevTools.js"></script>
