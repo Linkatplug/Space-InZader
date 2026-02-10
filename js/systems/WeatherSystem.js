@@ -11,8 +11,9 @@ class WeatherSystem {
         
         // Event configuration
         this.events = [
-            { type: 'meteor_storm', weight: 0.6, duration: 8 },
-            { type: 'black_hole', weight: 0.4, duration: 12 }
+            { type: 'meteor_storm', weight: 0.5, duration: 15 }, // Changed: 15s average (12-18s random)
+            { type: 'black_hole', weight: 0.3, duration: 12 },
+            { type: 'magnetic_storm', weight: 0.2, duration: 5 } // New: Magnetic storm disables weapons
         ];
         
         // Event state
@@ -102,10 +103,17 @@ class WeatherSystem {
      * Activate the event after warning
      */
     activateEvent() {
-        this.eventTimer = this.activeEvent.duration;
+        // Random duration variation for meteor storm (12-18s)
+        if (this.activeEvent.type === 'meteor_storm') {
+            this.eventTimer = 12 + Math.random() * 6; // 12-18 seconds
+        } else {
+            this.eventTimer = this.activeEvent.duration;
+        }
         
         if (this.activeEvent.type === 'black_hole') {
             this.spawnBlackHole();
+        } else if (this.activeEvent.type === 'magnetic_storm') {
+            this.startMagneticStorm();
         }
         
         // Play event start sound
@@ -113,6 +121,8 @@ class WeatherSystem {
             this.audioManager.playSFX('meteor_warning');
         } else if (this.activeEvent.type === 'black_hole') {
             this.audioManager.playSFX('black_hole_spawn');
+        } else if (this.activeEvent.type === 'magnetic_storm') {
+            this.audioManager.playSFX('electric');
         }
     }
     
@@ -125,6 +135,8 @@ class WeatherSystem {
             this.updateMeteorStorm(deltaTime);
         } else if (this.activeEvent.type === 'black_hole') {
             this.updateBlackHole(deltaTime);
+        } else if (this.activeEvent.type === 'magnetic_storm') {
+            this.updateMagneticStorm(deltaTime);
         }
     }
     
