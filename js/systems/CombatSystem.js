@@ -3,6 +3,9 @@
  * @description Handles weapon firing, combat mechanics, and projectile creation
  */
 
+// Sound probability constants for weapons
+const BEAM_SOUND_PROBABILITY = 0.15; // Beam weapons fire rapidly, reduce sound frequency
+
 class CombatSystem {
     constructor(world, gameState, audioManager) {
         this.world = world;
@@ -90,8 +93,6 @@ class CombatSystem {
                 case 'beam':
                     // Beam weapons fire rapidly (20 times/sec) - play sound only occasionally to avoid repetitive noise
                     // Vampire ray weapon especially benefits from reduced sound frequency
-                    // Using a constant for probability makes it easier to tune
-                    const BEAM_SOUND_PROBABILITY = 0.15;
                     if (Math.random() < BEAM_SOUND_PROBABILITY) {
                         // Use a softer, lower pitch for a subtle energy drain effect
                         this.audioManager.playSFX('laser', MathUtils.randomFloat(0.3, 0.5));
