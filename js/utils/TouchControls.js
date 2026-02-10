@@ -49,7 +49,18 @@ class TouchControls {
     setupCanvasResize() {
         // Make canvas responsive
         const resizeCanvas = () => {
-            if (this.isMobile) {
+            // Re-detect if we should be in mobile mode based on screen size
+            const shouldBeMobile = window.innerWidth <= 768;
+            
+            if (shouldBeMobile !== this.enabled) {
+                if (shouldBeMobile) {
+                    this.enable();
+                } else {
+                    this.disable();
+                }
+            }
+            
+            if (shouldBeMobile) {
                 const container = document.getElementById('gameContainer');
                 const canvas = this.canvas;
                 const menuCanvas = document.getElementById('menuStarfield');
@@ -83,6 +94,21 @@ class TouchControls {
                 if (menuCanvas) {
                     menuCanvas.style.width = `${newWidth}px`;
                     menuCanvas.style.height = `${newHeight}px`;
+                }
+            } else {
+                // Reset to default desktop size
+                const container = document.getElementById('gameContainer');
+                const canvas = this.canvas;
+                const menuCanvas = document.getElementById('menuStarfield');
+                
+                container.style.width = '';
+                container.style.height = '';
+                canvas.style.width = '';
+                canvas.style.height = '';
+                
+                if (menuCanvas) {
+                    menuCanvas.style.width = '';
+                    menuCanvas.style.height = '';
                 }
             }
         };
