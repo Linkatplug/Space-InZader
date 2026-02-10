@@ -726,7 +726,7 @@ class CollisionSystem {
                         if (blackHoleComp.lastPlayerDamageTime >= 0.5) {
                             // Scale damage based on distance - closer to center = more damage
                             // At center (distance=0): 3x damage, at edge (distance=damageRadius): 1x damage
-                            const distanceFactor = 1 - (distance / blackHoleComp.damageRadius);
+                            const distanceFactor = Math.max(0, Math.min(1, 1 - (distance / blackHoleComp.damageRadius)));
                             const damageMultiplier = 1 + (distanceFactor * 2); // 1x to 3x multiplier
                             const scaledDamage = blackHoleComp.damage * damageMultiplier;
                             
@@ -768,7 +768,7 @@ class CollisionSystem {
                     // Apply damage every 0.5 seconds
                     if (blackHoleComp.lastEnemyDamageTime[enemy.id] >= 0.5) {
                         // Scale damage based on distance - closer to center = more damage
-                        const distanceFactor = 1 - (distance / blackHoleComp.damageRadius);
+                        const distanceFactor = Math.max(0, Math.min(1, 1 - (distance / blackHoleComp.damageRadius)));
                         const damageMultiplier = 1 + (distanceFactor * 2); // 1x to 3x multiplier
                         const scaledDamage = blackHoleComp.damage * 0.5 * damageMultiplier;
                         
