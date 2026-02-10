@@ -42,7 +42,8 @@ class TouchControls {
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         const isSmallScreen = window.innerWidth <= 768;
         
-        return (isMobileUA || isTouchDevice) && isSmallScreen;
+        // Enable on small screens regardless of device type (for mobile browsers)
+        return isSmallScreen || (isMobileUA || isTouchDevice);
     }
     
     setupCanvasResize() {
