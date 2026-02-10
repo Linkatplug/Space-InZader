@@ -331,8 +331,45 @@ function generateRoomId() {
     return Math.random().toString(36).substr(2, 6).toUpperCase();
 }
 
+// Error handling for server
+server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+        console.error(`\n❌ ERROR: Port ${PORT} is already in use!`);
+        console.error('\n📋 To fix this issue, try one of the following:\n');
+        console.error('1. Stop the existing server:');
+        console.error(`   - Find the process: lsof -i :${PORT} (Mac/Linux) or netstat -ano | findstr :${PORT} (Windows)`);
+        console.error('   - Kill it: kill -9 <PID> (Mac/Linux) or taskkill /PID <PID> /F (Windows)');
+        console.error('\n2. Use a different port:');
+        console.error(`   - PORT=3001 npm start`);
+        console.error('\n3. Wait a moment and try again (the port may still be releasing)\n');
+        process.exit(1);
+    } else {
+        console.error('Server error:', error);
+        process.exit(1);
+    }
+});
+
+// Graceful shutdown handlers
+const shutdown = () => {
+    console.log('\n🛑 Shutting down server gracefully...');
+    server.close(() => {
+        console.log('✅ Server closed');
+        process.exit(0);
+    });
+    
+    // Force close after 5 seconds
+    setTimeout(() => {
+        console.error('⚠️  Forced shutdown after timeout');
+        process.exit(1);
+    }, 5000);
+};
+
+process.on('SIGINT', shutdown);  // Ctrl+C
+process.on('SIGTERM', shutdown); // Kill command
+
 // Start server
 server.listen(PORT, () => {
-    console.log(`Space InZader Multiplayer Server running on port ${PORT}`);
-    console.log(`Open http://localhost:${PORT} to play`);
+    console.log(`🚀 Space InZader Multiplayer Server running on port ${PORT}`);
+    console.log(`📡 Open http://localhost:${PORT} to play`);
+    console.log(`⌨️  Press Ctrl+C to stop the server\n`);
 });

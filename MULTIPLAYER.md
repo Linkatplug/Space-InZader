@@ -113,10 +113,16 @@ Aucune configuration supplémentaire n'est nécessaire.
 
 ### Résolution de Problèmes
 
+**Port déjà utilisé (EADDRINUSE)**
+- Si vous voyez l'erreur "Port 3000 is already in use":
+  - Trouvez le processus : `lsof -i :3000` (Mac/Linux) ou `netstat -ano | findstr :3000` (Windows)
+  - Arrêtez-le : `kill -9 <PID>` (Mac/Linux) ou `taskkill /PID <PID> /F` (Windows)
+  - Ou utilisez un autre port : `PORT=3001 npm start`
+
 **Impossible de se connecter au serveur**
 - Vérifiez que le serveur est démarré (`npm start`)
-- Vérifiez que le port 3000 n'est pas utilisé par une autre application
-- Vérifiez votre pare-feu
+- Vérifiez que le port n'est pas bloqué par un pare-feu
+- Assurez-vous d'accéder au jeu via http://localhost:3000 (ou le port configuré)
 
 **Code de salle invalide**
 - Vérifiez que le code est correct (6 caractères)
