@@ -721,7 +721,30 @@ class CollisionSystem {
                         blackHolePos.x, blackHolePos.y
                     );
                     
-                    if (distance < blackHoleComp.damageRadius) {
+                    // Define center kill radius (instant death zone)
+                    const centerKillRadius = 30; // pixels - very center of black hole
+                    
+                    if (distance < centerKillRadius) {
+                        // INSTANT KILL - Player is in the center of the black hole
+                        const health = player.getComponent('health');
+                        if (health && !health.godMode) {
+                            health.current = 0; // Instant death
+                            
+                            // Intense visual feedback for instant death
+                            if (this.screenEffects) {
+                                this.screenEffects.shake(15, 0.5);
+                                this.screenEffects.flash('#9400D3', 0.5, 0.5);
+                            }
+                            
+                            // Play death sound
+                            if (this.audioManager && this.audioManager.initialized) {
+                                this.audioManager.playSFX('death');
+                            }
+                            
+                            console.log('%c[Black Hole] Player sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
+                        }
+                    } else if (distance < blackHoleComp.damageRadius) {
+                        // Normal damage zone - outside the instant kill center
                         // Update damage timer only when in damage radius
                         blackHoleComp.lastPlayerDamageTime += deltaTime;
                         
@@ -759,7 +782,18 @@ class CollisionSystem {
                     blackHolePos.x, blackHolePos.y
                 );
                 
-                if (distance < blackHoleComp.damageRadius) {
+                // Define center kill radius (instant death zone)
+                const centerKillRadius = 30; // pixels - very center of black hole
+                
+                if (distance < centerKillRadius) {
+                    // INSTANT KILL - Enemy is in the center of the black hole
+                    const enemyHealth = enemy.getComponent('health');
+                    if (enemyHealth) {
+                        enemyHealth.current = 0; // Instant death
+                        console.log('%c[Black Hole] Enemy sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
+                    }
+                } else if (distance < blackHoleComp.damageRadius) {
+                    // Normal damage zone - outside the instant kill center
                     // Initialize timer for this enemy if not exists
                     if (!blackHoleComp.lastEnemyDamageTime[enemy.id]) {
                         blackHoleComp.lastEnemyDamageTime[enemy.id] = 0; // Start at 0 for consistent timing
