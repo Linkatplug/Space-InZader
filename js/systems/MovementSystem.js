@@ -133,12 +133,12 @@ class MovementSystem {
             if (Math.abs(vel.vy) < velocityThreshold) vel.vy = 0;
         }
 
-        // Keep player in bounds
+        // Keep player in world bounds
         const collision = player.getComponent('collision');
         const radius = collision ? collision.radius : 15;
         
-        pos.x = MathUtils.clamp(pos.x, radius, this.canvas.width - radius);
-        pos.y = MathUtils.clamp(pos.y, radius, this.canvas.height - radius);
+        pos.x = MathUtils.clamp(pos.x, radius, WORLD_WIDTH - radius);
+        pos.y = MathUtils.clamp(pos.y, radius, WORLD_HEIGHT - radius);
     }
 
     updateEntityPosition(entity, deltaTime) {
@@ -150,10 +150,10 @@ class MovementSystem {
         pos.x += vel.vx * deltaTime;
         pos.y += vel.vy * deltaTime;
 
-        // Remove entities that are off-screen (with buffer)
-        const buffer = 100;
-        if (pos.x < -buffer || pos.x > this.canvas.width + buffer ||
-            pos.y < -buffer || pos.y > this.canvas.height + buffer) {
+        // Remove entities that are far off-world (with buffer)
+        const buffer = 200;
+        if (pos.x < -buffer || pos.x > WORLD_WIDTH + buffer ||
+            pos.y < -buffer || pos.y > WORLD_HEIGHT + buffer) {
             
             // Don't remove player or pickups
             if (entity.type !== 'player' && entity.type !== 'pickup') {

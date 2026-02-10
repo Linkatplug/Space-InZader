@@ -11,6 +11,10 @@ class RenderSystem {
         this.world = world;
         this.gameState = gameState;
         
+        // Camera system for larger world
+        this.cameraX = 0;
+        this.cameraY = 0;
+        
         // Screen effects reference (set from Game.js)
         this.screenEffects = null;
         
@@ -41,8 +45,8 @@ class RenderSystem {
         layers.forEach(layer => {
             for (let i = 0; i < layer.count; i++) {
                 this.stars.push({
-                    x: Math.random() * this.canvas.width,
-                    y: Math.random() * this.canvas.height,
+                    x: Math.random() * WORLD_WIDTH,
+                    y: Math.random() * WORLD_HEIGHT,
                     speed: layer.speed,
                     size: layer.size,
                     alpha: layer.alpha,
@@ -54,12 +58,35 @@ class RenderSystem {
     }
 
     /**
+     * Update camera position to follow player
+     */
+    updateCamera() {
+        const players = this.world.getEntitiesByType('player');
+        if (players.length > 0) {
+            const player = players[0];
+            const pos = player.getComponent('position');
+            if (pos) {
+                // Center camera on player
+                this.cameraX = pos.x - this.canvas.width / 2;
+                this.cameraY = pos.y - this.canvas.height / 2;
+                
+                // Clamp camera to world bounds
+                this.cameraX = MathUtils.clamp(this.cameraX, 0, WORLD_WIDTH - this.canvas.width);
+                this.cameraY = MathUtils.clamp(this.cameraY, 0, WORLD_HEIGHT - this.canvas.height);
+            }
+        }
+    }
+
+    /**
      * Main render loop
      * @param {number} deltaTime - Time since last frame in seconds
      */
     render(deltaTime) {
         this.lastFrameTime = deltaTime;
         this.fps = deltaTime > 0 ? 1 / deltaTime : 60;
+
+        // Update camera position based on player
+        this.updateCamera();
 
         // Clear canvas
         this.ctx.fillStyle = '#000';
@@ -70,7 +97,7 @@ class RenderSystem {
             this.gameState.isState(GameStates.LEVEL_UP) ||
             this.gameState.isState(GameStates.PAUSED)) {
             
-            // Save context for screen shake
+            // Save context for camera and screen shake
             this.ctx.save();
             
             // Apply screen shake if available
@@ -78,10 +105,13 @@ class RenderSystem {
                 this.screenEffects.applyShake(this.ctx);
             }
             
+            // Apply camera translation
+            this.ctx.translate(-this.cameraX, -this.cameraY);
+            
             this.renderStarfield(deltaTime);
             this.renderEntities();
             
-            // Restore context after shake
+            // Restore context after camera and shake
             this.ctx.restore();
             
             this.renderBossHealthBar();
@@ -101,11 +131,11 @@ class RenderSystem {
         this.ctx.save();
         
         this.stars.forEach(star => {
-            // Parallax movement
+            // Parallax movement (vertical scrolling)
             star.y += star.speed * 60 * deltaTime;
-            if (star.y > this.canvas.height) {
+            if (star.y > WORLD_HEIGHT) {
                 star.y = 0;
-                star.x = Math.random() * this.canvas.width;
+                star.x = Math.random() * WORLD_WIDTH;
             }
 
             // Twinkling effect

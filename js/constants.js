@@ -3,6 +3,10 @@
  * Centralized constants to avoid redeclaration errors
  */
 
+// World size (playable area - 2x canvas size)
+const WORLD_WIDTH = 2560;
+const WORLD_HEIGHT = 1440;
+
 // Enemy size threshold for boss detection
 const BOSS_SIZE_THRESHOLD = 35;
 
