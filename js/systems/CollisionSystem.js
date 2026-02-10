@@ -9,6 +9,14 @@ class CollisionSystem {
         this.gameState = gameState;
         this.audioManager = audioManager;
         this.particleSystem = particleSystem;
+        
+        // Black hole instant kill zone constants
+        this.BLACK_HOLE_CENTER_KILL_RADIUS = 30; // pixels - instant death zone
+        this.BLACK_HOLE_DEATH_SHAKE_INTENSITY = 15;
+        this.BLACK_HOLE_DEATH_SHAKE_DURATION = 0.5;
+        this.BLACK_HOLE_DEATH_FLASH_COLOR = '#9400D3'; // Purple
+        this.BLACK_HOLE_DEATH_FLASH_INTENSITY = 0.5;
+        this.BLACK_HOLE_DEATH_FLASH_DURATION = 0.5;
     }
 
     update(deltaTime) {
@@ -721,10 +729,7 @@ class CollisionSystem {
                         blackHolePos.x, blackHolePos.y
                     );
                     
-                    // Define center kill radius (instant death zone)
-                    const centerKillRadius = 30; // pixels - very center of black hole
-                    
-                    if (distance < centerKillRadius) {
+                    if (distance < this.BLACK_HOLE_CENTER_KILL_RADIUS) {
                         // INSTANT KILL - Player is in the center of the black hole
                         const health = player.getComponent('health');
                         if (health && !health.godMode) {
@@ -732,8 +737,15 @@ class CollisionSystem {
                             
                             // Intense visual feedback for instant death
                             if (this.screenEffects) {
-                                this.screenEffects.shake(15, 0.5);
-                                this.screenEffects.flash('#9400D3', 0.5, 0.5);
+                                this.screenEffects.shake(
+                                    this.BLACK_HOLE_DEATH_SHAKE_INTENSITY,
+                                    this.BLACK_HOLE_DEATH_SHAKE_DURATION
+                                );
+                                this.screenEffects.flash(
+                                    this.BLACK_HOLE_DEATH_FLASH_COLOR,
+                                    this.BLACK_HOLE_DEATH_FLASH_DURATION,
+                                    this.BLACK_HOLE_DEATH_FLASH_INTENSITY
+                                );
                             }
                             
                             // Play death sound
@@ -782,10 +794,7 @@ class CollisionSystem {
                     blackHolePos.x, blackHolePos.y
                 );
                 
-                // Define center kill radius (instant death zone)
-                const centerKillRadius = 30; // pixels - very center of black hole
-                
-                if (distance < centerKillRadius) {
+                if (distance < this.BLACK_HOLE_CENTER_KILL_RADIUS) {
                     // INSTANT KILL - Enemy is in the center of the black hole
                     const enemyHealth = enemy.getComponent('health');
                     if (enemyHealth) {
