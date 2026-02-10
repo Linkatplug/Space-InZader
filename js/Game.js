@@ -360,6 +360,9 @@ class Game {
         this.systems.weather.reset();
         this.screenEffects.reset();
         
+        // Spawn asteroids across the map
+        this.systems.spawner.spawnAsteroids(50);
+        
         // Hide menu, show game
         this.systems.ui.showScreen('game');
         

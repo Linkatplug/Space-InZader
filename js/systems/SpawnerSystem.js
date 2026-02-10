@@ -633,4 +633,50 @@ class SpawnerSystem {
         };
         this.difficultyMultiplier = 1.0;
     }
+
+    /**
+     * Spawn asteroids across the map
+     * @param {number} count - Number of asteroids to spawn
+     */
+    spawnAsteroids(count = 50) {
+        logger.info('SpawnerSystem', `Spawning ${count} asteroids across the map`);
+        
+        for (let i = 0; i < count; i++) {
+            // Random position in world
+            const x = Math.random() * (WORLD_WIDTH - 200) + 100;
+            const y = Math.random() * (WORLD_HEIGHT - 200) + 100;
+            
+            // All small asteroids for now
+            const sizeTier = 'small';
+            const size = 12;
+            const health = 30;
+            
+            this.createAsteroid(x, y, size, health, sizeTier);
+        }
+    }
+
+    /**
+     * Create asteroid entity
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {number} size - Size/radius
+     * @param {number} health - Health
+     * @param {string} sizeTier - Size tier ('small', 'medium', 'large')
+     * @returns {Entity} Created asteroid
+     */
+    createAsteroid(x, y, size, health, sizeTier) {
+        const asteroid = this.world.createEntity('asteroid');
+        
+        asteroid.addComponent('position', Components.Position(x, y));
+        asteroid.addComponent('health', Components.Health(health, health));
+        asteroid.addComponent('collision', Components.Collision(size));
+        asteroid.addComponent('renderable', Components.Renderable(
+            '#8B7355', // Brown/grey color
+            size,
+            'circle'
+        ));
+        asteroid.addComponent('asteroid', Components.Asteroid(sizeTier));
+        
+        return asteroid;
+    }
 }

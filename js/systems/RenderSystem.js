@@ -154,8 +154,9 @@ class RenderSystem {
      * Render all entities in the game world
      */
     renderEntities() {
-        // Render order: particles -> pickups -> projectiles -> enemies -> weather -> player
+        // Render order: particles -> asteroids -> pickups -> projectiles -> enemies -> weather -> player
         this.renderParticles();
+        this.renderAsteroids();
         this.renderPickups();
         this.renderProjectiles();
         this.renderEnemies();
@@ -189,6 +190,64 @@ class RenderSystem {
             this.ctx.fill();
             
             this.ctx.restore();
+        });
+    }
+
+    /**
+     * Render asteroids
+     */
+    renderAsteroids() {
+        const asteroids = this.world.getEntitiesByType('asteroid');
+        
+        asteroids.forEach(asteroid => {
+            const pos = asteroid.getComponent('position');
+            const render = asteroid.getComponent('renderable');
+            const asteroidComp = asteroid.getComponent('asteroid');
+            const health = asteroid.getComponent('health');
+            
+            if (!pos || !render || !asteroidComp) return;
+
+            this.ctx.save();
+            this.ctx.translate(pos.x, pos.y);
+            this.ctx.rotate(asteroidComp.rotation);
+            
+            // Draw asteroid as rocky brown circle with darker patches
+            const gradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, render.size);
+            gradient.addColorStop(0, '#8B7355');
+            gradient.addColorStop(0.5, '#6B5345');
+            gradient.addColorStop(1, '#4B3325');
+            
+            this.ctx.fillStyle = gradient;
+            this.ctx.shadowBlur = 5;
+            this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, render.size, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Add some crater-like details
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            for (let i = 0; i < 3; i++) {
+                const angle = (i / 3) * Math.PI * 2;
+                const dist = render.size * 0.4;
+                const craterSize = render.size * 0.15;
+                this.ctx.beginPath();
+                this.ctx.arc(
+                    Math.cos(angle) * dist,
+                    Math.sin(angle) * dist,
+                    craterSize,
+                    0,
+                    Math.PI * 2
+                );
+                this.ctx.fill();
+            }
+            
+            this.ctx.restore();
+            
+            // Health bar for larger asteroids
+            if (health && render.size > 15) {
+                this.drawHealthBar(pos.x, pos.y - render.size - 8, health.current, health.max, false);
+            }
         });
     }
 

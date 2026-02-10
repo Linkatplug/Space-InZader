@@ -230,6 +230,15 @@ function createBoss(phase, patterns) {
     };
 }
 
+// Asteroid component
+function createAsteroid(sizeTier) {
+    return {
+        sizeTier, // 'small', 'medium', 'large'
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 2
+    };
+}
+
 // === Backward compatibility Components wrapper ===
 // DO NOT REMOVE: used by Game.createPlayer and legacy systems
 const Components = {
@@ -321,5 +330,10 @@ const Components = {
         patterns,
         phaseTime: 0,
         nextPhaseHealth: 0.5
+    }),
+    Asteroid: (sizeTier) => ({
+        sizeTier,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 2
     })
 };

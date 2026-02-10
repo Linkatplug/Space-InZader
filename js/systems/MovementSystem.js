@@ -28,6 +28,15 @@ class MovementSystem {
             this.updatePlayerMovement(player, deltaTime);
         }
 
+        // Update asteroid rotation
+        const asteroids = this.world.getEntitiesByType('asteroid');
+        for (const asteroid of asteroids) {
+            const asteroidComp = asteroid.getComponent('asteroid');
+            if (asteroidComp) {
+                asteroidComp.rotation += asteroidComp.rotationSpeed * deltaTime;
+            }
+        }
+
         // Update orbital and laser projectiles
         const projectiles = this.world.getEntitiesByType('projectile');
         for (const projectile of projectiles) {
