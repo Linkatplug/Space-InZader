@@ -45,16 +45,32 @@ class TouchControls {
         const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
         const isSmallScreen = window.innerWidth <= 768;
+        const smallerDimension = Math.min(window.innerWidth, window.innerHeight);
         
-        // Enable on small screens regardless of device type (for mobile browsers)
-        return isSmallScreen || (isMobileUA || isTouchDevice);
+        // Enable on small screens OR mobile devices (both portrait and landscape)
+        // In landscape, smaller dimension (height) determines if it's a mobile device
+        return isSmallScreen || isMobileUA || isTouchDevice || smallerDimension <= 768;
     }
     
     setupCanvasResize() {
         // Make canvas responsive
         const resizeCanvas = () => {
-            // Re-detect if we should be in mobile mode based on screen size
-            const shouldBeMobile = window.innerWidth <= 768;
+            // Improved mobile detection for both portrait and landscape
+            // Check screen dimensions to determine if we're on a mobile device
+            const smallerDimension = Math.min(window.innerWidth, window.innerHeight);
+            const largerDimension = Math.max(window.innerWidth, window.innerHeight);
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const userAgent = navigator.userAgent.toLowerCase();
+            const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
+            
+            // Enable on mobile-sized screens:
+            // - Smaller dimension <= 768px AND larger dimension < 1024px (mobile in any orientation)
+            // - OR mobile UA with reasonable dimensions
+            // - OR touch device with clearly mobile dimensions
+            const shouldBeMobile = 
+                (smallerDimension <= 768 && largerDimension < 1024) || // Mobile size check
+                (isMobileUA && largerDimension <= 1366) || // Mobile UA with reasonable size
+                (isTouchDevice && smallerDimension <= 600); // Small touch device
             
             if (shouldBeMobile !== this.enabled) {
                 if (shouldBeMobile) {
@@ -69,35 +85,21 @@ class TouchControls {
                 const canvas = this.canvas;
                 const menuCanvas = document.getElementById('menuStarfield');
                 
-                // Set canvas to fill viewport while maintaining aspect ratio
-                const aspectRatio = 16 / 9; // Original 1280x720
+                // Make canvas fill entire viewport for full screen experience
                 const windowWidth = window.innerWidth;
                 const windowHeight = window.innerHeight;
-                const windowAspect = windowWidth / windowHeight;
                 
-                let newWidth, newHeight;
+                // Apply full viewport size to container
+                container.style.width = `${windowWidth}px`;
+                container.style.height = `${windowHeight}px`;
                 
-                if (windowAspect > aspectRatio) {
-                    // Window is wider than canvas aspect ratio
-                    newHeight = windowHeight;
-                    newWidth = newHeight * aspectRatio;
-                } else {
-                    // Window is taller than canvas aspect ratio
-                    newWidth = windowWidth;
-                    newHeight = newWidth / aspectRatio;
-                }
-                
-                // Apply size to container
-                container.style.width = `${newWidth}px`;
-                container.style.height = `${newHeight}px`;
-                
-                // Canvas maintains internal resolution but scales visually
-                canvas.style.width = `${newWidth}px`;
-                canvas.style.height = `${newHeight}px`;
+                // Canvas scales to fill container
+                canvas.style.width = `${windowWidth}px`;
+                canvas.style.height = `${windowHeight}px`;
                 
                 if (menuCanvas) {
-                    menuCanvas.style.width = `${newWidth}px`;
-                    menuCanvas.style.height = `${newHeight}px`;
+                    menuCanvas.style.width = `${windowWidth}px`;
+                    menuCanvas.style.height = `${windowHeight}px`;
                 }
             } else {
                 // Reset to default desktop size
