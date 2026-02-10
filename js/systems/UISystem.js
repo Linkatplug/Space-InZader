@@ -119,6 +119,12 @@ class UISystem {
         this.shieldDisplay = document.getElementById('shieldDisplay');
         this.shieldValue = document.getElementById('shieldValue');
         
+        // Heat/Overheat elements
+        this.heatBar = document.getElementById('heatBar');
+        this.heatFill = document.getElementById('heatFill');
+        this.heatDisplay = document.getElementById('heatDisplay');
+        this.heatValue = document.getElementById('heatValue');
+        
         // Stats display elements
         this.statDamage = document.getElementById('statDamage');
         this.statFireRate = document.getElementById('statFireRate');
@@ -345,6 +351,32 @@ class UISystem {
         } else {
             this.shieldBar.style.display = 'none';
             this.shieldDisplay.style.display = 'none';
+        }
+        
+        // Update heat/overheat gauge
+        if (this.heatBar && this.heatFill && this.heatDisplay) {
+            const heat = playerComp?.heat ?? 0;
+            const heatMax = playerComp?.heatMax ?? 100;
+            
+            if (heatMax > 0 && heat > 0) {
+                this.heatBar.style.display = 'block';
+                this.heatDisplay.style.display = 'block';
+                this.heatValue.textContent = `${Math.ceil(heat)}/${heatMax}`;
+                const heatPercent = (heat / heatMax) * 100;
+                this.heatFill.style.width = `${Math.max(0, Math.min(100, heatPercent))}%`;
+                
+                // Change color based on heat level
+                if (heatPercent >= 80) {
+                    this.heatFill.style.background = 'linear-gradient(to right, #ff4444, #ff0000)';
+                } else if (heatPercent >= 50) {
+                    this.heatFill.style.background = 'linear-gradient(to right, #ffaa00, #ff6600)';
+                } else {
+                    this.heatFill.style.background = 'linear-gradient(to right, #ffcc00, #ff9900)';
+                }
+            } else {
+                this.heatBar.style.display = 'none';
+                this.heatDisplay.style.display = 'none';
+            }
         }
 
         // Update weapon display
