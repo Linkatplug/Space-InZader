@@ -17,6 +17,12 @@ class TouchControls {
         this.JOYSTICK_INNER_RADIUS = 30; // Half of inner circle size (60px / 2)
         this.JOYSTICK_DEAD_ZONE = 5; // Minimum distance to register movement
         
+        // Mobile detection thresholds
+        this.MOBILE_SMALLER_DIMENSION_THRESHOLD = 768; // Max height/width for mobile
+        this.MOBILE_LARGER_DIMENSION_THRESHOLD = 1024; // Max other dimension for mobile
+        this.TABLET_DIMENSION_THRESHOLD = 1366; // Max dimension for tablets
+        this.SMALL_TOUCH_DEVICE_THRESHOLD = 600; // Clearly mobile touch devices
+        
         // Touch identifiers
         this.joystickTouchId = null;
         this.fireButtonTouchId = null;
@@ -44,12 +50,11 @@ class TouchControls {
         const userAgent = navigator.userAgent.toLowerCase();
         const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
         const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        const isSmallScreen = window.innerWidth <= 768;
         const smallerDimension = Math.min(window.innerWidth, window.innerHeight);
         
         // Enable on small screens OR mobile devices (both portrait and landscape)
         // In landscape, smaller dimension (height) determines if it's a mobile device
-        return isSmallScreen || isMobileUA || isTouchDevice || smallerDimension <= 768;
+        return smallerDimension <= this.MOBILE_SMALLER_DIMENSION_THRESHOLD || isMobileUA || isTouchDevice;
     }
     
     setupCanvasResize() {
@@ -64,13 +69,14 @@ class TouchControls {
             const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
             
             // Enable on mobile-sized screens:
-            // - Smaller dimension <= 768px AND larger dimension < 1024px (mobile in any orientation)
+            // - Smaller dimension <= threshold AND larger dimension < threshold (mobile in any orientation)
             // - OR mobile UA with reasonable dimensions
             // - OR touch device with clearly mobile dimensions
             const shouldBeMobile = 
-                (smallerDimension <= 768 && largerDimension < 1024) || // Mobile size check
-                (isMobileUA && largerDimension <= 1366) || // Mobile UA with reasonable size
-                (isTouchDevice && smallerDimension <= 600); // Small touch device
+                (smallerDimension <= this.MOBILE_SMALLER_DIMENSION_THRESHOLD && 
+                 largerDimension < this.MOBILE_LARGER_DIMENSION_THRESHOLD) || 
+                (isMobileUA && largerDimension <= this.TABLET_DIMENSION_THRESHOLD) || 
+                (isTouchDevice && smallerDimension <= this.SMALL_TOUCH_DEVICE_THRESHOLD);
             
             if (shouldBeMobile !== this.enabled) {
                 if (shouldBeMobile) {
