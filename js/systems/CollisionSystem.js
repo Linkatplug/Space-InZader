@@ -39,7 +39,7 @@ class CollisionSystem {
         this.checkPlayerProjectileCollisions();
         
         // Check weather hazard collisions
-        this.checkWeatherHazardCollisions();
+        this.checkWeatherHazardCollisions(deltaTime);
     }
 
     checkProjectileEnemyCollisions() {
@@ -602,8 +602,9 @@ class CollisionSystem {
     
     /**
      * Check collisions between player and weather hazards (meteors, black holes)
+     * @param {number} deltaTime - Time elapsed since last frame
      */
-    checkWeatherHazardCollisions() {
+    checkWeatherHazardCollisions(deltaTime) {
         const player = this.world.getEntitiesByType('player')[0];
         const enemies = this.world.getEntitiesByType('enemy');
         
@@ -723,12 +724,19 @@ class CollisionSystem {
                         
                         // Apply damage every 0.5 seconds
                         if (blackHoleComp.lastPlayerDamageTime >= 0.5) {
-                            this.damagePlayer(player, blackHoleComp.damage, 'black_hole');
+                            // Scale damage based on distance - closer to center = more damage
+                            // At center (distance=0): 3x damage, at edge (distance=damageRadius): 1x damage
+                            const distanceFactor = 1 - (distance / blackHoleComp.damageRadius);
+                            const damageMultiplier = 1 + (distanceFactor * 2); // 1x to 3x multiplier
+                            const scaledDamage = blackHoleComp.damage * damageMultiplier;
+                            
+                            this.damagePlayer(player, scaledDamage, 'black_hole');
                             blackHoleComp.lastPlayerDamageTime = 0;
                             
-                            // Visual feedback
+                            // Visual feedback - more intense closer to center
                             if (this.screenEffects) {
-                                this.screenEffects.flash('#9400D3', 0.2, 0.1);
+                                const flashIntensity = 0.1 + (distanceFactor * 0.2); // 0.1 to 0.3
+                                this.screenEffects.flash('#9400D3', 0.2, flashIntensity);
                             }
                         }
                     } else {
@@ -759,7 +767,12 @@ class CollisionSystem {
                     
                     // Apply damage every 0.5 seconds
                     if (blackHoleComp.lastEnemyDamageTime[enemy.id] >= 0.5) {
-                        this.damageEnemy(enemy, blackHoleComp.damage * 0.5);
+                        // Scale damage based on distance - closer to center = more damage
+                        const distanceFactor = 1 - (distance / blackHoleComp.damageRadius);
+                        const damageMultiplier = 1 + (distanceFactor * 2); // 1x to 3x multiplier
+                        const scaledDamage = blackHoleComp.damage * 0.5 * damageMultiplier;
+                        
+                        this.damageEnemy(enemy, scaledDamage);
                         blackHoleComp.lastEnemyDamageTime[enemy.id] = 0;
                     }
                 } else {
