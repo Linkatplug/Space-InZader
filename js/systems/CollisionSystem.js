@@ -704,7 +704,14 @@ class CollisionSystem {
             
             if (!blackHolePos || !blackHoleCol || !blackHoleComp) continue;
             
-            // Damage player if within damage radius
+            // Check if grace period has passed
+            const isActive = blackHoleComp.age > blackHoleComp.gracePeriod;
+            if (!isActive) continue; // Don't damage during grace period
+            
+            // Update damage timers
+            blackHoleComp.lastPlayerDamageTime += deltaTime;
+            
+            // Damage player if within damage radius (throttled to 0.5s intervals)
             if (player) {
                 const playerPos = player.getComponent('position');
                 if (playerPos) {
@@ -714,18 +721,21 @@ class CollisionSystem {
                     );
                     
                     if (distance < blackHoleComp.damageRadius) {
-                        // Apply damage over time
-                        this.damagePlayer(player, blackHoleComp.damage, 'black_hole');
-                        
-                        // Visual feedback
-                        if (this.screenEffects) {
-                            this.screenEffects.flash('#9400D3', 0.2, 0.1);
+                        // Apply damage every 0.5 seconds
+                        if (blackHoleComp.lastPlayerDamageTime >= 0.5) {
+                            this.damagePlayer(player, blackHoleComp.damage, 'black_hole');
+                            blackHoleComp.lastPlayerDamageTime = 0;
+                            
+                            // Visual feedback
+                            if (this.screenEffects) {
+                                this.screenEffects.flash('#9400D3', 0.2, 0.1);
+                            }
                         }
                     }
                 }
             }
             
-            // Damage enemies within damage radius
+            // Damage enemies within damage radius (throttled to 0.5s intervals per enemy)
             for (const enemy of enemies) {
                 const enemyPos = enemy.getComponent('position');
                 if (!enemyPos) continue;
@@ -736,8 +746,19 @@ class CollisionSystem {
                 );
                 
                 if (distance < blackHoleComp.damageRadius) {
-                    // Apply reduced damage to enemies
-                    this.damageEnemy(enemy, blackHoleComp.damage * 0.5);
+                    // Initialize timer for this enemy if not exists
+                    if (!blackHoleComp.lastEnemyDamageTime[enemy.id]) {
+                        blackHoleComp.lastEnemyDamageTime[enemy.id] = 0.5; // Start ready to damage
+                    }
+                    
+                    // Update timer
+                    blackHoleComp.lastEnemyDamageTime[enemy.id] += deltaTime;
+                    
+                    // Apply damage every 0.5 seconds
+                    if (blackHoleComp.lastEnemyDamageTime[enemy.id] >= 0.5) {
+                        this.damageEnemy(enemy, blackHoleComp.damage * 0.5);
+                        blackHoleComp.lastEnemyDamageTime[enemy.id] = 0;
+                    }
                 }
             }
         }

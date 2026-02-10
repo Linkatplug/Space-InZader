@@ -206,7 +206,11 @@ class WeatherSystem {
         // Update rotation for visual effect
         blackHoleComp.rotation += deltaTime * 2;
         
-        // Apply gravitational pull to player
+        // Update age for grace period
+        blackHoleComp.age = (blackHoleComp.age || 0) + deltaTime;
+        const isActive = blackHoleComp.age > blackHoleComp.gracePeriod;
+        
+        // Apply gravitational pull to player (only after grace period)
         const player = this.world.getEntitiesByType('player')[0];
         if (player) {
             const playerPos = player.getComponent('position');
@@ -217,10 +221,10 @@ class WeatherSystem {
                 const dy = blackHolePos.y - playerPos.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 
-                if (distance < this.blackHolePullRadius && distance > 0) {
+                if (distance < this.blackHolePullRadius && distance > 0 && isActive) {
                     // Calculate pull force (stronger when closer)
-                    // Gentler initial pull - ramp up over 2 seconds
-                    const eventAge = blackHoleComp.age || 0;
+                    // Gentler initial pull - ramp up over 2 seconds after grace period
+                    const eventAge = blackHoleComp.age - blackHoleComp.gracePeriod;
                     const pullMultiplier = Math.min(eventAge / 2.0, 1.0); // 0 to 1 over 2 seconds
                     const basePullStrength = (1 - distance / this.blackHolePullRadius) * 1200; // DOUBLED AGAIN from 600 for much stronger pull
                     const pullStrength = basePullStrength * (0.3 + 0.7 * pullMultiplier); // 30% min, 100% max
@@ -230,29 +234,11 @@ class WeatherSystem {
                     // Apply pull to player velocity
                     playerVel.vx += pullX;
                     playerVel.vy += pullY;
-                    
-                    // Track age for pull ramping
-                    blackHoleComp.age = eventAge + deltaTime;
-                    
-                    // Damage if too close (handled by collision system)
-                    if (distance < this.blackHoleDamageRadius) {
-                        const health = player.getComponent('health');
-                        if (health && !blackHoleComp.lastDamageTime) {
-                            blackHoleComp.lastDamageTime = 0;
-                        }
-                        
-                        blackHoleComp.lastDamageTime += deltaTime;
-                        if (blackHoleComp.lastDamageTime >= 0.5) {
-                            // Damage every 0.5 seconds
-                            blackHoleComp.lastDamageTime = 0;
-                            // Damage will be handled by collision system
-                        }
-                    }
                 }
             }
         }
         
-        // Apply gravitational pull to enemies
+        // Apply gravitational pull to enemies (only after grace period)
         const enemies = this.world.getEntitiesByType('enemy');
         for (const enemy of enemies) {
             const enemyPos = enemy.getComponent('position');
@@ -264,9 +250,9 @@ class WeatherSystem {
             const dy = blackHolePos.y - enemyPos.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < this.blackHolePullRadius && distance > 0) {
+            if (distance < this.blackHolePullRadius && distance > 0 && isActive) {
                 // Calculate pull force (same as player but slightly weaker)
-                const eventAge = blackHoleComp.age || 0;
+                const eventAge = blackHoleComp.age - blackHoleComp.gracePeriod;
                 const pullMultiplier = Math.min(eventAge / 2.0, 1.0);
                 const basePullStrength = (1 - distance / this.blackHolePullRadius) * 250; // Slightly weaker than player
                 const pullStrength = basePullStrength * (0.3 + 0.7 * pullMultiplier);
@@ -296,8 +282,8 @@ class WeatherSystem {
             const dy = blackHolePos.y - pickupPos.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
             
-            // Pull XP orbs (faster than player)
-            if (distance < this.blackHolePullRadius && distance > 0) {
+            // Pull XP orbs (faster than player) - only after grace period
+            if (distance < this.blackHolePullRadius && distance > 0 && isActive) {
                 const pullStrength = (1 - distance / this.blackHolePullRadius) * 1000; // DOUBLED from 500 - Stronger than player
                 const pullX = (dx / distance) * pullStrength * deltaTime;
                 const pullY = (dy / distance) * pullStrength * deltaTime;
@@ -306,8 +292,8 @@ class WeatherSystem {
                 pickupVel.vy += pullY;
             }
             
-            // Destroy XP if too close to black hole
-            if (distance < destroyRadius) {
+            // Destroy XP if too close to black hole (only after grace period)
+            if (distance < destroyRadius && isActive) {
                 // Create destruction particles
                 this.world.createParticles({
                     x: pickupPos.x,
@@ -344,7 +330,10 @@ class WeatherSystem {
             damageRadius: this.blackHoleDamageRadius,
             damage: 25, // Damage per tick when too close
             rotation: 0,
-            lastDamageTime: 0
+            age: 0, // Track age for grace period
+            gracePeriod: 1.0, // 1 second grace period before damage/pull starts
+            lastPlayerDamageTime: 0, // Track last time player was damaged
+            lastEnemyDamageTime: {} // Track last time each enemy was damaged (by enemy ID)
         });
     }
     
