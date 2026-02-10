@@ -60,7 +60,7 @@ class MovementSystem {
         if (!projComp || !pos) return;
         
         // Find owner (player)
-        const owner = this.world.getEntityById(projComp.owner);
+        const owner = this.world.getEntity(projComp.owner);
         if (!owner) {
             this.world.removeEntity(entity.id);
             return;
