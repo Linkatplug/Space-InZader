@@ -28,21 +28,23 @@ class MovementSystem {
             this.updatePlayerMovement(player, deltaTime);
         }
 
-        // Update orbital projectiles
+        // Update orbital and laser projectiles
         const projectiles = this.world.getEntitiesByType('projectile');
         for (const projectile of projectiles) {
             const projComp = projectile.getComponent('projectile');
             if (projComp && projComp.orbital) {
                 this.updateOrbitalProjectile(projectile, deltaTime);
+            } else if (projComp && projComp.isLaser) {
+                this.updateLaserProjectile(projectile, deltaTime);
             }
         }
 
-        // Update all entities with velocity (non-orbital projectiles and others)
+        // Update all entities with velocity (non-orbital/non-laser projectiles and others)
         const movingEntities = this.world.getEntitiesWithComponent('velocity');
         for (const entity of movingEntities) {
             const projComp = entity.getComponent('projectile');
-            // Skip orbital projectiles as they're updated above
-            if (!(projComp && projComp.orbital)) {
+            // Skip orbital and laser projectiles as they're updated above
+            if (!(projComp && (projComp.orbital || projComp.isLaser))) {
                 this.updateEntityPosition(entity, deltaTime);
             }
         }
