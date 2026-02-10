@@ -89,8 +89,12 @@ class CombatSystem {
                     break;
                 case 'beam':
                 case 'railgun':
-                    // Calm, deep sound for beam/railgun - much softer
-                    this.audioManager.playSFX('laser', MathUtils.randomFloat(0.4, 0.6));
+                    // Beam weapons fire rapidly - play sound only occasionally to avoid repetitive noise
+                    // Vampire ray weapon especially benefits from reduced sound frequency
+                    if (Math.random() < 0.15) {
+                        // Use a softer, lower pitch for a subtle energy drain effect
+                        this.audioManager.playSFX('laser', MathUtils.randomFloat(0.3, 0.5));
+                    }
                     break;
                 case 'mine':
                 case 'turret':
