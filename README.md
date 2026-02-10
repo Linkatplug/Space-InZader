@@ -45,11 +45,19 @@ A fully playable **roguelite space shooter** web game inspired by Space Invaders
 3. **Click START GAME** to begin
 
 ### Multiplayer Mode (2 Players Co-op)
-1. **Start the server**: `npm install && npm start`
-2. **Open** `http://localhost:3000` in two browsers
-3. **Player 1**: Click MULTIPLAYER → CREATE GAME → Share room code
-4. **Player 2**: Click MULTIPLAYER → JOIN GAME → Enter room code
-5. **Start!** When both players are ready
+
+⚠️ **IMPORTANT**: Ne double-cliquez PAS sur index.html pour le multijoueur !
+
+**Setup requis:**
+1. **Open terminal** in game folder
+2. **Install dependencies**: `npm install` (one time only)
+3. **Start server**: `npm start`
+4. **Open browser** at: `http://localhost:3000`
+
+**Play:**
+- **Player 1**: Click MULTIPLAYER → CREATE GAME → Share room code
+- **Player 2**: Click MULTIPLAYER → JOIN GAME → Enter room code
+- **Start!** When both players are ready
 
 📖 [Full Multiplayer Guide](MULTIPLAYER.md)
 

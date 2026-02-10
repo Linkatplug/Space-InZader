@@ -1357,25 +1357,45 @@ class Game {
      * Show multiplayer menu
      */
     showMultiplayerMenu() {
+        const statusEl = document.getElementById('connectionStatus');
+        
+        // Check if page is accessed via file:// protocol
+        if (window.location.protocol === 'file:') {
+            if (statusEl) {
+                statusEl.innerHTML = '⚠️ ERREUR: Ouvrez le jeu via <b>http://localhost:3000</b><br>Ne double-cliquez PAS sur index.html !<br><br>1. Ouvrez un terminal<br>2. Exécutez: <b>npm install</b><br>3. Exécutez: <b>npm start</b><br>4. Ouvrez: <b>http://localhost:3000</b>';
+                statusEl.style.color = '#ff6600';
+                statusEl.style.fontSize = '14px';
+                statusEl.style.lineHeight = '1.6';
+            }
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('multiplayerMenu').style.display = 'flex';
+            return;
+        }
+        
         // Connect to server
         if (!this.multiplayerManager.connected) {
+            if (statusEl) {
+                statusEl.textContent = 'Connexion au serveur...';
+                statusEl.style.color = '#ffff00';
+            }
+            
             this.multiplayerManager.connect();
             
-            // Update status
+            // Update status with longer timeout (3 seconds instead of 1)
             setTimeout(() => {
-                const statusEl = document.getElementById('connectionStatus');
                 if (statusEl) {
                     if (this.multiplayerManager.connected) {
                         statusEl.textContent = 'Connecté au serveur ✓';
                         statusEl.style.color = '#00ff00';
                     } else {
-                        statusEl.textContent = 'Échec de connexion - Vérifiez que le serveur est démarré';
+                        statusEl.innerHTML = '❌ Échec de connexion<br><br>Vérifiez que:<br>1. Vous avez exécuté <b>npm install</b><br>2. Le serveur est démarré avec <b>npm start</b><br>3. Vous voyez "Server running on port 3000"';
                         statusEl.style.color = '#ff0000';
+                        statusEl.style.fontSize = '14px';
+                        statusEl.style.lineHeight = '1.6';
                     }
                 }
-            }, 1000);
+            }, 3000);
         } else {
-            const statusEl = document.getElementById('connectionStatus');
             if (statusEl) {
                 statusEl.textContent = 'Connecté au serveur ✓';
                 statusEl.style.color = '#00ff00';

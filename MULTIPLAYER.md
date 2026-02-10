@@ -1,5 +1,26 @@
 # Mode Multijoueur - Space InZader 🚀
 
+## ⚠️ IMPORTANT - Comment Démarrer
+
+**NE DOUBLE-CLIQUEZ PAS sur index.html !** Le multijoueur nécessite un serveur Node.js.
+
+### Étapes Obligatoires
+
+1. **Ouvrez un terminal** dans le dossier du jeu
+2. **Installez les dépendances** (une seule fois) :
+   ```bash
+   npm install
+   ```
+3. **Démarrez le serveur** :
+   ```bash
+   npm start
+   ```
+4. **Ouvrez votre navigateur** à : `http://localhost:3000`
+
+⚠️ **N'ouvrez PAS le fichier index.html directement !**
+
+---
+
 ## Description
 
 Le mode multijoueur permet à 2 joueurs de jouer en coopération contre les vagues d'ennemis. Un joueur héberge la partie et partage un code de salle avec l'autre joueur.
@@ -34,7 +55,7 @@ Open http://localhost:3000 to play
 
 1. Ouvrez le jeu dans votre navigateur : `http://localhost:3000`
 2. Cliquez sur **MULTIJOUEUR** dans le menu principal
-3. Attendez la connexion au serveur
+3. Attendez la connexion au serveur (vous verrez "Connecté au serveur ✓")
 4. Sélectionnez votre vaisseau
 5. Cliquez sur **CRÉER UNE PARTIE**
 6. Un code à 6 caractères s'affiche - **partagez ce code** avec le Joueur 2
@@ -45,7 +66,7 @@ Open http://localhost:3000 to play
 
 1. Ouvrez le jeu dans votre navigateur : `http://localhost:3000`
 2. Cliquez sur **MULTIJOUEUR** dans le menu principal
-3. Attendez la connexion au serveur
+3. Attendez la connexion au serveur (vous verrez "Connecté au serveur ✓")
 4. Sélectionnez votre vaisseau
 5. Cliquez sur **REJOINDRE UNE PARTIE**
 6. Entrez le **code de la salle** fourni par l'Hôte

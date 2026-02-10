@@ -1,0 +1,66 @@
+╔═══════════════════════════════════════════════════════════╗
+║                                                           ║
+║          SPACE INZADER - MODE MULTIJOUEUR                 ║
+║                                                           ║
+╚═══════════════════════════════════════════════════════════╝
+
+⚠️  IMPORTANT - LIRE AVANT DE JOUER EN MULTIJOUEUR ⚠️
+
+NE DOUBLE-CLIQUEZ PAS SUR index.html !
+
+Le mode multijoueur nécessite un serveur Node.js.
+
+
+═══════════════════════════════════════════════════════════
+
+ÉTAPES OBLIGATOIRES :
+
+1. Ouvrez un terminal dans ce dossier
+
+2. Installez les dépendances (une seule fois) :
+   
+   npm install
+
+3. Démarrez le serveur :
+   
+   npm start
+
+4. Ouvrez votre navigateur à :
+   
+   http://localhost:3000
+
+
+═══════════════════════════════════════════════════════════
+
+ENSUITE, POUR JOUER :
+
+Joueur 1 (Hôte) :
+  → Cliquez MULTIJOUEUR → CRÉER UNE PARTIE
+  → Partagez le code de salle avec Joueur 2
+
+Joueur 2 :
+  → Cliquez MULTIJOUEUR → REJOINDRE UNE PARTIE
+  → Entrez le code de salle
+
+
+═══════════════════════════════════════════════════════════
+
+DÉPANNAGE :
+
+Si vous voyez "Échec de connexion" :
+  ✗ Vous avez double-cliqué sur index.html
+  ✗ Vous n'avez pas exécuté "npm install"
+  ✗ Le serveur n'est pas démarré
+
+Solution :
+  ✓ Fermez le fichier
+  ✓ Exécutez: npm install
+  ✓ Exécutez: npm start
+  ✓ Ouvrez: http://localhost:3000
+
+
+═══════════════════════════════════════════════════════════
+
+Pour plus d'infos : Lisez MULTIPLAYER.md
+
+═══════════════════════════════════════════════════════════
