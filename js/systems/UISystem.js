@@ -194,6 +194,11 @@ class UISystem {
             this.creditsBtn.addEventListener('click', () => this.showCredits());
         }
 
+        // Back button from ship selection
+        if (this.backToMainBtn) {
+            this.backToMainBtn.addEventListener('click', () => this.showMainMenu());
+        }
+
         // Pause menu buttons
         if (this.resumeBtn) {
             this.resumeBtn.addEventListener('click', () => this.hidePauseMenu());
