@@ -422,6 +422,22 @@ class Game {
         playerComp.stats.xpBonus = metaXP;
         playerComp.stats.armor = shipData.baseStats.armor || 0;
         
+        // Store base stats snapshot for delta calculations in UI
+        // This represents ship stats + meta progression before any passives
+        playerComp.baseStats = {
+            damageMultiplier: playerComp.stats.damageMultiplier,
+            fireRateMultiplier: playerComp.stats.fireRateMultiplier,
+            speed: playerComp.stats.speed,
+            maxHealth: maxHealth,
+            armor: playerComp.stats.armor,
+            critChance: playerComp.stats.critChance,
+            critDamage: playerComp.stats.critDamage,
+            lifesteal: playerComp.stats.lifesteal,
+            healthRegen: playerComp.stats.healthRegen,
+            rangeMultiplier: 1,
+            projectileSpeedMultiplier: 1
+        };
+        
         this.player.addComponent('player', playerComp);
         
         this.player.addComponent('renderable', Components.Renderable(

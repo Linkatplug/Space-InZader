@@ -38,6 +38,12 @@ class UISystem {
         
         // Controls help tracking
         this.controlsShownThisGame = false;
+        
+        // Stats overlay toggle state
+        this.statsOverlayVisible = true;
+        
+        // Track missing stats warnings to avoid spam
+        this.missingStatsWarned = new Set();
     }
 
     /**
@@ -125,6 +131,9 @@ class UISystem {
         // Weapon and passive status elements
         this.weaponList = document.getElementById('weaponList');
         this.passiveList = document.getElementById('passiveList');
+        
+        // Stats overlay panel
+        this.statsOverlayPanel = document.getElementById('statsOverlayPanel');
 
         // Menu elements (ship selection)
         this.shipSelection = document.getElementById('shipSelection');
@@ -242,6 +251,16 @@ class UISystem {
         if (this.creditsBackBtn) {
             this.creditsBackBtn.addEventListener('click', () => this.showMainMenu());
         }
+        
+        // Stats overlay toggle with 'A' key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'a' || e.key === 'A') {
+                // Only toggle if game is running
+                if (this.gameState && (this.gameState.currentState === GameStates.RUNNING || this.gameState.currentState === GameStates.LEVEL_UP)) {
+                    this.toggleStatsOverlay();
+                }
+            }
+        });
     }
 
     /**
@@ -339,6 +358,9 @@ class UISystem {
         
         // Update weather warning
         this.updateWeatherWarning();
+        
+        // Update stats overlay (deltas)
+        this.updateStatsOverlay(playerComp, health);
     }
     
     /**
@@ -1593,5 +1615,173 @@ class UISystem {
         `;
         
         container.innerHTML = html;
+    }
+    
+    /**
+     * Toggle stats overlay visibility
+     */
+    toggleStatsOverlay() {
+        this.statsOverlayVisible = !this.statsOverlayVisible;
+        if (this.statsOverlayPanel) {
+            this.statsOverlayPanel.style.display = this.statsOverlayVisible ? 'block' : 'none';
+        }
+    }
+    
+    /**
+     * Update stats overlay with delta calculations
+     * @param {Object} playerComp - Player component with stats and baseStats
+     * @param {Object} health - Health component
+     */
+    updateStatsOverlay(playerComp, health) {
+        if (!this.statsOverlayPanel || !this.statsOverlayVisible || !playerComp) return;
+        
+        const stats = playerComp.stats || {};
+        const baseStats = playerComp.baseStats || {};
+        
+        // Helper function to get stat with fallback
+        const getStat = (statName, defaultValue = 0) => {
+            const value = stats[statName];
+            if (value === undefined || value === null) {
+                // Warn once per stat
+                if (!this.missingStatsWarned.has(statName)) {
+                    console.warn(`[UISystem] Missing stat: ${statName}, using default ${defaultValue}`);
+                    this.missingStatsWarned.add(statName);
+                }
+                return defaultValue;
+            }
+            return value;
+        };
+        
+        const getBaseStat = (statName, defaultValue = 0) => {
+            return baseStats[statName] !== undefined ? baseStats[statName] : defaultValue;
+        };
+        
+        // Calculate deltas and format display
+        const statsList = [
+            {
+                label: 'Damage',
+                current: getStat('damageMultiplier', 1),
+                base: getBaseStat('damageMultiplier', 1),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Fire Rate',
+                current: getStat('fireRateMultiplier', 1),
+                base: getBaseStat('fireRateMultiplier', 1),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Speed',
+                current: getStat('speed', 1),
+                base: getBaseStat('speed', 1),
+                format: 'number',
+                multiplier: 1
+            },
+            {
+                label: 'Max HP',
+                current: health ? health.max : 100,
+                base: getBaseStat('maxHealth', 100),
+                format: 'number',
+                multiplier: 1
+            },
+            {
+                label: 'Armor',
+                current: getStat('armor', 0),
+                base: getBaseStat('armor', 0),
+                format: 'number',
+                multiplier: 1
+            },
+            {
+                label: 'Crit Chance',
+                current: getStat('critChance', 0),
+                base: getBaseStat('critChance', 0),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Crit Damage',
+                current: getStat('critDamage', 1.5),
+                base: getBaseStat('critDamage', 1.5),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Lifesteal',
+                current: getStat('lifesteal', 0),
+                base: getBaseStat('lifesteal', 0),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Health Regen',
+                current: getStat('healthRegen', 0),
+                base: getBaseStat('healthRegen', 0),
+                format: 'decimal',
+                suffix: '/s',
+                multiplier: 1
+            },
+            {
+                label: 'Range',
+                current: getStat('rangeMultiplier', 1),
+                base: getBaseStat('rangeMultiplier', 1),
+                format: 'percent',
+                multiplier: 100
+            },
+            {
+                label: 'Projectile Speed',
+                current: getStat('projectileSpeedMultiplier', 1),
+                base: getBaseStat('projectileSpeedMultiplier', 1),
+                format: 'percent',
+                multiplier: 100
+            }
+        ];
+        
+        // Build HTML
+        let html = '<div class="stats-overlay-title">PLAYER STATS</div>';
+        
+        statsList.forEach(stat => {
+            const current = stat.current * stat.multiplier;
+            const base = stat.base * stat.multiplier;
+            const delta = current - base;
+            
+            // Format values
+            let currentStr;
+            let deltaStr;
+            
+            if (stat.format === 'percent') {
+                currentStr = `${Math.round(current)}%`;
+                deltaStr = delta === 0 ? '±0%' : `${delta > 0 ? '+' : ''}${Math.round(delta)}%`;
+            } else if (stat.format === 'decimal') {
+                currentStr = `${current.toFixed(1)}${stat.suffix || ''}`;
+                deltaStr = delta === 0 ? '±0' : `${delta > 0 ? '+' : ''}${delta.toFixed(1)}${stat.suffix || ''}`;
+            } else {
+                currentStr = `${Math.round(current)}`;
+                deltaStr = delta === 0 ? '±0' : `${delta > 0 ? '+' : ''}${Math.round(delta)}`;
+            }
+            
+            // Determine color
+            let deltaColor;
+            if (delta > 0) {
+                deltaColor = '#0f0'; // Green
+            } else if (delta < 0) {
+                deltaColor = '#f33'; // Red
+            } else {
+                deltaColor = '#888'; // Gray
+            }
+            
+            html += `
+                <div class="stats-overlay-row">
+                    <span class="stats-overlay-label">${stat.label}:</span>
+                    <span class="stats-overlay-value">${currentStr}</span>
+                    <span class="stats-overlay-delta" style="color: ${deltaColor}">${deltaStr}</span>
+                </div>
+            `;
+        });
+        
+        html += '<div class="stats-overlay-hint">Press [A] to toggle</div>';
+        
+        this.statsOverlayPanel.innerHTML = html;
     }
 }
