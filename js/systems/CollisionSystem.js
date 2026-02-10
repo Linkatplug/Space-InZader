@@ -708,9 +708,6 @@ class CollisionSystem {
             const isActive = blackHoleComp.age > blackHoleComp.gracePeriod;
             if (!isActive) continue; // Don't damage during grace period
             
-            // Update damage timers
-            blackHoleComp.lastPlayerDamageTime += deltaTime;
-            
             // Damage player if within damage radius (throttled to 0.5s intervals)
             if (player) {
                 const playerPos = player.getComponent('position');
@@ -721,6 +718,9 @@ class CollisionSystem {
                     );
                     
                     if (distance < blackHoleComp.damageRadius) {
+                        // Update damage timer only when in damage radius
+                        blackHoleComp.lastPlayerDamageTime += deltaTime;
+                        
                         // Apply damage every 0.5 seconds
                         if (blackHoleComp.lastPlayerDamageTime >= 0.5) {
                             this.damagePlayer(player, blackHoleComp.damage, 'black_hole');
@@ -731,6 +731,9 @@ class CollisionSystem {
                                 this.screenEffects.flash('#9400D3', 0.2, 0.1);
                             }
                         }
+                    } else {
+                        // Reset timer when player exits damage radius
+                        blackHoleComp.lastPlayerDamageTime = 0;
                     }
                 }
             }

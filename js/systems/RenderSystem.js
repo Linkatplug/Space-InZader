@@ -641,15 +641,21 @@ class RenderSystem {
             
             if (!pos || !blackHoleComp) return;
             
+            // Calculate scale based on age (grows during grace period)
+            const age = blackHoleComp.age || 0;
+            const gracePeriod = blackHoleComp.gracePeriod || 1.0;
+            const scale = age < gracePeriod ? (age / gracePeriod) : 1.0;
+            
             this.ctx.save();
             this.ctx.translate(pos.x, pos.y);
+            this.ctx.scale(scale, scale);
             
             // Draw swirling vortex effect
             const numRings = 6;
             for (let i = 0; i < numRings; i++) {
                 const ringProgress = i / numRings;
                 const radius = blackHoleComp.pullRadius * (1 - ringProgress * 0.8);
-                const alpha = (1 - ringProgress) * 0.3;
+                const alpha = (1 - ringProgress) * 0.3 * scale; // Fade in during grace period
                 const rotation = blackHoleComp.rotation + ringProgress * Math.PI;
                 
                 this.ctx.save();
@@ -680,14 +686,14 @@ class RenderSystem {
             coreGradient.addColorStop(1, '#4B0082');
             
             this.ctx.fillStyle = coreGradient;
-            this.ctx.shadowBlur = 30;
+            this.ctx.shadowBlur = 30 * scale;
             this.ctx.shadowColor = '#9400D3';
             this.ctx.beginPath();
             this.ctx.arc(0, 0, blackHoleComp.damageRadius, 0, Math.PI * 2);
             this.ctx.fill();
             
             // Draw accretion disk particles
-            this.ctx.globalAlpha = 0.6;
+            this.ctx.globalAlpha = 0.6 * scale;
             for (let i = 0; i < 20; i++) {
                 const angle = (i / 20) * Math.PI * 2 + blackHoleComp.rotation * 2;
                 const dist = blackHoleComp.damageRadius * 1.5 + Math.sin(blackHoleComp.rotation + i) * 20;
