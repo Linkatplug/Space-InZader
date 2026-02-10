@@ -38,6 +38,7 @@ class MovementSystem {
     updatePlayerMovement(player, deltaTime) {
         const pos = player.getComponent('position');
         const playerComp = player.getComponent('player');
+        const vel = player.getComponent('velocity');
         
         if (!pos || !playerComp) return;
 
@@ -50,8 +51,11 @@ class MovementSystem {
         if (this.keys['a'] || this.keys['q']) dx -= 1;
         if (this.keys['d']) dx += 1;
 
+        // Check if player is actively moving
+        const hasInput = (dx !== 0 || dy !== 0);
+
         // Normalize diagonal movement
-        if (dx !== 0 || dy !== 0) {
+        if (hasInput) {
             const normalized = MathUtils.normalize(dx, dy);
             dx = normalized.x;
             dy = normalized.y;
@@ -61,6 +65,23 @@ class MovementSystem {
         const speed = playerComp.speed * playerComp.stats.speed;
         pos.x += dx * speed * deltaTime;
         pos.y += dy * speed * deltaTime;
+
+        // Apply drag/friction to player velocity (if exists)
+        // This prevents drift from black hole or other forces
+        if (vel) {
+            // Use stronger drag when not actively moving
+            const dragCoeff = hasInput ? 3.0 : 8.0;
+            
+            // Apply drag: vel *= (1 - dragCoeff * deltaTime)
+            const dragFactor = Math.max(0, 1 - dragCoeff * deltaTime);
+            vel.vx *= dragFactor;
+            vel.vy *= dragFactor;
+            
+            // Clamp small velocities to zero to stop drift completely
+            const velocityThreshold = 0.5;
+            if (Math.abs(vel.vx) < velocityThreshold) vel.vx = 0;
+            if (Math.abs(vel.vy) < velocityThreshold) vel.vy = 0;
+        }
 
         // Keep player in bounds
         const collision = player.getComponent('collision');

@@ -607,43 +607,71 @@ class UISystem {
     renderScoreboard() {
         if (!this.scoreList) return;
         
-        const saveManager = window.game?.saveManager;
-        if (!saveManager) {
-            this.scoreList.innerHTML = '<div style="color:#666;text-align:center;padding:40px;">SaveManager not available</div>';
+        const scoreManager = window.game?.scoreManager;
+        if (!scoreManager) {
+            this.scoreList.innerHTML = '<div style="color:#666;text-align:center;padding:40px;font-size:20px;">Score Manager not available</div>';
             return;
         }
         
-        const scores = saveManager.getTopScores(10);
-        this.scoreList.innerHTML = '';
+        const scores = scoreManager.getTopScores(10);
         
         if (scores.length === 0) {
-            this.scoreList.innerHTML = '<div style="color:#666;text-align:center;padding:40px;">No scores yet. Play to set a record!</div>';
+            this.scoreList.innerHTML = '<div style="color:#0ff;text-align:center;padding:40px;font-size:22px;text-shadow:0 0 10px #0ff;">Aucun score enregistré.<br><br>Jouez pour établir un record!</div>';
             return;
         }
+        
+        // Create table structure
+        let tableHTML = `
+            <table style="width:100%;border-collapse:collapse;font-size:20px;">
+                <thead>
+                    <tr style="border-bottom:2px solid #0ff;color:#0ff;text-shadow:0 0 10px #0ff;">
+                        <th style="padding:10px;text-align:left;">Rang</th>
+                        <th style="padding:10px;text-align:left;">Nom</th>
+                        <th style="padding:10px;text-align:right;">Score</th>
+                        <th style="padding:10px;text-align:center;">Vague</th>
+                        <th style="padding:10px;text-align:center;">Temps</th>
+                        <th style="padding:10px;text-align:right;">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
         
         scores.forEach((entry, index) => {
             const rank = index + 1;
-            const div = document.createElement('div');
-            div.className = `score-entry rank-${rank}`;
-            
             const date = new Date(entry.date);
             const timeStr = Math.floor(entry.time / 60) + ':' + String(Math.floor(entry.time % 60)).padStart(2, '0');
             
-            div.innerHTML = `
-                <div class="score-header">
-                    <span>#${rank} - ${entry.class}</span>
-                    <span>${entry.score.toLocaleString()}</span>
-                </div>
-                <div class="score-details">
-                    Wave ${entry.wave} | ${entry.kills} kills | ${timeStr} | ${entry.bossKills} bosses
-                </div>
-                <div class="score-build">
-                    ${date.toLocaleDateString()} ${date.toLocaleTimeString()}
-                </div>
+            // Color based on rank
+            let rankColor = '#fff';
+            if (rank === 1) rankColor = '#ffd700'; // Gold
+            else if (rank === 2) rankColor = '#c0c0c0'; // Silver
+            else if (rank === 3) rankColor = '#cd7f32'; // Bronze
+            else rankColor = '#0ff'; // Cyan for others
+            
+            const rowStyle = `
+                border-bottom:1px solid #333;
+                color:${rankColor};
+                text-shadow:0 0 5px ${rankColor};
             `;
             
-            this.scoreList.appendChild(div);
+            tableHTML += `
+                <tr style="${rowStyle}">
+                    <td style="padding:12px;text-align:left;font-weight:bold;">#${rank}</td>
+                    <td style="padding:12px;text-align:left;">${entry.playerName}</td>
+                    <td style="padding:12px;text-align:right;font-weight:bold;">${entry.score.toLocaleString()}</td>
+                    <td style="padding:12px;text-align:center;">${entry.wave}</td>
+                    <td style="padding:12px;text-align:center;">${timeStr}</td>
+                    <td style="padding:12px;text-align:right;font-size:16px;">${date.toLocaleDateString()}</td>
+                </tr>
+            `;
         });
+        
+        tableHTML += `
+                </tbody>
+            </table>
+        `;
+        
+        this.scoreList.innerHTML = tableHTML;
     }
 
     /**
