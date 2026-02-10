@@ -88,13 +88,18 @@ class CombatSystem {
                     this.audioManager.playSFX('electric', MathUtils.randomFloat(0.9, 1.1));
                     break;
                 case 'beam':
-                case 'railgun':
-                    // Beam weapons fire rapidly - play sound only occasionally to avoid repetitive noise
+                    // Beam weapons fire rapidly (20 times/sec) - play sound only occasionally to avoid repetitive noise
                     // Vampire ray weapon especially benefits from reduced sound frequency
-                    if (Math.random() < 0.15) {
+                    // Using a constant for probability makes it easier to tune
+                    const BEAM_SOUND_PROBABILITY = 0.15;
+                    if (Math.random() < BEAM_SOUND_PROBABILITY) {
                         // Use a softer, lower pitch for a subtle energy drain effect
                         this.audioManager.playSFX('laser', MathUtils.randomFloat(0.3, 0.5));
                     }
+                    break;
+                case 'railgun':
+                    // Railgun fires slowly (0.4 times/sec) - always play sound but keep it soft
+                    this.audioManager.playSFX('laser', MathUtils.randomFloat(0.4, 0.6));
                     break;
                 case 'mine':
                 case 'turret':
