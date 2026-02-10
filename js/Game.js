@@ -136,6 +136,10 @@ class Game {
         this.running = false;
         this.player = null;
         
+        // Multiplayer state tracking
+        this.pendingMultiplayerAction = null; // Can be 'host' or 'join'
+        this.pendingJoinRoomData = null; // Store room data for join action
+        
         // Expose to window for system access
         window.game = this;
         
@@ -224,6 +228,34 @@ class Game {
         // Listen for ship selection
         window.addEventListener('shipSelected', (e) => {
             this.gameState.selectedShip = e.detail.ship;
+            
+            // If there's a pending multiplayer action, execute it now
+            if (this.pendingMultiplayerAction === 'host') {
+                this.pendingMultiplayerAction = null;
+                // Return to multiplayer menu and create room
+                setTimeout(() => {
+                    this.showMultiplayerMenu();
+                    setTimeout(() => {
+                        this.hostMultiplayerGame();
+                    }, 100);
+                }, 100);
+            } else if (this.pendingMultiplayerAction === 'join') {
+                this.pendingMultiplayerAction = null;
+                const roomData = this.pendingJoinRoomData;
+                this.pendingJoinRoomData = null;
+                // Return to multiplayer menu and join room
+                setTimeout(() => {
+                    this.showMultiplayerMenu();
+                    setTimeout(() => {
+                        // Restore the room input values
+                        if (roomData) {
+                            document.getElementById('roomCodeInput').value = roomData.roomCode;
+                            document.getElementById('playerNameInput2').value = roomData.playerName;
+                        }
+                        this.joinMultiplayerGame();
+                    }, 100);
+                }, 100);
+            }
         });
 
         // Listen for boost selection - BULLETPROOF handler
@@ -1426,10 +1458,12 @@ class Game {
         }
 
         if (!this.gameState.selectedShip) {
+            // Save the action to execute after ship selection
+            this.pendingMultiplayerAction = 'host';
             // Show ship selection
             this.hideMultiplayerMenu();
             this.gameState.setState(GameStates.MENU);
-            this.systems.ui.showScreen('menu');
+            this.systems.ui.showShipSelection();  // Changed from showScreen('menu')
             return;
         }
 
@@ -1461,10 +1495,13 @@ class Game {
         }
 
         if (!this.gameState.selectedShip) {
+            // Save the action and room data to execute after ship selection
+            this.pendingMultiplayerAction = 'join';
+            this.pendingJoinRoomData = { roomCode, playerName };
             // Show ship selection
             this.hideMultiplayerMenu();
             this.gameState.setState(GameStates.MENU);
-            this.systems.ui.showScreen('menu');
+            this.systems.ui.showShipSelection();  // Changed from showScreen('menu')
             return;
         }
 
