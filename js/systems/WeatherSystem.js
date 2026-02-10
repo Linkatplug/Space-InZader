@@ -221,7 +221,7 @@ class WeatherSystem {
                     // Track age for pull ramping
                     blackHoleComp.age = eventAge + deltaTime;
                     
-                    // Damage if too close
+                    // Damage if too close (handled by collision system)
                     if (distance < this.blackHoleDamageRadius) {
                         const health = player.getComponent('health');
                         if (health && !blackHoleComp.lastDamageTime) {
@@ -236,6 +236,33 @@ class WeatherSystem {
                         }
                     }
                 }
+            }
+        }
+        
+        // Apply gravitational pull to enemies
+        const enemies = this.world.getEntitiesByType('enemy');
+        for (const enemy of enemies) {
+            const enemyPos = enemy.getComponent('position');
+            const enemyVel = enemy.getComponent('velocity');
+            
+            if (!enemyPos || !enemyVel) continue;
+            
+            const dx = blackHolePos.x - enemyPos.x;
+            const dy = blackHolePos.y - enemyPos.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < this.blackHolePullRadius && distance > 0) {
+                // Calculate pull force (same as player but slightly weaker)
+                const eventAge = blackHoleComp.age || 0;
+                const pullMultiplier = Math.min(eventAge / 2.0, 1.0);
+                const basePullStrength = (1 - distance / this.blackHolePullRadius) * 250; // Slightly weaker than player
+                const pullStrength = basePullStrength * (0.3 + 0.7 * pullMultiplier);
+                const pullX = (dx / distance) * pullStrength * deltaTime;
+                const pullY = (dy / distance) * pullStrength * deltaTime;
+                
+                // Apply pull to enemy velocity
+                enemyVel.vx += pullX;
+                enemyVel.vy += pullY;
             }
         }
     }
