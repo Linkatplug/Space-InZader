@@ -612,10 +612,6 @@ class CollisionSystem {
                     this.damageEnemy(enemy, blackHoleComp.damage * 0.5);
                 }
             }
-                if (this.screenEffects) {
-                    this.screenEffects.flash('#9400D3', 0.2, 0.1);
-                }
-            }
         }
     }
 }
