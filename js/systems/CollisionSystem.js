@@ -751,7 +751,7 @@ class CollisionSystem {
                 if (distance < blackHoleComp.damageRadius) {
                     // Initialize timer for this enemy if not exists
                     if (!blackHoleComp.lastEnemyDamageTime[enemy.id]) {
-                        blackHoleComp.lastEnemyDamageTime[enemy.id] = 0.5; // Start ready to damage
+                        blackHoleComp.lastEnemyDamageTime[enemy.id] = 0; // Start at 0 for consistent timing
                     }
                     
                     // Update timer
@@ -761,6 +761,11 @@ class CollisionSystem {
                     if (blackHoleComp.lastEnemyDamageTime[enemy.id] >= 0.5) {
                         this.damageEnemy(enemy, blackHoleComp.damage * 0.5);
                         blackHoleComp.lastEnemyDamageTime[enemy.id] = 0;
+                    }
+                } else {
+                    // Reset timer when enemy exits damage radius to prevent memory accumulation
+                    if (blackHoleComp.lastEnemyDamageTime[enemy.id]) {
+                        delete blackHoleComp.lastEnemyDamageTime[enemy.id];
                     }
                 }
             }
