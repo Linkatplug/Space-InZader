@@ -222,7 +222,7 @@ class WeatherSystem {
                     // Gentler initial pull - ramp up over 2 seconds
                     const eventAge = blackHoleComp.age || 0;
                     const pullMultiplier = Math.min(eventAge / 2.0, 1.0); // 0 to 1 over 2 seconds
-                    const basePullStrength = (1 - distance / this.blackHolePullRadius) * 600; // DOUBLED from 300
+                    const basePullStrength = (1 - distance / this.blackHolePullRadius) * 1200; // DOUBLED AGAIN from 600 for much stronger pull
                     const pullStrength = basePullStrength * (0.3 + 0.7 * pullMultiplier); // 30% min, 100% max
                     const pullX = (dx / distance) * pullStrength * deltaTime;
                     const pullY = (dy / distance) * pullStrength * deltaTime;
