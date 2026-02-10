@@ -20,14 +20,17 @@ class MultiplayerManager {
 
     /**
      * Connect to multiplayer server
+     * @param {string} serverUrl - Optional server URL. If not provided, connects to same origin
      */
-    connect(serverUrl = 'http://localhost:3000') {
+    connect(serverUrl) {
         if (typeof io === 'undefined') {
             console.error('Socket.IO not loaded');
             return false;
         }
 
-        this.socket = io(serverUrl);
+        // Connect to same origin if no URL provided (recommended for production)
+        // This allows the game to work on both localhost:3000 and games.linkatplug.be:7779
+        this.socket = serverUrl ? io(serverUrl) : io();
         
         this.socket.on('connect', () => {
             console.log('Connected to multiplayer server');

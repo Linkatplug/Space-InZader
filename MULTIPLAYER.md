@@ -97,11 +97,18 @@ Le serveur synchronise :
 - **Serveur** : Node.js + Express + Socket.IO
 - **Client** : Vanilla JavaScript avec Socket.IO client
 - **Communication** : WebSocket en temps réel
-- **Port par défaut** : 3000
+- **Connexion** : Automatique vers l'origine du serveur (fonctionne en local et en production)
+
+### Déploiement
+Le jeu se connecte automatiquement au serveur qui l'héberge :
+- En développement : Se connecte à `http://localhost:3000`
+- En production : Se connecte à l'URL du serveur (ex: `http://games.linkatplug.be:7779`)
+
+Aucune configuration supplémentaire n'est nécessaire.
 
 ### Limites
 - Maximum **2 joueurs** par partie
-- Les deux joueurs doivent être sur le **même réseau local** ou le serveur doit être accessible via internet
+- Les deux joueurs doivent pouvoir accéder au même serveur
 - L'hôte contrôle l'apparition des ennemis pour éviter les désynchronisations
 
 ### Résolution de Problèmes
