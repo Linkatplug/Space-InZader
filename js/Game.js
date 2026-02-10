@@ -4,30 +4,64 @@
  */
 
 // Default stats blueprint - ALL stats must be defined to prevent undefined errors
+// Base Stats: Core stats from ship + meta progression
+// Derived Stats: Calculated from passives/synergies (multipliers apply to base)
 const DEFAULT_STATS = {
+    // === CORE DAMAGE STATS ===
     damage: 1,
     damageMultiplier: 1,
+    
+    // === FIRE RATE STATS ===
     fireRate: 1,
     fireRateMultiplier: 1,
+    
+    // === MOVEMENT STATS ===
     speed: 1,
     speedMultiplier: 1,
+    
+    // === HEALTH STATS ===
     maxHealth: 1,
     maxHealthMultiplier: 1,
     maxHealthAdd: 0,
-    armor: 0,
-    lifesteal: 0,
     healthRegen: 0,
+    
+    // === DEFENSE STATS ===
+    armor: 0,
+    shield: 0,
+    shieldRegen: 0,
+    shieldRegenDelay: 3.0,
+    dodgeChance: 0,
+    
+    // === LIFESTEAL & SUSTAIN ===
+    lifesteal: 0,
+    
+    // === CRITICAL STATS ===
     critChance: 0,
     critDamage: 1.5,
+    
+    // === UTILITY STATS ===
     luck: 0,
     xpBonus: 1,
+    magnetRange: 0,
+    
+    // === PROJECTILE STATS ===
     projectileSpeed: 1,
     projectileSpeedMultiplier: 1,
     range: 1,
     rangeMultiplier: 1,
-    shield: 0,
-    shieldRegen: 0,
-    shieldRegenDelay: 3.0
+    piercing: 0,
+    
+    // === SPECIAL EFFECTS (defaults for passives) ===
+    overheatReduction: 0,
+    explosionChance: 0,
+    explosionDamage: 0,
+    explosionRadius: 0,
+    stunChance: 0,
+    reflectDamage: 0,
+    projectileCount: 0,
+    ricochetChance: 0,
+    chainLightning: 0,
+    slowChance: 0
 };
 
 class Game {
@@ -608,7 +642,110 @@ class Game {
             this.synergySystem.forceRecalculate();
         }
 
+        // Apply soft caps to prevent infinite stacking
+        this.applySoftCaps(playerComp.stats);
+        
+        // Validate stats and log warnings
+        this.validateStats(playerComp.stats);
+
         console.log('Player stats recalculated:', playerComp.stats);
+    }
+    
+    /**
+     * Apply soft caps to stats to prevent infinite stacking
+     * @param {Object} stats - Player stats object
+     */
+    applySoftCaps(stats) {
+        // Lifesteal cap at 50% to prevent invincibility
+        if (stats.lifesteal > 0.5) {
+            console.warn(`Lifesteal capped at 50% (was ${(stats.lifesteal * 100).toFixed(1)}%)`);
+            stats.lifesteal = 0.5;
+        }
+        
+        // Health regen cap at 10/s to prevent trivializing damage
+        if (stats.healthRegen > 10) {
+            console.warn(`Health regen capped at 10/s (was ${stats.healthRegen.toFixed(1)}/s)`);
+            stats.healthRegen = 10;
+        }
+        
+        // Fire rate minimum 0.1 (max 10x speed) to prevent freeze
+        if (stats.fireRate < 0.1) {
+            console.warn(`Fire rate capped at minimum 0.1 (was ${stats.fireRate.toFixed(2)})`);
+            stats.fireRate = 0.1;
+        }
+        
+        // Fire rate maximum 10 to prevent performance issues
+        if (stats.fireRate > 10) {
+            console.warn(`Fire rate capped at 10 (was ${stats.fireRate.toFixed(2)})`);
+            stats.fireRate = 10;
+        }
+        
+        // Speed minimum 0.2 to prevent getting stuck
+        if (stats.speed < 0.2) {
+            console.warn(`Speed capped at minimum 0.2 (was ${stats.speed.toFixed(2)})`);
+            stats.speed = 0.2;
+        }
+        
+        // Speed maximum 5 to prevent control issues
+        if (stats.speed > 5) {
+            console.warn(`Speed capped at 5 (was ${stats.speed.toFixed(2)})`);
+            stats.speed = 5;
+        }
+        
+        // Crit chance cap at 100%
+        if (stats.critChance > 1.0) {
+            console.warn(`Crit chance capped at 100% (was ${(stats.critChance * 100).toFixed(1)}%)`);
+            stats.critChance = 1.0;
+        }
+        
+        // Dodge chance cap at 75% to maintain some risk
+        if (stats.dodgeChance > 0.75) {
+            console.warn(`Dodge chance capped at 75% (was ${(stats.dodgeChance * 100).toFixed(1)}%)`);
+            stats.dodgeChance = 0.75;
+        }
+    }
+    
+    /**
+     * Validate stats for sanity and log warnings for extreme values
+     * @param {Object} stats - Player stats object
+     */
+    validateStats(stats) {
+        const warnings = [];
+        
+        // Check for undefined stats (critical error)
+        for (const [key, value] of Object.entries(stats)) {
+            if (value === undefined) {
+                warnings.push(`CRITICAL: Stat '${key}' is undefined!`);
+            }
+        }
+        
+        // Check for extreme values
+        if (stats.damageMultiplier > 10) {
+            warnings.push(`Very high damage multiplier: ${stats.damageMultiplier.toFixed(2)}x`);
+        }
+        
+        if (stats.fireRateMultiplier > 5) {
+            warnings.push(`Very high fire rate multiplier: ${stats.fireRateMultiplier.toFixed(2)}x`);
+        }
+        
+        if (stats.speedMultiplier > 3) {
+            warnings.push(`Very high speed multiplier: ${stats.speedMultiplier.toFixed(2)}x`);
+        }
+        
+        if (stats.lifesteal > 0.3) {
+            warnings.push(`High lifesteal: ${(stats.lifesteal * 100).toFixed(1)}%`);
+        }
+        
+        if (stats.healthRegen > 5) {
+            warnings.push(`High health regen: ${stats.healthRegen.toFixed(1)}/s`);
+        }
+        
+        // Log all warnings grouped
+        if (warnings.length > 0) {
+            console.group('%c⚠️ Stats Validation Warnings', 'color: #ffaa00; font-weight: bold;');
+            warnings.forEach(w => console.warn(w));
+            console.groupEnd();
+        }
     }
 
     triggerLevelUp() {
