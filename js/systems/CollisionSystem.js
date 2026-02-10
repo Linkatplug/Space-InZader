@@ -403,9 +403,8 @@ class CollisionSystem {
             }
         }
         
-        // Remove asteroid
+        // Remove asteroid (asteroids don't count as kills)
         this.world.removeEntity(asteroid.id);
-        this.gameState.stats.kills++;
     }
 
     killEnemy(enemy) {
