@@ -97,7 +97,7 @@ class Game {
             render: new RenderSystem(this.canvas, this.world, this.gameState),
             ui: new UISystem(this.world, this.gameState),
             wave: new WaveSystem(this.gameState),
-            weather: new WeatherSystem(this.world, this.canvas, this.audioManager)
+            weather: new WeatherSystem(this.world, this.canvas, this.audioManager, this.gameState)
         };
         
         // Synergy system (initialized when game starts)

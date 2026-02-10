@@ -4,10 +4,11 @@
  */
 
 class WeatherSystem {
-    constructor(world, canvas, audioManager) {
+    constructor(world, canvas, audioManager, gameState) {
         this.world = world;
         this.canvas = canvas;
         this.audioManager = audioManager;
+        this.gameState = gameState;
         
         // Event configuration
         this.events = [
