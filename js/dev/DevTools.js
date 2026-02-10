@@ -268,6 +268,22 @@ class DevTools {
                 </div>
                 
                 <div class="utility-section">
+                    <h3>Weather Events</h3>
+                    <button class="devtools-btn" onclick="window.devTools.spawnBlackHole()">
+                        🕳️ Spawn Glass Hole
+                    </button>
+                    <button class="devtools-btn" onclick="window.devTools.spawnMeteorStorm()">
+                        ☄️ Spawn Meteor Storm
+                    </button>
+                    <button class="devtools-btn" onclick="window.devTools.spawnMagneticStorm()">
+                        ⚡ Spawn Magnetic Storm
+                    </button>
+                    <button class="devtools-btn" onclick="window.devTools.endWeatherEvent()">
+                        ✖️ End Current Event
+                    </button>
+                </div>
+                
+                <div class="utility-section">
                     <h3>Current Stats</h3>
                     ${statsHtml}
                 </div>
@@ -497,6 +513,110 @@ class DevTools {
      */
     printAuditReport() {
         this.auditor.printReport();
+    }
+    
+    /**
+     * Spawn a black hole (glass hole) event
+     */
+    spawnBlackHole() {
+        const weatherSystem = this.game.systems.weather;
+        if (!weatherSystem) {
+            console.error('[DevTools] Weather system not found');
+            return;
+        }
+        
+        // End current event if any
+        if (weatherSystem.activeEvent) {
+            weatherSystem.endEvent();
+        }
+        
+        // Manually trigger black hole
+        weatherSystem.activeEvent = { type: 'black_hole', duration: 12 };
+        weatherSystem.showingWarning = false;
+        weatherSystem.eventTimer = 12;
+        weatherSystem.spawnBlackHole();
+        
+        if (weatherSystem.audioManager && weatherSystem.audioManager.initialized) {
+            weatherSystem.audioManager.playSFX('black_hole_spawn');
+        }
+        
+        console.log('%c[DevTools] Spawned black hole (glass hole)', 'color: #9400D3; font-weight: bold');
+    }
+    
+    /**
+     * Spawn a meteor storm event
+     */
+    spawnMeteorStorm() {
+        const weatherSystem = this.game.systems.weather;
+        if (!weatherSystem) {
+            console.error('[DevTools] Weather system not found');
+            return;
+        }
+        
+        // End current event if any
+        if (weatherSystem.activeEvent) {
+            weatherSystem.endEvent();
+        }
+        
+        // Manually trigger meteor storm
+        weatherSystem.activeEvent = { type: 'meteor_storm', duration: 15 };
+        weatherSystem.showingWarning = false;
+        weatherSystem.eventTimer = 15;
+        weatherSystem.meteorSpawnTimer = 0;
+        
+        if (weatherSystem.audioManager && weatherSystem.audioManager.initialized) {
+            weatherSystem.audioManager.playSFX('meteor_warning');
+        }
+        
+        console.log('%c[DevTools] Spawned meteor storm', 'color: #ff6600; font-weight: bold');
+    }
+    
+    /**
+     * Spawn a magnetic storm event
+     */
+    spawnMagneticStorm() {
+        const weatherSystem = this.game.systems.weather;
+        if (!weatherSystem) {
+            console.error('[DevTools] Weather system not found');
+            return;
+        }
+        
+        // End current event if any
+        if (weatherSystem.activeEvent) {
+            weatherSystem.endEvent();
+        }
+        
+        // Manually trigger magnetic storm
+        weatherSystem.activeEvent = { type: 'magnetic_storm', duration: 5 };
+        weatherSystem.showingWarning = false;
+        weatherSystem.eventTimer = 5;
+        weatherSystem.startMagneticStorm();
+        
+        if (weatherSystem.audioManager && weatherSystem.audioManager.initialized) {
+            weatherSystem.audioManager.playSFX('electric');
+        }
+        
+        console.log('%c[DevTools] Spawned magnetic storm', 'color: #9900ff; font-weight: bold');
+    }
+    
+    /**
+     * End the current weather event
+     */
+    endWeatherEvent() {
+        const weatherSystem = this.game.systems.weather;
+        if (!weatherSystem) {
+            console.error('[DevTools] Weather system not found');
+            return;
+        }
+        
+        if (!weatherSystem.activeEvent) {
+            console.log('%c[DevTools] No active weather event to end', 'color: #ffaa00');
+            return;
+        }
+        
+        const eventType = weatherSystem.activeEvent.type;
+        weatherSystem.endEvent();
+        console.log(`%c[DevTools] Ended weather event: ${eventType}`, 'color: #00ff00');
     }
 }
 
