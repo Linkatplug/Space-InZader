@@ -12,6 +12,20 @@ class CollisionSystem {
     }
 
     update(deltaTime) {
+        // Update orbital projectile hit cooldowns
+        const projectiles = this.world.getEntitiesByType('projectile');
+        for (const projectile of projectiles) {
+            const projComp = projectile.getComponent('projectile');
+            if (projComp && projComp.orbital && projComp.hitCooldown) {
+                for (const enemyId in projComp.hitCooldown) {
+                    projComp.hitCooldown[enemyId] -= deltaTime;
+                    if (projComp.hitCooldown[enemyId] <= 0) {
+                        delete projComp.hitCooldown[enemyId];
+                    }
+                }
+            }
+        }
+        
         // Check projectile-enemy collisions
         this.checkProjectileEnemyCollisions();
         
@@ -50,12 +64,25 @@ class CollisionSystem {
                 
                 if (!enemyPos || !enemyCol || !enemyHealth) continue;
 
+                // Skip if orbital projectile is on cooldown for this enemy
+                if (projComp.orbital && projComp.hitCooldown && projComp.hitCooldown[enemy.id] > 0) {
+                    continue;
+                }
+
                 if (MathUtils.circleCollision(
                     projPos.x, projPos.y, projCol.radius,
                     enemyPos.x, enemyPos.y, enemyCol.radius
                 )) {
                     // Deal damage to enemy (pass owner entity for lifesteal)
                     this.damageEnemy(enemy, projComp.damage, ownerEntity);
+                    
+                    // Don't remove orbital projectiles - they persist and keep damaging
+                    if (projComp.orbital) {
+                        // Orbital projectiles keep rotating but add a brief hit cooldown
+                        if (!projComp.hitCooldown) projComp.hitCooldown = {};
+                        projComp.hitCooldown[enemy.id] = 0.15; // 150ms cooldown per enemy
+                        continue; // Check other enemies
+                    }
                     
                     // Remove projectile if not piercing
                     if (projComp.piercing <= 0) {
@@ -384,6 +411,59 @@ class CollisionSystem {
             if (Math.random() < healthDropChance) {
                 const healAmount = 5 + Math.floor(Math.random() * 11); // 5-15 HP
                 this.spawnPickup(pos.x + (Math.random() - 0.5) * 30, pos.y + (Math.random() - 0.5) * 30, 'health', healAmount);
+            }
+            
+            // Chain Lightning/Chain Reaction
+            // Get player to check for chain lightning stat
+            const player = this.world.getEntitiesByType('player')[0];
+            if (player) {
+                const playerComp = player.getComponent('player');
+                if (playerComp && playerComp.stats.chainLightning > 0) {
+                    // Find nearby enemies for chain reaction
+                    const chainRange = 150; // Range for chain lightning
+                    const chainDamage = enemyComp.maxHealth * 0.3; // 30% of killed enemy's max HP
+                    const maxChains = Math.floor(playerComp.stats.chainLightning); // Number of chains
+                    
+                    const allEnemies = this.world.getEntitiesByType('enemy');
+                    const nearbyEnemies = [];
+                    
+                    // Find nearby enemies
+                    for (const nearbyEnemy of allEnemies) {
+                        if (nearbyEnemy.id === enemy.id) continue;
+                        
+                        const nearbyPos = nearbyEnemy.getComponent('position');
+                        if (nearbyPos) {
+                            const dx = nearbyPos.x - pos.x;
+                            const dy = nearbyPos.y - pos.y;
+                            const distance = Math.sqrt(dx * dx + dy * dy);
+                            
+                            if (distance < chainRange) {
+                                nearbyEnemies.push({ enemy: nearbyEnemy, distance: distance, pos: nearbyPos });
+                            }
+                        }
+                    }
+                    
+                    // Sort by distance and chain to closest enemies
+                    nearbyEnemies.sort((a, b) => a.distance - b.distance);
+                    const chainsToApply = Math.min(maxChains, nearbyEnemies.length);
+                    
+                    for (let i = 0; i < chainsToApply; i++) {
+                        const target = nearbyEnemies[i];
+                        
+                        // Create lightning visual effect
+                        if (this.particleSystem) {
+                            this.particleSystem.createLightning(pos.x, pos.y, target.pos.x, target.pos.y, '#00ffff');
+                        }
+                        
+                        // Deal chain damage
+                        this.damageEnemy(target.enemy, chainDamage, player);
+                    }
+                    
+                    // Play chain lightning sound
+                    if (chainsToApply > 0 && this.audioManager && this.audioManager.initialized) {
+                        this.audioManager.playSFX('electric', 1.0);
+                    }
+                }
             }
             
             // Update stats
