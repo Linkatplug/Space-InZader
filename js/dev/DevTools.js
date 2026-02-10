@@ -685,9 +685,10 @@ class DevTools {
     jumpToWave(waveNumber) {
         const targetWave = parseInt(waveNumber);
         
-        if (isNaN(targetWave) || targetWave < 1) {
+        // Validate wave number (1-999 to match UI constraints)
+        if (isNaN(targetWave) || targetWave < 1 || targetWave > 999) {
             console.error('[DevTools] Invalid wave number:', waveNumber);
-            alert('Please enter a valid wave number (1 or higher)');
+            alert('Please enter a valid wave number (1-999)');
             return;
         }
         
@@ -697,7 +698,8 @@ class DevTools {
             return;
         }
         
-        // Update wave system
+        // Update wave system state directly (WaveSystem doesn't provide setter methods)
+        // This is acceptable in dev tools context for testing purposes
         waveSystem.waveNumber = targetWave;
         waveSystem.waveTimer = 0;
         waveSystem.isPaused = false;
