@@ -15,6 +15,9 @@ class RenderSystem {
         this.cameraX = 0;
         this.cameraY = 0;
         
+        // Zoom level (0.5 = 2x zoom out to see more)
+        this.zoomLevel = 0.5;
+        
         // Screen effects reference (set from Game.js)
         this.screenEffects = null;
         
@@ -66,13 +69,17 @@ class RenderSystem {
             const player = players[0];
             const pos = player.getComponent('position');
             if (pos) {
+                // Calculate visible area based on zoom level
+                const visibleWidth = this.canvas.width / this.zoomLevel;
+                const visibleHeight = this.canvas.height / this.zoomLevel;
+                
                 // Center camera on player
-                this.cameraX = pos.x - this.canvas.width / 2;
-                this.cameraY = pos.y - this.canvas.height / 2;
+                this.cameraX = pos.x - visibleWidth / 2;
+                this.cameraY = pos.y - visibleHeight / 2;
                 
                 // Clamp camera to world bounds
-                this.cameraX = MathUtils.clamp(this.cameraX, 0, WORLD_WIDTH - this.canvas.width);
-                this.cameraY = MathUtils.clamp(this.cameraY, 0, WORLD_HEIGHT - this.canvas.height);
+                this.cameraX = MathUtils.clamp(this.cameraX, 0, WORLD_WIDTH - visibleWidth);
+                this.cameraY = MathUtils.clamp(this.cameraY, 0, WORLD_HEIGHT - visibleHeight);
             }
         }
     }
@@ -97,7 +104,7 @@ class RenderSystem {
             this.gameState.isState(GameStates.LEVEL_UP) ||
             this.gameState.isState(GameStates.PAUSED)) {
             
-            // Save context for camera and screen shake
+            // Save context for camera, zoom, and screen shake
             this.ctx.save();
             
             // Apply screen shake if available
@@ -105,13 +112,16 @@ class RenderSystem {
                 this.screenEffects.applyShake(this.ctx);
             }
             
-            // Apply camera translation
+            // Apply zoom scale (0.5 = 2x zoom out)
+            this.ctx.scale(this.zoomLevel, this.zoomLevel);
+            
+            // Apply camera translation (adjusted for zoom)
             this.ctx.translate(-this.cameraX, -this.cameraY);
             
             this.renderStarfield(deltaTime);
             this.renderEntities();
             
-            // Restore context after camera and shake
+            // Restore context after camera, zoom, and shake
             this.ctx.restore();
             
             this.renderBossHealthBar();
