@@ -378,7 +378,8 @@ class CollisionSystem {
             
             // Random chance to drop health pack (5-15 HP)
             const isBoss = renderable && renderable.size >= BOSS_SIZE_THRESHOLD;
-            const healthDropChance = isBoss ? 0.5 : 0.25; // 50% for bosses, 25% for regular enemies
+            // Reduce health drop rate by 75% (multiply by 0.25)
+            const healthDropChance = isBoss ? 0.125 : 0.0625; // Was 50% for bosses, 25% for regular - now 12.5% and 6.25%
             
             if (Math.random() < healthDropChance) {
                 const healAmount = 5 + Math.floor(Math.random() * 11); // 5-15 HP

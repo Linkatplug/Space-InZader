@@ -150,13 +150,16 @@ class SpawnerSystem {
             }
         } else {
             // Normal scaling from wave 7+
-            enemyCountMult = Math.min(4.0, 1 + (timeMinutes * 0.20));
-            enemyHealthMult = Math.min(5.0, 1 + (waveNumber * 0.15));
-            enemySpeedMult = Math.min(2.0, 1 + (waveNumber * 0.05));
+            // WAVE 8+ DIFFICULTY RAMP: Increased speed, HP, count, and special enemies
+            const wave8Bonus = waveNumber >= 8 ? (waveNumber - 7) : 0;
+            
+            enemyCountMult = Math.min(4.0, 1 + (timeMinutes * 0.20) + (wave8Bonus * 0.06)); // +6% per wave after 8
+            enemyHealthMult = Math.min(5.0, 1 + (waveNumber * 0.15) + (wave8Bonus * 0.05)); // +5% HP per wave after 8
+            enemySpeedMult = Math.min(2.0, 1 + (waveNumber * 0.05) + (wave8Bonus * 0.03)); // +3% speed per wave after 8
             
             // Debug logging
             if (window.debugDifficulty) {
-                console.log(`[Wave ${waveNumber}] Difficulty: Count=${enemyCountMult.toFixed(2)}, Health=${enemyHealthMult.toFixed(2)}, Speed=${enemySpeedMult.toFixed(2)}`);
+                console.log(`[Wave ${waveNumber}] Difficulty: Count=${enemyCountMult.toFixed(2)}, Health=${enemyHealthMult.toFixed(2)}, Speed=${enemySpeedMult.toFixed(2)} ${wave8Bonus > 0 ? `(+WAVE8 RAMP)` : ''}`);
             }
         }
         
