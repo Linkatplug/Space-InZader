@@ -997,8 +997,8 @@ class Game {
         this.saveManager.addNoyaux(credits, this.saveData);
         this.saveManager.updateStats(this.gameState.stats, this.saveData);
         
-        // Stop background music
-        this.audioManager.stopBackgroundMusic();
+        // Keep background music playing (instead of stopping it)
+        // Music will continue seamlessly from gameplay to game over screen
         
         // Check if score qualifies for leaderboard
         const finalScore = this.gameState.stats.score;
