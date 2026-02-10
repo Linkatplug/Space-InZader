@@ -113,6 +113,7 @@ class RenderSystem {
             }
             
             // Apply zoom scale (0.5 = 2x zoom out)
+            // IMPORTANT: Scale must be applied before translate to maintain correct camera positioning
             this.ctx.scale(this.zoomLevel, this.zoomLevel);
             
             // Apply camera translation (adjusted for zoom)
