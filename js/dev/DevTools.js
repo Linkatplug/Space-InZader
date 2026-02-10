@@ -1,7 +1,7 @@
 /**
  * @file DevTools.js
  * @description Developer tools overlay for testing weapons and passives
- * Press F4 to toggle
+ * Press F4 or L to toggle
  */
 
 class DevTools {
@@ -22,7 +22,8 @@ class DevTools {
      */
     setupKeyBindings() {
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'F4') {
+            // Support both F4 and L key for toggling dev tools
+            if (e.key === 'F4' || e.key === 'l' || e.key === 'L') {
                 e.preventDefault();
                 this.toggle();
             }
@@ -57,7 +58,7 @@ class DevTools {
         this.container.style.display = 'block';
         this.render();
         
-        console.log('%c[DevTools] Opened (F4 to close)', 'color: #00ff00; font-weight: bold');
+        console.log('%c[DevTools] Opened (F4 or L to close)', 'color: #00ff00; font-weight: bold');
     }
 
     /**
@@ -91,7 +92,7 @@ class DevTools {
         
         this.container.innerHTML = `
             <div class="devtools-header">
-                <h2>🛠️ DEV TOOLS <span style="font-size: 14px; opacity: 0.7;">(Press F4 to close)</span></h2>
+                <h2>🛠️ DEV TOOLS <span style="font-size: 14px; opacity: 0.7;">(Press F4 or L to close)</span></h2>
                 <div class="devtools-tabs">
                     <button class="devtools-tab ${this.currentTab === 'weapons' ? 'active' : ''}" onclick="window.devTools.switchTab('weapons')">
                         ⚔️ Weapons
