@@ -26,6 +26,7 @@ class MultiplayerManager {
         this.hostInProgress = false;
         this.readySent = false;
         this.startReceived = false;
+        this.roomCodeModal = null;
         
         // Room players state
         this.roomPlayers = []; // Array of {playerId, name, ready, isHost}
@@ -45,6 +46,18 @@ class MultiplayerManager {
             readySent: this.readySent,
             ...extra
         });
+    }
+
+    resetRoomSessionState() {
+        this.roomId = null;
+        this.currentRoomId = null;
+        this.playerId = null;
+        this.isHost = false;
+        this.roomState = 'NONE';
+        this.gameState = 'IDLE';
+        this.readySent = false;
+        this.startReceived = false;
+        this.roomPlayers = [];
     }
 
     /**
@@ -84,10 +97,15 @@ class MultiplayerManager {
         });
 
         this.socket.on('disconnect', () => {
+            const wasRunning = this.game.gameState.isState(GameStates.RUNNING);
             this.connectionState = 'DISCONNECTED';
             this.connected = false;
+            this.closeRoomCodeModal();
+            this.resetRoomSessionState();
             this.logState('Disconnected from server');
-            this.showDisconnectMessage();
+            if (wasRunning) {
+                this.showDisconnectMessage();
+            }
         });
 
         this.setupEventHandlers();
@@ -222,6 +240,8 @@ class MultiplayerManager {
         }
 
         this.hostInProgress = true;
+        this.readySent = false;
+        this.startReceived = false;
         this.roomState = 'HOSTING';
         this.logState('Creating room...', { playerName, shipType });
         
@@ -250,6 +270,7 @@ class MultiplayerManager {
             this.gameState = 'WAITING_READY';
             this.logState('Room created successfully');
             this.showRoomCode();
+            this.sendReady();
         });
     }
 
@@ -274,6 +295,8 @@ class MultiplayerManager {
         }
 
         this.joinInProgress = true;
+        this.readySent = false;
+        this.startReceived = false;
         this.roomState = 'JOINING';
         this.logState('Joining room...', { roomId, playerName, shipType });
         
@@ -303,6 +326,7 @@ class MultiplayerManager {
             this.gameState = 'WAITING_READY';
             this.logState('Joined room successfully');
             this.onRoomJoined(response.players);
+            this.sendReady();
         });
     }
 
@@ -409,6 +433,7 @@ class MultiplayerManager {
         setTimeout(() => {
             this.gameState = 'RUNNING';
             this.logState('Starting game NOW');
+            this.closeRoomCodeModal();
             
             // Start the actual game
             if (this.game.gameState.state !== GameStates.RUNNING) {
@@ -432,6 +457,14 @@ class MultiplayerManager {
         } else {
             // Avoid crashing the whole multiplayer flow if UI method is missing
             this.logState('UISystem.updateMultiplayerLobby missing (skipping UI update)');
+        }
+
+        // Also update the fallback modal shown to the host with simple status text.
+        const roomStatusEl = document.getElementById('roomPlayersStatus');
+        if (roomStatusEl) {
+            const p1 = this.roomPlayers.find((p) => p.playerId === 1);
+            const p2 = this.roomPlayers.find((p) => p.playerId === 2);
+            roomStatusEl.textContent = `${p1?.name || 'J1'}: ${p1?.ready ? 'PRÊT' : 'EN ATTENTE'} | ${p2?.name || 'J2'}: ${p2?.ready ? 'PRÊT' : 'EN ATTENTE'}`;
         }
     }
 
@@ -697,6 +730,8 @@ class MultiplayerManager {
      * Show room code to host
      */
     showRoomCode() {
+        this.closeRoomCodeModal();
+
         const modal = document.createElement('div');
         modal.style.cssText = `
             position: fixed;
@@ -716,8 +751,9 @@ class MultiplayerManager {
             <h2 style="margin-bottom: 20px;">Room Created!</h2>
             <p style="margin-bottom: 10px;">Room Code:</p>
             <div style="font-size: 32px; font-weight: bold; margin-bottom: 20px; letter-spacing: 4px;">${this.roomId}</div>
-            <p style="margin-bottom: 20px;">Share this code with your friend</p>
-            <button id="startWhenReady" style="
+            <p style="margin-bottom: 12px;">Share this code with your friend</p>
+            <p id="roomPlayersStatus" style="margin-bottom: 20px; color: #7cfdfd;">J1: EN ATTENTE | J2: ABSENT</p>
+            <button id="closeRoomCodeModal" style="
                 background: #00ffff;
                 color: #000;
                 border: none;
@@ -726,22 +762,23 @@ class MultiplayerManager {
                 cursor: pointer;
                 font-family: 'Courier New', monospace;
                 font-weight: bold;
-            ">Waiting for Player 2...</button>
+            ">FERMER</button>
         `;
         
         document.body.appendChild(modal);
-        
-        // Update button when player joins
-        this.socket.once('player-joined', () => {
-            const btn = document.getElementById('startWhenReady');
-            if (btn) {
-                btn.textContent = 'START GAME';
-                btn.onclick = () => {
-                    modal.remove();
-                    this.game.startGame();
-                };
-            }
-        });
+        this.roomCodeModal = modal;
+
+        const closeBtn = document.getElementById('closeRoomCodeModal');
+        if (closeBtn) {
+            closeBtn.onclick = () => this.closeRoomCodeModal();
+        }
+    }
+
+    closeRoomCodeModal() {
+        if (this.roomCodeModal) {
+            this.roomCodeModal.remove();
+            this.roomCodeModal = null;
+        }
     }
 
     /**
@@ -759,11 +796,13 @@ class MultiplayerManager {
      * Cleanup
      */
     disconnect() {
+        this.closeRoomCodeModal();
         if (this.socket) {
             this.socket.disconnect();
         }
         this.multiplayerEnabled = false;
         this.connected = false;
+        this.resetRoomSessionState();
         this.otherPlayers.clear();
     }
 }
