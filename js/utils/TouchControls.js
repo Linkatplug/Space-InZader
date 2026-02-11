@@ -16,6 +16,7 @@ class TouchControls {
         // Joystick configuration constants
         this.JOYSTICK_INNER_RADIUS = 30; // Half of inner circle size (60px / 2)
         this.JOYSTICK_DEAD_ZONE = 5; // Minimum distance to register movement
+        this.JOYSTICK_MAX_DISTANCE = 75; // Maximum distance from center for full input
         
         // Mobile detection thresholds
         this.MOBILE_SMALLER_DIMENSION_THRESHOLD = 768; // Max height/width for mobile
@@ -227,7 +228,7 @@ class TouchControls {
         document.addEventListener('fullscreenchange', () => this.updateFullscreenButton());
         document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenButton());
         document.addEventListener('mozfullscreenchange', () => this.updateFullscreenButton());
-        document.addEventListener('MSFullscreenChange', () => this.updateFullscreenButton());
+        document.addEventListener('msfullscreenchange', () => this.updateFullscreenButton());
     }
     
     toggleFullscreen() {
@@ -269,7 +270,9 @@ class TouchControls {
                            document.mozFullScreenElement || 
                            document.msFullscreenElement;
         
-        // Update button icon: ⛶ for enter fullscreen, ⊗ for exit fullscreen
+        // Update button icon:
+        // ⛶ (U+26F6) = "Square Four Corners" - indicates expand to fullscreen
+        // ⊗ (U+2297) = "Circled Times" - indicates close/exit fullscreen
         this.fullscreenButton.textContent = isFullscreen ? '⊗' : '⛶';
     }
     
@@ -295,7 +298,7 @@ class TouchControls {
     handleJoystickMove(touch) {
         if (!this.joystickActive) return;
         
-        const maxDistance = 75; // Maximum distance from center for full input
+        const maxDistance = this.JOYSTICK_MAX_DISTANCE;
         
         // Calculate relative position from joystick center
         const dx = touch.clientX - this.joystickCenter.x;
