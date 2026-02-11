@@ -614,7 +614,7 @@ class UISystem {
 
     /**
      * Show options screen
-     * @param {string} returnScreen - Screen to return to ('main', 'pause', etc.)
+     * @param {string} returnScreen - Screen to return to ('main', 'pause', etc.')
      */
     showOptions(returnScreen = 'main') {
         this.optionsReturnScreen = returnScreen;
@@ -724,10 +724,7 @@ class UISystem {
      * Show credits screen
      */
     showCredits() {
-        this.hideAllScreens();
-        if (this.creditsScreen) {
-            this.creditsScreen.classList.add('active');
-        }
+        this.showScreen('creditsScreen');
     }
 
     /**
