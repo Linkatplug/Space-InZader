@@ -616,22 +616,16 @@ class UISystem {
      * Show commands screen
      */
     showCommands() {
-        this.hideAllScreens();
-        if (this.commandsScreen) {
-            this.commandsScreen.classList.add('active');
-        }
+        this.showScreen('commandsScreen');
     }
 
     /**
      * Show options screen
-     * @param {string} returnScreen - Screen to return to ('main', 'pause', etc.)
+     * @param {string} returnScreen - Screen to return to ('main', 'pause', etc.')
      */
     showOptions(returnScreen = 'main') {
         this.optionsReturnScreen = returnScreen;
-        this.hideAllScreens();
-        if (this.optionsScreen) {
-            this.optionsScreen.classList.add('active');
-        }
+        this.showScreen('optionsScreen');
         this.loadOptionsValues();
     }
 
@@ -656,10 +650,7 @@ class UISystem {
      * Show scoreboard screen
      */
     showScoreboard() {
-        this.hideAllScreens();
-        if (this.scoreboardScreen) {
-            this.scoreboardScreen.classList.add('active');
-        }
+        this.showScreen('scoreboardScreen');
         this.renderScoreboard();
     }
 
@@ -740,10 +731,7 @@ class UISystem {
      * Show credits screen
      */
     showCredits() {
-        this.hideAllScreens();
-        if (this.creditsScreen) {
-            this.creditsScreen.classList.add('active');
-        }
+        this.showScreen('creditsScreen');
     }
 
     /**

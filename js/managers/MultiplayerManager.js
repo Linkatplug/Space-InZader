@@ -270,7 +270,14 @@ class MultiplayerManager {
             this.gameState = 'WAITING_READY';
             this.logState('Room created successfully');
             this.showRoomCode();
-            this.sendReady();
+            
+            // AUTO-READY: Automatically send ready status (MVP solution)
+            setTimeout(() => {
+                if (this.roomState === 'IN_ROOM' && !this.readySent) {
+                    this.logState('Auto-sending ready (host)');
+                    this.sendReady();
+                }
+            }, 500);
         });
     }
 
@@ -326,7 +333,14 @@ class MultiplayerManager {
             this.gameState = 'WAITING_READY';
             this.logState('Joined room successfully');
             this.onRoomJoined(response.players);
-            this.sendReady();
+            
+            // AUTO-READY: Automatically send ready status (MVP solution)
+            setTimeout(() => {
+                if (this.roomState === 'IN_ROOM' && !this.readySent) {
+                    this.logState('Auto-sending ready (guest)');
+                    this.sendReady();
+                }
+            }, 500);
         });
     }
 
