@@ -439,10 +439,32 @@ server.on('error', (error) => {
         console.error(`\n❌ ERROR: Port ${PORT} is already in use!`);
         console.error('\n📋 To fix this issue, try one of the following:\n');
         console.error('1. Stop the existing server:');
-        console.error(`   - Find the process: lsof -i :${PORT} (Mac/Linux) or netstat -ano | findstr :${PORT} (Windows)`);
-        console.error('   - Kill it: kill -9 <PID> (Mac/Linux) or taskkill /PID <PID> /F (Windows)');
+        
+        // Try to find the PID automatically on Unix-like systems
+        const { execSync } = require('child_process');
+        try {
+            if (process.platform !== 'win32') {
+                const lsofOutput = execSync(`lsof -ti :${PORT} 2>/dev/null`, { encoding: 'utf8' }).trim();
+                if (lsofOutput) {
+                    const pids = lsofOutput.split('\n');
+                    console.error(`   ℹ️  Process(es) using port ${PORT}: ${pids.join(', ')}`);
+                    console.error(`   - To stop: kill -9 ${pids.join(' ')}`);
+                } else {
+                    console.error(`   - Find the process: lsof -i :${PORT}`);
+                    console.error(`   - Kill it: kill -9 <PID>`);
+                }
+            } else {
+                console.error(`   - Find the process: netstat -ano | findstr :${PORT}`);
+                console.error(`   - Kill it: taskkill /PID <PID> /F`);
+            }
+        } catch (e) {
+            // If lsof fails, show generic instructions
+            console.error(`   - Find the process: lsof -i :${PORT} (Mac/Linux) or netstat -ano | findstr :${PORT} (Windows)`);
+            console.error(`   - Kill it: kill -9 <PID> (Mac/Linux) or taskkill /PID <PID> /F (Windows)`);
+        }
+        
         console.error('\n2. Use a different port:');
-        console.error(`   - PORT=3001 npm start`);
+        console.error(`   - PORT=${parseInt(PORT) + 1} npm start`);
         console.error('\n3. Wait a moment and try again (the port may still be releasing)\n');
         process.exit(1);
     } else {
