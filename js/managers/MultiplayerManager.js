@@ -30,6 +30,7 @@ class MultiplayerManager {
         
         // Room players state
         this.roomPlayers = []; // Array of {playerId, name, ready, isHost}
+        this.pendingRemotePlayers = [];
     }
     
     /**
@@ -58,6 +59,7 @@ class MultiplayerManager {
         this.readySent = false;
         this.startReceived = false;
         this.roomPlayers = [];
+        this.pendingRemotePlayers = [];
     }
 
     /**
@@ -162,9 +164,16 @@ class MultiplayerManager {
         // Game started (old protocol - keep for compatibility)
         this.socket.on('game-started', (data) => {
             this.logState('Game started (legacy)', data);
-            // Host already started, client needs to start
-            if (!this.isHost && this.game.gameState.state !== GameStates.RUNNING) {
-                this.game.startGame();
+            // Ignore legacy event once synchronized start protocol is active
+            if (this.startReceived || this.game.gameState.isState(GameStates.RUNNING)) {
+                return;
+            }
+            if (!this.isHost) {
+                this.onGameStart({
+                    roomId: this.currentRoomId,
+                    startAt: Date.now(),
+                    players: data?.players || []
+                });
             }
         });
 
@@ -436,9 +445,14 @@ class MultiplayerManager {
             this.closeRoomCodeModal();
             
             // Start the actual game
-            if (this.game.gameState.state !== GameStates.RUNNING) {
+            if (!this.game.gameState.isState(GameStates.RUNNING)) {
                 this.game.startGame();
             }
+
+            // Game.startGame() clears the world, so remote entities must be recreated afterwards.
+            this.pendingRemotePlayers = Array.isArray(data?.players) ? data.players : [];
+            this.otherPlayers.clear();
+            this.syncRemotePlayersFromRoom(this.pendingRemotePlayers);
         }, delay);
     }
     
@@ -613,16 +627,29 @@ class MultiplayerManager {
         }
     }
 
+    syncRemotePlayersFromRoom(players = []) {
+        if (!Array.isArray(players)) return;
+
+        const remotePlayers = players.filter((p) => p && p.playerId !== this.playerId);
+        const activeIds = new Set(remotePlayers.map((p) => p.playerId));
+
+        // Remove stale entities
+        for (const [remoteId, entity] of this.otherPlayers.entries()) {
+            if (!activeIds.has(remoteId)) {
+                this.game.world.removeEntity(entity.id);
+                this.otherPlayers.delete(remoteId);
+            }
+        }
+
+        // Upsert current remote players
+        remotePlayers.forEach((playerData) => this.createOrUpdateOtherPlayerEntity(playerData));
+    }
+
     /**
      * Handle room joined
      */
     onRoomJoined(players) {
-        // Create entities for existing players
-        players.forEach(playerData => {
-            if (playerData.playerId !== this.playerId) {
-                this.createOtherPlayerEntity(playerData);
-            }
-        });
+        this.syncRemotePlayersFromRoom(players);
     }
 
     /**
@@ -630,15 +657,26 @@ class MultiplayerManager {
      */
     onPlayerJoined(playerData) {
         if (playerData.playerId !== this.playerId) {
-            this.createOtherPlayerEntity(playerData);
+            this.createOrUpdateOtherPlayerEntity(playerData)
         }
     }
 
     /**
      * Create entity for other player
      */
-    createOtherPlayerEntity(playerData) {
-        const entity = this.game.world.createEntity('other-player');
+    createOrUpdateOtherPlayerEntity(playerData) {
+        if (!playerData || playerData.playerId === this.playerId) return null;
+
+        let entity = this.otherPlayers.get(playerData.playerId);
+        if (entity && !this.game.world.getEntity(entity.id)) {
+            this.otherPlayers.delete(playerData.playerId);
+            entity = null;
+        }
+
+        if (!entity) {
+            entity = this.game.world.createEntity('other-player');
+            this.otherPlayers.set(playerData.playerId, entity);
+        }
 
         // Defensive defaults: room-state/player lists may omit gameplay fields
         // (especially during early handshake / partial payloads)
@@ -646,34 +684,61 @@ class MultiplayerManager {
         const safeHealth = typeof playerData?.health === 'number' ? playerData.health : 100;
         const safeShipType = playerData?.shipType || 'fighter';
         
-        entity.addComponent('position', Components.Position(
-            safePos.x,
-            safePos.y
-        ));
-        
-        entity.addComponent('velocity', Components.Velocity(0, 0));
-        entity.addComponent('collision', Components.Collision(15));
-        
-        entity.addComponent('health', Components.Health(
-            safeHealth,
-            safeHealth
-        ));
-        
-        entity.addComponent('otherPlayer', {
-            playerId: playerData.playerId,
-            name: playerData.name,
-            shipType: safeShipType
-        });
+        const pos = entity.getComponent('position');
+        if (pos) {
+            pos.x = safePos.x;
+            pos.y = safePos.y;
+        } else {
+            entity.addComponent('position', Components.Position(safePos.x, safePos.y));
+        }
 
-        this.otherPlayers.set(playerData.playerId, entity);
-        console.log(`Created entity for player ${playerData.playerId}`);
+        if (!entity.getComponent('velocity')) {
+            entity.addComponent('velocity', Components.Velocity(0, 0));
+        }
+        if (!entity.getComponent('collision')) {
+            entity.addComponent('collision', Components.Collision(15));
+        }
+
+        const health = entity.getComponent('health');
+        if (health) {
+            health.current = safeHealth;
+            health.max = Math.max(health.max || safeHealth, safeHealth);
+        } else {
+            entity.addComponent('health', Components.Health(safeHealth, safeHealth));
+        }
+
+        const otherPlayerComp = entity.getComponent('otherPlayer');
+        if (otherPlayerComp) {
+            otherPlayerComp.playerId = playerData.playerId;
+            otherPlayerComp.name = playerData.name;
+            otherPlayerComp.shipType = safeShipType;
+        } else {
+            entity.addComponent('otherPlayer', {
+                playerId: playerData.playerId,
+                name: playerData.name,
+                shipType: safeShipType
+            });
+        }
+
+        console.log(`Synced entity for player ${playerData.playerId}`);
+        return entity;
     }
 
     /**
      * Handle player moved
      */
     onPlayerMoved(data) {
-        const entity = this.otherPlayers.get(data.playerId);
+        let entity = this.otherPlayers.get(data.playerId);
+        if (!entity) {
+            entity = this.createOrUpdateOtherPlayerEntity({
+                playerId: data.playerId,
+                position: data.position,
+                health: 100,
+                name: `Joueur ${data.playerId}`,
+                shipType: 'fighter'
+            });
+        }
+
         if (entity) {
             const pos = entity.getComponent('position');
             const vel = entity.getComponent('velocity');
@@ -694,7 +759,17 @@ class MultiplayerManager {
      * Handle player health update
      */
     onPlayerHealthUpdate(data) {
-        const entity = this.otherPlayers.get(data.playerId);
+        let entity = this.otherPlayers.get(data.playerId);
+        if (!entity) {
+            entity = this.createOrUpdateOtherPlayerEntity({
+                playerId: data.playerId,
+                position: data.position,
+                health: 100,
+                name: `Joueur ${data.playerId}`,
+                shipType: 'fighter'
+            });
+        }
+
         if (entity) {
             const health = entity.getComponent('health');
             if (health) {
@@ -804,5 +879,6 @@ class MultiplayerManager {
         this.connected = false;
         this.resetRoomSessionState();
         this.otherPlayers.clear();
+        this.pendingRemotePlayers = [];
     }
 }

@@ -727,26 +727,44 @@ class RenderSystem {
             this.ctx.save();
             this.ctx.translate(pos.x, pos.y);
 
-            // Draw player ship with different color (green for multiplayer)
+            const shipType = otherPlayerComp?.shipType || 'fighter';
+            const colorMap = {
+                fighter: '#00ff00',
+                tank: '#ffaa00',
+                scout: '#00d4ff',
+                interceptor: '#ff66ff'
+            };
+            const remoteColor = colorMap[shipType] || '#00ff00';
+
             this.ctx.shadowBlur = 20;
-            this.ctx.shadowColor = '#00ff00';
-            this.ctx.fillStyle = '#00ff00';
-            this.ctx.strokeStyle = '#00ff00';
+            this.ctx.shadowColor = remoteColor;
+            this.ctx.fillStyle = remoteColor;
+            this.ctx.strokeStyle = remoteColor;
             this.ctx.lineWidth = 2;
 
-            // Draw triangle ship
+            // Draw ship shape based on selected class
             this.ctx.beginPath();
-            this.ctx.moveTo(0, -15);
-            this.ctx.lineTo(-10, 10);
-            this.ctx.lineTo(10, 10);
-            this.ctx.closePath();
+            if (shipType === 'tank') {
+                this.ctx.rect(-11, -11, 22, 22);
+            } else if (shipType === 'scout' || shipType === 'interceptor') {
+                this.ctx.moveTo(0, -16);
+                this.ctx.lineTo(-8, 12);
+                this.ctx.lineTo(0, 6);
+                this.ctx.lineTo(8, 12);
+                this.ctx.closePath();
+            } else {
+                this.ctx.moveTo(0, -15);
+                this.ctx.lineTo(-10, 10);
+                this.ctx.lineTo(10, 10);
+                this.ctx.closePath();
+            }
             this.ctx.fill();
             this.ctx.stroke();
 
             // Draw player name above ship
             if (otherPlayerComp && otherPlayerComp.name) {
                 this.ctx.shadowBlur = 0;
-                this.ctx.fillStyle = '#00ff00';
+                this.ctx.fillStyle = remoteColor;
                 this.ctx.font = '12px "Courier New"';
                 this.ctx.textAlign = 'center';
                 this.ctx.fillText(otherPlayerComp.name, 0, -25);

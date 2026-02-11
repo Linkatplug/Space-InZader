@@ -552,11 +552,8 @@ class UISystem {
      * Show main menu and start starfield animation
      */
     showMainMenu() {
-        this.hideAllScreens();
         this.hideHUD();
-        if (this.mainMenu) {
-            this.mainMenu.classList.add('active');
-        }
+        this.showScreen('menu');
         this.startMenuStarfield();
         if (window.game?.audioManager) {
             window.game.audioManager.setMusicTheme('calm');
@@ -592,11 +589,7 @@ class UISystem {
         if (window.game?.gameState) {
             window.game.gameState.setState(GameStates.PAUSED);
         }
-        // Hide other screens first
-        this.hideAllScreens();
-        if (this.pauseMenu) {
-            this.pauseMenu.classList.add('active');
-        }
+        this.showScreen('pause');
     }
 
     /**
@@ -616,10 +609,7 @@ class UISystem {
      * Show commands screen
      */
     showCommands() {
-        this.hideAllScreens();
-        if (this.commandsScreen) {
-            this.commandsScreen.classList.add('active');
-        }
+        this.showScreen('commands');
     }
 
     /**
@@ -628,10 +618,7 @@ class UISystem {
      */
     showOptions(returnScreen = 'main') {
         this.optionsReturnScreen = returnScreen;
-        this.hideAllScreens();
-        if (this.optionsScreen) {
-            this.optionsScreen.classList.add('active');
-        }
+        this.showScreen('options');
         this.loadOptionsValues();
     }
 
@@ -656,10 +643,7 @@ class UISystem {
      * Show scoreboard screen
      */
     showScoreboard() {
-        this.hideAllScreens();
-        if (this.scoreboardScreen) {
-            this.scoreboardScreen.classList.add('active');
-        }
+        this.showScreen('scoreboard');
         this.renderScoreboard();
     }
 
@@ -887,10 +871,10 @@ class UISystem {
      */
     onOptionsBack() {
         if (this.optionsReturnScreen === 'pause') {
-            this.showPauseMenu();
-        } else {
-            this.showMainMenu();
+            this.showScreen('pause');
+            return;
         }
+        this.showMainMenu();
     }
 
     /**
