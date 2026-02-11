@@ -147,13 +147,32 @@ class MultiplayerManager {
      */
     createRoom(playerName, shipType) {
         if (!this.connected) {
-            alert('Not connected to server');
+            alert('Non connecté au serveur');
             return;
         }
 
+        console.log('[Multiplayer] Creating room...');
+        
         this.socket.emit('create-room', {
             playerName: playerName,
             shipType: shipType
+        }, (response) => {
+            console.log('[create-room ACK]', response);
+            
+            if (!response?.ok) {
+                const errorMsg = response?.error || 'Erreur inconnue';
+                console.error('Create room failed:', errorMsg);
+                alert('Impossible de créer la partie: ' + errorMsg);
+                return;
+            }
+            
+            // Success - update state
+            this.roomId = response.roomId;
+            this.playerId = response.playerId;
+            this.isHost = true;
+            this.multiplayerEnabled = true;
+            console.log(`Room created successfully: ${this.roomId}`);
+            this.showRoomCode();
         });
     }
 
@@ -162,14 +181,33 @@ class MultiplayerManager {
      */
     joinRoom(roomId, playerName, shipType) {
         if (!this.connected) {
-            alert('Not connected to server');
+            alert('Non connecté au serveur');
             return;
         }
 
+        console.log('[Multiplayer] Joining room:', roomId);
+        
         this.socket.emit('join-room', {
             roomId: roomId,
             playerName: playerName,
             shipType: shipType
+        }, (response) => {
+            console.log('[join-room ACK]', response);
+            
+            if (!response?.ok) {
+                const errorMsg = response?.error || 'Erreur inconnue';
+                console.error('Join room failed:', errorMsg);
+                alert('Impossible de rejoindre la partie: ' + errorMsg);
+                return;
+            }
+            
+            // Success - update state
+            this.roomId = response.roomId;
+            this.playerId = response.playerId;
+            this.isHost = false;
+            this.multiplayerEnabled = true;
+            console.log(`Joined room successfully: ${this.roomId} as Player ${this.playerId}`);
+            this.onRoomJoined(response.players);
         });
     }
 
@@ -177,9 +215,26 @@ class MultiplayerManager {
      * Start the game (host only)
      */
     startMultiplayerGame() {
-        if (!this.isHost) return;
+        if (!this.isHost) {
+            console.warn('Only host can start the game');
+            return;
+        }
         
-        this.socket.emit('start-game');
+        console.log('[Multiplayer] Starting game...');
+        
+        this.socket.emit('start-game', (response) => {
+            console.log('[start-game ACK]', response);
+            
+            if (!response?.ok) {
+                const errorMsg = response?.error || 'Erreur inconnue';
+                console.error('Start game failed:', errorMsg);
+                alert('Impossible de démarrer la partie: ' + errorMsg);
+                return;
+            }
+            
+            // Success
+            console.log('Game started successfully');
+        });
     }
 
     /**

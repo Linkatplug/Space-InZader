@@ -85,93 +85,195 @@ io.on('connection', (socket) => {
     console.log(`Player connected: ${socket.id}`);
 
     // Create room
-    socket.on('create-room', (data) => {
-        const roomId = generateRoomId();
-        const room = new GameRoom(roomId);
-        
-        const playerData = {
-            socketId: socket.id,
-            name: data.playerName || 'Player',
-            shipType: data.shipType || 'fighter',
-            position: { x: 400, y: 500 },
-            health: 100,
-            playerId: 1
-        };
+    socket.on('create-room', (data, callback) => {
+        try {
+            const roomId = generateRoomId();
+            const room = new GameRoom(roomId);
+            
+            const playerData = {
+                socketId: socket.id,
+                name: data.playerName || 'Player',
+                shipType: data.shipType || 'fighter',
+                position: { x: 400, y: 500 },
+                health: 100,
+                playerId: 1
+            };
 
-        room.addPlayer(socket.id, playerData);
-        rooms.set(roomId, room);
-        
-        socket.join(roomId);
-        socket.roomId = roomId;
-        
-        console.log(`Room created: ${roomId} by ${socket.id}`);
-        
-        socket.emit('room-created', {
-            roomId: roomId,
-            playerId: 1,
-            playerData: playerData
-        });
+            room.addPlayer(socket.id, playerData);
+            rooms.set(roomId, room);
+            
+            socket.join(roomId);
+            socket.roomId = roomId;
+            
+            console.log(`Room created: ${roomId} by ${socket.id}`);
+            
+            // Send ACK with success response
+            if (callback) {
+                callback({
+                    ok: true,
+                    roomId: roomId,
+                    playerId: 1,
+                    playerData: playerData
+                });
+            }
+            
+            // Still emit for backward compatibility with old event listeners
+            socket.emit('room-created', {
+                roomId: roomId,
+                playerId: 1,
+                playerData: playerData
+            });
+        } catch (error) {
+            console.error('Error creating room:', error);
+            if (callback) {
+                callback({
+                    ok: false,
+                    error: 'Failed to create room: ' + error.message
+                });
+            }
+        }
     });
 
     // Join room
-    socket.on('join-room', (data) => {
-        const roomId = data.roomId;
-        const room = rooms.get(roomId);
+    socket.on('join-room', (data, callback) => {
+        try {
+            const roomId = data.roomId;
+            const room = rooms.get(roomId);
 
-        if (!room) {
-            socket.emit('join-error', { message: 'Room not found' });
-            return;
+            if (!room) {
+                const errorMsg = 'Room not found';
+                console.log(`Join failed: ${errorMsg} - ${roomId}`);
+                if (callback) {
+                    callback({
+                        ok: false,
+                        error: errorMsg
+                    });
+                }
+                // Still emit for backward compatibility
+                socket.emit('join-error', { message: errorMsg });
+                return;
+            }
+
+            if (room.isFull()) {
+                const errorMsg = 'Room is full';
+                console.log(`Join failed: ${errorMsg} - ${roomId}`);
+                if (callback) {
+                    callback({
+                        ok: false,
+                        error: errorMsg
+                    });
+                }
+                // Still emit for backward compatibility
+                socket.emit('join-error', { message: errorMsg });
+                return;
+            }
+
+            const playerData = {
+                socketId: socket.id,
+                name: data.playerName || 'Player 2',
+                shipType: data.shipType || 'fighter',
+                position: { x: 400, y: 500 },
+                health: 100,
+                playerId: 2
+            };
+
+            room.addPlayer(socket.id, playerData);
+            socket.join(roomId);
+            socket.roomId = roomId;
+
+            console.log(`Player ${socket.id} joined room ${roomId}`);
+
+            // Send ACK with success response
+            if (callback) {
+                callback({
+                    ok: true,
+                    roomId: roomId,
+                    playerId: 2,
+                    playerData: playerData,
+                    players: room.getPlayerData()
+                });
+            }
+
+            // Still emit for backward compatibility
+            socket.emit('room-joined', {
+                roomId: roomId,
+                playerId: 2,
+                playerData: playerData,
+                players: room.getPlayerData()
+            });
+
+            // Notify other player
+            socket.to(roomId).emit('player-joined', {
+                playerData: playerData,
+                players: room.getPlayerData()
+            });
+        } catch (error) {
+            console.error('Error joining room:', error);
+            if (callback) {
+                callback({
+                    ok: false,
+                    error: 'Failed to join room: ' + error.message
+                });
+            }
         }
-
-        if (room.isFull()) {
-            socket.emit('join-error', { message: 'Room is full' });
-            return;
-        }
-
-        const playerData = {
-            socketId: socket.id,
-            name: data.playerName || 'Player 2',
-            shipType: data.shipType || 'fighter',
-            position: { x: 400, y: 500 },
-            health: 100,
-            playerId: 2
-        };
-
-        room.addPlayer(socket.id, playerData);
-        socket.join(roomId);
-        socket.roomId = roomId;
-
-        console.log(`Player ${socket.id} joined room ${roomId}`);
-
-        // Notify both players
-        socket.emit('room-joined', {
-            roomId: roomId,
-            playerId: 2,
-            playerData: playerData,
-            players: room.getPlayerData()
-        });
-
-        socket.to(roomId).emit('player-joined', {
-            playerData: playerData,
-            players: room.getPlayerData()
-        });
     });
 
     // Start game
-    socket.on('start-game', () => {
-        const roomId = socket.roomId;
-        const room = rooms.get(roomId);
+    socket.on('start-game', (callback) => {
+        try {
+            const roomId = socket.roomId;
+            const room = rooms.get(roomId);
 
-        if (!room || room.hostId !== socket.id) {
-            return; // Only host can start
+            if (!room) {
+                const errorMsg = 'Room not found';
+                console.log(`Start game failed: ${errorMsg}`);
+                if (callback) {
+                    callback({
+                        ok: false,
+                        error: errorMsg
+                    });
+                }
+                return;
+            }
+
+            if (room.hostId !== socket.id) {
+                const errorMsg = 'Only host can start the game';
+                console.log(`Start game failed: ${errorMsg}`);
+                if (callback) {
+                    callback({
+                        ok: false,
+                        error: errorMsg
+                    });
+                }
+                return;
+            }
+
+            room.gameState.started = true;
+            
+            console.log(`Game started in room ${roomId}`);
+            
+            // Send ACK with success response
+            if (callback) {
+                callback({
+                    ok: true,
+                    roomId: roomId,
+                    players: room.getPlayerData()
+                });
+            }
+            
+            // Notify all players in room
+            io.to(roomId).emit('game-started', {
+                players: room.getPlayerData()
+            });
+        } catch (error) {
+            console.error('Error starting game:', error);
+            if (callback) {
+                callback({
+                    ok: false,
+                    error: 'Failed to start game: ' + error.message
+                });
+            }
         }
-
-        room.gameState.started = true;
-        io.to(roomId).emit('game-started', {
-            players: room.getPlayerData()
-        });
-
-        console.log(`Game started in room ${roomId}`);
     });
 
     // Player movement
