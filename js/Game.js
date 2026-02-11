@@ -396,10 +396,8 @@ class Game {
     startGame() {
         logger.info('Game', 'Starting game with ship: ' + this.gameState.selectedShip);
         
-        // If hosting multiplayer, notify server
-        if (this.multiplayerManager.isHost && this.multiplayerManager.multiplayerEnabled) {
-            this.multiplayerManager.startMultiplayerGame();
-        }
+        // Multiplayer start is now driven by synchronized `start-game`
+        // from server after both players are ready.
         
         // Reset world and stats
         this.world.clear();
