@@ -33,6 +33,7 @@ class TouchControls {
         this.joystickInner = document.getElementById('touchJoystickInner');
         this.fireButton = document.getElementById('touchFireButton');
         this.pauseButton = document.getElementById('touchPauseButton');
+        this.fullscreenButton = document.getElementById('touchFullscreenButton');
         
         // Auto-detect mobile
         this.isMobile = this.detectMobile();
@@ -42,6 +43,7 @@ class TouchControls {
         }
         
         this.setupTouchHandlers();
+        this.setupFullscreenHandler();
         this.setupCanvasResize();
     }
     
@@ -135,19 +137,33 @@ class TouchControls {
     }
     
     setupTouchHandlers() {
-        if (!this.joystick || !this.fireButton) return;
+        if (!this.canvas) return;
         
-        // Joystick touch handlers
-        this.joystick.addEventListener('touchstart', (e) => {
+        // Use the entire game container as joystick area
+        const gameContainer = document.getElementById('gameContainer');
+        if (!gameContainer) return;
+        
+        // Full-screen joystick handlers on the game container
+        gameContainer.addEventListener('touchstart', (e) => {
+            // Check if touch is on pause button or other UI elements
+            const target = e.target;
+            if (target.closest('.touch-pause-button') || 
+                target.closest('.touch-fullscreen-button') ||
+                target.closest('.menu-screen') ||
+                target.closest('.level-up-screen') ||
+                target.closest('.game-over-screen')) {
+                return; // Let UI elements handle their own touch
+            }
+            
             e.preventDefault();
-            if (this.joystickTouchId === null) {
+            if (this.joystickTouchId === null && e.changedTouches.length > 0) {
                 const touch = e.changedTouches[0];
                 this.joystickTouchId = touch.identifier;
                 this.handleJoystickStart(touch);
             }
         }, { passive: false });
         
-        this.joystick.addEventListener('touchmove', (e) => {
+        gameContainer.addEventListener('touchmove', (e) => {
             e.preventDefault();
             for (let touch of e.changedTouches) {
                 if (touch.identifier === this.joystickTouchId) {
@@ -157,7 +173,7 @@ class TouchControls {
             }
         }, { passive: false });
         
-        this.joystick.addEventListener('touchend', (e) => {
+        gameContainer.addEventListener('touchend', (e) => {
             e.preventDefault();
             for (let touch of e.changedTouches) {
                 if (touch.identifier === this.joystickTouchId) {
@@ -167,57 +183,121 @@ class TouchControls {
             }
         }, { passive: false });
         
-        // Fire button touch handlers
-        this.fireButton.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (this.fireButtonTouchId === null) {
-                const touch = e.changedTouches[0];
-                this.fireButtonTouchId = touch.identifier;
-                this.fireButtonPressed = true;
-            }
-        }, { passive: false });
-        
-        this.fireButton.addEventListener('touchend', (e) => {
-            e.preventDefault();
+        gameContainer.addEventListener('touchcancel', (e) => {
             for (let touch of e.changedTouches) {
-                if (touch.identifier === this.fireButtonTouchId) {
-                    this.fireButtonPressed = false;
-                    this.fireButtonTouchId = null;
+                if (touch.identifier === this.joystickTouchId) {
+                    this.handleJoystickEnd();
                     break;
                 }
             }
         }, { passive: false });
         
         // Pause button handler
-        this.pauseButton.addEventListener('touchstart', (e) => {
+        if (this.pauseButton) {
+            this.pauseButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Trigger ESC key event for pause
+                const escEvent = new KeyboardEvent('keydown', {
+                    key: 'Escape',
+                    code: 'Escape',
+                    keyCode: 27
+                });
+                window.dispatchEvent(escEvent);
+            }, { passive: false });
+        }
+    }
+    
+    setupFullscreenHandler() {
+        if (!this.fullscreenButton) return;
+        
+        this.fullscreenButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            // Trigger ESC key event for pause
-            const escEvent = new KeyboardEvent('keydown', {
-                key: 'Escape',
-                code: 'Escape',
-                keyCode: 27
-            });
-            window.dispatchEvent(escEvent);
+            e.stopPropagation();
+            this.toggleFullscreen();
         }, { passive: false });
+        
+        this.fullscreenButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.toggleFullscreen();
+        });
+        
+        // Update button icon when fullscreen state changes
+        document.addEventListener('fullscreenchange', () => this.updateFullscreenButton());
+        document.addEventListener('webkitfullscreenchange', () => this.updateFullscreenButton());
+        document.addEventListener('mozfullscreenchange', () => this.updateFullscreenButton());
+        document.addEventListener('MSFullscreenChange', () => this.updateFullscreenButton());
+    }
+    
+    toggleFullscreen() {
+        const elem = document.documentElement;
+        
+        if (!document.fullscreenElement && 
+            !document.webkitFullscreenElement && 
+            !document.mozFullScreenElement && 
+            !document.msFullscreenElement) {
+            // Enter fullscreen
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.mozRequestFullScreen) {
+                elem.mozRequestFullScreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        } else {
+            // Exit fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+    }
+    
+    updateFullscreenButton() {
+        if (!this.fullscreenButton) return;
+        
+        const isFullscreen = document.fullscreenElement || 
+                           document.webkitFullscreenElement || 
+                           document.mozFullScreenElement || 
+                           document.msFullscreenElement;
+        
+        // Update button icon: ⛶ for enter fullscreen, ⊗ for exit fullscreen
+        this.fullscreenButton.textContent = isFullscreen ? '⊗' : '⛶';
     }
     
     handleJoystickStart(touch) {
         this.joystickActive = true;
-        const rect = this.joystick.getBoundingClientRect();
+        // Set joystick center at the touch position
         this.joystickCenter = {
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2
+            x: touch.clientX,
+            y: touch.clientY
         };
+        
+        // Position the joystick visual at the touch point
+        if (this.joystick) {
+            this.joystick.style.left = `${touch.clientX}px`;
+            this.joystick.style.top = `${touch.clientY}px`;
+            this.joystick.style.transform = 'translate(-50%, -50%)';
+            this.joystick.style.opacity = '1';
+        }
+        
         this.handleJoystickMove(touch);
     }
     
     handleJoystickMove(touch) {
         if (!this.joystickActive) return;
         
-        const rect = this.joystick.getBoundingClientRect();
-        const maxDistance = rect.width / 2 - this.JOYSTICK_INNER_RADIUS;
+        const maxDistance = 75; // Maximum distance from center for full input
         
-        // Calculate relative position
+        // Calculate relative position from joystick center
         const dx = touch.clientX - this.joystickCenter.x;
         const dy = touch.clientY - this.joystickCenter.y;
         const distance = Math.sqrt(dx * dx + dy * dy);
@@ -226,7 +306,7 @@ class TouchControls {
         const clampedDistance = Math.min(distance, maxDistance);
         const angle = Math.atan2(dy, dx);
         
-        // Update joystick position
+        // Update joystick position for visual feedback
         this.joystickPosition.x = Math.cos(angle) * clampedDistance;
         this.joystickPosition.y = Math.sin(angle) * clampedDistance;
         
@@ -239,8 +319,10 @@ class TouchControls {
             this.joystickDirection.y = 0;
         }
         
-        // Update visual position
-        this.joystickInner.style.transform = `translate(calc(-50% + ${this.joystickPosition.x}px), calc(-50% + ${this.joystickPosition.y}px))`;
+        // Update visual position of inner joystick
+        if (this.joystickInner) {
+            this.joystickInner.style.transform = `translate(calc(-50% + ${this.joystickPosition.x}px), calc(-50% + ${this.joystickPosition.y}px))`;
+        }
     }
     
     handleJoystickEnd() {
@@ -251,8 +333,15 @@ class TouchControls {
         this.joystickPosition.x = 0;
         this.joystickPosition.y = 0;
         
+        // Fade out the joystick visual
+        if (this.joystick) {
+            this.joystick.style.opacity = '0';
+        }
+        
         // Reset visual position
-        this.joystickInner.style.transform = 'translate(-50%, -50%)';
+        if (this.joystickInner) {
+            this.joystickInner.style.transform = 'translate(-50%, -50%)';
+        }
     }
     
     enable() {
