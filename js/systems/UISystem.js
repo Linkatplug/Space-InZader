@@ -1866,6 +1866,53 @@ class UISystem {
     }
 
     /**
+     * Centralized screen management - shows one screen at a time.
+     * This prevents overlay issues by hiding ALL screens then showing only the target.
+     * 
+     * @param {string} screenId - ID of the screen to show
+     */
+    showScreen(screenId) {
+        console.log(`[UI] showScreen: ${screenId}`);
+        
+        // List of all screens that should be mutually exclusive
+        const screens = [
+            "mainMenu",
+            "menuScreen",
+            "multiplayerMenu",
+            "multiplayerHostScreen",
+            "multiplayerJoinScreen",
+            "multiplayerLobbyScreen",
+            "shipSelectionScreen",
+            "pauseMenu",
+            "gameOverScreen",
+            "metaScreen",
+            "commandsScreen",
+            "optionsScreen",
+            "scoreboardScreen",
+            "creditsScreen"
+        ];
+        
+        // Hide all screens
+        for (const id of screens) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.display = "none";
+                el.classList.remove('active');
+            }
+        }
+        
+        // Show target screen
+        const target = document.getElementById(screenId);
+        if (target) {
+            target.style.display = "flex";
+            target.classList.add('active');
+            console.log(`[UI] Showing screen: ${screenId}`);
+        } else {
+            console.warn(`[UI] Screen not found: ${screenId}`);
+        }
+    }
+
+    /**
      * Multiplayer lobby UI update (safe no-op).
      *
      * MultiplayerManager calls this whenever it receives `room-state` updates.
