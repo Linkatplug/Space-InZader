@@ -19,6 +19,27 @@ const io = socketIO(server, {
 
 const PORT = process.env.PORT || 7779;
 
+// Health check endpoints for deployment systems (AMP, PM2, etc.)
+app.get('/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'ok', 
+        timestamp: Date.now() 
+    });
+});
+
+app.get('/status', (req, res) => {
+    res.status(200).json({
+        status: 'running',
+        port: PORT,
+        rooms: rooms.size,
+        uptime: process.uptime()
+    });
+});
+
+app.get('/ping', (req, res) => {
+    res.status(200).send('pong');
+});
+
 // Serve static files
 app.use(express.static(__dirname));
 
