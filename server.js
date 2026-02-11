@@ -134,7 +134,11 @@ class GameRoom {
                 name: playerData.name,
                 isHost: playerData.isHost || (socketId === this.hostId),
                 ready: this.isPlayerReady(socketId),
-                socketId: socketId
+                socketId: socketId,
+                // Include full player data needed by createOtherPlayerEntity
+                position: playerData.position || { x: 400, y: 500 },
+                shipType: playerData.shipType || 'fighter',
+                health: playerData.health || 100
             });
         }
         return players;

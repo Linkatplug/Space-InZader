@@ -1864,4 +1864,46 @@ class UISystem {
         
         this.statsOverlayPanel.innerHTML = html;
     }
+
+    /**
+     * Update multiplayer lobby UI with player ready status
+     * @param {Array} players - Array of player objects with ready status
+     * @param {boolean} isHost - Whether current player is host
+     */
+    updateMultiplayerLobby(players, isHost) {
+        // Safe no-op implementation
+        // This method is called by MultiplayerManager to update lobby UI
+        // If you want to display lobby UI, implement it here
+        
+        console.log('[UI] updateMultiplayerLobby called', { 
+            playerCount: players ? players.length : 0, 
+            isHost, 
+            players 
+        });
+        
+        // Future: Add actual lobby UI update logic here
+        // For now, just log to prevent crashes
+        
+        // Example implementation (when lobby UI exists):
+        /*
+        const lobbyElement = document.getElementById('multiplayerLobby');
+        if (!lobbyElement) {
+            console.warn('[UI] Multiplayer lobby element not found');
+            return;
+        }
+        
+        let html = '<div class="lobby-players">';
+        players.forEach(player => {
+            const readyIcon = player.ready ? '✓' : '⏳';
+            const hostBadge = player.isHost ? '👑' : '';
+            html += `
+                <div class="lobby-player">
+                    ${hostBadge} ${player.name} ${readyIcon}
+                </div>
+            `;
+        });
+        html += '</div>';
+        lobbyElement.innerHTML = html;
+        */
+    }
 }
