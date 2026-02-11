@@ -17,7 +17,7 @@ const io = socketIO(server, {
     }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 7779;
 
 // Serve static files
 app.use(express.static(__dirname));
