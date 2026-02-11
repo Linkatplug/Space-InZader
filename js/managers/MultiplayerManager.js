@@ -424,9 +424,14 @@ class MultiplayerManager {
         // This will be called by Game.js to update the UI
         this.logState('Updating lobby UI', { players: this.roomPlayers });
         
-        // Trigger UI update in game
-        if (this.game && this.game.systems && this.game.systems.ui) {
-            this.game.systems.ui.updateMultiplayerLobby(this.roomPlayers, this.isHost);
+        // Trigger UI update in game (safe: UI system may not implement multiplayer lobby yet)
+        const ui = this.game?.systems?.ui;
+        const fn = ui?.updateMultiplayerLobby;
+        if (typeof fn === 'function') {
+            fn.call(ui, this.roomPlayers, this.isHost);
+        } else {
+            // Avoid crashing the whole multiplayer flow if UI method is missing
+            this.logState('UISystem.updateMultiplayerLobby missing (skipping UI update)');
         }
     }
 
@@ -601,24 +606,30 @@ class MultiplayerManager {
      */
     createOtherPlayerEntity(playerData) {
         const entity = this.game.world.createEntity('other-player');
+
+        // Defensive defaults: room-state/player lists may omit gameplay fields
+        // (especially during early handshake / partial payloads)
+        const safePos = playerData?.position || { x: 400, y: 500 };
+        const safeHealth = typeof playerData?.health === 'number' ? playerData.health : 100;
+        const safeShipType = playerData?.shipType || 'fighter';
         
         entity.addComponent('position', Components.Position(
-            playerData.position.x,
-            playerData.position.y
+            safePos.x,
+            safePos.y
         ));
         
         entity.addComponent('velocity', Components.Velocity(0, 0));
         entity.addComponent('collision', Components.Collision(15));
         
         entity.addComponent('health', Components.Health(
-            playerData.health,
-            playerData.health
+            safeHealth,
+            safeHealth
         ));
         
         entity.addComponent('otherPlayer', {
             playerId: playerData.playerId,
             name: playerData.name,
-            shipType: playerData.shipType
+            shipType: safeShipType
         });
 
         this.otherPlayers.set(playerData.playerId, entity);

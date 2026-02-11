@@ -135,10 +135,12 @@ class GameRoom {
                 isHost: playerData.isHost || (socketId === this.hostId),
                 ready: this.isPlayerReady(socketId),
                 socketId: socketId,
-                // Include full player data needed by createOtherPlayerEntity
-                position: playerData.position || { x: 400, y: 500 },
-                shipType: playerData.shipType || 'fighter',
-                health: playerData.health || 100
+
+                // Include gameplay fields so clients can safely create entities
+                // (MultiplayerManager.createOtherPlayerEntity expects these)
+                shipType: playerData.shipType,
+                position: playerData.position,
+                health: playerData.health
             });
         }
         return players;
