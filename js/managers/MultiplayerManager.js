@@ -16,6 +16,35 @@ class MultiplayerManager {
         
         // Queue for events received before game starts
         this.eventQueue = [];
+        
+        // State machine for reliable multiplayer
+        this.connectionState = 'DISCONNECTED'; // DISCONNECTED | CONNECTING | CONNECTED
+        this.roomState = 'NONE'; // NONE | HOSTING | JOINING | IN_ROOM
+        this.gameState = 'IDLE'; // IDLE | WAITING_READY | STARTING | RUNNING
+        this.currentRoomId = null;
+        this.joinInProgress = false;
+        this.hostInProgress = false;
+        this.readySent = false;
+        this.startReceived = false;
+        
+        // Room players state
+        this.roomPlayers = []; // Array of {playerId, name, ready, isHost}
+    }
+    
+    /**
+     * Log state transitions with context
+     */
+    logState(msg, extra = {}) {
+        console.log(`[MP] ${msg}`, {
+            connectionState: this.connectionState,
+            roomState: this.roomState,
+            gameState: this.gameState,
+            roomId: this.currentRoomId,
+            playerId: this.playerId,
+            isHost: this.isHost,
+            readySent: this.readySent,
+            ...extra
+        });
     }
 
     /**
@@ -24,22 +53,40 @@ class MultiplayerManager {
      */
     connect(serverUrl) {
         if (typeof io === 'undefined') {
-            console.error('Socket.IO not loaded');
+            console.error('[MP] Socket.IO not loaded');
             return false;
         }
+        
+        // Prevent multiple connections
+        if (this.socket && this.connectionState !== 'DISCONNECTED') {
+            this.logState('Already connected or connecting, skipping');
+            return true;
+        }
+
+        this.connectionState = 'CONNECTING';
+        this.logState('Connecting to server', { serverUrl: serverUrl || 'same-origin' });
 
         // Connect to same origin if no URL provided (recommended for production)
-        // This allows the game to work on both localhost:3000 and games.linkatplug.be:7779
         this.socket = serverUrl ? io(serverUrl) : io();
         
+        // Remove all previous listeners to prevent duplicates
+        this.socket.removeAllListeners();
+        
+        // Add debug listener for all incoming events
+        this.socket.onAny((event, ...args) => {
+            console.log('[MP IN]', event, args);
+        });
+        
         this.socket.on('connect', () => {
-            console.log('Connected to multiplayer server');
+            this.connectionState = 'CONNECTED';
             this.connected = true;
+            this.logState('Connected to server', { socketId: this.socket.id });
         });
 
         this.socket.on('disconnect', () => {
-            console.log('Disconnected from multiplayer server');
+            this.connectionState = 'DISCONNECTED';
             this.connected = false;
+            this.logState('Disconnected from server');
             this.showDisconnectMessage();
         });
 
@@ -78,13 +125,25 @@ class MultiplayerManager {
 
         // Player joined
         this.socket.on('player-joined', (data) => {
-            console.log('Another player joined:', data.playerData);
+            this.logState('Player joined notification', data);
             this.onPlayerJoined(data.playerData);
         });
+        
+        // Room state update (new protocol)
+        this.socket.on('room-state', (data) => {
+            this.logState('Room state update received', data);
+            this.updateRoomState(data);
+        });
+        
+        // Start game (new synchronized protocol)
+        this.socket.on('start-game', (data) => {
+            this.logState('Start game command received', data);
+            this.onGameStart(data);
+        });
 
-        // Game started
+        // Game started (old protocol - keep for compatibility)
         this.socket.on('game-started', (data) => {
-            console.log('Game started with players:', data.players);
+            this.logState('Game started (legacy)', data);
             // Host already started, client needs to start
             if (!this.isHost && this.game.gameState.state !== GameStates.RUNNING) {
                 this.game.startGame();
@@ -150,28 +209,46 @@ class MultiplayerManager {
             alert('Non connecté au serveur');
             return;
         }
+        
+        // Prevent double-create
+        if (this.hostInProgress) {
+            this.logState('Create room already in progress, ignoring');
+            return;
+        }
+        
+        if (this.currentRoomId) {
+            this.logState('Already in a room, ignoring', { currentRoom: this.currentRoomId });
+            return;
+        }
 
-        console.log('[Multiplayer] Creating room...');
+        this.hostInProgress = true;
+        this.roomState = 'HOSTING';
+        this.logState('Creating room...', { playerName, shipType });
         
         this.socket.emit('create-room', {
             playerName: playerName,
             shipType: shipType
         }, (response) => {
-            console.log('[create-room ACK]', response);
+            this.logState('Create room ACK received', response);
+            this.hostInProgress = false;
             
             if (!response?.ok) {
                 const errorMsg = response?.error || 'Erreur inconnue';
-                console.error('Create room failed:', errorMsg);
+                this.logState('Create room failed', { error: errorMsg });
                 alert('Impossible de créer la partie: ' + errorMsg);
+                this.roomState = 'NONE';
                 return;
             }
             
             // Success - update state
             this.roomId = response.roomId;
+            this.currentRoomId = response.roomId;
             this.playerId = response.playerId;
             this.isHost = true;
             this.multiplayerEnabled = true;
-            console.log(`Room created successfully: ${this.roomId}`);
+            this.roomState = 'IN_ROOM';
+            this.gameState = 'WAITING_READY';
+            this.logState('Room created successfully');
             this.showRoomCode();
         });
     }
@@ -184,57 +261,173 @@ class MultiplayerManager {
             alert('Non connecté au serveur');
             return;
         }
+        
+        // Prevent double-join
+        if (this.joinInProgress) {
+            this.logState('Join room already in progress, ignoring');
+            return;
+        }
+        
+        if (this.currentRoomId) {
+            this.logState('Already in a room, ignoring', { currentRoom: this.currentRoomId });
+            return;
+        }
 
-        console.log('[Multiplayer] Joining room:', roomId);
+        this.joinInProgress = true;
+        this.roomState = 'JOINING';
+        this.logState('Joining room...', { roomId, playerName, shipType });
         
         this.socket.emit('join-room', {
             roomId: roomId,
             playerName: playerName,
             shipType: shipType
         }, (response) => {
-            console.log('[join-room ACK]', response);
+            this.logState('Join room ACK received', response);
+            this.joinInProgress = false;
             
             if (!response?.ok) {
                 const errorMsg = response?.error || 'Erreur inconnue';
-                console.error('Join room failed:', errorMsg);
+                this.logState('Join room failed', { error: errorMsg });
                 alert('Impossible de rejoindre la partie: ' + errorMsg);
+                this.roomState = 'NONE';
                 return;
             }
             
             // Success - update state
             this.roomId = response.roomId;
+            this.currentRoomId = response.roomId;
             this.playerId = response.playerId;
             this.isHost = false;
             this.multiplayerEnabled = true;
-            console.log(`Joined room successfully: ${this.roomId} as Player ${this.playerId}`);
+            this.roomState = 'IN_ROOM';
+            this.gameState = 'WAITING_READY';
+            this.logState('Joined room successfully');
             this.onRoomJoined(response.players);
         });
     }
 
     /**
-     * Start the game (host only)
+     * Start the game (host only) - OLD PROTOCOL
      */
     startMultiplayerGame() {
         if (!this.isHost) {
-            console.warn('Only host can start the game');
+            this.logState('Only host can start the game');
             return;
         }
         
-        console.log('[Multiplayer] Starting game...');
+        this.logState('Starting game (legacy)...');
         
         this.socket.emit('start-game', (response) => {
-            console.log('[start-game ACK]', response);
+            this.logState('Start game ACK (legacy)', response);
             
             if (!response?.ok) {
                 const errorMsg = response?.error || 'Erreur inconnue';
-                console.error('Start game failed:', errorMsg);
+                this.logState('Start game failed', { error: errorMsg });
                 alert('Impossible de démarrer la partie: ' + errorMsg);
                 return;
             }
             
-            // Success
-            console.log('Game started successfully');
+            this.logState('Game started successfully (legacy)');
         });
+    }
+    
+    /**
+     * Send ready status - NEW PROTOCOL
+     */
+    sendReady() {
+        if (!this.currentRoomId) {
+            this.logState('Cannot send ready: not in a room');
+            return;
+        }
+        
+        if (this.readySent) {
+            this.logState('Ready already sent, ignoring');
+            return;
+        }
+        
+        this.readySent = true;
+        this.logState('Sending ready status');
+        
+        this.socket.emit('player-ready', {
+            roomId: this.currentRoomId
+        }, (response) => {
+            this.logState('Player ready ACK', response);
+            
+            if (!response?.ok) {
+                const errorMsg = response?.error || 'Erreur inconnue';
+                this.logState('Player ready failed', { error: errorMsg });
+                alert('Erreur lors de l\'envoi du statut prêt: ' + errorMsg);
+                this.readySent = false;
+                return;
+            }
+            
+            this.logState('Ready status sent successfully');
+        });
+    }
+    
+    /**
+     * Update room state from server
+     */
+    updateRoomState(data) {
+        this.logState('Updating room state', data);
+        
+        if (data.roomId !== this.currentRoomId) {
+            this.logState('Room state for different room, ignoring', { 
+                expected: this.currentRoomId, 
+                received: data.roomId 
+            });
+            return;
+        }
+        
+        // Update players list with ready status
+        this.roomPlayers = data.players || [];
+        
+        // Update UI to show player ready status
+        this.updateLobbyUI();
+    }
+    
+    /**
+     * Handle game start command from server
+     */
+    onGameStart(data) {
+        if (this.startReceived) {
+            this.logState('Start already received, ignoring duplicate');
+            return;
+        }
+        
+        this.startReceived = true;
+        this.gameState = 'STARTING';
+        this.logState('Processing game start', data);
+        
+        const startAt = data.startAt || Date.now();
+        const now = Date.now();
+        const delay = Math.max(0, startAt - now);
+        
+        this.logState('Scheduling game start', { startAt, now, delay });
+        
+        // Wait until synchronized start time
+        setTimeout(() => {
+            this.gameState = 'RUNNING';
+            this.logState('Starting game NOW');
+            
+            // Start the actual game
+            if (this.game.gameState.state !== GameStates.RUNNING) {
+                this.game.startGame();
+            }
+        }, delay);
+    }
+    
+    /**
+     * Update lobby UI with player ready status
+     */
+    updateLobbyUI() {
+        // This will be called by Game.js to update the UI
+        this.logState('Updating lobby UI', { players: this.roomPlayers });
+        
+        // Trigger UI update in game
+        if (this.game && this.game.systems && this.game.systems.ui) {
+            this.game.systems.ui.updateMultiplayerLobby(this.roomPlayers, this.isHost);
+        }
     }
 
     /**

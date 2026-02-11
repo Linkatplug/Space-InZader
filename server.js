@@ -36,9 +36,16 @@ class GameRoom {
             projectiles: new Map(),
             pickups: new Map()
         };
+        this.readyStatus = new Map(); // socketId -> boolean
     }
 
     addPlayer(socketId, playerData) {
+        // Check if player already in room (reconnection scenario)
+        if (this.players.has(socketId)) {
+            console.log(`[SV] Player ${socketId} already in room ${this.roomId}`);
+            return { alreadyInRoom: true, playerId: this.players.get(socketId).playerId };
+        }
+        
         if (this.players.size >= 2) {
             return false; // Room full
         }
@@ -46,16 +53,20 @@ class GameRoom {
         if (this.players.size === 0) {
             this.hostId = socketId;
             playerData.playerId = 1;
+            playerData.isHost = true;
         } else {
             playerData.playerId = 2;
+            playerData.isHost = false;
         }
         
         this.players.set(socketId, playerData);
+        this.readyStatus.set(socketId, false);
         return true;
     }
 
     removePlayer(socketId) {
         this.players.delete(socketId);
+        this.readyStatus.delete(socketId);
         
         // If host leaves, make other player host
         if (socketId === this.hostId && this.players.size > 0) {
@@ -63,8 +74,49 @@ class GameRoom {
             const newHost = this.players.get(this.hostId);
             if (newHost) {
                 newHost.playerId = 1;
+                newHost.isHost = true;
             }
         }
+    }
+    
+    setPlayerReady(socketId, ready) {
+        if (!this.players.has(socketId)) {
+            return false;
+        }
+        this.readyStatus.set(socketId, ready);
+        console.log(`[SV] Player ${socketId} ready status: ${ready} in room ${this.roomId}`);
+        return true;
+    }
+    
+    isPlayerReady(socketId) {
+        return this.readyStatus.get(socketId) || false;
+    }
+    
+    areAllPlayersReady() {
+        if (this.players.size < 2) {
+            return false; // Need 2 players
+        }
+        
+        for (const [socketId, _] of this.players) {
+            if (!this.isPlayerReady(socketId)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    getPlayersWithReadyStatus() {
+        const players = [];
+        for (const [socketId, playerData] of this.players) {
+            players.push({
+                playerId: playerData.playerId,
+                name: playerData.name,
+                isHost: playerData.isHost || (socketId === this.hostId),
+                ready: this.isPlayerReady(socketId),
+                socketId: socketId
+            });
+        }
+        return players;
     }
 
     isFull() {
@@ -96,7 +148,8 @@ io.on('connection', (socket) => {
                 shipType: data.shipType || 'fighter',
                 position: { x: 400, y: 500 },
                 health: 100,
-                playerId: 1
+                playerId: 1,
+                isHost: true
             };
 
             room.addPlayer(socket.id, playerData);
@@ -105,7 +158,7 @@ io.on('connection', (socket) => {
             socket.join(roomId);
             socket.roomId = roomId;
             
-            console.log(`Room created: ${roomId} by ${socket.id}`);
+            console.log(`[SV] create-room socket=${socket.id} room=${roomId} players=${room.players.size}`);
             
             // Send ACK with success response
             if (callback) {
@@ -113,7 +166,8 @@ io.on('connection', (socket) => {
                     ok: true,
                     roomId: roomId,
                     playerId: 1,
-                    playerData: playerData
+                    playerData: playerData,
+                    players: room.getPlayersWithReadyStatus()
                 });
             }
             
@@ -124,7 +178,7 @@ io.on('connection', (socket) => {
                 playerData: playerData
             });
         } catch (error) {
-            console.error('Error creating room:', error);
+            console.error('[SV] Error creating room:', error);
             if (callback) {
                 callback({
                     ok: false,
@@ -142,7 +196,7 @@ io.on('connection', (socket) => {
 
             if (!room) {
                 const errorMsg = 'Room not found';
-                console.log(`Join failed: ${errorMsg} - ${roomId}`);
+                console.log(`[SV] join-room FAILED socket=${socket.id} room=${roomId} reason=${errorMsg}`);
                 if (callback) {
                     callback({
                         ok: false,
@@ -154,61 +208,85 @@ io.on('connection', (socket) => {
                 return;
             }
 
-            if (room.isFull()) {
-                const errorMsg = 'Room is full';
-                console.log(`Join failed: ${errorMsg} - ${roomId}`);
-                if (callback) {
-                    callback({
-                        ok: false,
-                        error: errorMsg
-                    });
-                }
-                // Still emit for backward compatibility
-                socket.emit('join-error', { message: errorMsg });
-                return;
-            }
-
-            const playerData = {
+            // Check if already in room (reconnection)
+            const addResult = room.addPlayer(socket.id, {
                 socketId: socket.id,
                 name: data.playerName || 'Player 2',
                 shipType: data.shipType || 'fighter',
                 position: { x: 400, y: 500 },
                 health: 100,
-                playerId: 2
-            };
+                playerId: 2,
+                isHost: false
+            });
+            
+            if (addResult === false) {
+                // Room is full
+                const errorMsg = 'Room is full';
+                console.log(`[SV] join-room FAILED socket=${socket.id} room=${roomId} reason=${errorMsg} players=${room.players.size}`);
+                if (callback) {
+                    callback({
+                        ok: false,
+                        error: errorMsg
+                    });
+                }
+                socket.emit('join-error', { message: errorMsg });
+                return;
+            }
+            
+            if (addResult.alreadyInRoom) {
+                // Player reconnecting
+                console.log(`[SV] join-room RECONNECT socket=${socket.id} room=${roomId} playerId=${addResult.playerId}`);
+                if (callback) {
+                    callback({
+                        ok: true,
+                        roomId: roomId,
+                        playerId: addResult.playerId,
+                        already: true,
+                        players: room.getPlayersWithReadyStatus()
+                    });
+                }
+                return;
+            }
 
-            room.addPlayer(socket.id, playerData);
             socket.join(roomId);
             socket.roomId = roomId;
 
-            console.log(`Player ${socket.id} joined room ${roomId}`);
+            const playerData = room.players.get(socket.id);
+            console.log(`[SV] join-room SUCCESS socket=${socket.id} room=${roomId} playerId=${playerData.playerId} totalPlayers=${room.players.size}`);
 
             // Send ACK with success response
             if (callback) {
                 callback({
                     ok: true,
                     roomId: roomId,
-                    playerId: 2,
+                    playerId: playerData.playerId,
                     playerData: playerData,
-                    players: room.getPlayerData()
+                    players: room.getPlayersWithReadyStatus()
                 });
             }
 
             // Still emit for backward compatibility
             socket.emit('room-joined', {
                 roomId: roomId,
-                playerId: 2,
+                playerId: playerData.playerId,
                 playerData: playerData,
                 players: room.getPlayerData()
             });
 
-            // Notify other player
+            // Notify other player and broadcast room state
             socket.to(roomId).emit('player-joined', {
                 playerData: playerData,
                 players: room.getPlayerData()
             });
+            
+            // Broadcast updated room state to all players
+            io.to(roomId).emit('room-state', {
+                roomId: roomId,
+                players: room.getPlayersWithReadyStatus(),
+                hostId: room.hostId
+            });
         } catch (error) {
-            console.error('Error joining room:', error);
+            console.error('[SV] Error joining room:', error);
             if (callback) {
                 callback({
                     ok: false,
@@ -218,7 +296,89 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Start game
+    
+    // Player ready (NEW PROTOCOL)
+    socket.on('player-ready', (data, callback) => {
+        try {
+            const roomId = data.roomId || socket.roomId;
+            const room = rooms.get(roomId);
+            
+            if (!room) {
+                const errorMsg = 'Room not found';
+                console.log(`[SV] player-ready FAILED socket=${socket.id} room=${roomId} reason=${errorMsg}`);
+                if (callback) {
+                    callback({
+                        ok: false,
+                        error: errorMsg
+                    });
+                }
+                return;
+            }
+            
+            // Mark player as ready
+            const success = room.setPlayerReady(socket.id, true);
+            if (!success) {
+                const errorMsg = 'Player not in room';
+                console.log(`[SV] player-ready FAILED socket=${socket.id} room=${roomId} reason=${errorMsg}`);
+                if (callback) {
+                    callback({
+                        ok: false,
+                        error: errorMsg
+                    });
+                }
+                return;
+            }
+            
+            const playersStatus = room.getPlayersWithReadyStatus();
+            console.log(`[SV] player-ready SUCCESS socket=${socket.id} room=${roomId} players=`, playersStatus.map(p => `${p.playerId}:${p.ready}`).join(','));
+            
+            // Send ACK
+            if (callback) {
+                callback({
+                    ok: true,
+                    roomId: roomId
+                });
+            }
+            
+            // Broadcast room state to all players
+            io.to(roomId).emit('room-state', {
+                roomId: roomId,
+                players: playersStatus,
+                hostId: room.hostId
+            });
+            
+            // Check if all players are ready
+            if (room.areAllPlayersReady()) {
+                console.log(`[SV] All players ready in room ${roomId}, starting game...`);
+                
+                // Generate seed for synchronized random
+                const seed = Date.now();
+                const startAt = Date.now() + 1000; // Start in 1 second
+                
+                room.gameState.started = true;
+                
+                console.log(`[SV] start-game AUTO room=${roomId} seed=${seed} startAt=${startAt} players=${room.players.size}`);
+                
+                // Notify all players to start
+                io.to(roomId).emit('start-game', {
+                    roomId: roomId,
+                    seed: seed,
+                    startAt: startAt,
+                    players: room.getPlayerData()
+                });
+            }
+        } catch (error) {
+            console.error('[SV] Error handling player-ready:', error);
+            if (callback) {
+                callback({
+                    ok: false,
+                    error: 'Failed to process ready: ' + error.message
+                });
+            }
+        }
+    });
+
+    // Start game (LEGACY - kept for backward compatibility)
     socket.on('start-game', (callback) => {
         try {
             const roomId = socket.roomId;
@@ -226,7 +386,7 @@ io.on('connection', (socket) => {
 
             if (!room) {
                 const errorMsg = 'Room not found';
-                console.log(`Start game failed: ${errorMsg}`);
+                console.log(`[SV] start-game FAILED socket=${socket.id} reason=${errorMsg}`);
                 if (callback) {
                     callback({
                         ok: false,
@@ -238,7 +398,7 @@ io.on('connection', (socket) => {
 
             if (room.hostId !== socket.id) {
                 const errorMsg = 'Only host can start the game';
-                console.log(`Start game failed: ${errorMsg}`);
+                console.log(`[SV] start-game FAILED socket=${socket.id} room=${roomId} reason=${errorMsg}`);
                 if (callback) {
                     callback({
                         ok: false,
@@ -250,7 +410,7 @@ io.on('connection', (socket) => {
 
             room.gameState.started = true;
             
-            console.log(`Game started in room ${roomId}`);
+            console.log(`[SV] start-game LEGACY room=${roomId} by host`);
             
             // Send ACK with success response
             if (callback) {
@@ -266,7 +426,7 @@ io.on('connection', (socket) => {
                 players: room.getPlayerData()
             });
         } catch (error) {
-            console.error('Error starting game:', error);
+            console.error('[SV] Error starting game:', error);
             if (callback) {
                 callback({
                     ok: false,
