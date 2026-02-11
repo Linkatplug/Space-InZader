@@ -1874,6 +1874,53 @@ class UISystem {
     showScreen(screenId) {
         console.log(`[UI] showScreen: ${screenId}`);
         
+        // Legacy ID mapping for backward compatibility
+        const legacyIdMap = {
+            'menu': 'mainMenu',
+            'meta': 'metaScreen',
+            'game': 'gameHud',  // Special case: when game is running
+            'gameOver': 'gameOverScreen',
+            'pause': 'pauseMenu',
+            'commands': 'commandsScreen',
+            'options': 'optionsScreen',
+            'scoreboard': 'scoreboardScreen',
+            'credits': 'creditsScreen'
+        };
+        
+        // Map legacy ID to actual ID
+        const actualId = legacyIdMap[screenId] || screenId;
+        
+        // Special case: 'game' means hide all menus and show game HUD
+        if (screenId === 'game') {
+            // Hide all menu screens
+            const menuScreens = [
+                "mainMenu",
+                "menuScreen",
+                "multiplayerMenu",
+                "multiplayerHostScreen",
+                "multiplayerJoinScreen",
+                "multiplayerLobbyScreen",
+                "shipSelectionScreen",
+                "pauseMenu",
+                "gameOverScreen",
+                "metaScreen",
+                "commandsScreen",
+                "optionsScreen",
+                "scoreboardScreen",
+                "creditsScreen"
+            ];
+            
+            for (const id of menuScreens) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.display = "none";
+                    el.classList.remove('active');
+                }
+            }
+            console.log(`[UI] Game mode - all menus hidden`);
+            return;
+        }
+        
         // List of all screens that should be mutually exclusive
         const screens = [
             "mainMenu",
@@ -1902,13 +1949,13 @@ class UISystem {
         }
         
         // Show target screen
-        const target = document.getElementById(screenId);
+        const target = document.getElementById(actualId);
         if (target) {
             target.style.display = "flex";
             target.classList.add('active');
-            console.log(`[UI] Showing screen: ${screenId}`);
+            console.log(`[UI] Showing screen: ${actualId}`);
         } else {
-            console.warn(`[UI] Screen not found: ${screenId}`);
+            console.warn(`[UI] Screen not found: ${actualId} (original: ${screenId})`);
         }
     }
 
