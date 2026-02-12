@@ -272,6 +272,71 @@ class SynergySystem {
     forceRecalculate() {
         this.recalculateSynergies();
     }
+    
+    /**
+     * Calculate new tag-based synergy effects
+     * @returns {Object} Tag effects data
+     */
+    calculateTagEffects() {
+        if (!this.player) return null;
+        
+        const playerComp = this.player.getComponent('player');
+        if (!playerComp) return null;
+        
+        // Get weapons and modules
+        const weapons = playerComp.weapons || [];
+        const modules = playerComp.modules || [];
+        
+        // Use TagSynergyData if available
+        if (typeof calculateTagEffects !== 'undefined') {
+            return calculateTagEffects(weapons, modules);
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Apply tag synergy bonuses to weapon damage
+     * @param {Object} weapon - Weapon data
+     * @returns {number} Damage multiplier
+     */
+    getWeaponTagMultiplier(weapon) {
+        const tagEffects = this.calculateTagEffects();
+        if (!tagEffects) return 1.0;
+        
+        if (typeof getWeaponTagMultiplier !== 'undefined') {
+            return getWeaponTagMultiplier(weapon, tagEffects);
+        }
+        
+        return 1.0;
+    }
+    
+    /**
+     * Get synergy summary for UI
+     * @returns {Object[]} Array of active synergies
+     */
+    getSynergySummary() {
+        const summary = [];
+        
+        // Add old synergies
+        this.activeSynergies.forEach((data, id) => {
+            summary.push({
+                id,
+                count: data.count,
+                threshold: data.threshold,
+                type: 'legacy'
+            });
+        });
+        
+        // Add new tag synergies
+        const tagEffects = this.calculateTagEffects();
+        if (tagEffects && typeof getSynergySummary !== 'undefined') {
+            const tagSummary = getSynergySummary(tagEffects);
+            summary.push(...tagSummary);
+        }
+        
+        return summary;
+    }
 }
 
 // Export to global namespace

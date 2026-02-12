@@ -1,0 +1,251 @@
+/**
+ * @file HeatSystem.js
+ * @description Manages heat generation, cooling, and overheat mechanics
+ */
+
+class HeatSystem {
+    constructor(world, gameState) {
+        this.world = world;
+        this.gameState = gameState;
+    }
+
+    /**
+     * Update heat for all entities with heat components
+     * @param {number} deltaTime - Time elapsed since last frame
+     */
+    update(deltaTime) {
+        const players = this.world.getEntitiesByType('player');
+        
+        for (const player of players) {
+            this.updateHeat(player, deltaTime);
+        }
+    }
+
+    /**
+     * Update heat component for an entity
+     * @param {Entity} entity - Entity to update
+     * @param {number} deltaTime - Time elapsed
+     */
+    updateHeat(entity, deltaTime) {
+        const heat = entity.getComponent('heat');
+        if (!heat) return;
+
+        // Handle overheat timer
+        if (heat.overheated) {
+            heat.overheatTimer -= deltaTime;
+            
+            if (heat.overheatTimer <= 0) {
+                // Recovery from overheat
+                heat.overheated = false;
+                heat.current = typeof HEAT_SYSTEM !== 'undefined' 
+                    ? HEAT_SYSTEM.OVERHEAT_RECOVERY_VALUE 
+                    : 50;
+            }
+            // Don't process cooling or passive heat while overheated
+            return;
+        }
+
+        // Apply passive heat generation
+        heat.current += heat.passiveHeat * deltaTime;
+
+        // Apply cooling
+        const coolingAmount = heat.cooling * deltaTime;
+        heat.current = Math.max(0, heat.current - coolingAmount);
+
+        // Check for overheat
+        if (heat.current >= heat.max) {
+            this.triggerOverheat(entity);
+        }
+    }
+
+    /**
+     * Add heat to an entity
+     * @param {Entity} entity - Entity to add heat to
+     * @param {number} amount - Heat amount to add
+     * @returns {boolean} True if overheat was triggered
+     */
+    addHeat(entity, amount) {
+        const heat = entity.getComponent('heat');
+        if (!heat || heat.overheated) return false;
+
+        heat.current += amount;
+
+        // Check for overheat
+        if (heat.current >= heat.max) {
+            this.triggerOverheat(entity);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Trigger overheat condition
+     * @param {Entity} entity - Entity to overheat
+     */
+    triggerOverheat(entity) {
+        const heat = entity.getComponent('heat');
+        if (!heat) return;
+
+        heat.overheated = true;
+        heat.overheatTimer = typeof HEAT_SYSTEM !== 'undefined'
+            ? HEAT_SYSTEM.OVERHEAT_DISABLE_DURATION
+            : 2.0;
+        heat.current = heat.max; // Keep at max during overheat
+
+        // Visual/audio feedback
+        console.log('⚠️ OVERHEAT! Weapons disabled for', heat.overheatTimer, 'seconds');
+        
+        // Store overheat state in gameState if it's a player
+        if (entity.type === 'player' && this.gameState) {
+            this.gameState.weaponDisabled = true;
+            
+            // Set a timer to re-enable weapons
+            setTimeout(() => {
+                if (this.gameState) {
+                    this.gameState.weaponDisabled = false;
+                }
+            }, heat.overheatTimer * 1000);
+        }
+    }
+
+    /**
+     * Check if entity is overheated
+     * @param {Entity} entity - Entity to check
+     * @returns {boolean} True if overheated
+     */
+    isOverheated(entity) {
+        const heat = entity.getComponent('heat');
+        return heat ? heat.overheated : false;
+    }
+
+    /**
+     * Get heat percentage
+     * @param {Entity} entity - Entity to check
+     * @returns {number} Heat percentage (0-1)
+     */
+    getHeatPercent(entity) {
+        const heat = entity.getComponent('heat');
+        if (!heat) return 0;
+        
+        return heat.max > 0 ? Math.min(1, heat.current / heat.max) : 0;
+    }
+
+    /**
+     * Check if heat is in warning zone
+     * @param {Entity} entity - Entity to check
+     * @returns {boolean} True if heat is high
+     */
+    isHeatWarning(entity) {
+        const heatPercent = this.getHeatPercent(entity);
+        const warningThreshold = typeof HEAT_SYSTEM !== 'undefined'
+            ? HEAT_SYSTEM.WARNING_THRESHOLD
+            : 0.8;
+        
+        return heatPercent >= warningThreshold;
+    }
+
+    /**
+     * Modify cooling rate
+     * @param {Entity} entity - Entity to modify
+     * @param {number} amount - Amount to add to cooling (can be negative)
+     */
+    modifyCooling(entity, amount) {
+        const heat = entity.getComponent('heat');
+        if (!heat) return;
+
+        heat.cooling = Math.max(0, heat.cooling + amount);
+    }
+
+    /**
+     * Modify passive heat generation
+     * @param {Entity} entity - Entity to modify
+     * @param {number} amount - Amount to add to passive heat
+     */
+    modifyPassiveHeat(entity, amount) {
+        const heat = entity.getComponent('heat');
+        if (!heat) return;
+
+        heat.passiveHeat = Math.max(0, heat.passiveHeat + amount);
+    }
+
+    /**
+     * Modify max heat capacity
+     * @param {Entity} entity - Entity to modify
+     * @param {number} amount - Amount to add to max heat
+     */
+    modifyMaxHeat(entity, amount) {
+        const heat = entity.getComponent('heat');
+        if (!heat) return;
+
+        heat.max = Math.max(1, heat.max + amount);
+    }
+
+    /**
+     * Force cool down (set heat to 0)
+     * @param {Entity} entity - Entity to cool
+     */
+    forceCooldown(entity) {
+        const heat = entity.getComponent('heat');
+        if (!heat) return;
+
+        heat.current = 0;
+        heat.overheated = false;
+        heat.overheatTimer = 0;
+        
+        if (entity.type === 'player' && this.gameState) {
+            this.gameState.weaponDisabled = false;
+        }
+    }
+
+    /**
+     * Calculate heat per second from weapons
+     * @param {Object[]} weapons - Array of equipped weapons
+     * @returns {number} Total heat per second
+     */
+    calculateWeaponHeat(weapons) {
+        let totalHeatPerSecond = 0;
+
+        for (const weapon of weapons) {
+            if (!weapon || !weapon.data) continue;
+
+            const heat = weapon.data.heat || 0;
+            const fireRate = weapon.data.fireRate || 1;
+            totalHeatPerSecond += heat * fireRate;
+        }
+
+        return totalHeatPerSecond;
+    }
+
+    /**
+     * Get visual heat level (for UI)
+     * @param {Entity} entity - Entity to check
+     * @returns {string} Heat level description
+     */
+    getHeatLevel(entity) {
+        const percent = this.getHeatPercent(entity);
+
+        if (percent >= 1.0) return 'OVERHEAT';
+        if (percent >= 0.8) return 'CRITICAL';
+        if (percent >= 0.6) return 'HIGH';
+        if (percent >= 0.4) return 'MEDIUM';
+        if (percent >= 0.2) return 'LOW';
+        return 'COOL';
+    }
+
+    /**
+     * Get heat color for UI
+     * @param {Entity} entity - Entity to check
+     * @returns {string} Color hex code
+     */
+    getHeatColor(entity) {
+        const percent = this.getHeatPercent(entity);
+
+        if (percent >= 1.0) return '#FF0000'; // Red - overheat
+        if (percent >= 0.8) return '#FF6600'; // Orange-red - critical
+        if (percent >= 0.6) return '#FF9900'; // Orange - high
+        if (percent >= 0.4) return '#FFCC00'; // Yellow - medium
+        if (percent >= 0.2) return '#99FF00'; // Yellow-green - low
+        return '#00FF00'; // Green - cool
+    }
+}

@@ -850,4 +850,121 @@ class CombatSystem {
             }
         }
     }
+    
+    /**
+     * Fire weapon with new heat system integration
+     * @param {Entity} player - Player entity
+     * @param {Object} weapon - Weapon data
+     */
+    fireWeaponWithHeat(player, weapon) {
+        // Check heat first
+        const heat = player.getComponent('heat');
+        if (heat && heat.overheated) {
+            return; // Cannot fire when overheated
+        }
+        
+        // Fire the weapon normally
+        this.fireWeapon(player, weapon);
+        
+        // Add heat if system is active
+        if (heat && weapon.data && weapon.data.heat) {
+            const heatAmount = weapon.data.heat;
+            heat.current += heatAmount;
+            
+            // Check for overheat
+            if (heat.current >= heat.max && this.world.heatSystem) {
+                this.world.heatSystem.triggerOverheat(player);
+            }
+        }
+    }
+    
+    /**
+     * Calculate damage with new defense system
+     * @param {Entity} attacker - Attacking entity
+     * @param {Entity} target - Target entity
+     * @param {number} baseDamage - Base damage
+     * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
+     * @returns {Object} Damage result
+     */
+    calculateDamageWithDefense(attacker, target, baseDamage, damageType = 'kinetic') {
+        // Apply attacker's damage multipliers
+        const attackerPlayer = attacker.getComponent('player');
+        let damage = baseDamage;
+        
+        if (attackerPlayer && attackerPlayer.stats) {
+            damage *= attackerPlayer.stats.damageMultiplier || 1;
+            
+            // Apply tag synergies if available
+            if (this.world.synergySystem) {
+                const weapon = { damageType, tags: [damageType] };
+                const tagMultiplier = this.world.synergySystem.getWeaponTagMultiplier(weapon);
+                damage *= tagMultiplier;
+            }
+            
+            // Apply crit if available
+            if (typeof rollCrit !== 'undefined' && typeof CRIT_CAPS !== 'undefined') {
+                const critChance = Math.min(attackerPlayer.stats.critChance || 0, CRIT_CAPS.MAX_CRIT_CHANCE);
+                const critDamage = Math.min(attackerPlayer.stats.critDamage || 1.5, CRIT_CAPS.MAX_CRIT_DAMAGE);
+                
+                if (rollCrit(critChance)) {
+                    damage *= critDamage;
+                }
+            }
+        }
+        
+        // Apply damage through defense system
+        if (this.world.defenseSystem) {
+            return this.world.defenseSystem.applyDamage(target, damage, damageType);
+        }
+        
+        // Fallback to old health system
+        const health = target.getComponent('health');
+        if (health) {
+            health.current -= damage;
+            return {
+                totalDamage: damage,
+                layersDamaged: ['health'],
+                destroyed: health.current <= 0,
+                damageType
+            };
+        }
+        
+        return {
+            totalDamage: 0,
+            layersDamaged: [],
+            destroyed: false,
+            damageType
+        };
+    }
+    
+    /**
+     * Get damage type for a weapon
+     * @param {Object} weaponData - Weapon data
+     * @returns {string} Damage type
+     */
+    getWeaponDamageType(weaponData) {
+        if (!weaponData) return 'kinetic';
+        
+        // Check if weapon has explicit damage type (new system)
+        if (weaponData.damageType) {
+            return weaponData.damageType;
+        }
+        
+        // Infer from weapon ID or tags (legacy compatibility)
+        if (weaponData.id) {
+            const id = weaponData.id.toLowerCase();
+            if (id.includes('ion') || id.includes('emp') || id.includes('arc') || id.includes('disruptor')) {
+                return 'em';
+            }
+            if (id.includes('plasma') || id.includes('thermal') || id.includes('flame') || id.includes('solar')) {
+                return 'thermal';
+            }
+            if (id.includes('missile') || id.includes('bomb') || id.includes('explosive') || id.includes('cluster')) {
+                return 'explosive';
+            }
+        }
+        
+        // Default to kinetic
+        return 'kinetic';
+    }
 }
