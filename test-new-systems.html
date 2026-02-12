@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>System Test - Space InZader</title>
+</head>
+<body>
+    <h1>System Test</h1>
+    <div id="output"></div>
+    
+    <!-- Core files -->
+    <script src="js/utils/Math.js"></script>
+    <script src="js/utils/Logger.js"></script>
+    <script src="js/core/ECS.js"></script>
+    
+    <!-- New data files -->
+    <script src="js/data/DefenseData.js"></script>
+    <script src="js/data/HeatData.js"></script>
+    <script src="js/data/NewWeaponData.js"></script>
+    <script src="js/data/ModuleData.js"></script>
+    <script src="js/data/EnemyProfiles.js"></script>
+    <script src="js/data/LootData.js"></script>
+    <script src="js/data/TagSynergyData.js"></script>
+    
+    <!-- New systems -->
+    <script src="js/systems/DefenseSystem.js"></script>
+    <script src="js/systems/HeatSystem.js"></script>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        function log(msg, status = 'ok') {
+            const color = status === 'ok' ? 'green' : 'red';
+            output.innerHTML += `<p style="color: ${color}">${status === 'ok' ? '✓' : '✗'} ${msg}</p>`;
+        }
+        
+        try {
+            // Test 1: Defense data
+            log('DefenseData loaded');
+            log(`DAMAGE_TYPES defined: ${Object.keys(DAMAGE_TYPES).join(', ')}`);
+            log(`BASE_DEFENSE_VALUES defined`);
+            
+            // Test 2: Create defense component
+            const defense = createDefenseComponent();
+            log(`Defense component created: Shield=${defense.shield.max}, Armor=${defense.armor.max}, Structure=${defense.structure.max}`);
+            
+            // Test 3: Heat data
+            log('HeatData loaded');
+            log(`Heat system max: ${HEAT_SYSTEM.MAX_HEAT}, cooling: ${HEAT_SYSTEM.BASE_COOLING}`);
+            
+            // Test 4: New weapons
+            log('NewWeaponData loaded');
+            log(`Total weapons: ${Object.keys(NEW_WEAPONS).length}`);
+            log(`Sample weapon: ${NEW_WEAPONS.ION_BLASTER.name} (${NEW_WEAPONS.ION_BLASTER.damageType})`);
+            
+            // Test 5: Modules
+            log('ModuleData loaded');
+            log(`Total modules: ${Object.keys(MODULES).length}`);
+            
+            // Test 6: Enemy profiles
+            log('EnemyProfiles loaded');
+            log(`Total enemy profiles: ${Object.keys(ENEMY_PROFILES).length}`);
+            
+            // Test 7: Loot system
+            log('LootData loaded');
+            const tier = getCurrentTier(300); // 5 minutes
+            log(`Tier at 5 min: T${Object.keys(PROGRESSION_TIERS).indexOf(Object.keys(PROGRESSION_TIERS).find(k => PROGRESSION_TIERS[k] === tier)) + 1}`);
+            
+            // Test 8: Tag synergy
+            log('TagSynergyData loaded');
+            const testItems = [
+                { tags: ['em', 'ballistic'] },
+                { tags: ['em', 'area'] },
+                { tags: ['em', 'chain'] }
+            ];
+            const tagCounts = countTags(testItems);
+            log(`Tag counts: ${JSON.stringify(tagCounts)}`);
+            const bonuses = calculateSynergyBonuses(tagCounts);
+            log(`Synergy bonuses: ${JSON.stringify(bonuses)}`);
+            
+            // Test 9: Create systems
+            const world = new World();
+            const defenseSystem = new DefenseSystem(world);
+            log('DefenseSystem created');
+            
+            const heatSystem = new HeatSystem(world, null);
+            log('HeatSystem created');
+            
+            // Test 10: Test defense system
+            const entity = world.createEntity('test');
+            entity.addComponent('defense', createDefenseComponent());
+            const result = defenseSystem.applyDamage(entity, 50, 'em');
+            log(`Defense damage test: ${result.totalDamage} damage dealt to ${result.layersDamaged.join(', ')}`);
+            
+            // Test 11: Test heat system
+            const player = world.createEntity('player');
+            player.addComponent('heat', createHeatComponent());
+            heatSystem.addHeat(player, 30);
+            log(`Heat added: ${heatSystem.getHeatPercent(player) * 100}%`);
+            
+            log('<h2>All tests passed! ✓</h2>', 'ok');
+            
+        } catch (error) {
+            log(`ERROR: ${error.message}`, 'error');
+            console.error(error);
+        }
+    </script>
+</body>
+</html>

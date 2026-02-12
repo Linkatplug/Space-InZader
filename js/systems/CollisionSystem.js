@@ -221,13 +221,29 @@ class CollisionSystem {
         }
     }
 
-    damageEnemy(enemy, damage, attacker = null) {
+    damageEnemy(enemy, damage, attacker = null, damageType = 'kinetic') {
+        // Try new defense system first
+        const defense = enemy.getComponent('defense');
         const health = enemy.getComponent('health');
         const renderable = enemy.getComponent('renderable');
-        if (!health) return;
-
-        health.current -= damage;
-        this.gameState.stats.damageDealt += damage;
+        
+        let actualDamage = damage;
+        let destroyed = false;
+        
+        if (defense && this.world && this.world.defenseSystem) {
+            // Use new defense system
+            const result = this.world.defenseSystem.applyDamage(enemy, damage, damageType);
+            actualDamage = result.totalDamage;
+            destroyed = result.destroyed;
+        } else if (health) {
+            // Fallback to old health system
+            health.current -= damage;
+            destroyed = health.current <= 0;
+        } else {
+            return; // No health or defense
+        }
+        
+        this.gameState.stats.damageDealt += actualDamage;
         
         // Check if this is a boss (large size)
         const isBoss = renderable && renderable.size >= BOSS_SIZE_THRESHOLD;
@@ -238,7 +254,7 @@ class CollisionSystem {
             const playerHealth = attacker.getComponent('health');
             
             if (playerComp && playerHealth && playerComp.stats.lifesteal > 0) {
-                const healAmount = damage * playerComp.stats.lifesteal;
+                const healAmount = actualDamage * playerComp.stats.lifesteal;
                 const newHealth = Math.min(playerHealth.max, playerHealth.current + healAmount);
                 if (newHealth > playerHealth.current) {
                     playerHealth.current = newHealth;
@@ -267,13 +283,14 @@ class CollisionSystem {
             }
         }
 
-        if (health.current <= 0) {
+        if (destroyed) {
             this.killEnemy(enemy);
         }
     }
 
-    damagePlayer(player, damage) {
+    damagePlayer(player, damage, damageType = 'kinetic') {
         const health = player.getComponent('health');
+        const defense = player.getComponent('defense');
         const shield = player.getComponent('shield');
         const playerComp = player.getComponent('player');
         
@@ -282,6 +299,36 @@ class CollisionSystem {
         // God mode check - no damage taken
         if (health.godMode) return;
 
+        // Try new defense system first
+        if (defense && this.world && this.world.defenseSystem) {
+            const result = this.world.defenseSystem.applyDamage(player, damage, damageType);
+            this.gameState.stats.damageTaken += result.totalDamage;
+            
+            // Visual feedback based on which layers were hit
+            if (this.screenEffects) {
+                if (result.layersDamaged.includes('shield')) {
+                    this.screenEffects.flash('#00FFFF', 0.2, 0.1);
+                } else if (result.layersDamaged.includes('armor')) {
+                    this.screenEffects.flash('#8B4513', 0.25, 0.12);
+                } else if (result.layersDamaged.includes('structure')) {
+                    this.screenEffects.shake(5, 0.2);
+                    this.screenEffects.flash('#FF0000', 0.3, 0.15);
+                }
+            }
+            
+            // Play hit sound
+            if (this.audioManager && this.audioManager.initialized) {
+                this.audioManager.playSFX('hit', 1.2);
+            }
+            
+            // Check for death
+            if (result.destroyed) {
+                health.current = 0;
+            }
+            return;
+        }
+
+        // Fallback to old system
         let remainingDamage = damage;
         
         // Shield absorbs damage first
