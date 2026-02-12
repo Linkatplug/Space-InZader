@@ -139,3 +139,20 @@ function validateHeatSustainability(heatGenPerSec, effectiveCooling, maxHeat = H
             : 'Balanced: Build will overheat with sustained fire'
     };
 }
+
+// Expose to window for cross-file access
+window.HEAT_SYSTEM = HEAT_SYSTEM;
+window.CRIT_CAPS = CRIT_CAPS;
+window.HeatData = {
+    HEAT_SYSTEM,
+    CRIT_CAPS,
+    createHeatComponent,
+    calculateCritDamage,
+    rollCrit,
+    calculateEffectiveCooling,
+    validateHeatSustainability
+};
+
+// Console confirmation for debugging
+console.log('[Content] Heat system constants loaded (MAX_HEAT: 100, BASE_COOLING: 10, MAX_COOLING_BONUS: 2.0)');
+console.log('[Content] Crit caps loaded (MAX_CRIT_CHANCE: 0.6, MAX_CRIT_DAMAGE: 3.0)');
