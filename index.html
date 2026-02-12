@@ -31,6 +31,8 @@
             display: block;
             background: #000;
             border: 2px solid #00ffff;
+            position: relative;
+            z-index: 1; /* Canvas behind UI elements */
         }
 
         #ui {
@@ -40,6 +42,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
+            z-index: 100; /* UI layer above canvas */
         }
 
         .menu-screen, .level-up-screen, .game-over-screen, .meta-screen {
@@ -53,13 +56,16 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            pointer-events: all;
-            touch-action: auto; /* Allow touch interactions */
-            z-index: 1001; /* Ensure menus are above stats overlay */
+            pointer-events: all !important; /* Force pointer events */
+            touch-action: manipulation !important; /* Force touch responsiveness */
+            z-index: 10001 !important; /* Absolutely above everything */
         }
 
         .menu-screen.active, .level-up-screen.active, .game-over-screen.active, .meta-screen.active {
-            display: flex;
+            display: flex !important;
+            pointer-events: all !important; /* Ensure clicks work when active */
+            touch-action: manipulation !important;
+            z-index: 10001 !important;
         }
 
         .title {
@@ -1157,35 +1163,87 @@
             margin: 5px 0;
             font-size: 14px;
         }
-        /* Prevent external joystick/virtual controls from appearing */
-        /* Hide any third-party joystick overlays that might be injected */
+        /* AGGRESSIVE: Prevent external joystick/virtual controls from appearing */
+        /* Hide any third-party joystick overlays that might be injected by browsers/extensions */
         [class*="joystick"],
         [id*="joystick"],
         [class*="nipple"],
         [id*="nipple"],
         [class*="virtual-joystick"],
-        [id*="virtual-joystick"] {
+        [id*="virtual-joystick"],
+        [class*="gamepad"],
+        [id*="gamepad"],
+        [class*="touch-control"],
+        [id*="touch-control"],
+        [class*="mobile-control"],
+        [id*="mobile-control"],
+        .joystick,
+        .virtual-joystick,
+        .gamepad-controls,
+        .mobile-joystick {
             display: none !important;
             visibility: hidden !important;
             opacity: 0 !important;
             pointer-events: none !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+            width: 0 !important;
+            height: 0 !important;
         }
 
-        /* Ensure menus are always on top and clickable */
-        .menu-screen.active {
-            z-index: 10000 !important;
-            pointer-events: all !important;
+        /* Canvas should not capture touches when menus are active */
+        body:has(.menu-screen.active) #gameCanvas,
+        body:has(.level-up-screen.active) #gameCanvas,
+        body:has(.game-over-screen.active) #gameCanvas,
+        body:has(.meta-screen.active) #gameCanvas {
+            pointer-events: none !important;
+            touch-action: none !important;
         }
 
-        /* Mobile-specific fixes */
-        @media (max-width: 768px) {
+        /* Mobile-specific fixes - CRITICAL FOR PHONE SCREENS */
+        @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+            /* Force touch optimization on all menus */
             .menu-screen, .level-up-screen, .game-over-screen, .meta-screen {
                 -webkit-overflow-scrolling: touch;
+                touch-action: manipulation !important;
+                pointer-events: all !important;
+                -webkit-user-select: none;
+                user-select: none;
             }
             
+            /* Make all buttons easily tappable */
             .button {
-                min-height: 48px; /* Ensure touch-friendly size */
-                min-width: 120px;
+                min-height: 50px !important; /* Larger for better touch */
+                min-width: 140px !important;
+                padding: 18px 45px !important;
+                font-size: 20px !important;
+                touch-action: manipulation !important;
+                -webkit-tap-highlight-color: rgba(0, 255, 255, 0.5) !important;
+            }
+            
+            /* Ensure active menus dominate the screen */
+            .menu-screen.active, .level-up-screen.active, .game-over-screen.active, .meta-screen.active {
+                z-index: 99999 !important;
+                pointer-events: all !important;
+                touch-action: manipulation !important;
+            }
+            
+            /* Disable canvas touch when menu active */
+            #gameCanvas {
+                pointer-events: none !important;
+            }
+            
+            /* Force UI layer to allow touches on menus only */
+            #ui {
+                pointer-events: none !important;
+            }
+            
+            #ui > .menu-screen, 
+            #ui > .level-up-screen, 
+            #ui > .game-over-screen, 
+            #ui > .meta-screen {
+                pointer-events: all !important;
             }
         }
     </style>
