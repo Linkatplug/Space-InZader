@@ -38,6 +38,7 @@ class TouchControls {
         
         // Auto-detect mobile
         this.isMobile = this.detectMobile();
+        this.isAndroidDevice = /android/i.test(navigator.userAgent);
         
         if (this.isMobile) {
             this.enable();
@@ -46,6 +47,22 @@ class TouchControls {
         this.setupTouchHandlers();
         this.setupFullscreenHandler();
         this.setupCanvasResize();
+        this.applyAndroidUIAdjustments();
+    }
+    
+    applyAndroidUIAdjustments() {
+        if (!this.isAndroidDevice) return;
+
+        const statsDisplay = document.getElementById('statsDisplay');
+        const statsOverlayPanel = document.getElementById('statsOverlayPanel');
+
+        if (statsDisplay) {
+            statsDisplay.style.display = 'none';
+        }
+
+        if (statsOverlayPanel) {
+            statsOverlayPanel.style.display = 'none';
+        }
     }
     
     detectMobile() {
@@ -177,9 +194,11 @@ class TouchControls {
         }, { passive: false });
         
         gameContainer.addEventListener('touchmove', (e) => {
-            e.preventDefault();
+            if (this.joystickTouchId === null) return;
+
             for (let touch of e.changedTouches) {
                 if (touch.identifier === this.joystickTouchId) {
+                    e.preventDefault();
                     this.handleJoystickMove(touch);
                     break;
                 }
@@ -187,9 +206,11 @@ class TouchControls {
         }, { passive: false });
         
         gameContainer.addEventListener('touchend', (e) => {
-            e.preventDefault();
+            if (this.joystickTouchId === null) return;
+
             for (let touch of e.changedTouches) {
                 if (touch.identifier === this.joystickTouchId) {
+                    e.preventDefault();
                     this.handleJoystickEnd();
                     break;
                 }
