@@ -38,6 +38,7 @@ class TouchControls {
         
         // Auto-detect mobile
         this.isMobile = this.detectMobile();
+        this.isAndroidDevice = /android/i.test(navigator.userAgent);
         
         if (this.isMobile) {
             this.enable();
@@ -46,6 +47,22 @@ class TouchControls {
         this.setupTouchHandlers();
         this.setupFullscreenHandler();
         this.setupCanvasResize();
+        this.applyAndroidUIAdjustments();
+    }
+    
+    applyAndroidUIAdjustments() {
+        if (!this.isAndroidDevice) return;
+
+        const statsDisplay = document.getElementById('statsDisplay');
+        const statsOverlayPanel = document.getElementById('statsOverlayPanel');
+
+        if (statsDisplay) {
+            statsDisplay.style.display = 'none';
+        }
+
+        if (statsOverlayPanel) {
+            statsOverlayPanel.style.display = 'none';
+        }
     }
     
     detectMobile() {
@@ -150,9 +167,21 @@ class TouchControls {
             const target = e.target;
             if (target.closest('.touch-pause-button') || 
                 target.closest('.touch-fullscreen-button') ||
+                target.closest('#mainMenu') ||
+                target.closest('#pauseMenu') ||
+                target.closest('#commandsScreen') ||
+                target.closest('#optionsScreen') ||
+                target.closest('#scoreboardScreen') ||
+                target.closest('#creditsScreen') ||
                 target.closest('.menu-screen') ||
                 target.closest('.level-up-screen') ||
-                target.closest('.game-over-screen')) {
+                target.closest('.game-over-screen') ||
+                target.closest('.meta-screen') ||
+                target.closest('button') ||
+                target.closest('a') ||
+                target.closest('input') ||
+                target.closest('select') ||
+                target.closest('textarea')) {
                 return; // Let UI elements handle their own touch
             }
             
@@ -165,9 +194,11 @@ class TouchControls {
         }, { passive: false });
         
         gameContainer.addEventListener('touchmove', (e) => {
-            e.preventDefault();
+            if (this.joystickTouchId === null) return;
+
             for (let touch of e.changedTouches) {
                 if (touch.identifier === this.joystickTouchId) {
+                    e.preventDefault();
                     this.handleJoystickMove(touch);
                     break;
                 }
@@ -175,9 +206,11 @@ class TouchControls {
         }, { passive: false });
         
         gameContainer.addEventListener('touchend', (e) => {
-            e.preventDefault();
+            if (this.joystickTouchId === null) return;
+
             for (let touch of e.changedTouches) {
                 if (touch.identifier === this.joystickTouchId) {
+                    e.preventDefault();
                     this.handleJoystickEnd();
                     break;
                 }
