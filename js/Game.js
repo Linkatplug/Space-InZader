@@ -103,6 +103,9 @@ class Game {
             weather: new WeatherSystem(this.world, this.canvas, this.audioManager, this.gameState)
         };
         
+        // Setup touch event handlers for canvas (gameplay only)
+        this.setupCanvasTouchHandlers();
+        
         // Synergy system (initialized when game starts)
         this.synergySystem = null;
         
@@ -367,28 +370,43 @@ class Game {
         document.addEventListener('click', initAudio);
         document.addEventListener('keydown', initAudio);
 
-        // Multiplayer menu listeners
-        document.getElementById('multiplayerBtn')?.addEventListener('click', () => {
+        // Helper function to add mobile-friendly button handlers
+        const addButtonHandler = (buttonId, handler) => {
+            const btn = document.getElementById(buttonId);
+            if (!btn) return;
+            
+            // Add click handler (for desktop and fallback)
+            btn.addEventListener('click', handler);
+            
+            // Add pointerdown handler (more reliable on mobile)
+            btn.addEventListener('pointerdown', (e) => {
+                e.stopPropagation(); // Prevent event from reaching canvas
+                handler(e);
+            });
+        };
+
+        // Multiplayer menu listeners (using mobile-friendly handlers)
+        addButtonHandler('multiplayerBtn', () => {
             this.showMultiplayerMenu();
         });
 
-        document.getElementById('hostGameBtn')?.addEventListener('click', () => {
+        addButtonHandler('hostGameBtn', () => {
             this.hostMultiplayerGame();
         });
 
-        document.getElementById('joinGameBtn')?.addEventListener('click', () => {
+        addButtonHandler('joinGameBtn', () => {
             document.getElementById('joinRoomDiv').style.display = 'block';
         });
 
-        document.getElementById('confirmJoinBtn')?.addEventListener('click', () => {
+        addButtonHandler('confirmJoinBtn', () => {
             this.joinMultiplayerGame();
         });
 
-        document.getElementById('cancelJoinBtn')?.addEventListener('click', () => {
+        addButtonHandler('cancelJoinBtn', () => {
             document.getElementById('joinRoomDiv').style.display = 'none';
         });
 
-        document.getElementById('multiplayerBackBtn')?.addEventListener('click', () => {
+        addButtonHandler('multiplayerBackBtn', () => {
             this.hideMultiplayerMenu();
         });
     }
@@ -1514,5 +1532,46 @@ class Game {
 
         // Hide multiplayer menu
         this.hideMultiplayerMenu();
+    }
+
+    /**
+     * Check if gameplay is currently active (touch controls should work)
+     * @returns {boolean} True if game is in RUNNING state
+     */
+    isGameplayActive() {
+        return this.gameState && this.gameState.isState(GameStates.RUNNING);
+    }
+
+    /**
+     * Setup touch event handlers on canvas for gameplay controls
+     * Only prevents default during gameplay, not in menus
+     */
+    setupCanvasTouchHandlers() {
+        // Prevent default touch behaviors ONLY during gameplay on canvas
+        this.canvas.addEventListener('touchstart', (e) => {
+            if (!this.isGameplayActive()) {
+                // In menus: allow normal touch behavior (enables clicks)
+                return;
+            }
+            // In gameplay: prevent scroll/zoom
+            e.preventDefault();
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (!this.isGameplayActive()) {
+                // In menus: allow normal touch behavior
+                return;
+            }
+            // In gameplay: prevent scroll/zoom
+            e.preventDefault();
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchend', (e) => {
+            if (!this.isGameplayActive()) {
+                // In menus: allow normal touch behavior
+                return;
+            }
+            // In gameplay: could add touch control logic here if needed
+        }, { passive: false });
     }
 }
