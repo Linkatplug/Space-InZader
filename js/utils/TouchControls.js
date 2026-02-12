@@ -150,9 +150,21 @@ class TouchControls {
             const target = e.target;
             if (target.closest('.touch-pause-button') || 
                 target.closest('.touch-fullscreen-button') ||
+                target.closest('#mainMenu') ||
+                target.closest('#pauseMenu') ||
+                target.closest('#commandsScreen') ||
+                target.closest('#optionsScreen') ||
+                target.closest('#scoreboardScreen') ||
+                target.closest('#creditsScreen') ||
                 target.closest('.menu-screen') ||
                 target.closest('.level-up-screen') ||
-                target.closest('.game-over-screen')) {
+                target.closest('.game-over-screen') ||
+                target.closest('.meta-screen') ||
+                target.closest('button') ||
+                target.closest('a') ||
+                target.closest('input') ||
+                target.closest('select') ||
+                target.closest('textarea')) {
                 return; // Let UI elements handle their own touch
             }
             
