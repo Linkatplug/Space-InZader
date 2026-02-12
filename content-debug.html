@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space InZader - Content Debug Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #0f0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #0ff;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #0ff;
+            font-size: 2em;
+        }
+        
+        h2 {
+            color: #f0f;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #f0f;
+            padding-bottom: 5px;
+        }
+        
+        .section {
+            background: #111;
+            border: 2px solid #0f0;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #333;
+        }
+        
+        .stat-label {
+            color: #ff0;
+        }
+        
+        .stat-value {
+            color: #0ff;
+            font-weight: bold;
+        }
+        
+        .list {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .list-item {
+            padding: 3px 0;
+            color: #0f0;
+        }
+        
+        .button {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            display: block;
+            margin: 30px auto;
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        
+        .button:hover {
+            background: #0ff;
+            box-shadow: 0 0 20px #0ff;
+            transform: scale(1.05);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            background: #222;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .status.loaded {
+            border: 2px solid #0f0;
+        }
+        
+        .status.error {
+            border: 2px solid #f00;
+            color: #f00;
+        }
+        
+        .constant {
+            display: inline-block;
+            padding: 2px 8px;
+            margin: 2px;
+            background: #222;
+            border: 1px solid #0ff;
+            border-radius: 3px;
+        }
+        
+        code {
+            background: #222;
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: #ff0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 SPACE INZADER - CONTENT DEBUG DASHBOARD</h1>
+        
+        <div id="status" class="status">
+            <strong>Loading content...</strong>
+        </div>
+        
+        <div class="section">
+            <h2>📊 OVERVIEW</h2>
+            <div id="overview"></div>
+        </div>
+        
+        <div class="grid">
+            <div class="section">
+                <h2>⚔️ NEW WEAPONS</h2>
+                <div id="weapons"></div>
+            </div>
+            
+            <div class="section">
+                <h2>🛡️ MODULES</h2>
+                <div id="modules"></div>
+            </div>
+            
+            <div class="section">
+                <h2>👾 ENEMY PROFILES</h2>
+                <div id="enemies"></div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>🔗 TAG SYNERGIES</h2>
+            <div id="synergies"></div>
+        </div>
+        
+        <div class="section">
+            <h2>⚖️ BALANCE CONSTANTS</h2>
+            <div id="constants"></div>
+        </div>
+        
+        <div class="section">
+            <h2>🚢 SHIP UPGRADES</h2>
+            <div id="ships"></div>
+        </div>
+        
+        <button class="button" onclick="dumpToConsole()">
+            💾 DUMP ALL DATA TO CONSOLE
+        </button>
+    </div>
+
+    <!-- Load all data files in same order as index.html -->
+    <script src="js/data/BalanceConstants.js"></script>
+    <script src="js/data/DefenseData.js"></script>
+    <script src="js/data/HeatData.js"></script>
+    <script src="js/data/TagSynergyData.js"></script>
+    <script src="js/data/NewWeaponData.js"></script>
+    <script src="js/data/ModuleData.js"></script>
+    <script src="js/data/EnemyProfiles.js"></script>
+    <script src="js/data/ShipUpgradeData.js"></script>
+    <script src="js/ui/EnhancedUIComponents.js"></script>
+
+    <script>
+        // Wait for all scripts to load
+        window.addEventListener('load', () => {
+            try {
+                // Check if all data is loaded
+                const allLoaded = window.NEW_WEAPONS && 
+                                 window.ModuleData && 
+                                 window.EnemyProfiles && 
+                                 window.TagSynergyData && 
+                                 window.BalanceConstants && 
+                                 window.ShipUpgradeData &&
+                                 window.EnhancedUIComponents;
+                
+                const status = document.getElementById('status');
+                if (allLoaded) {
+                    status.className = 'status loaded';
+                    status.innerHTML = '<strong>✅ ALL CONTENT LOADED SUCCESSFULLY</strong>';
+                    populateDashboard();
+                } else {
+                    status.className = 'status error';
+                    status.innerHTML = '<strong>❌ ERROR: Some content failed to load</strong>';
+                    console.error('Missing content:', {
+                        NEW_WEAPONS: !!window.NEW_WEAPONS,
+                        ModuleData: !!window.ModuleData,
+                        EnemyProfiles: !!window.EnemyProfiles,
+                        TagSynergyData: !!window.TagSynergyData,
+                        BalanceConstants: !!window.BalanceConstants,
+                        ShipUpgradeData: !!window.ShipUpgradeData,
+                        EnhancedUIComponents: !!window.EnhancedUIComponents
+                    });
+                }
+            } catch (error) {
+                console.error('Error in content-debug:', error);
+                const status = document.getElementById('status');
+                status.className = 'status error';
+                status.innerHTML = `<strong>❌ ERROR: ${error.message}</strong>`;
+            }
+        });
+        
+        function populateDashboard() {
+            // Overview
+            const weaponCount = Object.keys(window.NEW_WEAPONS).length;
+            const moduleCount = Object.keys(window.ModuleData.MODULES).length;
+            const enemyCount = Object.keys(window.EnemyProfiles.PROFILES).length;
+            const shipCount = Object.keys(window.ShipUpgradeData.SHIPS).length;
+            
+            document.getElementById('overview').innerHTML = `
+                <div class="stat">
+                    <span class="stat-label">Total New Weapons:</span>
+                    <span class="stat-value">${weaponCount}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Total Modules:</span>
+                    <span class="stat-value">${moduleCount}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Total Enemy Profiles:</span>
+                    <span class="stat-value">${enemyCount}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Total Ships:</span>
+                    <span class="stat-value">${shipCount}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">UI Components:</span>
+                    <span class="stat-value">6</span>
+                </div>
+            `;
+            
+            // Weapons
+            let weaponsHTML = `<div class="stat"><span class="stat-label">Total:</span><span class="stat-value">${weaponCount}</span></div>`;
+            weaponsHTML += '<div class="list">';
+            
+            const weaponsByType = {
+                em: [],
+                thermal: [],
+                kinetic: [],
+                explosive: []
+            };
+            
+            for (const weapon of Object.values(window.NEW_WEAPONS)) {
+                weaponsByType[weapon.damageType].push(weapon.name);
+            }
+            
+            for (const [type, weapons] of Object.entries(weaponsByType)) {
+                weaponsHTML += `<div class="list-item"><strong>${type.toUpperCase()}</strong> (${weapons.length}): ${weapons.join(', ')}</div>`;
+            }
+            
+            weaponsHTML += '</div>';
+            document.getElementById('weapons').innerHTML = weaponsHTML;
+            
+            // Modules
+            let modulesHTML = `<div class="stat"><span class="stat-label">Total:</span><span class="stat-value">${moduleCount}</span></div>`;
+            modulesHTML += '<div class="list">';
+            
+            for (const module of Object.values(window.ModuleData.MODULES)) {
+                const benefits = Object.keys(module.effects).join(', ');
+                const costs = Object.keys(module.costs).join(', ');
+                modulesHTML += `<div class="list-item"><strong>${module.name}</strong><br>`;
+                modulesHTML += `Benefits: ${benefits || 'none'}<br>`;
+                modulesHTML += `Costs: ${costs || 'none'}</div>`;
+            }
+            
+            modulesHTML += '</div>';
+            document.getElementById('modules').innerHTML = modulesHTML;
+            
+            // Enemies
+            let enemiesHTML = `<div class="stat"><span class="stat-label">Total:</span><span class="stat-value">${enemyCount}</span></div>`;
+            enemiesHTML += '<div class="list">';
+            
+            for (const enemy of Object.values(window.EnemyProfiles.PROFILES)) {
+                const def = enemy.defense;
+                enemiesHTML += `<div class="list-item"><strong>${enemy.name}</strong><br>`;
+                enemiesHTML += `Shield: ${def.shield} | Armor: ${def.armor} | Structure: ${def.structure}<br>`;
+                enemiesHTML += `Damage Type: ${enemy.damageType}</div>`;
+            }
+            
+            enemiesHTML += '</div>';
+            document.getElementById('enemies').innerHTML = enemiesHTML;
+            
+            // Tag Synergies
+            const synData = window.TagSynergyData;
+            let synHTML = '';
+            
+            for (const [threshold, bonus] of Object.entries(synData.TAG_SYNERGY_THRESHOLDS)) {
+                synHTML += `<div class="stat">
+                    <span class="stat-label">${threshold}+ items with same tag:</span>
+                    <span class="stat-value">+${(bonus * 100).toFixed(0)}%</span>
+                </div>`;
+            }
+            
+            synHTML += `<div class="stat">
+                <span class="stat-label">Non-majority tag malus:</span>
+                <span class="stat-value">${(synData.TAG_MALUS * 100).toFixed(0)}%</span>
+            </div>`;
+            
+            synHTML += '<div class="list"><strong>Offensive Tags:</strong> ' + 
+                       synData.OFFENSIVE_TAGS.join(', ') + '</div>';
+            
+            document.getElementById('synergies').innerHTML = synHTML;
+            
+            // Balance Constants
+            const bc = window.BalanceConstants;
+            let constsHTML = '';
+            
+            constsHTML += '<h3 style="color: #0ff; margin-bottom: 10px;">Resistance Caps</h3>';
+            constsHTML += `<span class="constant">RESIST_CAP: ${bc.RESISTANCE_CAPS.MAX_SINGLE_RESIST}</span>`;
+            constsHTML += `<span class="constant">STACKING: ${bc.RESISTANCE_CAPS.STACKING_TYPE}</span>`;
+            
+            constsHTML += '<h3 style="color: #0ff; margin: 15px 0 10px;">Heat Caps</h3>';
+            constsHTML += `<span class="constant">MAX_COOLING_BONUS: ${bc.HEAT_CAPS.MAX_COOLING_BONUS}</span>`;
+            constsHTML += `<span class="constant">MAX_FIRE_RATE_MULT: ${bc.HEAT_CAPS.MAX_FIRE_RATE_MULT}</span>`;
+            constsHTML += `<span class="constant">MAX_DAMAGE_MULT: ${bc.HEAT_CAPS.MAX_DAMAGE_MULT}</span>`;
+            
+            constsHTML += '<h3 style="color: #0ff; margin: 15px 0 10px;">Crit Caps</h3>';
+            constsHTML += `<span class="constant">MAX_CRIT_CHANCE: ${bc.CRIT_BALANCE.MAX_CRIT_CHANCE}</span>`;
+            constsHTML += `<span class="constant">MAX_CRIT_DAMAGE: ${bc.CRIT_BALANCE.MAX_CRIT_DAMAGE}</span>`;
+            
+            document.getElementById('constants').innerHTML = constsHTML;
+            
+            // Ship Upgrades
+            let shipsHTML = '';
+            
+            for (const [id, ship] of Object.entries(window.ShipUpgradeData.SHIPS)) {
+                shipsHTML += `<div class="stat">
+                    <span class="stat-label">${ship.name}:</span>
+                    <span class="stat-value">${ship.upgrades.length} upgrades</span>
+                </div>`;
+                
+                shipsHTML += '<div class="list">';
+                for (const upgrade of ship.upgrades.slice(0, 3)) {
+                    shipsHTML += `<div class="list-item">• ${upgrade.name} (max level ${upgrade.maxLevel})</div>`;
+                }
+                if (ship.upgrades.length > 3) {
+                    shipsHTML += `<div class="list-item">... and ${ship.upgrades.length - 3} more</div>`;
+                }
+                shipsHTML += '</div>';
+            }
+            
+            document.getElementById('ships').innerHTML = shipsHTML;
+        }
+        
+        function dumpToConsole() {
+            console.log('='.repeat(80));
+            console.log('SPACE INZADER - CONTENT DUMP');
+            console.log('='.repeat(80));
+            
+            console.group('📦 NEW WEAPONS (' + Object.keys(window.NEW_WEAPONS).length + ')');
+            console.table(window.NEW_WEAPONS);
+            console.groupEnd();
+            
+            console.group('🛡️ MODULES (' + Object.keys(window.ModuleData.MODULES).length + ')');
+            console.table(window.ModuleData.MODULES);
+            console.groupEnd();
+            
+            console.group('👾 ENEMY PROFILES (' + Object.keys(window.EnemyProfiles.PROFILES).length + ')');
+            console.table(window.EnemyProfiles.PROFILES);
+            console.groupEnd();
+            
+            console.group('🔗 TAG SYNERGIES');
+            console.log('Thresholds:', window.TagSynergyData.TAG_SYNERGY_THRESHOLDS);
+            console.log('Malus:', window.TagSynergyData.TAG_MALUS);
+            console.log('Offensive Tags:', window.TagSynergyData.OFFENSIVE_TAGS);
+            console.groupEnd();
+            
+            console.group('⚖️ BALANCE CONSTANTS');
+            console.log('Resistance Caps:', window.BalanceConstants.RESISTANCE_CAPS);
+            console.log('Heat Caps:', window.BalanceConstants.HEAT_CAPS);
+            console.log('Crit Balance:', window.BalanceConstants.CRIT_BALANCE);
+            console.groupEnd();
+            
+            console.group('🚢 SHIP UPGRADES (' + Object.keys(window.ShipUpgradeData.SHIPS).length + ' ships)');
+            for (const [id, ship] of Object.entries(window.ShipUpgradeData.SHIPS)) {
+                console.log(`${ship.name}: ${ship.upgrades.length} upgrades`);
+            }
+            console.table(window.ShipUpgradeData.SHIPS);
+            console.groupEnd();
+            
+            console.group('🎨 UI COMPONENTS');
+            console.log('Components:', Object.keys(window.EnhancedUIComponents));
+            console.groupEnd();
+            
+            console.log('='.repeat(80));
+            console.log('✅ Full data dump complete! Check groups above for details.');
+            console.log('='.repeat(80));
+        }
+    </script>
+</body>
+</html>

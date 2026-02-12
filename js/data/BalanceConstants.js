@@ -279,3 +279,22 @@ function calculateEffectiveResistance(baseResist, bonusResist) {
     // ADDITIVE stacking with cap
     return Math.min(RESISTANCE_CAPS.MAX_SINGLE_RESIST, baseResist + bonusResist);
 }
+
+// ========== GLOBAL EXPOSURE ==========
+// Expose to window for passive loading
+if (typeof window !== 'undefined') {
+    window.BalanceConstants = {
+        RESISTANCE_CAPS: RESISTANCE_CAPS,
+        HEAT_CAPS: HEAT_CAPS,
+        CRIT_BALANCE: CRIT_BALANCE,
+        TAG_SYNERGY: TAG_SYNERGY,
+        TIER_PROGRESSION: TIER_PROGRESSION,
+        META_VALIDATION: META_VALIDATION,
+        validateHeatSustainability: validateHeatSustainability,
+        calculateDPS: calculateDPS,
+        calculateEffectiveResistance: calculateEffectiveResistance
+    };
+    
+    // Console log confirmation
+    console.log('[Content] Balance constants loaded (RESIST_CAP: 0.75, MAX_COOLING: 2.0, CRIT_CAP: 0.6/3.0)');
+}

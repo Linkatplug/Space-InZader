@@ -226,3 +226,17 @@ function createEnemyDefense(enemyProfile) {
         }
     };
 }
+
+// ========== GLOBAL EXPOSURE ==========
+// Expose to window for passive loading
+if (typeof window !== 'undefined') {
+    window.EnemyProfiles = {
+        PROFILES: ENEMY_PROFILES,
+        RESIST_PROFILES: RESIST_PROFILES,
+        createEnemyDefense: createEnemyDefense
+    };
+    
+    // Console log confirmation
+    const profileCount = Object.keys(ENEMY_PROFILES).length;
+    console.log(`[Content] Enemy profiles loaded: ${profileCount}`);
+}

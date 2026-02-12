@@ -250,3 +250,16 @@ function applyModuleEffects(stats, module) {
     
     return newStats;
 }
+
+// ========== GLOBAL EXPOSURE ==========
+// Expose to window for passive loading
+if (typeof window !== 'undefined') {
+    window.ModuleData = {
+        MODULES: MODULES,
+        applyModuleEffects: applyModuleEffects
+    };
+    
+    // Console log confirmation
+    const moduleCount = Object.keys(MODULES).length;
+    console.log(`[Content] Modules loaded: ${moduleCount}`);
+}

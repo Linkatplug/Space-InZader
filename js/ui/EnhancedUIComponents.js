@@ -486,3 +486,20 @@ class LayerDamageNotification {
         }
     }
 }
+
+// ========== GLOBAL EXPOSURE ==========
+// Expose to window for passive loading
+if (typeof window !== 'undefined') {
+    window.EnhancedUIComponents = {
+        UI_CONSTANTS: UI_CONSTANTS,
+        ThreeLayerDefenseUI: ThreeLayerDefenseUI,
+        HeatGaugeUI: HeatGaugeUI,
+        WeaponDamageTypeDisplay: WeaponDamageTypeDisplay,
+        DamageFloatingText: DamageFloatingText,
+        EnemyResistanceIndicator: EnemyResistanceIndicator,
+        LayerDamageNotification: LayerDamageNotification
+    };
+    
+    // Console log confirmation
+    console.log('[Content] Enhanced UI components loaded (6 components ready)');
+}

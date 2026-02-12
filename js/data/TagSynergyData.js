@@ -239,3 +239,18 @@ function getSynergySummary(tagEffects) {
     
     return summary;
 }
+
+// ========== GLOBAL EXPOSURE ==========
+// Expose to window for passive loading
+if (typeof window !== 'undefined') {
+    window.TagSynergyData = {
+        TAG_SYNERGY_THRESHOLDS: TAG_SYNERGY_THRESHOLDS,
+        TAG_MALUS: TAG_MALUS,
+        OFFENSIVE_TAGS: OFFENSIVE_TAGS,
+        calculateTagEffects: calculateTagEffects,
+        getTagSynergySummary: getTagSynergySummary
+    };
+    
+    // Console log confirmation
+    console.log('[Content] Tag synergy rules loaded (3+ => +8%, 5+ => +18%, malus -10%)');
+}

@@ -480,3 +480,18 @@ function getWeaponsByDamageType(damageType) {
 function getWeaponsByTag(tag) {
     return Object.values(NEW_WEAPONS).filter(w => w.tags.includes(tag));
 }
+
+// ========== GLOBAL EXPOSURE ==========
+// Expose to window for passive loading
+if (typeof window !== 'undefined') {
+    window.NEW_WEAPONS = NEW_WEAPONS;
+    window.NewWeaponData = {
+        WEAPONS: NEW_WEAPONS,
+        getWeaponsByDamageType: getWeaponsByDamageType,
+        getWeaponsByTag: getWeaponsByTag
+    };
+    
+    // Console log confirmation
+    const weaponCount = Object.keys(NEW_WEAPONS).length;
+    console.log(`[Content] New weapons loaded: ${weaponCount}`);
+}
