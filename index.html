@@ -54,6 +54,7 @@
             justify-content: center;
             align-items: center;
             pointer-events: all;
+            touch-action: auto; /* Allow touch interactions */
             z-index: 1001; /* Ensure menus are above stats overlay */
         }
 
@@ -81,6 +82,9 @@
             transition: all 0.3s;
             text-transform: uppercase;
             letter-spacing: 2px;
+            touch-action: manipulation; /* Improve touch responsiveness */
+            user-select: none; /* Prevent text selection on touch */
+            -webkit-tap-highlight-color: rgba(0, 255, 255, 0.3); /* Visual feedback on mobile */
         }
 
         .button:hover {
@@ -1152,6 +1156,37 @@
         .audit-summary p {
             margin: 5px 0;
             font-size: 14px;
+        }
+        /* Prevent external joystick/virtual controls from appearing */
+        /* Hide any third-party joystick overlays that might be injected */
+        [class*="joystick"],
+        [id*="joystick"],
+        [class*="nipple"],
+        [id*="nipple"],
+        [class*="virtual-joystick"],
+        [id*="virtual-joystick"] {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+
+        /* Ensure menus are always on top and clickable */
+        .menu-screen.active {
+            z-index: 10000 !important;
+            pointer-events: all !important;
+        }
+
+        /* Mobile-specific fixes */
+        @media (max-width: 768px) {
+            .menu-screen, .level-up-screen, .game-over-screen, .meta-screen {
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            .button {
+                min-height: 48px; /* Ensure touch-friendly size */
+                min-width: 120px;
+            }
         }
     </style>
 </head>
