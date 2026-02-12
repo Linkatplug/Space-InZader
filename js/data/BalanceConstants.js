@@ -287,11 +287,14 @@ if (typeof window !== 'undefined') {
         RESISTANCE_CAPS: RESISTANCE_CAPS,
         HEAT_CAPS: HEAT_CAPS,
         CRIT_BALANCE: CRIT_BALANCE,
-        TAG_SYNERGY: TAG_SYNERGY,
-        TIER_PROGRESSION: TIER_PROGRESSION,
-        META_VALIDATION: META_VALIDATION,
+        TAG_SYNERGY_BALANCE: TAG_SYNERGY_BALANCE,
+        DRONE_BALANCE: DRONE_BALANCE,
+        TIER_PROGRESSION_BALANCE: TIER_PROGRESSION_BALANCE,
+        REACTIVE_ARMOR_BALANCE: REACTIVE_ARMOR_BALANCE,
+        DPS_FORMULA: DPS_FORMULA,
+        META_THRESHOLDS: META_THRESHOLDS,
         validateHeatSustainability: validateHeatSustainability,
-        calculateDPS: calculateDPS,
+        calculateTotalDPS: calculateTotalDPS,
         calculateEffectiveResistance: calculateEffectiveResistance
     };
     

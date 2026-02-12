@@ -232,7 +232,6 @@ function createEnemyDefense(enemyProfile) {
 if (typeof window !== 'undefined') {
     window.EnemyProfiles = {
         PROFILES: ENEMY_PROFILES,
-        RESIST_PROFILES: RESIST_PROFILES,
         createEnemyDefense: createEnemyDefense
     };
     

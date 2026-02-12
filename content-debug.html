@@ -310,7 +310,7 @@
                 const def = enemy.defense;
                 enemiesHTML += `<div class="list-item"><strong>${enemy.name}</strong><br>`;
                 enemiesHTML += `Shield: ${def.shield} | Armor: ${def.armor} | Structure: ${def.structure}<br>`;
-                enemiesHTML += `Damage Type: ${enemy.damageType}</div>`;
+                enemiesHTML += `Attack Type: ${enemy.attackDamageType || 'unknown'}</div>`;
             }
             
             enemiesHTML += '</div>';
@@ -320,20 +320,24 @@
             const synData = window.TagSynergyData;
             let synHTML = '';
             
-            for (const [threshold, bonus] of Object.entries(synData.TAG_SYNERGY_THRESHOLDS)) {
-                synHTML += `<div class="stat">
-                    <span class="stat-label">${threshold}+ items with same tag:</span>
-                    <span class="stat-value">+${(bonus * 100).toFixed(0)}%</span>
-                </div>`;
-            }
+            // SYNERGY_THRESHOLDS is an object with TIER_1 and TIER_2
+            synHTML += `<div class="stat">
+                <span class="stat-label">3+ items with same tag:</span>
+                <span class="stat-value">+${(synData.SYNERGY_THRESHOLDS.TIER_1.bonus * 100).toFixed(0)}%</span>
+            </div>`;
+            
+            synHTML += `<div class="stat">
+                <span class="stat-label">5+ items with same tag:</span>
+                <span class="stat-value">+${(synData.SYNERGY_THRESHOLDS.TIER_2.bonus * 100).toFixed(0)}%</span>
+            </div>`;
             
             synHTML += `<div class="stat">
                 <span class="stat-label">Non-majority tag malus:</span>
-                <span class="stat-value">${(synData.TAG_MALUS * 100).toFixed(0)}%</span>
+                <span class="stat-value">${(synData.NON_MAJORITY_MALUS * 100).toFixed(0)}%</span>
             </div>`;
             
-            synHTML += '<div class="list"><strong>Offensive Tags:</strong> ' + 
-                       synData.OFFENSIVE_TAGS.join(', ') + '</div>';
+            synHTML += '<div class="list"><strong>Damage Types:</strong> ' + 
+                       synData.TAG_CATEGORIES.DAMAGE_TYPES.join(', ') + '</div>';
             
             document.getElementById('synergies').innerHTML = synHTML;
             

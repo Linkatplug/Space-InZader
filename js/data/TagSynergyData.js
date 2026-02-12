@@ -244,9 +244,12 @@ function getSynergySummary(tagEffects) {
 // Expose to window for passive loading
 if (typeof window !== 'undefined') {
     window.TagSynergyData = {
-        TAG_SYNERGY_THRESHOLDS: TAG_SYNERGY_THRESHOLDS,
-        TAG_MALUS: TAG_MALUS,
-        OFFENSIVE_TAGS: OFFENSIVE_TAGS,
+        TAG_CATEGORIES: TAG_CATEGORIES,
+        SYNERGY_THRESHOLDS: SYNERGY_THRESHOLDS,
+        NON_MAJORITY_MALUS: NON_MAJORITY_MALUS,
+        countTags: countTags,
+        calculateSynergyBonuses: calculateSynergyBonuses,
+        findMajorityOffensiveTag: findMajorityOffensiveTag,
         calculateTagEffects: calculateTagEffects,
         getTagSynergySummary: getTagSynergySummary
     };
