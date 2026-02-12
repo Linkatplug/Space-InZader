@@ -172,14 +172,25 @@ class Game {
     }
 
     setupUIListeners() {
-        // Start button
-        document.getElementById('startButton').addEventListener('click', () => {
-            if (this.gameState.selectedShip) {
+        // Listen for startGame custom event from ship selection
+        document.addEventListener('startGame', (e) => {
+            if (e.detail && e.detail.shipId) {
+                this.gameState.selectedShip = e.detail.shipId;
                 this.startGame();
-            } else {
-                alert('Please select a ship first!');
             }
         });
+
+        // Start button (legacy - keeping for backward compatibility)
+        const startButton = document.getElementById('startButton');
+        if (startButton) {
+            startButton.addEventListener('click', () => {
+                if (this.gameState.selectedShip) {
+                    this.startGame();
+                } else {
+                    alert('Please select a ship first!');
+                }
+            });
+        }
 
         // Meta button
         document.getElementById('metaButton').addEventListener('click', () => {
