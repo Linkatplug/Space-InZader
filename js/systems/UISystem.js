@@ -39,8 +39,11 @@ class UISystem {
         // Controls help tracking
         this.controlsShownThisGame = false;
         
-        // Stats overlay toggle state
-        this.statsOverlayVisible = true;
+        // Detect if on mobile device
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+        
+        // Stats overlay toggle state - hidden by default on mobile
+        this.statsOverlayVisible = !this.isMobile;
         
         // Track missing stats warnings to avoid spam
         this.missingStatsWarned = new Set();
@@ -140,6 +143,12 @@ class UISystem {
         
         // Stats overlay panel
         this.statsOverlayPanel = document.getElementById('statsOverlayPanel');
+        this.statsToggleBtn = document.getElementById('statsToggleBtn');
+        
+        // Set initial visibility based on mobile detection
+        if (this.statsOverlayPanel) {
+            this.statsOverlayPanel.style.display = this.statsOverlayVisible ? 'block' : 'none';
+        }
 
         // Menu elements (ship selection)
         this.shipSelection = document.getElementById('shipSelection');
@@ -162,6 +171,20 @@ class UISystem {
      * Bind UI event handlers
      */
     bindEvents() {
+        // Stats toggle button for mobile
+        if (this.statsToggleBtn) {
+            this.statsToggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleStatsOverlay();
+            });
+            
+            // Prevent touch events from bubbling
+            this.statsToggleBtn.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            });
+        }
+        
         // Ship selection screen
         if (this.startButton) {
             this.startButton.addEventListener('click', () => this.onStartGame());
@@ -616,22 +639,16 @@ class UISystem {
      * Show commands screen
      */
     showCommands() {
-        this.hideAllScreens();
-        if (this.commandsScreen) {
-            this.commandsScreen.classList.add('active');
-        }
+        this.showScreen('commandsScreen');
     }
 
     /**
      * Show options screen
-     * @param {string} returnScreen - Screen to return to ('main', 'pause', etc.)
+     * @param {string} returnScreen - Screen to return to ('main', 'pause', etc.')
      */
     showOptions(returnScreen = 'main') {
         this.optionsReturnScreen = returnScreen;
-        this.hideAllScreens();
-        if (this.optionsScreen) {
-            this.optionsScreen.classList.add('active');
-        }
+        this.showScreen('optionsScreen');
         this.loadOptionsValues();
     }
 
@@ -656,10 +673,7 @@ class UISystem {
      * Show scoreboard screen
      */
     showScoreboard() {
-        this.hideAllScreens();
-        if (this.scoreboardScreen) {
-            this.scoreboardScreen.classList.add('active');
-        }
+        this.showScreen('scoreboardScreen');
         this.renderScoreboard();
     }
 
@@ -740,10 +754,7 @@ class UISystem {
      * Show credits screen
      */
     showCredits() {
-        this.hideAllScreens();
-        if (this.creditsScreen) {
-            this.creditsScreen.classList.add('active');
-        }
+        this.showScreen('creditsScreen');
     }
 
     /**
@@ -1860,8 +1871,141 @@ class UISystem {
             `;
         });
         
-        html += '<div class="stats-overlay-hint">Press [A] to toggle</div>';
+        // Add hint text - different for mobile and desktop
+        const hintText = this.isMobile ? 
+            'Tap 📊 button to toggle' : 
+            'Press [A] to toggle';
+        html += `<div class="stats-overlay-hint">${hintText}</div>`;
         
         this.statsOverlayPanel.innerHTML = html;
+    }
+
+    /**
+     * Centralized screen management - shows one screen at a time.
+     * This prevents overlay issues by hiding ALL screens then showing only the target.
+     * 
+     * @param {string} screenId - ID of the screen to show
+     */
+    showScreen(screenId) {
+        console.log(`[UI] showScreen: ${screenId}`);
+        
+        // Legacy ID mapping for backward compatibility
+        const legacyIdMap = {
+            'menu': 'mainMenu',
+            'meta': 'metaScreen',
+            'game': 'gameHud',  // Special case: when game is running
+            'gameOver': 'gameOverScreen',
+            'pause': 'pauseMenu',
+            'commands': 'commandsScreen',
+            'options': 'optionsScreen',
+            'scoreboard': 'scoreboardScreen',
+            'credits': 'creditsScreen'
+        };
+        
+        // Map legacy ID to actual ID
+        const actualId = legacyIdMap[screenId] || screenId;
+        
+        // Special case: 'game' means hide all menus and show game HUD
+        if (screenId === 'game') {
+            // Hide all menu screens
+            const menuScreens = [
+                "mainMenu",
+                "menuScreen",
+                "multiplayerMenu",
+                "multiplayerHostScreen",
+                "multiplayerJoinScreen",
+                "multiplayerLobbyScreen",
+                "shipSelectionScreen",
+                "pauseMenu",
+                "gameOverScreen",
+                "metaScreen",
+                "commandsScreen",
+                "optionsScreen",
+                "scoreboardScreen",
+                "creditsScreen"
+            ];
+            
+            for (const id of menuScreens) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.display = "none";
+                    el.classList.remove('active');
+                }
+            }
+            
+            // Show stats toggle button during gameplay
+            if (this.statsToggleBtn) {
+                this.statsToggleBtn.classList.add('visible');
+            }
+            
+            console.log(`[UI] Game mode - all menus hidden`);
+            return;
+        }
+        
+        // List of all screens that should be mutually exclusive
+        const screens = [
+            "mainMenu",
+            "menuScreen",
+            "multiplayerMenu",
+            "multiplayerHostScreen",
+            "multiplayerJoinScreen",
+            "multiplayerLobbyScreen",
+            "shipSelectionScreen",
+            "pauseMenu",
+            "gameOverScreen",
+            "metaScreen",
+            "commandsScreen",
+            "optionsScreen",
+            "scoreboardScreen",
+            "creditsScreen"
+        ];
+        
+        // Hide all screens
+        for (const id of screens) {
+            const el = document.getElementById(id);
+            if (el) {
+                el.style.display = "none";
+                el.classList.remove('active');
+            }
+        }
+        
+        // Hide stats toggle button in menus
+        if (this.statsToggleBtn) {
+            this.statsToggleBtn.classList.remove('visible');
+        }
+        
+        // Show target screen
+        const target = document.getElementById(actualId);
+        if (target) {
+            target.style.display = "flex";
+            target.classList.add('active');
+            console.log(`[UI] Showing screen: ${actualId}`);
+        } else {
+            console.warn(`[UI] Screen not found: ${actualId} (original: ${screenId})`);
+        }
+    }
+
+    /**
+     * Multiplayer lobby UI update (safe no-op).
+     *
+     * MultiplayerManager calls this whenever it receives `room-state` updates.
+     * This method MUST exist to avoid crashing the multiplayer flow, even if
+     * you don't have a dedicated lobby UI yet.
+     *
+     * @param {Array} players - Array of players with { playerId, name, ready, isHost, ... }
+     * @param {boolean} isHost - Whether local player is the host
+     */
+    updateMultiplayerLobby(players = [], isHost = false) {
+        // Optional element: if it doesn't exist, just do nothing.
+        const statusEl = document.getElementById('multiplayerLobbyStatus');
+        if (!statusEl) return;
+
+        const p1 = players.find(p => p.playerId === 1);
+        const p2 = players.find(p => p.playerId === 2);
+
+        const p1Text = p1 ? `${p1.name || 'J1'}: ${p1.ready ? 'PRET' : 'EN ATTENTE'}` : 'J1: ABSENT';
+        const p2Text = p2 ? `${p2.name || 'J2'}: ${p2.ready ? 'PRET' : 'EN ATTENTE'}` : 'J2: ABSENT';
+
+        statusEl.textContent = `${p1Text} | ${p2Text}${isHost ? ' (HOTE)' : ''}`;
     }
 }

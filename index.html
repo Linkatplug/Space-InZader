@@ -31,6 +31,8 @@
             display: block;
             background: #000;
             border: 2px solid #00ffff;
+            position: relative;
+            z-index: 1; /* Canvas behind UI elements */
         }
 
         #ui {
@@ -40,6 +42,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
+            z-index: 100; /* UI layer above canvas */
         }
 
         .menu-screen, .level-up-screen, .game-over-screen, .meta-screen {
@@ -53,11 +56,16 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            pointer-events: all;
+            pointer-events: all !important; /* Force pointer events */
+            touch-action: manipulation !important; /* Force touch responsiveness */
+            z-index: 10001 !important; /* Absolutely above everything */
         }
 
         .menu-screen.active, .level-up-screen.active, .game-over-screen.active, .meta-screen.active {
-            display: flex;
+            display: flex !important;
+            pointer-events: all !important; /* Ensure clicks work when active */
+            touch-action: manipulation !important;
+            z-index: 10001 !important;
         }
 
         .title {
@@ -80,6 +88,9 @@
             transition: all 0.3s;
             text-transform: uppercase;
             letter-spacing: 2px;
+            touch-action: manipulation; /* Improve touch responsiveness */
+            user-select: none; /* Prevent text selection on touch */
+            -webkit-tap-highlight-color: rgba(0, 255, 255, 0.3); /* Visual feedback on mobile */
         }
 
         .button:hover {
@@ -348,6 +359,47 @@
             margin-top: 8px;
             padding-top: 5px;
             border-top: 1px solid #333;
+        }
+        
+        /* Stats Toggle Button for Mobile */
+        .stats-toggle-btn {
+            position: fixed;
+            left: 10px;
+            bottom: 10px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            border-radius: 50%;
+            display: none; /* Hidden by default, shown on mobile */
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #00ffff;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .stats-toggle-btn:active {
+            transform: scale(0.9);
+            background: rgba(0, 255, 255, 0.4);
+        }
+        
+        .stats-toggle-btn.visible {
+            display: flex;
+        }
+        
+        /* Hide stats overlay on mobile by default */
+        @media (max-width: 768px) {
+            .stats-overlay-panel {
+                display: none;
+            }
+            
+            .stats-toggle-btn {
+                display: flex;
+            }
         }
 
         .health-bar {
@@ -1111,6 +1163,89 @@
             margin: 5px 0;
             font-size: 14px;
         }
+        /* AGGRESSIVE: Prevent external joystick/virtual controls from appearing */
+        /* Hide any third-party joystick overlays that might be injected by browsers/extensions */
+        [class*="joystick"],
+        [id*="joystick"],
+        [class*="nipple"],
+        [id*="nipple"],
+        [class*="virtual-joystick"],
+        [id*="virtual-joystick"],
+        [class*="gamepad"],
+        [id*="gamepad"],
+        [class*="touch-control"],
+        [id*="touch-control"],
+        [class*="mobile-control"],
+        [id*="mobile-control"],
+        .joystick,
+        .virtual-joystick,
+        .gamepad-controls,
+        .mobile-joystick {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+            width: 0 !important;
+            height: 0 !important;
+        }
+
+        /* Canvas should not capture touches when menus are active */
+        body:has(.menu-screen.active) #gameCanvas,
+        body:has(.level-up-screen.active) #gameCanvas,
+        body:has(.game-over-screen.active) #gameCanvas,
+        body:has(.meta-screen.active) #gameCanvas {
+            pointer-events: none !important;
+            touch-action: none !important;
+        }
+
+        /* Mobile-specific fixes - CRITICAL FOR PHONE SCREENS */
+        @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+            /* Force touch optimization on all menus */
+            .menu-screen, .level-up-screen, .game-over-screen, .meta-screen {
+                -webkit-overflow-scrolling: touch;
+                touch-action: manipulation !important;
+                pointer-events: all !important;
+                -webkit-user-select: none;
+                user-select: none;
+            }
+            
+            /* Make all buttons easily tappable */
+            .button {
+                min-height: 50px !important; /* Larger for better touch */
+                min-width: 140px !important;
+                padding: 18px 45px !important;
+                font-size: 20px !important;
+                touch-action: manipulation !important;
+                -webkit-tap-highlight-color: rgba(0, 255, 255, 0.5) !important;
+            }
+            
+            /* Ensure active menus dominate the screen */
+            .menu-screen.active, .level-up-screen.active, .game-over-screen.active, .meta-screen.active {
+                z-index: 99999 !important;
+                pointer-events: all !important;
+                touch-action: manipulation !important;
+            }
+            
+            /* Disable canvas touch when menu active */
+            #gameCanvas {
+                pointer-events: none !important;
+            }
+            
+            /* Force UI layer to allow touches on menus only */
+            #ui {
+                pointer-events: none !important;
+            }
+            
+            #ui > .menu-screen, 
+            #ui > .level-up-screen, 
+            #ui > .game-over-screen, 
+            #ui > .meta-screen {
+                pointer-events: all !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1122,7 +1257,8 @@
                 <div class="main-menu-container">
                     <h1 class="game-title">SPACE INZADER</h1>
                     <div class="main-menu-buttons">
-                        <button class="menu-btn" id="playBtn">JOUER</button>
+                        <button class="menu-btn" id="playBtn">SOLO</button>
+                        <button class="menu-btn" id="multiplayerBtn">MULTIJOUEUR</button>
                         <button class="menu-btn" id="scoreboardBtn">CLASSEMENT</button>
                         <button class="menu-btn" id="optionsBtn">OPTIONS</button>
                         <button class="menu-btn" id="creditsBtn">CRÉDITS</button>
@@ -1141,6 +1277,38 @@
                 <div class="ship-selection" id="shipSelection"></div>
                 <button class="button" id="startButton">COMMENCER</button>
                 <button class="button" id="backToMainBtn">RETOUR</button>
+            </div>
+
+            <!-- Multiplayer Menu -->
+            <div id="multiplayerMenu" class="screen overlay" style="display: none;">
+                <div style="background: rgba(10, 10, 26, 0.95); border: 2px solid #00ffff; padding: 40px; border-radius: 10px; max-width: 600px;">
+                    <h2 style="text-align: center; margin-bottom: 30px; font-size: 36px; text-shadow: 0 0 20px #00ffff;">MULTIJOUEUR</h2>
+                    <p style="text-align: center; margin-bottom: 20px; color: #00ffff;">Mode coopératif à 2 joueurs</p>
+                    
+                    <div class="main-menu-buttons" style="margin: 20px 0;">
+                        <button class="menu-btn" id="hostGameBtn">CRÉER UNE PARTIE</button>
+                        <button class="menu-btn" id="joinGameBtn">REJOINDRE UNE PARTIE</button>
+                        <button class="menu-btn" id="multiplayerBackBtn">RETOUR</button>
+                    </div>
+
+                    <div id="joinRoomDiv" style="display: none; margin-top: 30px;">
+                        <p style="margin-bottom: 10px;">Entrez le code de la partie :</p>
+                        <input type="text" id="roomCodeInput" placeholder="CODE" maxlength="6" 
+                            style="width: 100%; padding: 15px; font-size: 24px; text-align: center; 
+                            background: rgba(0, 255, 255, 0.1); border: 2px solid #00ffff; color: #00ffff; 
+                            font-family: 'Courier New', monospace; text-transform: uppercase; margin-bottom: 15px;">
+                        <input type="text" id="playerNameInput2" placeholder="Nom du joueur" 
+                            style="width: 100%; padding: 10px; font-size: 18px; 
+                            background: rgba(0, 255, 255, 0.1); border: 2px solid #00ffff; color: #00ffff; 
+                            font-family: 'Courier New', monospace; margin-bottom: 15px;">
+                        <button class="button" id="confirmJoinBtn" style="width: 100%;">REJOINDRE</button>
+                        <button class="button" id="cancelJoinBtn" style="width: 100%; margin-top: 10px; background: #666;">ANNULER</button>
+                    </div>
+
+                    <div id="serverStatus" style="margin-top: 20px; padding: 15px; background: rgba(0, 0, 0, 0.5); border-radius: 5px; text-align: center;">
+                        <span id="connectionStatus">Connexion au serveur...</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Pause Menu -->
@@ -1349,6 +1517,9 @@
             <!-- Stats Overlay Panel (Left Side) -->
             <div class="stats-overlay-panel" id="statsOverlayPanel"></div>
             
+            <!-- Stats Toggle Button for Mobile -->
+            <button class="stats-toggle-btn" id="statsToggleBtn" title="Toggle Stats">📊</button>
+            
             <!-- Controls Help -->
             <div class="controls-help" id="controlsHelp">
                 <h4>🎮 CONTRÔLES</h4>
@@ -1390,6 +1561,9 @@
     <script src="js/managers/SaveManager.js"></script>
     <script src="js/managers/ScoreManager.js"></script>
     <script src="js/managers/AudioManager.js"></script>
+    <!-- Socket.IO for multiplayer - served from node_modules -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="js/managers/MultiplayerManager.js"></script>
     <!-- Dev Tools -->
     <script src="js/dev/ContentAuditor.js"></script>
     <script src="js/dev/DevTools.js"></script>

@@ -22,6 +22,7 @@ class MovementSystem {
     }
 
     update(deltaTime) {
+        // Note: This update is only called when game is in RUNNING state (guarded by Game.js loop)
         // Update player movement
         const players = this.world.getEntitiesByType('player');
         for (const player of players) {

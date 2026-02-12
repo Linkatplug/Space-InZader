@@ -124,13 +124,14 @@ class RenderSystem {
      * Render all entities in the game world
      */
     renderEntities() {
-        // Render order: particles -> pickups -> projectiles -> enemies -> weather -> player
+        // Render order: particles -> pickups -> projectiles -> enemies -> weather -> player -> other players
         this.renderParticles();
         this.renderPickups();
         this.renderProjectiles();
         this.renderEnemies();
         this.renderWeatherHazards();
         this.renderPlayer();
+        this.renderOtherPlayers();
     }
 
     /**
@@ -706,6 +707,67 @@ class RenderSystem {
                 this.ctx.fill();
             }
             
+            this.ctx.restore();
+        });
+    }
+
+    /**
+     * Render other players in multiplayer
+     */
+    renderOtherPlayers() {
+        const otherPlayers = this.world.getEntitiesByType('other-player');
+        
+        otherPlayers.forEach(player => {
+            const pos = player.getComponent('position');
+            const health = player.getComponent('health');
+            const otherPlayerComp = player.getComponent('otherPlayer');
+            
+            if (!pos) return;
+
+            this.ctx.save();
+            this.ctx.translate(pos.x, pos.y);
+
+            // Draw player ship with different color (green for multiplayer)
+            this.ctx.shadowBlur = 20;
+            this.ctx.shadowColor = '#00ff00';
+            this.ctx.fillStyle = '#00ff00';
+            this.ctx.strokeStyle = '#00ff00';
+            this.ctx.lineWidth = 2;
+
+            // Draw triangle ship
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, -15);
+            this.ctx.lineTo(-10, 10);
+            this.ctx.lineTo(10, 10);
+            this.ctx.closePath();
+            this.ctx.fill();
+            this.ctx.stroke();
+
+            // Draw player name above ship
+            if (otherPlayerComp && otherPlayerComp.name) {
+                this.ctx.shadowBlur = 0;
+                this.ctx.fillStyle = '#00ff00';
+                this.ctx.font = '12px "Courier New"';
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(otherPlayerComp.name, 0, -25);
+            }
+
+            // Draw health bar
+            if (health) {
+                const barWidth = 30;
+                const barHeight = 4;
+                const healthPercent = health.current / health.max;
+
+                this.ctx.shadowBlur = 0;
+                // Background
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+                this.ctx.fillRect(-barWidth / 2, 20, barWidth, barHeight);
+
+                // Health
+                this.ctx.fillStyle = healthPercent > 0.5 ? '#00ff00' : (healthPercent > 0.25 ? '#ffff00' : '#ff0000');
+                this.ctx.fillRect(-barWidth / 2, 20, barWidth * healthPercent, barHeight);
+            }
+
             this.ctx.restore();
         });
     }

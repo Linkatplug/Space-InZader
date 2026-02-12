@@ -76,6 +76,9 @@ class Game {
         this.audioManager = new AudioManager();
         this.scoreManager = new ScoreManager();
         
+        // Multiplayer manager
+        this.multiplayerManager = new MultiplayerManager(this);
+        
         // Debug system
         this.debugOverlay = null;
         
@@ -99,6 +102,9 @@ class Game {
             wave: new WaveSystem(this.gameState),
             weather: new WeatherSystem(this.world, this.canvas, this.audioManager, this.gameState)
         };
+        
+        // Setup touch event handlers for canvas (gameplay only)
+        this.setupCanvasTouchHandlers();
         
         // Synergy system (initialized when game starts)
         this.synergySystem = null;
@@ -133,6 +139,10 @@ class Game {
         this.running = false;
         this.player = null;
         
+        // Multiplayer state tracking
+        this.pendingMultiplayerAction = null; // Can be 'host' or 'join'
+        this.pendingJoinRoomData = null; // Store room data for join action
+        
         // Expose to window for system access
         window.game = this;
         
@@ -162,14 +172,25 @@ class Game {
     }
 
     setupUIListeners() {
-        // Start button
-        document.getElementById('startButton').addEventListener('click', () => {
-            if (this.gameState.selectedShip) {
+        // Listen for startGame custom event from ship selection
+        document.addEventListener('startGame', (e) => {
+            if (e.detail && e.detail.shipId) {
+                this.gameState.selectedShip = e.detail.shipId;
                 this.startGame();
-            } else {
-                alert('Please select a ship first!');
             }
         });
+
+        // Start button (legacy - keeping for backward compatibility)
+        const startButton = document.getElementById('startButton');
+        if (startButton) {
+            startButton.addEventListener('click', () => {
+                if (this.gameState.selectedShip) {
+                    this.startGame();
+                } else {
+                    alert('Please select a ship first!');
+                }
+            });
+        }
 
         // Meta button
         document.getElementById('metaButton').addEventListener('click', () => {
@@ -221,6 +242,34 @@ class Game {
         // Listen for ship selection
         window.addEventListener('shipSelected', (e) => {
             this.gameState.selectedShip = e.detail.ship;
+            
+            // If there's a pending multiplayer action, execute it now
+            if (this.pendingMultiplayerAction === 'host') {
+                this.pendingMultiplayerAction = null;
+                // Return to multiplayer menu and create room
+                setTimeout(() => {
+                    this.showMultiplayerMenu();
+                    setTimeout(() => {
+                        this.hostMultiplayerGame();
+                    }, 100);
+                }, 100);
+            } else if (this.pendingMultiplayerAction === 'join') {
+                this.pendingMultiplayerAction = null;
+                const roomData = this.pendingJoinRoomData;
+                this.pendingJoinRoomData = null;
+                // Return to multiplayer menu and join room
+                setTimeout(() => {
+                    this.showMultiplayerMenu();
+                    setTimeout(() => {
+                        // Restore the room input values
+                        if (roomData) {
+                            document.getElementById('roomCodeInput').value = roomData.roomCode;
+                            document.getElementById('playerNameInput2').value = roomData.playerName;
+                        }
+                        this.joinMultiplayerGame();
+                    }, 100);
+                }, 100);
+            }
         });
 
         // Listen for boost selection - BULLETPROOF handler
@@ -331,10 +380,55 @@ class Game {
         };
         document.addEventListener('click', initAudio);
         document.addEventListener('keydown', initAudio);
+
+        // Helper function to add mobile-friendly button handlers
+        const addButtonHandler = (buttonId, handler) => {
+            const btn = document.getElementById(buttonId);
+            if (!btn) return;
+            
+            // Add click handler (for desktop and fallback)
+            btn.addEventListener('click', handler);
+            
+            // Add pointerdown handler (more reliable on mobile)
+            btn.addEventListener('pointerdown', (e) => {
+                e.stopPropagation(); // Prevent event from reaching canvas
+                handler(e);
+            });
+        };
+
+        // Multiplayer menu listeners (using mobile-friendly handlers)
+        addButtonHandler('multiplayerBtn', () => {
+            this.showMultiplayerMenu();
+        });
+
+        addButtonHandler('hostGameBtn', () => {
+            this.hostMultiplayerGame();
+        });
+
+        addButtonHandler('joinGameBtn', () => {
+            document.getElementById('joinRoomDiv').style.display = 'block';
+        });
+
+        addButtonHandler('confirmJoinBtn', () => {
+            this.joinMultiplayerGame();
+        });
+
+        addButtonHandler('cancelJoinBtn', () => {
+            document.getElementById('joinRoomDiv').style.display = 'none';
+        });
+
+        addButtonHandler('multiplayerBackBtn', () => {
+            this.hideMultiplayerMenu();
+        });
     }
 
     startGame() {
         logger.info('Game', 'Starting game with ship: ' + this.gameState.selectedShip);
+        
+        // If hosting multiplayer, notify server
+        if (this.multiplayerManager.isHost && this.multiplayerManager.multiplayerEnabled) {
+            this.multiplayerManager.startMultiplayerGame();
+        }
         
         // Reset world and stats
         this.world.clear();
@@ -1301,5 +1395,194 @@ class Game {
         
         // Update UI
         this.systems.ui.updateHUD();
+        
+        // Send player position to multiplayer if connected
+        if (this.multiplayerManager.multiplayerEnabled && this.player) {
+            const pos = this.player.getComponent('position');
+            const vel = this.player.getComponent('velocity');
+            if (pos && vel) {
+                this.multiplayerManager.sendPlayerPosition(
+                    { x: pos.x, y: pos.y },
+                    { vx: vel.vx, vy: vel.vy }
+                );
+            }
+        }
+        
+        // Process multiplayer events
+        if (this.multiplayerManager.multiplayerEnabled) {
+            this.multiplayerManager.processEventQueue();
+        }
+    }
+
+    /**
+     * Show multiplayer menu
+     */
+    showMultiplayerMenu() {
+        const statusEl = document.getElementById('connectionStatus');
+        
+        // Check if page is accessed via file:// protocol
+        if (window.location.protocol === 'file:') {
+            if (statusEl) {
+                statusEl.innerHTML = '⚠️ ERREUR: Ouvrez le jeu via <b>http://localhost:3000</b><br>Ne double-cliquez PAS sur index.html !<br><br>1. Ouvrez un terminal<br>2. Exécutez: <b>npm install</b><br>3. Exécutez: <b>npm start</b><br>4. Ouvrez: <b>http://localhost:3000</b>';
+                statusEl.style.color = '#ff6600';
+                statusEl.style.fontSize = '14px';
+                statusEl.style.lineHeight = '1.6';
+            }
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('multiplayerMenu').style.display = 'flex';
+            return;
+        }
+        
+        // Connect to server
+        if (!this.multiplayerManager.connected) {
+            if (statusEl) {
+                statusEl.textContent = 'Connexion au serveur...';
+                statusEl.style.color = '#ffff00';
+            }
+            
+            this.multiplayerManager.connect();
+            
+            // Update status with longer timeout (3 seconds instead of 1)
+            setTimeout(() => {
+                if (statusEl) {
+                    if (this.multiplayerManager.connected) {
+                        statusEl.textContent = 'Connecté au serveur ✓';
+                        statusEl.style.color = '#00ff00';
+                    } else {
+                        statusEl.innerHTML = '❌ Échec de connexion<br><br>Vérifiez que:<br>1. Vous avez exécuté <b>npm install</b><br>2. Le serveur est démarré avec <b>npm start</b><br>3. Vous voyez "Server running on port 3000"';
+                        statusEl.style.color = '#ff0000';
+                        statusEl.style.fontSize = '14px';
+                        statusEl.style.lineHeight = '1.6';
+                    }
+                }
+            }, 3000);
+        } else {
+            if (statusEl) {
+                statusEl.textContent = 'Connecté au serveur ✓';
+                statusEl.style.color = '#00ff00';
+            }
+        }
+        
+        // Show multiplayer menu
+        document.getElementById('mainMenu').style.display = 'none';
+        document.getElementById('multiplayerMenu').style.display = 'flex';
+    }
+
+    /**
+     * Hide multiplayer menu
+     */
+    hideMultiplayerMenu() {
+        document.getElementById('multiplayerMenu').style.display = 'none';
+        document.getElementById('mainMenu').style.display = 'flex';
+        document.getElementById('joinRoomDiv').style.display = 'none';
+    }
+
+    /**
+     * Host a multiplayer game
+     */
+    hostMultiplayerGame() {
+        if (!this.multiplayerManager.connected) {
+            alert('Non connecté au serveur');
+            return;
+        }
+
+        if (!this.gameState.selectedShip) {
+            // Save the action to execute after ship selection
+            this.pendingMultiplayerAction = 'host';
+            // Show ship selection
+            this.hideMultiplayerMenu();
+            this.gameState.setState(GameStates.MENU);
+            this.systems.ui.showShipSelection();  // Changed from showScreen('menu')
+            return;
+        }
+
+        // Create room
+        this.multiplayerManager.createRoom(
+            'Joueur 1',
+            this.gameState.selectedShip
+        );
+
+        // Hide multiplayer menu
+        this.hideMultiplayerMenu();
+    }
+
+    /**
+     * Join a multiplayer game
+     */
+    joinMultiplayerGame() {
+        const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+        const playerName = document.getElementById('playerNameInput2').value.trim() || 'Joueur 2';
+
+        if (!roomCode) {
+            alert('Entrez un code de partie');
+            return;
+        }
+
+        if (!this.multiplayerManager.connected) {
+            alert('Non connecté au serveur');
+            return;
+        }
+
+        if (!this.gameState.selectedShip) {
+            // Save the action and room data to execute after ship selection
+            this.pendingMultiplayerAction = 'join';
+            this.pendingJoinRoomData = { roomCode, playerName };
+            // Show ship selection
+            this.hideMultiplayerMenu();
+            this.gameState.setState(GameStates.MENU);
+            this.systems.ui.showShipSelection();  // Changed from showScreen('menu')
+            return;
+        }
+
+        // Join room
+        this.multiplayerManager.joinRoom(
+            roomCode,
+            playerName,
+            this.gameState.selectedShip
+        );
+
+        // Hide multiplayer menu
+        this.hideMultiplayerMenu();
+    }
+
+    /**
+     * Check if gameplay is currently active (touch controls should work)
+     * @returns {boolean} True if game is in RUNNING state
+     */
+    isGameplayActive() {
+        return this.gameState && this.gameState.isState(GameStates.RUNNING);
+    }
+
+    /**
+     * Setup touch event handlers on canvas for gameplay controls
+     * Only prevents default during gameplay, not in menus
+     */
+    setupCanvasTouchHandlers() {
+        // Prevent default touch behaviors ONLY during gameplay on canvas
+        this.canvas.addEventListener('touchstart', (e) => {
+            if (!this.isGameplayActive()) {
+                // In menus: allow normal touch behavior (enables clicks)
+                return;
+            }
+            // In gameplay: prevent scroll/zoom
+            e.preventDefault();
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (!this.isGameplayActive()) {
+                // In menus: allow normal touch behavior
+                return;
+            }
+            // In gameplay: prevent scroll/zoom
+            e.preventDefault();
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchend', (e) => {
+            if (!this.isGameplayActive()) {
+                // In menus: allow normal touch behavior
+                return;
+            }
+            // In gameplay: could add touch control logic here if needed
+        }, { passive: false });
     }
 }
