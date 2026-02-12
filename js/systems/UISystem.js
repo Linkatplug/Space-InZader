@@ -39,8 +39,11 @@ class UISystem {
         // Controls help tracking
         this.controlsShownThisGame = false;
         
-        // Stats overlay toggle state
-        this.statsOverlayVisible = true;
+        // Detect if on mobile device
+        this.isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+        
+        // Stats overlay toggle state - hidden by default on mobile
+        this.statsOverlayVisible = !this.isMobile;
         
         // Track missing stats warnings to avoid spam
         this.missingStatsWarned = new Set();
@@ -140,6 +143,12 @@ class UISystem {
         
         // Stats overlay panel
         this.statsOverlayPanel = document.getElementById('statsOverlayPanel');
+        this.statsToggleBtn = document.getElementById('statsToggleBtn');
+        
+        // Set initial visibility based on mobile detection
+        if (this.statsOverlayPanel) {
+            this.statsOverlayPanel.style.display = this.statsOverlayVisible ? 'block' : 'none';
+        }
 
         // Menu elements (ship selection)
         this.shipSelection = document.getElementById('shipSelection');
@@ -162,6 +171,20 @@ class UISystem {
      * Bind UI event handlers
      */
     bindEvents() {
+        // Stats toggle button for mobile
+        if (this.statsToggleBtn) {
+            this.statsToggleBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.toggleStatsOverlay();
+            });
+            
+            // Prevent touch events from bubbling
+            this.statsToggleBtn.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+            });
+        }
+        
         // Ship selection screen
         if (this.startButton) {
             this.startButton.addEventListener('click', () => this.onStartGame());
@@ -1848,7 +1871,11 @@ class UISystem {
             `;
         });
         
-        html += '<div class="stats-overlay-hint">Press [A] to toggle</div>';
+        // Add hint text - different for mobile and desktop
+        const hintText = this.isMobile ? 
+            'Tap 📊 button to toggle' : 
+            'Press [A] to toggle';
+        html += `<div class="stats-overlay-hint">${hintText}</div>`;
         
         this.statsOverlayPanel.innerHTML = html;
     }
@@ -1905,6 +1932,12 @@ class UISystem {
                     el.classList.remove('active');
                 }
             }
+            
+            // Show stats toggle button during gameplay
+            if (this.statsToggleBtn) {
+                this.statsToggleBtn.classList.add('visible');
+            }
+            
             console.log(`[UI] Game mode - all menus hidden`);
             return;
         }
@@ -1934,6 +1967,11 @@ class UISystem {
                 el.style.display = "none";
                 el.classList.remove('active');
             }
+        }
+        
+        // Hide stats toggle button in menus
+        if (this.statsToggleBtn) {
+            this.statsToggleBtn.classList.remove('visible');
         }
         
         // Show target screen

@@ -54,6 +54,7 @@
             justify-content: center;
             align-items: center;
             pointer-events: all;
+            z-index: 1001; /* Ensure menus are above stats overlay */
         }
 
         .menu-screen.active, .level-up-screen.active, .game-over-screen.active, .meta-screen.active {
@@ -348,6 +349,47 @@
             margin-top: 8px;
             padding-top: 5px;
             border-top: 1px solid #333;
+        }
+        
+        /* Stats Toggle Button for Mobile */
+        .stats-toggle-btn {
+            position: fixed;
+            left: 10px;
+            bottom: 10px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 255, 255, 0.2);
+            border: 2px solid #00ffff;
+            border-radius: 50%;
+            display: none; /* Hidden by default, shown on mobile */
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #00ffff;
+            cursor: pointer;
+            z-index: 1000;
+            transition: all 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .stats-toggle-btn:active {
+            transform: scale(0.9);
+            background: rgba(0, 255, 255, 0.4);
+        }
+        
+        .stats-toggle-btn.visible {
+            display: flex;
+        }
+        
+        /* Hide stats overlay on mobile by default */
+        @media (max-width: 768px) {
+            .stats-overlay-panel {
+                display: none;
+            }
+            
+            .stats-toggle-btn {
+                display: flex;
+            }
         }
 
         .health-bar {
@@ -1381,6 +1423,9 @@
             
             <!-- Stats Overlay Panel (Left Side) -->
             <div class="stats-overlay-panel" id="statsOverlayPanel"></div>
+            
+            <!-- Stats Toggle Button for Mobile -->
+            <button class="stats-toggle-btn" id="statsToggleBtn" title="Toggle Stats">📊</button>
             
             <!-- Controls Help -->
             <div class="controls-help" id="controlsHelp">
