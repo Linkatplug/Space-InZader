@@ -169,6 +169,11 @@ function getTagMultiplier(tag, tagEffects) {
 
 /**
  * Apply tag multipliers to weapon damage
+ * Note: Uses multiplicative stacking for multiple tags on the same weapon.
+ * For example, a weapon with both a +8% bonus tag and a -10% malus tag
+ * will result in: 1.08 * 0.9 = 0.972 (net -2.8% instead of -2%).
+ * This creates compounding effects but allows for more nuanced interactions.
+ * 
  * @param {Object} weapon - Weapon data
  * @param {Object} tagEffects - Tag effects from calculateTagEffects()
  * @returns {number} Damage multiplier for this weapon

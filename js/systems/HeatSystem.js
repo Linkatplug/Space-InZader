@@ -40,6 +40,11 @@ class HeatSystem {
                 heat.current = typeof HEAT_SYSTEM !== 'undefined' 
                     ? HEAT_SYSTEM.OVERHEAT_RECOVERY_VALUE 
                     : 50;
+                    
+                // Re-enable weapons if this is a player
+                if (entity.type === 'player' && this.gameState) {
+                    this.gameState.weaponDisabled = false;
+                }
             }
             // Don't process cooling or passive heat while overheated
             return;
@@ -99,13 +104,6 @@ class HeatSystem {
         // Store overheat state in gameState if it's a player
         if (entity.type === 'player' && this.gameState) {
             this.gameState.weaponDisabled = true;
-            
-            // Set a timer to re-enable weapons
-            setTimeout(() => {
-                if (this.gameState) {
-                    this.gameState.weaponDisabled = false;
-                }
-            }, heat.overheatTimer * 1000);
         }
     }
 
