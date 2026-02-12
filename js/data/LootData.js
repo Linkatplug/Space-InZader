@@ -15,13 +15,20 @@ const RARITY_WEIGHTS = {
 
 /**
  * Time-based progression tiers
+ * 
+ * IMPORTANT: These bonuses are ADDITIVE to base stats, NOT multiplicative layers
+ * Example: 100 base damage at T5 = 100 * (1 + 0.60) = 160 damage
+ * NOT exponential: 100 * 1.12 * 1.12 * 1.16 * 1.22 * 1.20 (would be broken)
+ * 
+ * Tier progression is moderate to preserve skill-based gameplay.
+ * Total scaling from T1 to T5 is 60%, which keeps skill relevant.
  */
 const PROGRESSION_TIERS = {
     T1: { minTime: 0, maxTime: 180, bonusPercent: 0 },      // 0-3 minutes, +0%
-    T2: { minTime: 180, maxTime: 360, bonusPercent: 12 },   // 3-6 minutes, +12%
-    T3: { minTime: 360, maxTime: 600, bonusPercent: 24 },   // 6-10 minutes, +24%
-    T4: { minTime: 600, maxTime: 900, bonusPercent: 40 },   // 10-15 minutes, +40%
-    T5: { minTime: 900, maxTime: Infinity, bonusPercent: 60 } // 15+ minutes, +60%
+    T2: { minTime: 180, maxTime: 360, bonusPercent: 12 },   // 3-6 minutes, +12% total
+    T3: { minTime: 360, maxTime: 600, bonusPercent: 24 },   // 6-10 minutes, +24% total
+    T4: { minTime: 600, maxTime: 900, bonusPercent: 40 },   // 10-15 minutes, +40% total
+    T5: { minTime: 900, maxTime: Infinity, bonusPercent: 60 } // 15+ minutes, +60% total (max)
 };
 
 /**

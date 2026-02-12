@@ -53,8 +53,13 @@ class HeatSystem {
         // Apply passive heat generation
         heat.current += heat.passiveHeat * deltaTime;
 
-        // Apply cooling
-        const coolingAmount = heat.cooling * deltaTime;
+        // Apply cooling with cap enforcement
+        const maxCoolingBonus = typeof HEAT_SYSTEM !== 'undefined' 
+            ? HEAT_SYSTEM.MAX_COOLING_BONUS 
+            : 2.0;
+        const cappedCoolingBonus = Math.min(heat.coolingBonus || 0, maxCoolingBonus);
+        const effectiveCooling = heat.cooling * (1 + cappedCoolingBonus);
+        const coolingAmount = effectiveCooling * deltaTime;
         heat.current = Math.max(0, heat.current - coolingAmount);
 
         // Check for overheat
@@ -144,15 +149,32 @@ class HeatSystem {
     }
 
     /**
-     * Modify cooling rate
+     * Modify cooling rate (with cap enforcement)
      * @param {Entity} entity - Entity to modify
-     * @param {number} amount - Amount to add to cooling (can be negative)
+     * @param {number} bonusPercent - Bonus percentage to add (e.g., 0.5 = +50%)
      */
-    modifyCooling(entity, amount) {
+    modifyCooling(entity, bonusPercent) {
         const heat = entity.getComponent('heat');
         if (!heat) return;
 
-        heat.cooling = Math.max(0, heat.cooling + amount);
+        // Update cooling bonus (will be capped in update loop)
+        heat.coolingBonus = (heat.coolingBonus || 0) + bonusPercent;
+    }
+    
+    /**
+     * Get effective cooling rate with bonuses applied
+     * @param {Entity} entity - Entity to check
+     * @returns {number} Effective cooling rate
+     */
+    getEffectiveCooling(entity) {
+        const heat = entity.getComponent('heat');
+        if (!heat) return 0;
+        
+        const maxCoolingBonus = typeof HEAT_SYSTEM !== 'undefined' 
+            ? HEAT_SYSTEM.MAX_COOLING_BONUS 
+            : 2.0;
+        const cappedBonus = Math.min(heat.coolingBonus || 0, maxCoolingBonus);
+        return heat.cooling * (1 + cappedBonus);
     }
 
     /**

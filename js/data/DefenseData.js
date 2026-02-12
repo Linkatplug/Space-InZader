@@ -45,9 +45,17 @@ const BASE_DEFENSE_VALUES = {
 };
 
 /**
+ * Resistance cap
+ * Maximum resistance for any damage type on any layer
+ * Prevents invulnerability through stacking
+ */
+const RESISTANCE_CAP = 0.75; // 75% maximum
+
+/**
  * Resistance tables for each defense layer
  * Format: { [damageType]: resistancePercentage }
  * Resistance reduces incoming damage: actualDamage = rawDamage * (1 - resistance)
+ * Resistance bonuses from modules/synergies are ADDITIVE and capped at RESISTANCE_CAP
  */
 const LAYER_RESISTANCES = {
     shield: {
@@ -161,7 +169,21 @@ function createDefenseComponent() {
  * @returns {number} Damage after resistance
  */
 function applyResistance(rawDamage, resistance) {
-    return rawDamage * (1 - resistance);
+    // Enforce cap
+    const cappedResistance = Math.min(resistance, RESISTANCE_CAP);
+    return rawDamage * (1 - cappedResistance);
+}
+
+/**
+ * Calculate effective resistance with additive bonuses
+ * Formula: effectiveResist = min(RESISTANCE_CAP, baseResist + bonusAdditive)
+ * This prevents multiplicative stacking exploits
+ * @param {number} baseResist - Base resistance from layer (0-1)
+ * @param {number} bonusResist - Bonus from modules/synergies (additive)
+ * @returns {number} Effective resistance (capped at RESISTANCE_CAP)
+ */
+function calculateEffectiveResistance(baseResist, bonusResist) {
+    return Math.min(RESISTANCE_CAP, baseResist + bonusResist);
 }
 
 /**

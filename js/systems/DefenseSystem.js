@@ -141,7 +141,10 @@ class DefenseSystem {
      * @returns {number} Damage after resistance
      */
     applyResistance(rawDamage, resistance) {
-        return rawDamage * (1 - Math.min(0.99, resistance));
+        // Enforce 75% cap to prevent invulnerability
+        const resistCap = typeof RESISTANCE_CAP !== 'undefined' ? RESISTANCE_CAP : 0.75;
+        const cappedResistance = Math.min(resistance, resistCap);
+        return rawDamage * (1 - cappedResistance);
     }
 
     /**
@@ -245,11 +248,11 @@ class DefenseSystem {
     }
 
     /**
-     * Modify layer resistance
+     * Modify layer resistance (ADDITIVE stacking with cap)
      * @param {Entity} entity - Entity to modify
      * @param {string} layerName - Layer to modify
      * @param {string} damageType - Damage type
-     * @param {number} amount - Amount to add to resistance
+     * @param {number} amount - Amount to ADD to resistance (can be negative)
      */
     modifyLayerResistance(entity, layerName, damageType, amount) {
         const defense = entity.getComponent('defense');
@@ -257,7 +260,9 @@ class DefenseSystem {
 
         const layer = defense[layerName];
         if (layer.resistances[damageType] !== undefined) {
-            layer.resistances[damageType] = Math.min(0.99, layer.resistances[damageType] + amount);
+            // ADDITIVE stacking with 75% hard cap
+            const resistCap = typeof RESISTANCE_CAP !== 'undefined' ? RESISTANCE_CAP : 0.75;
+            layer.resistances[damageType] = Math.max(0, Math.min(resistCap, layer.resistances[damageType] + amount));
         }
     }
 }

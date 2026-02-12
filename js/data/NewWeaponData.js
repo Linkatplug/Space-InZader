@@ -4,6 +4,28 @@
  */
 
 /**
+ * DRONE BALANCE RULES
+ * 
+ * - Drones generate INDIRECT heat: Heat is applied when drone is spawned, not per drone shot
+ * - Drones benefit from player's damage multiplier and tag synergies
+ * - Maximum 4 drones per weapon type
+ * - Maximum 8 total drones across all drone weapons
+ * - Drones have finite lifetime (default 10 seconds)
+ * - Heat per drone spawn is defined in weapon data (typically 8-15 per drone)
+ * 
+ * This prevents drone builds from being too safe/dominant while keeping them viable.
+ */
+
+/**
+ * BEAM WEAPON CRIT RULES
+ * 
+ * - Beam weapons fire rapidly (10-12 times per second)
+ * - Critical hits are calculated PER CYCLE (per second), NOT per tick
+ * - This prevents extreme variance and maintains consistent DPS
+ * - Each beam "cycle" rolls once for crit, applying to all ticks in that cycle
+ */
+
+/**
  * Weapon data structure for new system
  * @typedef {Object} NewWeaponData
  * @property {string} id - Unique identifier

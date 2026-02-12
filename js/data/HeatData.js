@@ -13,6 +13,11 @@ const HEAT_SYSTEM = {
     // Base cooling rate per second
     BASE_COOLING: 10,
     
+    // Maximum cooling bonus (prevents meta-breaking infinite sustain)
+    // Formula: coolingEffective = baseCooling * (1 + min(coolingBonus, MAX_COOLING_BONUS))
+    // With max bonus: 10 * (1 + 2.0) = 30/s max cooling
+    MAX_COOLING_BONUS: 2.0, // 200% bonus maximum
+    
     // Passive heat generation per second (from reactor, etc)
     BASE_PASSIVE_HEAT: 0,
     
@@ -26,7 +31,11 @@ const HEAT_SYSTEM = {
     OVERHEAT_RECOVERY_VALUE: 50,
     
     // Visual warning threshold (percentage)
-    WARNING_THRESHOLD: 0.8 // Show warning at 80%
+    WARNING_THRESHOLD: 0.8, // Show warning at 80%
+    
+    // Heat sustainability threshold for meta validation
+    // If a build can sustain > 95% heat, it's meta-breaking
+    SUSTAINABLE_HEAT_THRESHOLD: 0.95
 };
 
 /**
@@ -78,6 +87,58 @@ function createHeatComponent(maxHeat = HEAT_SYSTEM.MAX_HEAT,
                             cooling = HEAT_SYSTEM.BASE_COOLING, 
                             passiveHeat = HEAT_SYSTEM.BASE_PASSIVE_HEAT) {
     return {
+        current: 0,
+        max: maxHeat,
+        cooling: cooling,
+        coolingBonus: 0, // Bonus from modules (capped at MAX_COOLING_BONUS)
+        passiveHeat: passiveHeat,
+        overheated: false,
+        overheatTimer: 0
+    };
+}
+
+/**
+ * Calculate effective cooling with bonuses and caps
+ * @param {number} baseCooling - Base cooling rate
+ * @param {number} coolingBonus - Bonus from modules (percentage, e.g., 0.5 = +50%)
+ * @returns {number} Effective cooling rate
+ */
+function calculateEffectiveCooling(baseCooling, coolingBonus) {
+    const cappedBonus = Math.min(coolingBonus, HEAT_SYSTEM.MAX_COOLING_BONUS);
+    return baseCooling * (1 + cappedBonus);
+}
+
+/**
+ * Validate if a build's heat is sustainable
+ * @param {number} heatGenPerSec - Heat generated per second from weapons
+ * @param {number} effectiveCooling - Effective cooling per second
+ * @param {number} maxHeat - Maximum heat capacity
+ * @returns {Object} Sustainability analysis
+ */
+function validateHeatSustainability(heatGenPerSec, effectiveCooling, maxHeat = HEAT_SYSTEM.MAX_HEAT) {
+    const netHeatRate = heatGenPerSec - effectiveCooling;
+    const canSustainMax = netHeatRate <= 0;
+    
+    // Calculate equilibrium heat level
+    let equilibriumPercent = 0;
+    if (heatGenPerSec > 0 && effectiveCooling > 0) {
+        equilibriumPercent = Math.min(1.0, heatGenPerSec / effectiveCooling);
+    }
+    
+    const isMetaBreaking = equilibriumPercent >= HEAT_SYSTEM.SUSTAINABLE_HEAT_THRESHOLD;
+    
+    return {
+        heatGenPerSec,
+        effectiveCooling,
+        netHeatRate,
+        equilibriumPercent,
+        canSustainMax,
+        isMetaBreaking,
+        warning: isMetaBreaking 
+            ? 'META-BREAKING: Build can sustain 95%+ heat indefinitely'
+            : 'Balanced: Build will overheat with sustained fire'
+    };
+}
         current: 0,
         max: maxHeat,
         cooling: cooling,
