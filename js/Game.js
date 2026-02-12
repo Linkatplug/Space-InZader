@@ -97,7 +97,9 @@ class Game {
             render: new RenderSystem(this.canvas, this.world, this.gameState),
             ui: new UISystem(this.world, this.gameState),
             wave: new WaveSystem(this.gameState),
-            weather: new WeatherSystem(this.world, this.canvas, this.audioManager, this.gameState)
+            weather: new WeatherSystem(this.world, this.canvas, this.audioManager, this.gameState),
+            defense: new DefenseSystem(this.world),
+            heat: new HeatSystem(this.world, this.gameState)
         };
         
         // Synergy system (initialized when game starts)
@@ -117,6 +119,11 @@ class Game {
         // Set screen effects reference
         this.systems.collision.screenEffects = this.screenEffects;
         this.systems.render.screenEffects = this.screenEffects;
+        
+        // Set system references in world for cross-system access
+        this.world.defenseSystem = this.systems.defense;
+        this.world.heatSystem = this.systems.heat;
+        this.world.particleSystem = this.systems.particle;
         
         // Connect wave system to UI
         this.systems.wave.onWaveStart = (waveNumber) => {
@@ -1255,6 +1262,8 @@ class Game {
         this.systems.movement.update(deltaTime);
         this.systems.ai.update(deltaTime);
         this.systems.combat.update(deltaTime);
+        this.systems.defense.update(deltaTime);
+        this.systems.heat.update(deltaTime);
         this.systems.weather.update(deltaTime);
         this.systems.collision.update(deltaTime);
         
