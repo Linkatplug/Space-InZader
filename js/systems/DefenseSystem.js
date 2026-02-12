@@ -249,9 +249,11 @@ class DefenseSystem {
 
     /**
      * Modify layer resistance (ADDITIVE stacking with cap)
+     * IMPORTANT: This is the ONLY safe way to modify resistances
+     * All resistance changes MUST go through this method
      * @param {Entity} entity - Entity to modify
-     * @param {string} layerName - Layer to modify
-     * @param {string} damageType - Damage type
+     * @param {string} layerName - Layer to modify (shield, armor, structure)
+     * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
      * @param {number} amount - Amount to ADD to resistance (can be negative)
      */
     modifyLayerResistance(entity, layerName, damageType, amount) {
@@ -263,6 +265,35 @@ class DefenseSystem {
             // ADDITIVE stacking with 75% hard cap
             const resistCap = typeof RESISTANCE_CAP !== 'undefined' ? RESISTANCE_CAP : 0.75;
             layer.resistances[damageType] = Math.max(0, Math.min(resistCap, layer.resistances[damageType] + amount));
+        }
+    }
+    
+    /**
+     * Modify multiple resistances at once (utility method)
+     * @param {Entity} entity - Entity to modify
+     * @param {string} layerName - Layer to modify
+     * @param {Object} resistChanges - Object mapping damage types to changes
+     */
+    modifyMultipleResistances(entity, layerName, resistChanges) {
+        for (const [damageType, amount] of Object.entries(resistChanges)) {
+            this.modifyLayerResistance(entity, layerName, damageType, amount);
+        }
+    }
+    
+    /**
+     * Apply resistance bonus to all layers and all types
+     * Used for modules like Damage Control
+     * @param {Entity} entity - Entity to modify
+     * @param {number} bonusAmount - Amount to add to all resistances
+     */
+    modifyAllResistances(entity, bonusAmount) {
+        const layers = ['shield', 'armor', 'structure'];
+        const damageTypes = ['em', 'thermal', 'kinetic', 'explosive'];
+        
+        for (const layer of layers) {
+            for (const damageType of damageTypes) {
+                this.modifyLayerResistance(entity, layer, damageType, bonusAmount);
+            }
         }
     }
 }

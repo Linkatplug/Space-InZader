@@ -139,11 +139,3 @@ function validateHeatSustainability(heatGenPerSec, effectiveCooling, maxHeat = H
             : 'Balanced: Build will overheat with sustained fire'
     };
 }
-        current: 0,
-        max: maxHeat,
-        cooling: cooling,
-        passiveHeat: passiveHeat,
-        overheated: false,
-        overheatTimer: 0
-    };
-}

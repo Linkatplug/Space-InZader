@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Démonstration Système 3 Couches - Space InZader</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 100%);
+            color: #0ff;
+            padding: 20px;
+        }
+        h1 { 
+            color: #0ff; 
+            text-align: center; 
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #0ff;
+        }
+        h2 { 
+            color: #f0f; 
+            margin: 20px 0 10px;
+            border-bottom: 2px solid #f0f;
+            padding-bottom: 5px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border: 2px solid #0ff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+        .demo-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(0, 20, 40, 0.5);
+            border: 1px solid #0af;
+            border-radius: 5px;
+        }
+        .layer-display {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .layer-bar {
+            flex: 1;
+            height: 30px;
+            background: #111;
+            border: 2px solid #333;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+        }
+        .layer-bar-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+            position: relative;
+        }
+        .layer-bar-fill.shield { background: linear-gradient(90deg, #00BFFF, #0080FF); }
+        .layer-bar-fill.armor { background: linear-gradient(90deg, #8B4513, #654321); }
+        .layer-bar-fill.structure { background: linear-gradient(90deg, #DC143C, #8B0000); }
+        .layer-label {
+            min-width: 120px;
+            font-weight: bold;
+        }
+        .layer-value {
+            min-width: 80px;
+            text-align: right;
+        }
+        .damage-types {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .damage-card {
+            padding: 15px;
+            border: 2px solid;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .damage-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px currentColor;
+        }
+        .damage-card.em { border-color: #0ff; color: #0ff; }
+        .damage-card.thermal { border-color: #ff8c00; color: #ff8c00; }
+        .damage-card.kinetic { border-color: #fff; color: #fff; }
+        .damage-card.explosive { border-color: #f00; color: #f00; }
+        .damage-card h3 { margin-bottom: 10px; }
+        .resistance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .resistance-table th, .resistance-table td {
+            padding: 8px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        .resistance-table th { background: #0a2030; color: #0ff; }
+        .resistance-strong { color: #0f0; font-weight: bold; }
+        .resistance-weak { color: #f00; font-weight: bold; }
+        .resistance-normal { color: #ff0; }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        button {
+            padding: 10px 20px;
+            background: #0a2040;
+            color: #0ff;
+            border: 2px solid #0ff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #0ff;
+            color: #000;
+            box-shadow: 0 0 15px #0ff;
+        }
+        .log {
+            background: #000;
+            padding: 10px;
+            border: 1px solid #0a0;
+            border-radius: 5px;
+            height: 200px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 5px;
+        }
+        .log-damage { color: #f00; }
+        .log-resist { color: #ff0; }
+        .log-overflow { color: #f0f; }
+        .log-regen { color: #0f0; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            padding: 10px;
+            background: rgba(0, 40, 80, 0.5);
+            border: 1px solid #0af;
+            border-radius: 5px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0ff;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🛡️ Système de Défense à 3 Couches 🛡️</h1>
+        
+        <div class="demo-section">
+            <h2>État du Vaisseau</h2>
+            <div class="layer-display">
+                <span class="layer-label" style="color: #00BFFF;">🟦 BOUCLIER</span>
+                <div class="layer-bar">
+                    <div class="layer-bar-fill shield" id="shield-bar" style="width: 100%;"></div>
+                </div>
+                <span class="layer-value" id="shield-value">120 / 120</span>
+            </div>
+            <div class="layer-display">
+                <span class="layer-label" style="color: #8B4513;">🟫 ARMURE</span>
+                <div class="layer-bar">
+                    <div class="layer-bar-fill armor" id="armor-bar" style="width: 100%;"></div>
+                </div>
+                <span class="layer-value" id="armor-value">150 / 150</span>
+            </div>
+            <div class="layer-display">
+                <span class="layer-label" style="color: #DC143C;">🔧 STRUCTURE</span>
+                <div class="layer-bar">
+                    <div class="layer-bar-fill structure" id="structure-bar" style="width: 100%;"></div>
+                </div>
+                <span class="layer-value" id="structure-value">130 / 130</span>
+            </div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-hp">400</div>
+                    <div class="stat-label">HP Total</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="ehp-value">~560</div>
+                    <div class="stat-label">EHP Moyen</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="damage-taken">0</div>
+                    <div class="stat-label">Dégâts Subis</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>Types de Dégâts</h2>
+            <div class="damage-types">
+                <div class="damage-card em" onclick="dealDamage('em', 50)">
+                    <h3>✧ EM</h3>
+                    <p>Anti-Bouclier</p>
+                    <p style="font-size: 24px; margin: 10px 0;">50</p>
+                    <p style="font-size: 12px;">Cliquez pour attaquer</p>
+                </div>
+                <div class="damage-card thermal" onclick="dealDamage('thermal', 50)">
+                    <h3>✹ THERMAL</h3>
+                    <p>Anti-Structure</p>
+                    <p style="font-size: 24px; margin: 10px 0;">50</p>
+                    <p style="font-size: 12px;">Cliquez pour attaquer</p>
+                </div>
+                <div class="damage-card kinetic" onclick="dealDamage('kinetic', 50)">
+                    <h3>⦿ KINETIC</h3>
+                    <p>Anti-Armure</p>
+                    <p style="font-size: 24px; margin: 10px 0;">50</p>
+                    <p style="font-size: 12px;">Cliquez pour attaquer</p>
+                </div>
+                <div class="damage-card explosive" onclick="dealDamage('explosive', 50)">
+                    <h3>💥 EXPLOSIVE</h3>
+                    <p>Polyvalent</p>
+                    <p style="font-size: 24px; margin: 10px 0;">50</p>
+                    <p style="font-size: 12px;">Cliquez pour attaquer</p>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button onclick="dealDamage('em', 100)">EM 100</button>
+                <button onclick="dealDamage('thermal', 100)">Thermal 100</button>
+                <button onclick="dealDamage('kinetic', 100)">Kinetic 100</button>
+                <button onclick="dealDamage('explosive', 100)">Explosive 100</button>
+                <button onclick="resetShip()" style="border-color: #0f0; color: #0f0;">🔄 Réinitialiser</button>
+            </div>
+        </div>
+        
+        <div class="demo-section">
+            <h2>Table des Résistances</h2>
+            <table class="resistance-table">
+                <thead>
+                    <tr>
+                        <th>Couche</th>
+                        <th>EM</th>
+                        <th>Thermal</th>
+                        <th>Kinetic</th>
+                        <th>Explosive</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="color: #00BFFF; font-weight: bold;">Bouclier</td>
+                        <td class="resistance-weak">0%</td>
+                        <td class="resistance-normal">20%</td>
+                        <td class="resistance-normal">40%</td>
+                        <td class="resistance-strong">50%</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #8B4513; font-weight: bold;">Armure</td>
+                        <td class="resistance-strong">50%</td>
+                        <td class="resistance-normal">35%</td>
+                        <td class="resistance-normal">25%</td>
+                        <td class="resistance-weak">10%</td>
+                    </tr>
+                    <tr>
+                        <td style="color: #DC143C; font-weight: bold;">Structure</td>
+                        <td class="resistance-normal">30%</td>
+                        <td class="resistance-weak">0%</td>
+                        <td class="resistance-normal">15%</td>
+                        <td class="resistance-normal">20%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="demo-section">
+            <h2>Journal de Combat</h2>
+            <div class="log" id="combat-log"></div>
+        </div>
+    </div>
+    
+    <script>
+        // État du vaisseau
+        let ship = {
+            shield: { current: 120, max: 120, regen: 8, regenDelay: 3, timeSinceDamage: 0 },
+            armor: { current: 150, max: 150, regen: 0 },
+            structure: { current: 130, max: 130, regen: 0.5 }
+        };
+        
+        // Résistances (comme dans DefenseData.js)
+        const resistances = {
+            shield: { em: 0.0, thermal: 0.20, kinetic: 0.40, explosive: 0.50 },
+            armor: { em: 0.50, thermal: 0.35, kinetic: 0.25, explosive: 0.10 },
+            structure: { em: 0.30, thermal: 0.0, kinetic: 0.15, explosive: 0.20 }
+        };
+        
+        let totalDamageTaken = 0;
+        
+        function log(message, type = '') {
+            const logEl = document.getElementById('combat-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry ' + type;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(entry);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        function dealDamage(damageType, rawDamage) {
+            log(`⚔️ Attaque ${damageType.toUpperCase()} de ${rawDamage} dégâts`, 'log-damage');
+            
+            let remainingDamage = rawDamage;
+            const layers = ['shield', 'armor', 'structure'];
+            
+            for (const layerName of layers) {
+                if (remainingDamage <= 0) break;
+                const layer = ship[layerName];
+                if (layer.current <= 0) continue;
+                
+                // Appliquer résistance
+                const resist = resistances[layerName][damageType];
+                const damageAfterResist = remainingDamage * (1 - resist);
+                
+                log(`  → ${layerName}: ${rawDamage.toFixed(1)} × (1 - ${(resist*100).toFixed(0)}%) = ${damageAfterResist.toFixed(1)} dégâts`, 'log-resist');
+                
+                // Appliquer dégâts
+                const damageDealt = Math.min(layer.current, damageAfterResist);
+                layer.current -= damageDealt;
+                totalDamageTaken += damageDealt;
+                
+                log(`  → ${layerName} prend ${damageDealt.toFixed(1)} HP (reste: ${layer.current.toFixed(1)})`, 'log-damage');
+                
+                // Overflow
+                const overflow = damageAfterResist - damageDealt;
+                if (overflow > 0 && layerName !== 'structure') {
+                    remainingDamage = overflow / (1 - resist);
+                    log(`  → Overflow: ${overflow.toFixed(1)} → ${remainingDamage.toFixed(1)} raw damage`, 'log-overflow');
+                } else {
+                    remainingDamage = 0;
+                }
+                
+                // Reset shield regen timer
+                if (layerName === 'shield') {
+                    layer.timeSinceDamage = 0;
+                }
+            }
+            
+            updateDisplay();
+            
+            if (ship.structure.current <= 0) {
+                log('💀 VAISSEAU DÉTRUIT !', 'log-damage');
+                setTimeout(() => alert('💀 Vaisseau détruit !'), 100);
+            }
+        }
+        
+        function resetShip() {
+            ship = {
+                shield: { current: 120, max: 120, regen: 8, regenDelay: 3, timeSinceDamage: 0 },
+                armor: { current: 150, max: 150, regen: 0 },
+                structure: { current: 130, max: 130, regen: 0.5 }
+            };
+            totalDamageTaken = 0;
+            updateDisplay();
+            log('🔄 Vaisseau réinitialisé', 'log-regen');
+        }
+        
+        function updateDisplay() {
+            // Update bars
+            ['shield', 'armor', 'structure'].forEach(layer => {
+                const percent = (ship[layer].current / ship[layer].max) * 100;
+                document.getElementById(`${layer}-bar`).style.width = `${percent}%`;
+                document.getElementById(`${layer}-value`).textContent = 
+                    `${Math.round(ship[layer].current)} / ${ship[layer].max}`;
+            });
+            
+            // Update stats
+            const totalHp = ship.shield.current + ship.armor.current + ship.structure.current;
+            document.getElementById('total-hp').textContent = Math.round(totalHp);
+            document.getElementById('damage-taken').textContent = Math.round(totalDamageTaken);
+        }
+        
+        // Regeneration loop
+        setInterval(() => {
+            let regenerated = false;
+            
+            // Shield regen
+            if (ship.shield.current < ship.shield.max) {
+                ship.shield.timeSinceDamage += 0.1;
+                if (ship.shield.timeSinceDamage >= ship.shield.regenDelay) {
+                    ship.shield.current = Math.min(ship.shield.max, ship.shield.current + ship.shield.regen * 0.1);
+                    regenerated = true;
+                }
+            }
+            
+            // Structure regen
+            if (ship.structure.current < ship.structure.max && ship.structure.current > 0) {
+                ship.structure.current = Math.min(ship.structure.max, ship.structure.current + ship.structure.regen * 0.1);
+                regenerated = true;
+            }
+            
+            if (regenerated) {
+                updateDisplay();
+            }
+        }, 100);
+        
+        // Initial display
+        updateDisplay();
+        log('✅ Système de défense à 3 couches initialisé');
+        log('ℹ️ Cliquez sur les types de dégâts pour attaquer !');
+    </script>
+</body>
+</html>

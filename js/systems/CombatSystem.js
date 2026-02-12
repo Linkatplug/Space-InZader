@@ -868,12 +868,27 @@ class CombatSystem {
         
         // Add heat if system is active
         if (heat && weapon.data && weapon.data.heat) {
-            const heatAmount = weapon.data.heat;
-            heat.current += heatAmount;
+            let heatAmount = weapon.data.heat;
             
-            // Check for overheat
-            if (heat.current >= heat.max && this.world.heatSystem) {
-                this.world.heatSystem.triggerOverheat(player);
+            // Apply heat generation multiplier from modules
+            const playerComp = player.getComponent('player');
+            if (playerComp && playerComp.stats && playerComp.stats.moduleEffects) {
+                const heatMult = playerComp.stats.moduleEffects.heatGenerationMult || 1.0;
+                heatAmount *= heatMult;
+            }
+            
+            // Use HeatSystem.addHeat() instead of direct manipulation
+            if (this.world && this.world.heatSystem) {
+                this.world.heatSystem.addHeat(player, heatAmount);
+            } else {
+                // Fallback if HeatSystem not available
+                heat.current += heatAmount;
+                if (heat.current >= heat.max) {
+                    heat.overheated = true;
+                    heat.overheatTimer = typeof HEAT_SYSTEM !== 'undefined'
+                        ? HEAT_SYSTEM.OVERHEAT_DISABLE_DURATION
+                        : 2.0;
+                }
             }
         }
     }
@@ -893,6 +908,14 @@ class CombatSystem {
         
         if (attackerPlayer && attackerPlayer.stats) {
             damage *= attackerPlayer.stats.damageMultiplier || 1;
+            
+            // Apply damage type multiplier from modules
+            if (attackerPlayer.stats.moduleEffects) {
+                const typeMult = getModuleDamageMultiplier 
+                    ? getModuleDamageMultiplier(attackerPlayer.stats.moduleEffects, damageType)
+                    : 1.0;
+                damage *= typeMult;
+            }
             
             // Apply tag synergies if available
             if (this.world.synergySystem) {
