@@ -292,11 +292,11 @@
             modulesHTML += '<div class="list">';
             
             for (const module of Object.values(window.ModuleData.MODULES)) {
-                const benefits = Object.keys(module.effects).join(', ');
-                const costs = Object.keys(module.costs).join(', ');
+                const benefits = module.effects ? Object.keys(module.effects).join(', ') : 'none';
+                const costs = module.costs ? Object.keys(module.costs).join(', ') : 'none';
                 modulesHTML += `<div class="list-item"><strong>${module.name}</strong><br>`;
-                modulesHTML += `Benefits: ${benefits || 'none'}<br>`;
-                modulesHTML += `Costs: ${costs || 'none'}</div>`;
+                modulesHTML += `Benefits: ${benefits}<br>`;
+                modulesHTML += `Costs: ${costs}</div>`;
             }
             
             modulesHTML += '</div>';

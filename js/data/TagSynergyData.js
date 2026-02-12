@@ -250,8 +250,11 @@ if (typeof window !== 'undefined') {
         countTags: countTags,
         calculateSynergyBonuses: calculateSynergyBonuses,
         findMajorityOffensiveTag: findMajorityOffensiveTag,
+        calculateMaluses: calculateMaluses,
         calculateTagEffects: calculateTagEffects,
-        getTagSynergySummary: getTagSynergySummary
+        getTagMultiplier: getTagMultiplier,
+        getWeaponTagMultiplier: getWeaponTagMultiplier,
+        getSynergySummary: getSynergySummary
     };
     
     // Console log confirmation
