@@ -532,19 +532,13 @@ class Game {
         }
 
         console.log('[Game] Looking up weapon:', weaponType);
-        console.log('[Game] WeaponData available:', typeof WeaponData !== 'undefined');
-        console.log('[Game] window.WeaponData available:', typeof window.WeaponData !== 'undefined');
         
-        // Try both WeaponData and window.WeaponData
-        const weaponDataSource = typeof WeaponData !== 'undefined' ? WeaponData : window.WeaponData;
-        console.log('[Game] Using weaponDataSource:', weaponDataSource);
-        
-        const weaponData = weaponDataSource ? weaponDataSource.getWeaponData(weaponType) : null;
+        const weaponData = window.WeaponData ? window.WeaponData.getWeaponData(weaponType) : null;
         console.log('[Game] Weapon data result:', weaponData);
         
         if (!weaponData) {
             console.error('[Game] Failed to get weapon data for:', weaponType);
-            console.error('[Game] Available weapons:', weaponDataSource && weaponDataSource.WEAPONS ? Object.keys(weaponDataSource.WEAPONS) : 'NONE');
+            console.error('[Game] Available weapons:', window.WeaponData && window.WeaponData.WEAPONS ? Object.keys(window.WeaponData.WEAPONS) : 'NONE');
             logger.error('Game', `Invalid weapon: ${weaponType}`);
             return;
         }
@@ -994,8 +988,8 @@ class Game {
             const usePreferred = usePreferredTags && Math.random() < 0.6;
             
             // Get available weapons with tag filtering
-            const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
-                const weapon = WeaponData.WEAPONS[key];
+            const availableWeapons = Object.keys(window.WeaponData.WEAPONS).filter(key => {
+                const weapon = window.WeaponData.WEAPONS[key];
                 const saveWeapon = this.saveData.weapons[weapon.id];
                 if (!saveWeapon || !saveWeapon.unlocked) return false;
                 if (useRarityFilter && weapon.rarity !== rarity) return false;
@@ -1054,7 +1048,7 @@ class Game {
             }) : [];
 
             let all = [
-                ...availableWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
+                ...availableWeapons.map(w => ({ type: 'weapon', key: window.WeaponData.WEAPONS[w].id, data: window.WeaponData.WEAPONS[w] })),
                 ...availableUpgrades.map(u => ({ type: 'upgrade', key: u.id, data: u, currentLevel: u.currentLevel, maxLevel: u.maxLevel }))
             ];
 
@@ -1063,8 +1057,8 @@ class Game {
                 logger.debug('Game', `No preferred options at ${rarity}, trying global pool`);
                 
                 // Retry without preferred filter
-                const globalWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
-                    const weapon = WeaponData.WEAPONS[key];
+                const globalWeapons = Object.keys(window.WeaponData.WEAPONS).filter(key => {
+                    const weapon = window.WeaponData.WEAPONS[key];
                     const saveWeapon = this.saveData.weapons[weapon.id];
                     if (!saveWeapon || !saveWeapon.unlocked) return false;
                     if (weapon.rarity !== rarity) return false;
@@ -1102,7 +1096,7 @@ class Game {
                 }) : [];
                 
                 all = [
-                    ...globalWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
+                    ...globalWeapons.map(w => ({ type: 'weapon', key: window.WeaponData.WEAPONS[w].id, data: window.WeaponData.WEAPONS[w] })),
                     ...globalUpgrades.map(u => ({ type: 'upgrade', key: u.id, data: u, currentLevel: u.currentLevel, maxLevel: u.maxLevel }))
                 ];
             }
@@ -1152,8 +1146,8 @@ class Game {
         if (!playerComp) return null;
         
         // Get ALL available weapons (not maxed)
-        const availableWeapons = Object.keys(WeaponData.WEAPONS).filter(key => {
-            const weapon = WeaponData.WEAPONS[key];
+        const availableWeapons = Object.keys(window.WeaponData.WEAPONS).filter(key => {
+            const weapon = window.WeaponData.WEAPONS[key];
             const saveWeapon = this.saveData.weapons[weapon.id];
             if (!saveWeapon || !saveWeapon.unlocked) return false;
             
@@ -1183,7 +1177,7 @@ class Game {
         }) : [];
         
         const all = [
-            ...availableWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
+            ...availableWeapons.map(w => ({ type: 'weapon', key: window.WeaponData.WEAPONS[w].id, data: window.WeaponData.WEAPONS[w] })),
             ...availableUpgrades.map(u => ({ type: 'upgrade', key: u.id, data: u, currentLevel: u.currentLevel, maxLevel: u.maxLevel }))
         ];
         
