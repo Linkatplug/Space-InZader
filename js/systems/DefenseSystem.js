@@ -107,8 +107,8 @@ class DefenseSystem {
             if (remainingDamage <= 0) break;
             if (layer.data.current <= 0) continue;
 
-            // Apply resistance
-            const resistance = layer.data.resistances[damageType] || 0;
+            // Apply resistance from top-level resistances object
+            const resistance = (defense.resistances && defense.resistances[layer.name] && defense.resistances[layer.name][damageType]) || 0;
             const damageAfterResist = this.applyResistance(remainingDamage, resistance);
 
             // Apply damage to layer
