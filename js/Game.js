@@ -436,25 +436,37 @@ class Game {
         this.player.addComponent('velocity', Components.Velocity(0, 0));
         this.player.addComponent('collision', Components.Collision(15));
         
-        const defenseLayers = {
+        // Defense component with proper schema for DefenseSystem
+        const defense = {
             shield: {
-                max: 150,
-                current: 150,
-                resistances: { em: 0.3, kinetic: 0.2, thermal: 0.2, explosive: 0.2 }
+                current: 120,
+                max: 120,
+                regen: 8,
+                regenDelay: 0,
+                regenDelayMax: 3
             },
             armor: {
-                max: 100,
-                current: 100,
-                resistances: { em: 0.2, kinetic: 0.4, thermal: 0.25, explosive: 0.3 }
+                current: 150,
+                max: 150,
+                regen: 0,
+                regenDelay: 0,
+                regenDelayMax: 0
             },
             structure: {
-                max: 100,
-                current: 100,
-                resistances: { em: 0.1, kinetic: 0.1, thermal: 0.1, explosive: 0.1 }
+                current: 130,
+                max: 130,
+                regen: 0.5,
+                regenDelay: 0,
+                regenDelayMax: 0
+            },
+            resistances: {
+                shield: { em: 0.0, thermal: 0.2, kinetic: 0.4, explosive: 0.5 },
+                armor: { em: 0.5, thermal: 0.35, kinetic: 0.25, explosive: 0.1 },
+                structure: { em: 0.3, thermal: 0.0, kinetic: 0.15, explosive: 0.2 }
             }
         };
         
-        this.player.addComponent('defense', Components.Defense(defenseLayers));
+        this.player.addComponent('defense', defense);
         
         const baseHeatMax = 100;
         const baseCoolingRate = 20;
@@ -505,7 +517,7 @@ class Game {
 
         const startingWeaponId = ship.startingWeapon || 'ion_blaster';
         logger.info('Game', `Player setup: ship=${playerComp.shipId} startingWeapon=${startingWeaponId}`);
-        logger.info('Game', `Defense layers: Shield=${defenseLayers.shield.max} Armor=${defenseLayers.armor.max} Structure=${defenseLayers.structure.max}`);
+        logger.info('Game', `Defense layers: Shield=${defense.shield.max} Armor=${defense.armor.max} Structure=${defense.structure.max}`);
         
         this.addWeaponToPlayer(startingWeaponId);
         
