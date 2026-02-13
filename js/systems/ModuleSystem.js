@@ -203,15 +203,68 @@ function getModuleDamageMultiplier(moduleEffects, damageType) {
 function applyModuleHeatEffects(heat, moduleEffects) {
     if (!heat || !moduleEffects) return;
     
-    // Apply cooling bonus (will be capped by HeatSystem)
+    // Apply cooling bonus with cap (2.0 = 200% max bonus)
+    const MAX_COOLING_BONUS = 2.0;
     if (moduleEffects.coolingBonus !== undefined) {
-        heat.coolingBonus = (heat.coolingBonus || 0) + moduleEffects.coolingBonus;
+        const currentBonus = heat.coolingBonus || 0;
+        const newBonus = currentBonus + moduleEffects.coolingBonus;
+        heat.coolingBonus = Math.min(MAX_COOLING_BONUS, newBonus);
     }
     
     // Apply passive heat
     if (moduleEffects.passiveHeat !== undefined) {
         heat.passiveHeat = (heat.passiveHeat || 0) + moduleEffects.passiveHeat;
     }
+}
+
+/**
+ * Apply a single module to a player
+ * Call this when a module is picked up
+ * @param {Entity} player - Player entity
+ * @param {string} moduleId - Module ID to apply
+ * @returns {boolean} True if module was applied successfully
+ */
+function applyModule(player, moduleId) {
+    if (!player || !moduleId) return false;
+    
+    const playerComp = player.getComponent('player');
+    if (!playerComp) return false;
+    
+    // Initialize modules array if needed
+    if (!playerComp.modules) {
+        playerComp.modules = [];
+    }
+    
+    // Check if module already exists (prevent duplicates)
+    const exists = playerComp.modules.some(m => m.id === moduleId);
+    if (exists) {
+        console.warn('[ModuleSystem] Module already equipped:', moduleId);
+        return false;
+    }
+    
+    // Add module
+    playerComp.modules.push({ id: moduleId });
+    
+    // Get base stats (snapshot before module application)
+    const baseStats = playerComp.baseStats ? { ...playerComp.baseStats } : { ...playerComp.stats };
+    
+    // Apply all modules to stats
+    playerComp.stats = applyModulesToStats(playerComp, baseStats);
+    
+    // Apply to defense component if it exists
+    const defense = player.getComponent('defense');
+    if (defense && playerComp.stats.moduleEffects) {
+        applyModuleDefenseBonuses(defense, playerComp.stats.moduleEffects);
+        applyModuleResistances(defense, playerComp.stats.moduleEffects);
+    }
+    
+    // Apply to heat component if it exists
+    const heat = player.getComponent('heat');
+    if (heat && playerComp.stats.moduleEffects) {
+        applyModuleHeatEffects(heat, playerComp.stats.moduleEffects);
+    }
+    
+    return true;
 }
 
 /**

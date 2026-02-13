@@ -691,8 +691,6 @@ class CollisionSystem {
      */
     collectModule(player, moduleId) {
         const playerComp = player.getComponent('player');
-        const defense = player.getComponent('defense');
-        const heat = player.getComponent('heat');
         
         if (!playerComp) return;
 
@@ -719,40 +717,20 @@ class CollisionSystem {
             return;
         }
 
-        // Add module to player's inventory
-        playerComp.modules.push({ id: moduleId });
-        
-        // Log acquisition
-        console.log(`[Loot] module acquired: ${moduleData.name} (${moduleId})`);
-
-        // Apply module effects immediately using ModuleSystem
-        if (typeof applyModulesToStats !== 'undefined') {
-            // Get base stats (snapshot before module application)
-            const baseStats = playerComp.baseStats ? { ...playerComp.baseStats } : { ...playerComp.stats };
-            
-            // Apply modules to stats
-            playerComp.stats = applyModulesToStats(playerComp, baseStats);
-            
-            // Apply to defense component if it exists
-            if (defense && playerComp.stats.moduleEffects) {
-                if (typeof applyModuleDefenseBonuses !== 'undefined') {
-                    applyModuleDefenseBonuses(defense, playerComp.stats.moduleEffects);
-                }
-                if (typeof applyModuleResistances !== 'undefined') {
-                    applyModuleResistances(defense, playerComp.stats.moduleEffects);
+        // Apply module using ModuleSystem
+        if (typeof applyModule !== 'undefined') {
+            const success = applyModule(player, moduleId);
+            if (success) {
+                console.log(`[Loot] module acquired: ${moduleData.name} (${moduleId})`);
+                
+                // Log defense stats for debugging
+                const defense = player.getComponent('defense');
+                if (defense) {
+                    console.log(`[Loot] Module effects applied. Shield: ${defense?.shield?.max || 'N/A'}, Armor: ${defense?.armor?.max || 'N/A'}, Structure: ${defense?.structure?.max || 'N/A'}`);
                 }
             }
-            
-            // Apply to heat component if it exists
-            if (heat && playerComp.stats.moduleEffects) {
-                if (typeof applyModuleHeatEffects !== 'undefined') {
-                    applyModuleHeatEffects(heat, playerComp.stats.moduleEffects);
-                }
-            }
-            
-            console.log(`[Loot] Module effects applied. Shield: ${defense?.shield?.max || 'N/A'}, Armor: ${defense?.armor?.max || 'N/A'}, Structure: ${defense?.structure?.max || 'N/A'}`);
         } else {
-            console.warn('[Loot] ModuleSystem functions not available');
+            console.error('[Loot] ModuleSystem applyModule function not available');
         }
     }
 
