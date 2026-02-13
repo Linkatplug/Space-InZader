@@ -350,32 +350,61 @@
             border-top: 1px solid #333;
         }
 
-        .health-bar {
+        /* Defense Layer Bars */
+        .defense-bar {
             width: 200px;
-            height: 20px;
-            background: rgba(255, 0, 0, 0.3);
-            border: 2px solid #ff0000;
+            height: 15px;
             position: relative;
-        }
-
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff0000, #ff6600);
-            transition: width 0.3s;
+            margin-top: 3px;
         }
         
         .shield-bar {
-            width: 200px;
-            height: 15px;
             background: rgba(0, 255, 255, 0.2);
             border: 2px solid #00ffff;
-            position: relative;
-            margin-top: 3px;
         }
         
         .shield-fill {
             height: 100%;
             background: linear-gradient(90deg, #00ddff, #00ffff);
+            transition: width 0.3s;
+        }
+        
+        .armor-bar {
+            background: rgba(139, 69, 19, 0.3);
+            border: 2px solid #8B4513;
+        }
+        
+        .armor-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8B4513, #CD853F);
+            transition: width 0.3s;
+        }
+        
+        .structure-bar {
+            background: rgba(255, 0, 0, 0.3);
+            border: 2px solid #ff0000;
+        }
+        
+        .structure-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6600);
+            transition: width 0.3s;
+        }
+        
+        /* Legacy health bar (hidden by default, fallback for old system) */
+        .health-bar {
+            width: 200px;
+            height: 15px;
+            background: rgba(255, 0, 0, 0.3);
+            border: 2px solid #ff0000;
+            position: relative;
+            margin-top: 3px;
+            display: none;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6600);
             transition: width 0.3s;
         }
 
@@ -1490,14 +1519,31 @@
                 </div>
             </div>
             <div class="hud hud-bottom-left" id="hudBottomLeft">
-                <div class="health-bar">
-                    <div class="health-fill" id="healthFill"></div>
+                <!-- Defense Layers (Shield/Armor/Structure) -->
+                <div id="defenseLayers" style="display: block;">
+                    <div class="defense-bar shield-bar" id="shieldBar">
+                        <div class="shield-fill" id="shieldFill"></div>
+                    </div>
+                    <div style="margin-top: 2px; font-size: 11px;">🛡️ BOUCLIER: <span id="shieldValue">0/0</span></div>
+                    
+                    <div class="defense-bar armor-bar" id="armorBar">
+                        <div class="armor-fill" id="armorFill"></div>
+                    </div>
+                    <div style="margin-top: 2px; font-size: 11px;">🛡️ ARMURE: <span id="armorValue">0/0</span></div>
+                    
+                    <div class="defense-bar structure-bar" id="structureBar">
+                        <div class="structure-fill" id="structureFill"></div>
+                    </div>
+                    <div style="margin-top: 2px; font-size: 11px;">⚙️ STRUCTURE: <span id="structureValue">0/0</span></div>
                 </div>
-                <div style="margin-top: 5px;">PV: <span id="hpDisplay">100/100</span></div>
-                <div class="shield-bar" id="shieldBar" style="display: none;">
-                    <div class="shield-fill" id="shieldFill"></div>
+                
+                <!-- Legacy health bar (fallback for old system) -->
+                <div id="legacyHealth" style="display: none;">
+                    <div class="health-bar">
+                        <div class="health-fill" id="healthFill"></div>
+                    </div>
+                    <div style="margin-top: 5px;">PV: <span id="hpDisplay">100/100</span></div>
                 </div>
-                <div id="shieldDisplay" style="margin-top: 3px; display: none;">BOUCLIER: <span id="shieldValue">0/0</span></div>
             </div>
             <div class="hud hud-bottom-center" id="hudBottomCenter">
                 <div>Niveau: <span id="levelDisplay">1</span></div>

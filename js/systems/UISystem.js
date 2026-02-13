@@ -292,18 +292,27 @@ class UISystem {
         this.waveDisplay = document.getElementById('waveDisplay');
         this.killsDisplay = document.getElementById('killsDisplay');
         this.scoreDisplay = document.getElementById('scoreDisplay');
-        this.hpDisplay = document.getElementById('hpDisplay');
-        this.healthFill = document.getElementById('healthFill');
         this.levelDisplay = document.getElementById('levelDisplay');
         this.xpFill = document.getElementById('xpFill');
         this.weaponSlots = document.getElementById('weaponSlots');
         this.controlsHelp = document.getElementById('controlsHelp');
         
-        // Shield elements
+        // Defense layer elements
+        this.defenseLayers = document.getElementById('defenseLayers');
         this.shieldBar = document.getElementById('shieldBar');
         this.shieldFill = document.getElementById('shieldFill');
-        this.shieldDisplay = document.getElementById('shieldDisplay');
         this.shieldValue = document.getElementById('shieldValue');
+        this.armorBar = document.getElementById('armorBar');
+        this.armorFill = document.getElementById('armorFill');
+        this.armorValue = document.getElementById('armorValue');
+        this.structureBar = document.getElementById('structureBar');
+        this.structureFill = document.getElementById('structureFill');
+        this.structureValue = document.getElementById('structureValue');
+        
+        // Legacy health elements (fallback)
+        this.legacyHealth = document.getElementById('legacyHealth');
+        this.hpDisplay = document.getElementById('hpDisplay');
+        this.healthFill = document.getElementById('healthFill');
         
         // Heat/Overheat elements
         this.heatBar = document.getElementById('heatBar');
@@ -535,13 +544,47 @@ class UISystem {
             }
         }
 
-        if (health) {
-            // Update health
+        // Update defense layers or fallback to legacy health
+        const defense = player.getComponent('defense');
+        const health = player.getComponent('health');
+        
+        if (defense) {
+            // Show new defense system (Shield/Armor/Structure)
+            if (this.defenseLayers) this.defenseLayers.style.display = 'block';
+            if (this.legacyHealth) this.legacyHealth.style.display = 'none';
+            
+            // Update shield
+            if (this.shieldFill && this.shieldValue) {
+                const shieldPercent = (defense.shield.current / defense.shield.max) * 100;
+                this.shieldFill.style.width = `${Math.max(0, shieldPercent)}%`;
+                this.shieldValue.textContent = `${Math.ceil(defense.shield.current)}/${defense.shield.max}`;
+            }
+            
+            // Update armor
+            if (this.armorFill && this.armorValue) {
+                const armorPercent = (defense.armor.current / defense.armor.max) * 100;
+                this.armorFill.style.width = `${Math.max(0, armorPercent)}%`;
+                this.armorValue.textContent = `${Math.ceil(defense.armor.current)}/${defense.armor.max}`;
+            }
+            
+            // Update structure
+            if (this.structureFill && this.structureValue) {
+                const structurePercent = (defense.structure.current / defense.structure.max) * 100;
+                this.structureFill.style.width = `${Math.max(0, structurePercent)}%`;
+                this.structureValue.textContent = `${Math.ceil(defense.structure.current)}/${defense.structure.max}`;
+            }
+        } else if (health) {
+            // Fallback to legacy health system
+            if (this.defenseLayers) this.defenseLayers.style.display = 'none';
+            if (this.legacyHealth) this.legacyHealth.style.display = 'block';
+            
             this.hpDisplay.textContent = `${Math.ceil(health.current)}/${health.max}`;
             const healthPercent = (health.current / health.max) * 100;
             this.healthFill.style.width = `${Math.max(0, healthPercent)}%`;
         }
         
+        // Remove old shield code that's now integrated
+        /*
         // Update shield
         const shield = player.getComponent('shield');
         if (shield && shield.max > 0) {
@@ -554,6 +597,7 @@ class UISystem {
             this.shieldBar.style.display = 'none';
             this.shieldDisplay.style.display = 'none';
         }
+        */
         
         // Update heat/overheat gauge
         if (this.heatBar && this.heatFill && this.heatDisplay) {
