@@ -478,32 +478,42 @@ class Game {
         };
         this.player.addComponent('heat', heat);
         
-        const playerComp = Components.Player();
-        playerComp.speed = 220;
-        playerComp.shipId = shipId;
+        // Create player component directly (no Components wrapper)
+        const stats = structuredClone(DEFAULT_STATS);
+        stats.damage = metaDamage;
+        stats.damageMultiplier = metaDamage;
+        stats.fireRate = 1.0;
+        stats.fireRateMultiplier = 1.0;
+        stats.speed = 1.0;
+        stats.speedMultiplier = 1.0;
+        stats.maxHealth = 1;
+        stats.xpBonus = metaXP;
         
-        playerComp.stats = structuredClone(DEFAULT_STATS);
-        
-        playerComp.stats.damage = metaDamage;
-        playerComp.stats.damageMultiplier = metaDamage;
-        playerComp.stats.fireRate = 1.0;
-        playerComp.stats.fireRateMultiplier = 1.0;
-        playerComp.stats.speed = 1.0;
-        playerComp.stats.speedMultiplier = 1.0;
-        playerComp.stats.maxHealth = 1;
-        playerComp.stats.xpBonus = metaXP;
-        
-        playerComp.baseStats = {
-            damageMultiplier: playerComp.stats.damageMultiplier,
-            fireRateMultiplier: playerComp.stats.fireRateMultiplier,
-            speed: playerComp.stats.speed,
-            armor: 0,
-            critChance: 0.05,
-            critDamage: 1.5,
-            lifesteal: 0,
-            healthRegen: 0,
-            rangeMultiplier: 1,
-            projectileSpeedMultiplier: 1
+        const playerComp = {
+            speed: 220,
+            shipId: shipId,
+            score: 0,
+            kills: 0,
+            level: 1,
+            xp: 0,
+            xpToNext: 100,
+            weapons: [],
+            modules: [],
+            upgrades: new Map(),
+            stats: stats,
+            baseStats: {
+                damageMultiplier: stats.damageMultiplier,
+                fireRateMultiplier: stats.fireRateMultiplier,
+                speed: stats.speed,
+                armor: 0,
+                critChance: 0.05,
+                critDamage: 1.5,
+                lifesteal: 0,
+                healthRegen: 0,
+                rangeMultiplier: 1,
+                projectileSpeedMultiplier: 1
+            },
+            currentWeapon: null
         };
         
         this.player.addComponent('player', playerComp);
@@ -515,11 +525,17 @@ class Game {
             TECH_NEXUS: '#FF8C00'
         };
         
-        this.player.addComponent('renderable', Components.Renderable(
-            shipColors[shipId] || '#00FFFF',
-            15,
-            'triangle'
-        ));
+        // Create renderable component directly (no Components wrapper)
+        const renderable = {
+            color: shipColors[shipId] || '#00FFFF',
+            size: 15,
+            shape: 'triangle',
+            visible: true,
+            layer: 2,
+            alpha: 1.0,
+            blendMode: 'normal'
+        };
+        this.player.addComponent('renderable', renderable);
 
         const startingWeaponId = ship.startingWeapon || 'ion_blaster';
         logger.info('Game', `Player setup: ship=${playerComp.shipId} startingWeapon=${startingWeaponId}`);
