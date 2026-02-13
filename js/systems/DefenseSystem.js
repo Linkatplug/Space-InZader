@@ -107,6 +107,20 @@ class DefenseSystem {
             layer.data.current -= damageDealt;
             layersDamaged.push(layer.name);
 
+            // Emit damage event for UI
+            if (this.world.events) {
+                const pos = entity.getComponent('position');
+                this.world.events.emit('damageApplied', {
+                    targetId: entity.id,
+                    layerHit: layer.name,
+                    finalDamage: damageDealt,
+                    damageType: damageType,
+                    resistUsed: resistance,
+                    x: pos ? pos.x : 0,
+                    y: pos ? pos.y : 0
+                });
+            }
+
             // Reset regen delay for this layer
             if (layer.data.regenDelayMax > 0) {
                 layer.data.regenDelay = layer.data.regenDelayMax;

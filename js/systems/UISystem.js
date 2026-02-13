@@ -44,6 +44,178 @@ class UISystem {
         
         // Track missing stats warnings to avoid spam
         this.missingStatsWarned = new Set();
+        
+        // Tactical UI state
+        this.tacticalUI = {
+            enabled: true,
+            container: null,
+            defenseUI: null,
+            heatUI: null,
+            weaponTypeUI: null,
+            floatingTexts: []
+        };
+        
+        // Initialize tactical UI
+        this.initTacticalUI();
+    }
+
+    /**
+     * Initialize tactical UI components
+     */
+    initTacticalUI() {
+        if (!window.EnhancedUIComponents) {
+            console.warn('[UI] EnhancedUIComponents not found, skipping tactical UI');
+            return;
+        }
+
+        try {
+            // Create container
+            const container = document.createElement('div');
+            container.id = 'tactical-ui-container';
+            container.style.cssText = 'position:absolute;top:10px;left:10px;z-index:100;pointer-events:none;';
+            document.body.appendChild(container);
+            this.tacticalUI.container = container;
+
+            // Defense UI container
+            const defenseContainer = document.createElement('div');
+            defenseContainer.id = 'defense-ui';
+            container.appendChild(defenseContainer);
+
+            // Heat UI container  
+            const heatContainer = document.createElement('div');
+            heatContainer.id = 'heat-ui';
+            heatContainer.style.marginTop = '10px';
+            container.appendChild(heatContainer);
+
+            // Weapon type UI container
+            const weaponContainer = document.createElement('div');
+            weaponContainer.id = 'weapon-type-ui';
+            weaponContainer.style.marginTop = '10px';
+            container.appendChild(weaponContainer);
+
+            // Instantiate components
+            const Components = window.EnhancedUIComponents;
+            this.tacticalUI.defenseUI = new Components.ThreeLayerDefenseUI(defenseContainer);
+            this.tacticalUI.heatUI = new Components.HeatGaugeUI(heatContainer);
+            this.tacticalUI.weaponTypeUI = new Components.WeaponDamageTypeDisplay(weaponContainer);
+
+            // Subscribe to damage events
+            if (this.world.events) {
+                this.world.events.on('damageApplied', (data) => this.onDamageApplied(data));
+            }
+
+            console.log('[UI] Tactical UI components initialized');
+        } catch (err) {
+            console.error('[UI] Error initializing tactical UI:', err);
+        }
+    }
+
+    /**
+     * Toggle tactical UI visibility
+     */
+    toggleTacticalUI() {
+        this.tacticalUI.enabled = !this.tacticalUI.enabled;
+        if (this.tacticalUI.container) {
+            this.tacticalUI.container.style.display = this.tacticalUI.enabled ? 'block' : 'none';
+        }
+        console.log(`[UI] tactical HUD ${this.tacticalUI.enabled ? 'enabled' : 'disabled'}`);
+    }
+
+    /**
+     * Update tactical UI components
+     */
+    updateTacticalUI() {
+        if (!this.tacticalUI.enabled || !this.tacticalUI.defenseUI) return;
+
+        const player = this.world.getEntitiesByType('player')[0];
+        if (!player) return;
+
+        try {
+            // Update defense bars
+            const defense = player.getComponent('defense');
+            if (defense && this.tacticalUI.defenseUI) {
+                this.tacticalUI.defenseUI.update(defense);
+            }
+
+            // Update heat gauge
+            const heat = player.getComponent('heat');
+            if (heat && this.tacticalUI.heatUI) {
+                this.tacticalUI.heatUI.update(heat);
+            }
+
+            // Update weapon type display
+            const playerComp = player.getComponent('player');
+            if (playerComp && playerComp.currentWeapon && this.tacticalUI.weaponTypeUI) {
+                const damageType = playerComp.currentWeapon.damageType || 'kinetic';
+                this.tacticalUI.weaponTypeUI.update(damageType);
+            }
+        } catch (err) {
+            console.error('[UI] Error updating tactical UI:', err);
+        }
+    }
+
+    /**
+     * Handle damage applied event
+     */
+    onDamageApplied(data) {
+        this.createFloatingDamage(data);
+        
+        const layerEmojis = {
+            shield: '🟦 BOUCLIER',
+            armor: '🟫 ARMURE', 
+            structure: '🔧 STRUCTURE'
+        };
+        const layerName = layerEmojis[data.layerHit] || data.layerHit;
+        console.log(`[Combat] ${layerName} -${Math.round(data.finalDamage)}`);
+    }
+
+    /**
+     * Create floating damage text
+     */
+    createFloatingDamage(data) {
+        // Limit active floating texts
+        if (this.tacticalUI.floatingTexts.length >= 10) {
+            const oldest = this.tacticalUI.floatingTexts.shift();
+            if (oldest && oldest.parentNode) {
+                oldest.parentNode.removeChild(oldest);
+            }
+        }
+
+        const text = document.createElement('div');
+        text.className = 'floating-damage';
+        text.textContent = `-${Math.round(data.finalDamage)}`;
+        
+        const typeColors = {
+            em: '#00FFFF',
+            thermal: '#FF8C00',
+            kinetic: '#FFFFFF',
+            explosive: '#FF0000'
+        };
+        
+        text.style.cssText = `
+            position: absolute;
+            left: ${data.x || 400}px;
+            top: ${data.y || 300}px;
+            color: ${typeColors[data.damageType] || '#FFF'};
+            font-size: 20px;
+            font-weight: bold;
+            pointer-events: none;
+            animation: floatUp 1s ease-out forwards;
+            z-index: 1000;
+        `;
+
+        document.body.appendChild(text);
+        this.tacticalUI.floatingTexts.push(text);
+
+        setTimeout(() => {
+            if (text.parentNode) {
+                text.parentNode.removeChild(text);
+            }
+            const index = this.tacticalUI.floatingTexts.indexOf(text);
+            if (index > -1) {
+                this.tacticalUI.floatingTexts.splice(index, 1);
+            }
+        }, 1000);
     }
 
     /**
@@ -271,6 +443,13 @@ class UISystem {
                     this.toggleStatsOverlay();
                 }
             }
+            
+            // Tactical UI toggle with 'U' key
+            if (e.key === 'u' || e.key === 'U') {
+                if (this.gameState && (this.gameState.currentState === GameStates.RUNNING || this.gameState.currentState === GameStates.LEVEL_UP)) {
+                    this.toggleTacticalUI();
+                }
+            }
         });
     }
 
@@ -284,6 +463,7 @@ class UISystem {
         // Update HUD when game is running
         if (state === GameStates.RUNNING || state === GameStates.LEVEL_UP) {
             this.updateHUD();
+            this.updateTacticalUI();
         }
     }
 

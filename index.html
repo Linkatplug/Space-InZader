@@ -1111,6 +1111,176 @@
             margin: 5px 0;
             font-size: 14px;
         }
+
+        /* Tactical UI Styles */
+        #tactical-ui-container {
+            font-family: 'Courier New', monospace;
+            color: white;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
+        }
+
+        .defense-layers {
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .defense-layer {
+            margin-bottom: 5px;
+        }
+
+        .layer-label {
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        .layer-bar {
+            width: 200px;
+            height: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .layer-fill {
+            height: 100%;
+            transition: width 0.2s;
+        }
+
+        .shield-fill {
+            background: linear-gradient(90deg, #00BFFF, #1E90FF);
+        }
+
+        .armor-fill {
+            background: linear-gradient(90deg, #8B4513, #A0522D);
+        }
+
+        .structure-fill {
+            background: linear-gradient(90deg, #DC143C, #FF1493);
+        }
+
+        .layer-value {
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 11px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .heat-container {
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .heat-bar {
+            width: 200px;
+            height: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .heat-fill {
+            height: 100%;
+            transition: width 0.2s, background 0.3s;
+        }
+
+        .heat-fill.safe {
+            background: linear-gradient(90deg, #00FF00, #7FFF00);
+        }
+
+        .heat-fill.warning {
+            background: linear-gradient(90deg, #FFFF00, #FFD700);
+        }
+
+        .heat-fill.danger {
+            background: linear-gradient(90deg, #FF8C00, #FF4500);
+        }
+
+        .heat-fill.critical {
+            background: linear-gradient(90deg, #FF0000, #8B0000);
+            animation: pulseRed 0.5s infinite;
+        }
+
+        @keyframes pulseRed {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .heat-label {
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        .heat-value {
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 11px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .weapon-type-container {
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .weapon-type-icon {
+            display: inline-block;
+            padding: 5px 10px;
+            border: 2px solid;
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .weapon-type-icon.em {
+            color: #00FFFF;
+            border-color: #00FFFF;
+            background: rgba(0,255,255,0.1);
+        }
+
+        .weapon-type-icon.thermal {
+            color: #FF8C00;
+            border-color: #FF8C00;
+            background: rgba(255,140,0,0.1);
+        }
+
+        .weapon-type-icon.kinetic {
+            color: #FFFFFF;
+            border-color: #FFFFFF;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .weapon-type-icon.explosive {
+            color: #FF0000;
+            border-color: #FF0000;
+            background: rgba(255,0,0,0.1);
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+
+        .floating-damage {
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 2px 2px 4px black;
+        }
     </style>
 </head>
 <body>
