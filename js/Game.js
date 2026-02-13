@@ -520,18 +520,24 @@ class Game {
         ));
 
         // Add starting weapon
+        console.log('[Game] Adding starting weapon:', ship.startingWeaponId);
         this.addWeaponToPlayer(ship.startingWeaponId);
         
         // Ensure currentWeapon is set for UI
         if (playerComp.weapons && playerComp.weapons.length > 0) {
             const weapon = playerComp.weapons[0];
             playerComp.currentWeapon = weapon.data || weapon;
+            console.log('[Game] currentWeapon set:', playerComp.currentWeapon);
+        } else {
+            console.error('[Game] No weapons in player weapons array!');
         }
         
         console.log('Player created with ship:', shipId);
     }
 
     addWeaponToPlayer(weaponType) {
+        console.log('[Game] addWeaponToPlayer called with:', weaponType);
+        
         if (!this.player) {
             logger.warn('Game', 'Cannot add weapon - no player');
             return;
@@ -543,8 +549,14 @@ class Game {
             return;
         }
 
+        console.log('[Game] Looking up weapon:', weaponType);
+        console.log('[Game] WeaponData available:', typeof WeaponData !== 'undefined');
         const weaponData = WeaponData.getWeaponData(weaponType);
+        console.log('[Game] Weapon data result:', weaponData);
+        
         if (!weaponData) {
+            console.error('[Game] Failed to get weapon data for:', weaponType);
+            console.error('[Game] Available weapons:', WeaponData.WEAPONS ? Object.keys(WeaponData.WEAPONS) : 'NONE');
             logger.error('Game', `Invalid weapon: ${weaponType}`);
             return;
         }
