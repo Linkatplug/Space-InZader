@@ -1,0 +1,2248 @@
+20:39:29,471 [Game] Weapon data result: 
+Object { id: "auto_cannon", name: "Auto Cannon", description: "Sustained kinetic fire.", baseDamage: 16, fireRate: 4, maxLevel: 5, rarity: "common", tags: (3) […], color: "#CCCCCC", type: "direct", … }
+Game.js:561:17
+20:39:29,471 [20:39:29] [INFO] [Game] Added weapon: auto_cannon <empty string> Logger.js:126:25
+20:39:29,471 [20:39:29] [INFO] [Game] Player created successfully with 1 weapon(s) <empty string> Logger.js:126:25
+20:39:29,471 [20:39:29] [INFO] [WaveSystem] Reset to wave 1 <empty string> Logger.js:126:25
+20:39:29,472 startBackgroundMusic called - initialized: true musicPlaying: true AudioManager.js:507:17
+20:39:29,472 [20:39:29] [INFO] [Game] Game started successfully <empty string> Logger.js:126:25
+20:39:29,473 [20:39:29] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:29,713 [20:39:29] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:29,963 [20:39:29] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:30,213 [20:39:30] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:30,463 [20:39:30] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:30,714 [20:39:30] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:30,964 [20:39:30] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:31,214 [20:39:31] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:31,464 [20:39:31] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:31,714 [20:39:31] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:31,965 [20:39:31] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:32,215 [20:39:32] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:32,465 [20:39:32] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:32,715 [20:39:32] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:32,966 [20:39:32] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:32,966 [Spawn] SCOUT_DRONE S/A/St=100/35/45 dmgType=em 2 SpawnerSystem.js:269:21
+20:39:32,982 [20:39:32] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 597, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:32,982 [20:39:32] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 901, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:33,216 [20:39:33] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:33,466 [20:39:33] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:33,716 [20:39:33] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:33,833 [20:39:33] [DEBUG] [Collision] Projectile hit enemy at (15,495) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:33,833 [20:39:33] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "100/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:33,833 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:33,833 [20:39:33] [INFO] [DefenseSystem] enemy took kinetic damage: shield[100.0→90.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:33,967 [20:39:33] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:34,117 [20:39:34] [DEBUG] [Collision] Projectile hit enemy at (36,484) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:34,117 [20:39:34] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "90.4/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:34,117 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:34,117 [20:39:34] [INFO] [DefenseSystem] enemy took kinetic damage: shield[90.4→80.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:34,217 [20:39:34] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:34,233 [20:39:34] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 530, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:34,233 [20:39:34] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 748, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:34,384 [20:39:34] [DEBUG] [Collision] Projectile hit enemy at (55,472) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:34,384 [20:39:34] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "80.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:34,384 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:34,384 [20:39:34] [INFO] [DefenseSystem] enemy took kinetic damage: shield[80.8→71.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:34,467 [20:39:34] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:34,567 [20:39:34] [DEBUG] [Collision] Projectile hit enemy at (68,463) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:34,567 [20:39:34] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "71.20000000000002/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:34,567 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:34,567 [20:39:34] [INFO] [DefenseSystem] enemy took kinetic damage: shield[71.2→61.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:34,717 [20:39:34] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:34,751 [20:39:34] [DEBUG] [Collision] Projectile hit enemy at (78,460) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:34,751 [20:39:34] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "61.600000000000016/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:34,751 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:34,751 [20:39:34] [INFO] [DefenseSystem] enemy took kinetic damage: shield[61.6→52.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:34,967 [20:39:34] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:35,051 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,051 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,068 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,068 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,084 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,084 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,101 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,101 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,118 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,118 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,135 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,135 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,218 [20:39:35] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:35,435 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,435 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,451 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,451 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,468 [20:39:35] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:35,468 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,468 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,485 [20:39:35] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 252, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:35,485 [20:39:35] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 841, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:35,485 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,485 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,501 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,501 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,518 [20:39:35] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:35,518 [20:39:35] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:35,551 [20:39:35] [DEBUG] [Collision] Projectile hit enemy at (92,507) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:35,551 [20:39:35] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "52.000000000000014/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:35,552 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:35,552 [20:39:35] [INFO] [DefenseSystem] enemy took kinetic damage: shield[52.0→42.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:35,718 [20:39:35] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:35,952 [20:39:35] [DEBUG] [Collision] Projectile hit enemy at (62,494) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:35,953 [20:39:35] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "42.40000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:35,953 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:35,953 [20:39:35] [INFO] [DefenseSystem] enemy took kinetic damage: shield[42.4→32.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:35,968 [20:39:35] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:36,018 [20:39:36] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:36,018 [20:39:36] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:36,035 [20:39:36] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:36,035 [20:39:36] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:36,052 [20:39:36] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:36,052 [20:39:36] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:36,068 [20:39:36] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:36,068 [20:39:36] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:36,085 [20:39:36] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:36,085 [20:39:36] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:36,102 [20:39:36] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:36,102 [20:39:36] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:36,168 [20:39:36] [DEBUG] [Collision] Projectile hit enemy at (32,498) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:36,168 [20:39:36] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "32.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:36,168 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:36,168 [20:39:36] [INFO] [DefenseSystem] enemy took kinetic damage: shield[32.8→23.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:36,219 [20:39:36] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:36,402 [20:39:36] [DEBUG] [Collision] Projectile hit enemy at (0,504) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:36,402 [20:39:36] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "23.20000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:36,402 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:36,402 [20:39:36] [INFO] [DefenseSystem] enemy took kinetic damage: shield[23.2→13.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:36,469 [20:39:36] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:36,635 [20:39:36] [DEBUG] [Collision] Projectile hit enemy at (-30,514) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:36,635 [20:39:36] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "13.60000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:36,636 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:36,636 [20:39:36] [INFO] [DefenseSystem] enemy took kinetic damage: shield[13.6→4.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:36,719 [20:39:36] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:36,735 [20:39:36] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 124, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:36,736 [20:39:36] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 974, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:36,769 [Spawn] SCOUT_DRONE S/A/St=100/35/45 dmgType=em 2 SpawnerSystem.js:269:21
+20:39:36,786 [20:39:36] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 248, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:36,786 [20:39:36] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 516, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:36,869 [20:39:36] [DEBUG] [Collision] Projectile hit enemy at (-60,527) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:36,869 [20:39:36] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "4.000000000000011/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:36,869 [Combat] 🟦 BOUCLIER -4 UISystem.js:173:17
+20:39:36,869 [Combat] 🟫 ARMURE -7 UISystem.js:173:17
+20:39:36,869 [20:39:36] [INFO] [DefenseSystem] enemy took kinetic damage: shield[4.0→0.0]: 16.0dmg * (1-40%) = 9.6 → dealt 4.0 | armor[35.0→28.0]: 9.3dmg * (1-25%) = 7.0 → dealt 7.0 <empty string> Logger.js:126:25
+20:39:36,969 [20:39:36] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:37,002 [20:39:37] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:37,002 [20:39:37] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:37,019 [20:39:37] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:37,019 [20:39:37] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:37,036 [20:39:37] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:37,036 [20:39:37] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:37,053 [20:39:37] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:37,053 [20:39:37] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:37,103 [20:39:37] [DEBUG] [Collision] Projectile hit enemy at (-92,533) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:37,103 [20:39:37] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "28.000000000000014/35", structure: "45/45" }
+Logger.js:123:25
+20:39:37,103 [Combat] 🟫 ARMURE -12 UISystem.js:173:17
+20:39:37,103 [20:39:37] [INFO] [DefenseSystem] enemy took kinetic damage: armor[28.0→16.0]: 16.0dmg * (1-25%) = 12.0 → dealt 12.0 <empty string> Logger.js:126:25
+20:39:37,219 [20:39:37] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:37,436 [20:39:37] [DEBUG] [Collision] Projectile hit enemy at (-16,704) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:37,436 [20:39:37] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "100/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:37,436 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:37,436 [20:39:37] [INFO] [DefenseSystem] enemy took kinetic damage: shield[100.0→90.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:37,470 [20:39:37] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:37,670 [20:39:37] [DEBUG] [Collision] Projectile hit enemy at (-9,719) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:37,670 [20:39:37] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "90.4/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:37,670 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:37,670 [20:39:37] [INFO] [DefenseSystem] enemy took kinetic damage: shield[90.4→80.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:37,720 [20:39:37] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:37,920 [20:39:37] [DEBUG] [Collision] Projectile hit enemy at (8,729) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:37,920 [20:39:37] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "80.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:37,920 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:37,920 [20:39:37] [INFO] [DefenseSystem] enemy took kinetic damage: shield[80.8→71.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:37,970 [20:39:37] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:37,987 [20:39:37] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 760, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:38,037 [20:39:38] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 223, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:38,037 [20:39:38] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 534, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:38,220 [20:39:38] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:38,470 [20:39:38] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:38,721 [20:39:38] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:38,971 [20:39:38] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:39,104 [20:39:39] [DEBUG] [Collision] Projectile hit enemy at (55,782) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:39,104 [20:39:39] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "71.20000000000002/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:39,104 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:39,105 [20:39:39] [INFO] [DefenseSystem] enemy took kinetic damage: shield[71.2→61.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:39,221 [20:39:39] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:39,238 [20:39:39] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 401, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:39,288 [20:39:39] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 452, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:39,288 [20:39:39] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 398, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:39,371 [20:39:39] [DEBUG] [Collision] Projectile hit enemy at (73,767) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:39,371 [20:39:39] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "61.600000000000016/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:39,371 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:39,371 [20:39:39] [INFO] [DefenseSystem] enemy took kinetic damage: shield[61.6→52.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:39,471 [20:39:39] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:39,722 [20:39:39] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:39,972 [20:39:39] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:40,222 [20:39:40] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:40,339 [Spawn] SCOUT_DRONE S/A/St=100/35/45 dmgType=em 2 SpawnerSystem.js:269:21
+20:39:40,356 [20:39:40] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 747, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:40,356 [20:39:40] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 723, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:40,472 [20:39:40] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:40,489 [20:39:40] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 180, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:40,489 [20:39:40] [DEBUG] [Collision] Projectile hit enemy at (815,500) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:40,489 [20:39:40] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "100/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:40,489 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:40,489 [20:39:40] [INFO] [DefenseSystem] enemy took kinetic damage: shield[100.0→90.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:40,540 [20:39:40] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 565, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:40,540 [20:39:40] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 481, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:40,706 [20:39:40] [DEBUG] [Collision] Projectile hit enemy at (844,495) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:40,706 [20:39:40] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "90.4/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:40,706 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:40,706 [20:39:40] [INFO] [DefenseSystem] enemy took kinetic damage: shield[90.4→80.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:40,722 [20:39:40] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:40,922 [20:39:40] [DEBUG] [Collision] Projectile hit enemy at (872,484) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:40,922 [20:39:40] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "80.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:40,923 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:40,923 [20:39:40] [INFO] [DefenseSystem] enemy took kinetic damage: shield[80.8→71.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:40,972 [20:39:40] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:41,173 [20:39:41] [DEBUG] [Collision] Projectile hit enemy at (899,461) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:41,173 [20:39:41] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "71.20000000000002/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:41,173 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:41,173 [20:39:41] [INFO] [DefenseSystem] enemy took kinetic damage: shield[71.2→61.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:41,223 [20:39:41] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:41,406 [20:39:41] [DEBUG] [Collision] Projectile hit enemy at (917,434) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:41,406 [20:39:41] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "61.600000000000016/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:41,406 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:41,406 [20:39:41] [INFO] [DefenseSystem] enemy took kinetic damage: shield[61.6→52.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:41,473 [20:39:41] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:41,607 [20:39:41] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 489, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:41,607 [20:39:41] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 441, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:41,640 [20:39:41] [DEBUG] [Collision] Projectile hit enemy at (925,403) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:41,640 [20:39:41] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "52.000000000000014/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:41,640 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:41,640 [20:39:41] [INFO] [DefenseSystem] enemy took kinetic damage: shield[52.0→42.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:41,723 [20:39:41] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:41,740 [20:39:41] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 137, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:41,790 [20:39:41] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 655, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:41,790 [20:39:41] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 613, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:41,813 Starting playRandomMP3... AudioManager.js:553:17
+20:39:41,891 [20:39:41] [DEBUG] [Collision] Projectile hit enemy at (922,369) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:41,891 [20:39:41] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "42.40000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:41,891 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:41,891 [20:39:41] [INFO] [DefenseSystem] enemy took kinetic damage: shield[42.4→32.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:41,973 [20:39:41] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:42,088 Now playing: music/19583_newgrounds_robot_.mp3 AudioManager.js:626:21
+20:39:42,124 [20:39:42] [DEBUG] [Collision] Projectile hit enemy at (908,340) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:42,124 [20:39:42] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "32.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:42,124 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:42,124 [20:39:42] [INFO] [DefenseSystem] enemy took kinetic damage: shield[32.8→23.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:42,223 [20:39:42] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:42,357 [20:39:42] [DEBUG] [Collision] Projectile hit enemy at (884,318) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:42,357 [20:39:42] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "23.20000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:42,357 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:42,357 [20:39:42] [INFO] [DefenseSystem] enemy took kinetic damage: shield[23.2→13.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:42,474 [20:39:42] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:42,591 [20:39:42] [DEBUG] [Collision] Projectile hit enemy at (855,303) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:42,591 [20:39:42] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "13.60000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:42,591 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:42,591 [20:39:42] [INFO] [DefenseSystem] enemy took kinetic damage: shield[13.6→4.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:42,724 [20:39:42] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:42,824 [20:39:42] [DEBUG] [Collision] Projectile hit enemy at (824,296) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:42,824 [20:39:42] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "4.000000000000011/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:42,825 [Combat] 🟦 BOUCLIER -4 UISystem.js:173:17
+20:39:42,825 [Combat] 🟫 ARMURE -7 UISystem.js:173:17
+20:39:42,825 [20:39:42] [INFO] [DefenseSystem] enemy took kinetic damage: shield[4.0→0.0]: 16.0dmg * (1-40%) = 9.6 → dealt 4.0 | armor[35.0→28.0]: 9.3dmg * (1-25%) = 7.0 → dealt 7.0 <empty string> Logger.js:126:25
+20:39:42,858 [20:39:42] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 369, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:42,858 [20:39:42] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 373, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:42,974 [20:39:42] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:42,991 [20:39:42] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 82, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:43,041 [20:39:43] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 634, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:43,041 [20:39:43] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 446, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:43,075 [20:39:43] [DEBUG] [Collision] Projectile hit enemy at (790,297) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:43,075 [20:39:43] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "28.000000000000014/35", structure: "45/45" }
+Logger.js:123:25
+20:39:43,075 [Combat] 🟫 ARMURE -12 UISystem.js:173:17
+20:39:43,075 [20:39:43] [INFO] [DefenseSystem] enemy took kinetic damage: armor[28.0→16.0]: 16.0dmg * (1-25%) = 12.0 → dealt 12.0 <empty string> Logger.js:126:25
+20:39:43,225 [20:39:43] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:43,358 [20:39:43] [DEBUG] [Collision] Projectile hit enemy at (751,298) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:43,358 [20:39:43] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "16.000000000000014/35", structure: "45/45" }
+Logger.js:123:25
+20:39:43,358 [Combat] 🟫 ARMURE -12 UISystem.js:173:17
+20:39:43,358 [20:39:43] [INFO] [DefenseSystem] enemy took kinetic damage: armor[16.0→4.0]: 16.0dmg * (1-25%) = 12.0 → dealt 12.0 <empty string> Logger.js:126:25
+20:39:43,475 [20:39:43] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:43,575 [20:39:43] [DEBUG] [Collision] Projectile hit enemy at (722,304) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:43,575 [20:39:43] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "4.000000000000014/35", structure: "45/45" }
+Logger.js:123:25
+20:39:43,575 [Combat] 🟫 ARMURE -4 UISystem.js:173:17
+20:39:43,575 [Combat] 🔧 STRUCTURE -9 UISystem.js:173:17
+20:39:43,575 [20:39:43] [INFO] [DefenseSystem] enemy took kinetic damage: armor[4.0→0.0]: 16.0dmg * (1-25%) = 12.0 → dealt 4.0 | structure[45.0→35.9]: 10.7dmg * (1-15%) = 9.1 → dealt 9.1 <empty string> Logger.js:126:25
+20:39:43,725 [20:39:43] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:43,808 [20:39:43] [DEBUG] [Collision] Projectile hit enemy at (692,316) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:43,808 [20:39:43] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "0/35", structure: "35.93333333333335/45" }
+Logger.js:123:25
+20:39:43,808 [Combat] 🔧 STRUCTURE -14 UISystem.js:173:17
+20:39:43,808 [20:39:43] [INFO] [DefenseSystem] enemy took kinetic damage: structure[35.9→22.3]: 16.0dmg * (1-15%) = 13.6 → dealt 13.6 <empty string> Logger.js:126:25
+20:39:43,842 [Spawn] SCOUT_DRONE S/A/St=100/35/45 dmgType=em 2 SpawnerSystem.js:269:21
+20:39:43,858 [20:39:43] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 519, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:43,858 [20:39:43] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 667, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:43,975 [20:39:43] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:44,042 [20:39:44] [DEBUG] [Collision] Projectile hit enemy at (660,324) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:44,042 [20:39:44] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "0/35", structure: "22.33333333333335/45" }
+Logger.js:123:25
+20:39:44,042 [Combat] 🔧 STRUCTURE -14 UISystem.js:173:17
+20:39:44,042 [20:39:44] [INFO] [DefenseSystem] enemy took kinetic damage: structure[22.3→8.7]: 16.0dmg * (1-15%) = 13.6 → dealt 13.6 <empty string> Logger.js:126:25
+20:39:44,108 [20:39:44] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 501, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:44,108 [20:39:44] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 492, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:44,226 [20:39:44] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:44,242 [20:39:44] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 45, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:44,275 [20:39:44] [DEBUG] [Collision] Projectile hit enemy at (632,311) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:44,275 [20:39:44] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "0/35", structure: "8.73333333333335/45" }
+Logger.js:123:25
+20:39:44,276 [Combat] 🔧 STRUCTURE -9 UISystem.js:173:17
+20:39:44,276 [20:39:44] [INFO] [DefenseSystem] enemy took kinetic damage: structure[8.7→0.0]: 16.0dmg * (1-15%) = 13.6 → dealt 8.7 → DESTROYED <empty string> Logger.js:126:25
+20:39:44,292 [20:39:44] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 355, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:44,292 [20:39:44] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 264, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:44,309 [20:39:44] [DEBUG] [Collision] XP collected: 5 * 1.00 = 5.0 (0 → 5/100) <empty string> Logger.js:123:25
+20:39:44,326 [20:39:44] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:44,326 [20:39:44] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:44,342 [20:39:44] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:44,342 [20:39:44] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:44,359 [20:39:44] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:44,359 [20:39:44] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:44,377 [20:39:44] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:44,377 [20:39:44] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:44,476 [20:39:44] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:44,726 [20:39:44] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:44,959 [20:39:44] [DEBUG] [Collision] Projectile hit enemy at (389,227) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:44,959 [20:39:44] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "100/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:44,959 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:44,959 [20:39:44] [INFO] [DefenseSystem] enemy took kinetic damage: shield[100.0→90.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:44,976 [20:39:44] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:45,109 [20:39:45] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 645, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:45,109 [20:39:45] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 760, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:45,193 [20:39:45] [DEBUG] [Collision] Projectile hit enemy at (358,216) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:45,193 [20:39:45] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "90.4/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:45,194 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:45,194 [20:39:45] [INFO] [DefenseSystem] enemy took kinetic damage: shield[90.4→80.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:45,226 [20:39:45] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:45,359 [20:39:45] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 641, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:45,359 [20:39:45] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 631, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:45,443 [20:39:45] [DEBUG] [Collision] Projectile hit enemy at (326,203) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:45,444 [20:39:45] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "80.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:45,444 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:45,444 [20:39:45] [INFO] [DefenseSystem] enemy took kinetic damage: shield[80.8→71.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:45,476 [20:39:45] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:45,543 [20:39:45] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 296, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:45,543 [20:39:45] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 141, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:45,660 [20:39:45] [DEBUG] [Collision] Projectile hit enemy at (297,194) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:45,660 [20:39:45] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "71.20000000000002/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:45,660 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:45,660 [20:39:45] [INFO] [DefenseSystem] enemy took kinetic damage: shield[71.2→61.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:45,726 [20:39:45] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:45,877 [20:39:45] [DEBUG] [Collision] Projectile hit enemy at (269,185) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:45,877 [20:39:45] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "61.600000000000016/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:45,877 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:45,877 [20:39:45] [INFO] [DefenseSystem] enemy took kinetic damage: shield[61.6→52.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:45,977 [20:39:45] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:46,127 [20:39:46] [DEBUG] [Collision] Projectile hit enemy at (238,169) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:46,127 [20:39:46] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "52.000000000000014/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:46,127 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:46,127 [20:39:46] [INFO] [DefenseSystem] enemy took kinetic damage: shield[52.0→42.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:46,227 [20:39:46] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:46,360 [20:39:46] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 721, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:46,360 [20:39:46] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 906, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:46,360 [20:39:46] [DEBUG] [Collision] Projectile hit enemy at (213,148) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:46,360 [20:39:46] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "42.40000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:46,361 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:46,361 [20:39:46] [INFO] [DefenseSystem] enemy took kinetic damage: shield[42.4→32.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:46,477 [20:39:46] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:46,594 [20:39:46] [DEBUG] [Collision] Projectile hit enemy at (189,126) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:46,594 [20:39:46] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "32.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:46,594 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:46,594 [20:39:46] [INFO] [DefenseSystem] enemy took kinetic damage: shield[32.8→23.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:46,611 [20:39:46] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 763, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:46,611 [20:39:46] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 763, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:46,727 [20:39:46] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:46,794 [20:39:46] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 411, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:46,794 [20:39:46] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 73, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:46,811 [20:39:46] [DEBUG] [Collision] Projectile hit enemy at (174,103) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:46,811 [20:39:46] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "23.20000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:46,811 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:46,811 [20:39:46] [INFO] [DefenseSystem] enemy took kinetic damage: shield[23.2→13.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:46,977 [20:39:46] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:47,078 [20:39:47] [DEBUG] [Collision] Projectile hit enemy at (194,73) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:47,078 [20:39:47] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "13.60000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:47,078 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:47,078 [20:39:47] [INFO] [DefenseSystem] enemy took kinetic damage: shield[13.6→4.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:47,228 [20:39:47] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:47,395 [20:39:47] [DEBUG] [Collision] Projectile hit enemy at (235,60) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:47,395 [20:39:47] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "4.000000000000011/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:47,395 [Combat] 🟦 BOUCLIER -4 UISystem.js:173:17
+20:39:47,395 [Combat] 🟫 ARMURE -7 UISystem.js:173:17
+20:39:47,395 [20:39:47] [INFO] [DefenseSystem] enemy took kinetic damage: shield[4.0→0.0]: 16.0dmg * (1-40%) = 9.6 → dealt 4.0 | armor[35.0→28.0]: 9.3dmg * (1-25%) = 7.0 → dealt 7.0 <empty string> Logger.js:126:25
+20:39:47,411 [Spawn] SCOUT_DRONE S/A/St=100/35/45 dmgType=em 2 SpawnerSystem.js:269:21
+20:39:47,428 [20:39:47] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 175, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:47,428 [20:39:47] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 1255, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:47,478 [20:39:47] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:47,611 [20:39:47] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 714, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:47,612 [20:39:47] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 969, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:47,645 [20:39:47] [DEBUG] [Collision] Projectile hit enemy at (270,62) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:47,645 [20:39:47] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "28.000000000000014/35", structure: "45/45" }
+Logger.js:123:25
+20:39:47,645 [Combat] 🟫 ARMURE -12 UISystem.js:173:17
+20:39:47,645 [20:39:47] [INFO] [DefenseSystem] enemy took kinetic damage: armor[28.0→16.0]: 16.0dmg * (1-25%) = 12.0 → dealt 12.0 <empty string> Logger.js:126:25
+20:39:47,728 [20:39:47] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:47,862 [20:39:47] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 725, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:47,862 [20:39:47] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 733, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:47,878 [20:39:47] [DEBUG] [Collision] Projectile hit enemy at (299,75) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:47,878 [20:39:47] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "16.000000000000014/35", structure: "45/45" }
+Logger.js:123:25
+20:39:47,878 [Combat] 🟫 ARMURE -12 UISystem.js:173:17
+20:39:47,878 [20:39:47] [INFO] [DefenseSystem] enemy took kinetic damage: armor[16.0→4.0]: 16.0dmg * (1-25%) = 12.0 → dealt 12.0 <empty string> Logger.js:126:25
+20:39:47,978 [20:39:47] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:48,045 [20:39:48] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 420, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:48,045 [20:39:48] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 104, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:48,112 [20:39:48] [DEBUG] [Collision] Projectile hit enemy at (326,94) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:48,112 [20:39:48] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "4.000000000000014/35", structure: "45/45" }
+Logger.js:123:25
+20:39:48,112 [Combat] 🟫 ARMURE -4 UISystem.js:173:17
+20:39:48,112 [Combat] 🔧 STRUCTURE -9 UISystem.js:173:17
+20:39:48,112 [20:39:48] [INFO] [DefenseSystem] enemy took kinetic damage: armor[4.0→0.0]: 16.0dmg * (1-25%) = 12.0 → dealt 4.0 | structure[45.0→35.9]: 10.7dmg * (1-15%) = 9.1 → dealt 9.1 <empty string> Logger.js:126:25
+20:39:48,229 [20:39:48] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:48,262 [20:39:48] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:48,262 [20:39:48] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:48,279 [20:39:48] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:48,279 [20:39:48] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:48,296 [20:39:48] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:48,296 [20:39:48] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:48,312 [20:39:48] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:48,312 [20:39:48] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:48,329 [20:39:48] [DEBUG] [Collision] Projectile hit enemy at (349,113) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:48,329 [20:39:48] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "0/35", structure: "35.93333333333335/45" }
+Logger.js:123:25
+20:39:48,329 [Combat] 🔧 STRUCTURE -14 UISystem.js:173:17
+20:39:48,329 [20:39:48] [INFO] [DefenseSystem] enemy took kinetic damage: structure[35.9→22.3]: 16.0dmg * (1-15%) = 13.6 → dealt 13.6 <empty string> Logger.js:126:25
+20:39:48,479 [20:39:48] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:48,562 [20:39:48] [DEBUG] [Collision] Projectile hit enemy at (377,130) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:48,562 [20:39:48] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "0/35", structure: "22.33333333333335/45" }
+Logger.js:123:25
+20:39:48,562 [Combat] 🔧 STRUCTURE -14 UISystem.js:173:17
+20:39:48,562 [20:39:48] [INFO] [DefenseSystem] enemy took kinetic damage: structure[22.3→8.7]: 16.0dmg * (1-15%) = 13.6 → dealt 13.6 <empty string> Logger.js:126:25
+20:39:48,679 [20:39:48] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 401, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:48,679 [20:39:48] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 933, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:48,729 [20:39:48] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:48,812 [20:39:48] [DEBUG] [Collision] Projectile hit enemy at (411,135) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:48,813 [20:39:48] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "0/35", structure: "8.73333333333335/45" }
+Logger.js:123:25
+20:39:48,813 [Combat] 🔧 STRUCTURE -9 UISystem.js:173:17
+20:39:48,813 [20:39:48] [INFO] [DefenseSystem] enemy took kinetic damage: structure[8.7→0.0]: 16.0dmg * (1-15%) = 13.6 → dealt 8.7 → DESTROYED <empty string> Logger.js:126:25
+20:39:48,862 [20:39:48] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 406, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:48,862 [20:39:48] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 631, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:48,879 [20:39:48] [DEBUG] [Collision] XP collected: 5 * 1.00 = 5.0 (5 → 10/100) <empty string> Logger.js:123:25
+20:39:48,979 [20:39:48] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:49,030 [20:39:49] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:49,030 [20:39:49] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:49,046 [20:39:49] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:49,046 [20:39:49] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:49,063 [20:39:49] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:49,063 [20:39:49] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:49,080 [20:39:49] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:49,080 [20:39:49] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:49,113 [20:39:49] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 388, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:49,113 [20:39:49] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 388, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:49,229 [20:39:49] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:49,296 [20:39:49] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 379, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:49,346 [20:39:49] [DEBUG] [Collision] Projectile hit enemy at (285,519) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:49,346 [20:39:49] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "52.000000000000014/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:49,346 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:49,346 [20:39:49] [INFO] [DefenseSystem] enemy took kinetic damage: shield[52.0→42.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:49,479 [20:39:49] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:49,730 [20:39:49] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:49,847 [20:39:49] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:49,847 [20:39:49] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:49,863 [20:39:49] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:49,863 [20:39:49] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:49,880 [20:39:49] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:49,880 [20:39:49] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:49,897 [20:39:49] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:49,897 [20:39:49] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:49,913 [20:39:49] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:49,913 [20:39:49] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:49,930 [20:39:49] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 487, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:49,930 [20:39:49] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 627, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:49,980 [20:39:49] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:50,114 [20:39:50] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 205, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:50,114 [20:39:50] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 370, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:50,230 [20:39:50] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:50,280 [20:39:50] [DEBUG] [Collision] Projectile hit enemy at (822,147) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:50,281 [20:39:50] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "100/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:50,281 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:50,281 [20:39:50] [INFO] [DefenseSystem] enemy took kinetic damage: shield[100.0→90.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:50,364 [20:39:50] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 215, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:50,364 [20:39:50] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 219, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:50,464 [20:39:50] [DEBUG] [Collision] Projectile hit enemy at (795,182) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:50,465 [20:39:50] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "100/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:50,465 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:50,465 [20:39:50] [INFO] [DefenseSystem] enemy took kinetic damage: shield[100.0→90.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:50,481 [20:39:50] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:50,547 [20:39:50] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 419, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:50,681 [20:39:50] [DEBUG] [Collision] Projectile hit enemy at (823,194) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:50,681 [20:39:50] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "90.4/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:50,681 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:50,681 [20:39:50] [INFO] [DefenseSystem] enemy took kinetic damage: shield[90.4→80.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:50,731 [20:39:50] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:50,831 [20:39:50] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:50,831 [20:39:50] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:50,847 [20:39:50] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:50,848 [20:39:50] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:50,864 [20:39:50] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:50,864 [20:39:50] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:50,881 [20:39:50] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:50,881 [20:39:50] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:50,897 [20:39:50] [DEBUG] [Collision] Projectile hit enemy at (850,208) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:50,897 [20:39:50] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "80.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:50,898 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:50,898 [20:39:50] [INFO] [DefenseSystem] enemy took kinetic damage: shield[80.8→71.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:50,898 [20:39:50] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:50,898 [20:39:50] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:50,914 [20:39:50] [DEBUG] [Collision] Projectile hit enemy at (852,209) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:50,914 [20:39:50] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "71.20000000000002/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:50,914 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:50,914 [20:39:50] [INFO] [DefenseSystem] enemy took kinetic damage: shield[71.2→61.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:50,981 [20:39:50] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:51,131 [20:39:51] [DEBUG] [Collision] Projectile hit enemy at (881,217) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:51,131 [20:39:51] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "61.600000000000016/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:51,132 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:51,132 [20:39:51] [INFO] [DefenseSystem] enemy took kinetic damage: shield[61.6→52.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:51,181 [20:39:51] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 631, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:51,181 [20:39:51] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 321, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:51,215 [Spawn] SCOUT_DRONE S/A/St=100/35/45 dmgType=em 2 SpawnerSystem.js:269:21
+20:39:51,232 [20:39:51] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:51,232 [20:39:51] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 695, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:51,232 [20:39:51] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 361, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:51,365 [20:39:51] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 135, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:51,365 [20:39:51] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 163, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:51,381 [20:39:51] [DEBUG] [Collision] Projectile hit enemy at (913,215) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:51,381 [20:39:51] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "52.000000000000014/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:51,381 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:51,381 [20:39:51] [INFO] [DefenseSystem] enemy took kinetic damage: shield[52.0→42.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:51,481 [20:39:51] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:51,615 [20:39:51] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 181, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:51,615 [20:39:51] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 133, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:51,648 [20:39:51] [DEBUG] [Collision] Projectile hit enemy at (965,265) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:51,648 [20:39:51] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "100/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:51,649 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:51,649 [20:39:51] [INFO] [DefenseSystem] enemy took kinetic damage: shield[100.0→90.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:51,715 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,715 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:51,731 [20:39:51] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:51,732 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,732 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:51,748 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,748 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:51,766 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,766 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:51,782 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,782 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:51,799 [20:39:51] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 465, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:51,882 [20:39:51] [DEBUG] [Collision] Projectile hit enemy at (997,266) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:51,882 [20:39:51] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "90.4/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:51,882 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:51,882 [20:39:51] [INFO] [DefenseSystem] enemy took kinetic damage: shield[90.4→80.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:51,898 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,898 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:51,915 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,915 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:51,932 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,932 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:51,949 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,949 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:51,965 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,965 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:51,982 [20:39:51] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:51,982 [20:39:51] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:51,982 [20:39:51] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:52,099 [20:39:52] [DEBUG] [Collision] Projectile hit enemy at (1027,272) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:52,099 [20:39:52] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "80.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:52,099 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:52,099 [20:39:52] [INFO] [DefenseSystem] enemy took kinetic damage: shield[80.8→71.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:52,232 [20:39:52] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:52,349 [20:39:52] [DEBUG] [Collision] Projectile hit enemy at (1054,293) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:52,349 [20:39:52] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "71.20000000000002/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:52,349 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:52,349 [20:39:52] [INFO] [DefenseSystem] enemy took kinetic damage: shield[71.2→61.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:52,432 [20:39:52] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 736, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:52,432 [20:39:52] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 184, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:52,482 [20:39:52] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:52,482 [20:39:52] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 792, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:52,482 [20:39:52] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 426, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:52,599 [20:39:52] [DEBUG] [Collision] Projectile hit enemy at (1065,326) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:52,599 [20:39:52] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "61.600000000000016/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:52,599 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:52,599 [20:39:52] [INFO] [DefenseSystem] enemy took kinetic damage: shield[61.6→52.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:52,616 [20:39:52] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 199, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:52,616 [20:39:52] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 182, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:52,732 [20:39:52] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:52,833 [20:39:52] [DEBUG] [Collision] Projectile hit enemy at (1059,358) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:52,833 [20:39:52] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "52.000000000000014/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:52,833 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:52,833 [20:39:52] [INFO] [DefenseSystem] enemy took kinetic damage: shield[52.0→42.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:52,866 [20:39:52] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 195, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:52,866 [20:39:52] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 88, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:52,982 [20:39:52] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:53,050 [20:39:53] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 568, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:53,083 [20:39:53] [DEBUG] [Collision] Projectile hit enemy at (1067,391) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:53,083 [20:39:53] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "42.40000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:53,083 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:53,083 [20:39:53] [INFO] [DefenseSystem] enemy took kinetic damage: shield[42.4→32.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:53,233 [20:39:53] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:53,316 [20:39:53] [DEBUG] [Collision] Projectile hit enemy at (1071,424) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:53,316 [20:39:53] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "32.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:53,316 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:53,316 [20:39:53] [INFO] [DefenseSystem] enemy took kinetic damage: shield[32.8→23.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:53,483 [20:39:53] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:53,533 [20:39:53] [DEBUG] [Collision] Projectile hit enemy at (1074,454) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:53,533 [20:39:53] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "23.20000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:53,533 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:53,533 [20:39:53] [INFO] [DefenseSystem] enemy took kinetic damage: shield[23.2→13.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:53,683 [20:39:53] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 760, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:53,683 [20:39:53] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 131, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:53,733 [20:39:53] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:53,733 [20:39:53] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 814, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:53,733 [20:39:53] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 488, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:53,783 [20:39:53] [DEBUG] [Collision] Projectile hit enemy at (1101,472) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:53,783 [20:39:53] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "13.60000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:53,783 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:53,783 [20:39:53] [INFO] [DefenseSystem] enemy took kinetic damage: shield[13.6→4.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:53,867 [20:39:53] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 401, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:53,867 [20:39:53] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 185, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:53,950 [20:39:53] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:53,950 [20:39:53] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:53,967 [20:39:53] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:53,967 [20:39:53] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:53,984 [20:39:53] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:53,984 [20:39:53] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:53,984 [20:39:53] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,000 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,000 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,017 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,017 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,035 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,035 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,084 [20:39:54] [DEBUG] [Collision] Projectile hit enemy at (1133,448) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:54,084 [20:39:54] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "4.000000000000011/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:54,084 [Combat] 🟦 BOUCLIER -4 UISystem.js:173:17
+20:39:54,084 [Combat] 🟫 ARMURE -7 UISystem.js:173:17
+20:39:54,084 [20:39:54] [INFO] [DefenseSystem] enemy took kinetic damage: shield[4.0→0.0]: 16.0dmg * (1-40%) = 9.6 → dealt 4.0 | armor[35.0→28.0]: 9.3dmg * (1-25%) = 7.0 → dealt 7.0 <empty string> Logger.js:126:25
+20:39:54,117 [20:39:54] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 430, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:54,117 [20:39:54] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 120, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:54,134 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,134 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,150 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,150 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,167 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,167 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,184 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,184 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,201 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,201 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,218 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,218 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,234 [20:39:54] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:54,234 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,234 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,251 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,251 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,267 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,267 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,284 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,284 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,301 [20:39:54] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 464, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:54,301 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,301 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,317 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,317 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,334 [20:39:54] [DEBUG] [Collision] Projectile hit enemy at (1091,639) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:54,334 [20:39:54] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "100/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:54,334 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:54,334 [20:39:54] [INFO] [DefenseSystem] enemy took kinetic damage: shield[100.0→90.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:54,334 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,334 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,350 [20:39:54] [DEBUG] [Collision] Projectile hit enemy at (1093,640) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:54,350 [20:39:54] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "90.4/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:54,351 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:54,351 [20:39:54] [INFO] [DefenseSystem] enemy took kinetic damage: shield[90.4→80.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:54,351 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,351 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,367 [20:39:54] [DEBUG] [Collision] Projectile hit enemy at (1094,642) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:54,367 [20:39:54] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "80.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:54,367 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:54,367 [20:39:54] [INFO] [DefenseSystem] enemy took kinetic damage: shield[80.8→71.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:54,367 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,367 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,384 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,384 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,401 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,401 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,417 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,417 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,434 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,434 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,450 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,450 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,467 [20:39:54] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:54,467 [20:39:54] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:54,484 [20:39:54] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:54,618 [20:39:54] [DEBUG] [Collision] Projectile hit enemy at (1108,674) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:54,618 [20:39:54] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "71.20000000000002/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:54,618 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:54,618 [20:39:54] [INFO] [DefenseSystem] enemy took kinetic damage: shield[71.2→61.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:54,734 [20:39:54] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:54,901 [20:39:54] [DEBUG] [Collision] Projectile hit enemy at (1130,338) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:54,901 [20:39:54] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "28.000000000000014/35", structure: "45/45" }
+Logger.js:123:25
+20:39:54,901 [Combat] 🟫 ARMURE -12 UISystem.js:173:17
+20:39:54,901 [20:39:54] [INFO] [DefenseSystem] enemy took kinetic damage: armor[28.0→16.0]: 16.0dmg * (1-25%) = 12.0 → dealt 12.0 <empty string> Logger.js:126:25
+20:39:54,934 [20:39:54] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 719, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:54,934 [20:39:54] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 226, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:54,984 [20:39:54] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:54,984 [20:39:54] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 770, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:54,984 [20:39:54] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 432, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:55,118 [20:39:55] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 351, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:55,118 [20:39:55] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 271, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:55,118 [20:39:55] [DEBUG] [Collision] Projectile hit enemy at (1120,309) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:55,118 [20:39:55] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "16.000000000000014/35", structure: "45/45" }
+Logger.js:123:25
+20:39:55,118 [Combat] 🟫 ARMURE -12 UISystem.js:173:17
+20:39:55,118 [20:39:55] [INFO] [DefenseSystem] enemy took kinetic damage: armor[16.0→4.0]: 16.0dmg * (1-25%) = 12.0 → dealt 12.0 <empty string> Logger.js:126:25
+20:39:55,234 [20:39:55] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:55,352 [20:39:55] [DEBUG] [Collision] Projectile hit enemy at (1114,278) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:55,352 [20:39:55] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "4.000000000000014/35", structure: "45/45" }
+Logger.js:123:25
+20:39:55,352 [Combat] 🟫 ARMURE -4 UISystem.js:173:17
+20:39:55,352 [Combat] 🔧 STRUCTURE -9 UISystem.js:173:17
+20:39:55,352 [20:39:55] [INFO] [DefenseSystem] enemy took kinetic damage: armor[4.0→0.0]: 16.0dmg * (1-25%) = 12.0 → dealt 4.0 | structure[45.0→35.9]: 10.7dmg * (1-15%) = 9.1 → dealt 9.1 <empty string> Logger.js:126:25
+20:39:55,353 [Spawn] SCOUT_DRONE S/A/St=100/35/45 dmgType=em 2 SpawnerSystem.js:269:21
+20:39:55,368 [20:39:55] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 267, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:55,368 [20:39:55] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 100, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:55,368 [20:39:55] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 445, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:55,368 [20:39:55] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 1167, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:55,452 [20:39:55] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:55,452 [20:39:55] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:55,468 [20:39:55] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:55,468 [20:39:55] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:55,485 [20:39:55] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:55,485 [20:39:55] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:55,485 [20:39:55] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:55,502 [20:39:55] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:55,502 [20:39:55] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:55,518 [20:39:55] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:55,518 [20:39:55] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:55,551 [20:39:55] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 367, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:55,618 [20:39:55] [DEBUG] [Collision] Projectile hit enemy at (1146,260) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:55,618 [20:39:55] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "0/35", structure: "35.93333333333335/45" }
+Logger.js:123:25
+20:39:55,618 [Combat] 🔧 STRUCTURE -14 UISystem.js:173:17
+20:39:55,618 [20:39:55] [INFO] [DefenseSystem] enemy took kinetic damage: structure[35.9→22.3]: 16.0dmg * (1-15%) = 13.6 → dealt 13.6 <empty string> Logger.js:126:25
+20:39:55,735 [20:39:55] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:55,868 [20:39:55] [DEBUG] [Collision] Projectile hit enemy at (1180,262) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:55,868 [20:39:55] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "0/35", structure: "22.33333333333335/45" }
+Logger.js:123:25
+20:39:55,868 [Combat] 🔧 STRUCTURE -14 UISystem.js:173:17
+20:39:55,868 [20:39:55] [INFO] [DefenseSystem] enemy took kinetic damage: structure[22.3→8.7]: 16.0dmg * (1-15%) = 13.6 → dealt 13.6 <empty string> Logger.js:126:25
+20:39:55,985 [20:39:55] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:56,152 [20:39:56] [DEBUG] [Collision] Projectile hit enemy at (1212,285) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:56,152 [20:39:56] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "0/100", armor: "0/35", structure: "8.73333333333335/45" }
+Logger.js:123:25
+20:39:56,152 [Combat] 🔧 STRUCTURE -9 UISystem.js:173:17
+20:39:56,152 [20:39:56] [INFO] [DefenseSystem] enemy took kinetic damage: structure[8.7→0.0]: 16.0dmg * (1-15%) = 13.6 → dealt 8.7 → DESTROYED <empty string> Logger.js:126:25
+20:39:56,186 [20:39:56] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 519, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:56,186 [20:39:56] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 446, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:56,236 [20:39:56] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:56,236 [20:39:56] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 565, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:56,236 [20:39:56] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 305, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:56,319 [20:39:56] [DEBUG] [Collision] XP collected: 5 * 1.00 = 5.0 (10 → 15/100) <empty string> Logger.js:123:25
+20:39:56,369 [20:39:56] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 223, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:56,369 [20:39:56] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 400, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:56,436 [20:39:56] [DEBUG] [Collision] Projectile hit enemy at (988,62) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:56,436 [20:39:56] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "90.4/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:56,436 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:56,436 [20:39:56] [INFO] [DefenseSystem] enemy took kinetic damage: shield[90.4→80.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:56,486 [20:39:56] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:56,619 [20:39:56] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 250, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:56,619 [20:39:56] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 300, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:56,619 [20:39:56] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 1171, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:56,736 [20:39:56] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:56,802 [20:39:56] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 422, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:56,819 [20:39:56] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:56,819 [20:39:56] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:56,886 [20:39:56] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:56,886 [20:39:56] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:56,904 [20:39:56] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:56,904 [20:39:56] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:56,920 [20:39:56] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:56,920 [20:39:56] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:56,936 [20:39:56] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:56,937 [20:39:56] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:56,952 [20:39:56] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:56,952 [20:39:56] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:56,969 [20:39:56] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:56,969 [20:39:56] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:56,986 [20:39:56] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:56,986 [20:39:56] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:56,986 [20:39:56] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:57,236 [20:39:57] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:57,436 [20:39:57] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 377, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:57,436 [20:39:57] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 362, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:57,470 [20:39:57] [DEBUG] [Collision] Projectile hit enemy at (874,173) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:57,470 [20:39:57] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "42.40000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:57,470 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:57,470 [20:39:57] [INFO] [DefenseSystem] enemy took kinetic damage: shield[42.4→32.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:57,486 [20:39:57] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:57,487 [20:39:57] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 400, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:57,487 [20:39:57] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 294, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:57,620 [20:39:57] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 180, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:57,620 [20:39:57] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 272, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:57,686 [20:39:57] [DEBUG] [Collision] Projectile hit enemy at (863,184) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:57,686 [20:39:57] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "32.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:57,686 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:57,686 [20:39:57] [INFO] [DefenseSystem] enemy took kinetic damage: shield[32.8→23.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:57,737 [20:39:57] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:57,870 [20:39:57] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 340, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:57,870 [20:39:57] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 479, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:57,870 [20:39:57] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 838, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:57,937 [20:39:57] [DEBUG] [Collision] Projectile hit enemy at (852,201) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:57,937 [20:39:57] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "23.20000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:57,937 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:57,937 [20:39:57] [INFO] [DefenseSystem] enemy took kinetic damage: shield[23.2→13.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:57,987 [20:39:57] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:58,053 [20:39:58] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 205, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:58,237 [20:39:58] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:58,454 [20:39:58] [DEBUG] [Collision] Projectile hit enemy at (761,481) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:58,454 [20:39:58] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "100/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:58,454 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:58,454 [20:39:58] [INFO] [DefenseSystem] enemy took kinetic damage: shield[100.0→90.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:58,488 [20:39:58] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:58,688 [20:39:58] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 401, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:58,688 [20:39:58] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 216, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:58,704 [20:39:58] [DEBUG] [Collision] Projectile hit enemy at (730,464) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:58,704 [20:39:58] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "90.4/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:58,704 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:58,704 [20:39:58] [INFO] [DefenseSystem] enemy took kinetic damage: shield[90.4→80.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:58,737 [20:39:58] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:58,738 [20:39:58] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 406, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:58,738 [20:39:58] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 397, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:58,871 [20:39:58] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 316, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:58,871 [20:39:58] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 181, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:58,938 [20:39:58] [DEBUG] [Collision] Projectile hit enemy at (713,469) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:58,938 [20:39:58] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "42.40000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:58,938 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:58,938 [20:39:58] [INFO] [DefenseSystem] enemy took kinetic damage: shield[42.4→32.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:58,987 [20:39:58] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:59,071 [Spawn] SCOUT_DRONE S/A/St=100/35/45 dmgType=em 2 SpawnerSystem.js:269:21
+20:39:59,088 [20:39:59] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 446, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:59,088 [20:39:59] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 451, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:59,121 [20:39:59] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 452, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:59,121 [20:39:59] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 546, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:59,121 [20:39:59] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 629, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:59,188 [20:39:59] [DEBUG] [Collision] Projectile hit enemy at (711,476) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:59,188 [20:39:59] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "80.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:59,188 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:59,188 [20:39:59] [INFO] [DefenseSystem] enemy took kinetic damage: shield[80.8→71.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:59,239 [20:39:59] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:59,305 [20:39:59] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 181, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:59,421 [20:39:59] [DEBUG] [Collision] Projectile hit enemy at (712,481) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:59,421 [20:39:59] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "32.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:59,421 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:59,421 [20:39:59] [INFO] [DefenseSystem] enemy took kinetic damage: shield[32.8→23.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:59,488 [20:39:59] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:59,605 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,605 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,621 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,621 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,638 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,638 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,655 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,655 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,671 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,671 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,688 [20:39:59] [DEBUG] [Collision] Projectile hit enemy at (705,511) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:59,689 [20:39:59] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "71.20000000000002/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:59,689 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:59,689 [20:39:59] [INFO] [DefenseSystem] enemy took kinetic damage: shield[71.2→61.6]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:59,689 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,689 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,705 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,705 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,722 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,722 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,739 [20:39:59] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:59,739 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,739 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,755 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,755 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,772 [20:39:59] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:39:59,772 [20:39:59] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:39:59,938 [20:39:59] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 400, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:59,938 [20:39:59] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 181, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:59,938 [20:39:59] [DEBUG] [Collision] Projectile hit enemy at (704,528) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:39:59,939 [20:39:59] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "61.600000000000016/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:39:59,939 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:39:59,939 [20:39:59] [INFO] [DefenseSystem] enemy took kinetic damage: shield[61.6→52.0]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:39:59,988 [20:39:59] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:39:59,988 [20:39:59] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 400, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:39:59,989 [20:39:59] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 399, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:40:00,038 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,038 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,055 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,055 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,072 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,072 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,088 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,089 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,105 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,105 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,122 [20:40:00] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 357, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:40:00,122 [20:40:00] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 181, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:40:00,122 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,122 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,139 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,139 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,156 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,156 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,172 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,172 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,189 [20:40:00] [DEBUG] [Collision] Projectile hit enemy at (705,546) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:40:00,189 [20:40:00] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "52.000000000000014/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:40:00,189 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:40:00,189 [20:40:00] [INFO] [DefenseSystem] enemy took kinetic damage: shield[52.0→42.4]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:40:00,189 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,189 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,206 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,206 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,222 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,222 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,239 [20:40:00] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:40:00,239 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,239 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,255 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,255 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,272 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,272 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,289 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,289 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,306 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,306 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,322 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,322 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,339 [20:40:00] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 400, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:40:00,339 [20:40:00] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 399, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:40:00,339 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,339 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,356 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,356 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,372 [20:40:00] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 400, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:40:00,372 [20:40:00] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 439, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:40:00,372 [20:40:00] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 522, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:40:00,372 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,372 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,389 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,389 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,439 [20:40:00] [DEBUG] [Collision] Projectile hit enemy at (708,564) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:40:00,439 [20:40:00] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "42.40000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:40:00,439 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:40:00,439 [20:40:00] [INFO] [DefenseSystem] enemy took kinetic damage: shield[42.4→32.8]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:40:00,489 [20:40:00] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:40:00,505 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,505 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,522 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,522 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,539 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,539 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,555 [20:40:00] [DEBUG] [Combat] enemy firing at player 
+Object { distance: 181, damage: 6, damageType: "em" }
+Logger.js:123:25
+20:40:00,556 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,556 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,572 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,572 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,589 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,589 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,606 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,606 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,622 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,622 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,639 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,639 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,656 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,656 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,673 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,673 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,689 [20:40:00] [DEBUG] [Collision] Projectile hit enemy at (713,581) 
+Object { damage: 16, damageType: "kinetic", orbital: false }
+Logger.js:123:25
+20:40:00,689 [20:40:00] [DEBUG] [DefenseSystem] Applying 16 kinetic damage to enemy 
+Object { shield: "32.80000000000001/100", armor: "35/35", structure: "45/45" }
+Logger.js:123:25
+20:40:00,689 [Combat] 🟦 BOUCLIER -10 UISystem.js:173:17
+20:40:00,689 [20:40:00] [INFO] [DefenseSystem] enemy took kinetic damage: shield[32.8→23.2]: 16.0dmg * (1-40%) = 9.6 → dealt 9.6 <empty string> Logger.js:126:25
+20:40:00,689 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,689 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,706 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,706 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,722 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,723 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,739 [20:40:00] [DEBUG] [Combat] Firing auto_cannon Lv1 
+Object { damageType: "kinetic", baseDamage: 16, heat: 5 }
+Logger.js:123:25
+20:40:00,739 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,739 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,756 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,756 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,772 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,772 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,789 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,789 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,806 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,806 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,822 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,823 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,839 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,839 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,856 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,856 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,873 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,873 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,890 [20:40:00] [INFO] [Collision] Player taking 6.0 em damage <empty string> Logger.js:126:25
+20:40:00,890 [20:40:00] [DEBUG] [DefenseSystem] Applying 6 em damage to player 
+Object { shield: "120/120", armor: "150/150", structure: "130/130" }
+Logger.js:123:25
+20:40:00,904 State changed: RUNNING -> PAUSED GameState.js:45:17
+20:40:00,904 State changed: PAUSED -> PAUSED GameState.js:45:17
+20:40:03,465 State changed: PAUSED -> RUNNING GameState.js:45:17
+20:40:03,465 State changed: RUNNING -> MENU GameState.js:45:17
+20:40:44,157 Starting playRandomMP3... AudioManager.js:553:17
+20:40:44,422 Now playing: music/770175_Outer-Space-Adventure-Agen.mp3 AudioManager.js:626:21
+20:41:28,978 Uncaught TypeError: can't access property "shield" of undefined
+    update https://linkatplug.github.io/Space-InZader/js/utils/DebugOverlay.js:256
+    loop https://linkatplug.github.io/Space-InZader/js/Game.js:1140
+250 DebugOverlay.js:256:36
+20:41:33,173 Uncaught TypeError: can't access property "shield" of undefined
+    update https://linkatplug.github.io/Space-InZader/js/utils/DebugOverlay.js:256
+    loop https://linkatplug.github.io/Space-InZader/js/Game.js:1140
+    loop https://linkatplug.github.io/Space-InZader/js/Game.js:1115
+DebugOverlay.js:256:36
+20:41:33,182 Uncaught TypeError: can't access property "shield" of undefined
+    update https://linkatplug.github.io/Space-InZader/js/utils/DebugOverlay.js:256
+    loop https://linkatplug.github.io/Space-InZader/js/Game.js:1140
+    loop https://linkatplug.github.io/Space-InZader/js/Game.js:1115
+    loop https://linkatplug.github.io/Space-InZader/js/Game.js:1115
