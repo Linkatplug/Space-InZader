@@ -189,9 +189,10 @@ class CollisionSystem {
             const playerPos = player.getComponent('position');
             const playerCol = player.getComponent('collision');
             const playerHealth = player.getComponent('health');
+            const playerDefense = player.getComponent('defense');
             
-            if (!playerPos || !playerCol || !playerHealth) continue;
-            if (playerHealth.invulnerable || playerHealth.godMode) continue;
+            if (!playerPos || !playerCol || (!playerHealth && !playerDefense)) continue;
+            if (playerHealth && (playerHealth.invulnerable || playerHealth.godMode)) continue;
 
             for (const projectile of projectiles) {
                 const projPos = projectile.getComponent('position');
@@ -200,23 +201,25 @@ class CollisionSystem {
                 
                 if (!projPos || !projCol || !projComp) continue;
                 
-                // Check if projectile is from enemy (owner is an enemy entity)
+                // Check if projectile is from enemy (owner is an enemy entity or 'enemy' string)
                 const ownerEntity = this.world.getEntity(projComp.owner);
-                if (!ownerEntity || ownerEntity.type !== 'enemy') continue;
+                if (projComp.owner !== 'enemy' && (!ownerEntity || ownerEntity.type !== 'enemy')) continue;
 
                 if (MathUtils.circleCollision(
                     playerPos.x, playerPos.y, playerCol.radius,
                     projPos.x, projPos.y, projCol.radius
                 )) {
-                    // Deal damage to player
-                    this.damagePlayer(player, projComp.damage);
+                    // Deal damage to player with damage type
+                    this.damagePlayer(player, projComp.damage, projComp.damageType || 'kinetic');
                     
                     // Remove projectile
                     this.world.removeEntity(projectile.id);
                     
-                    // Add invulnerability frames
-                    playerHealth.invulnerable = true;
-                    playerHealth.invulnerableTime = 0.3;
+                    // Add invulnerability frames (only if using health component)
+                    if (playerHealth) {
+                        playerHealth.invulnerable = true;
+                        playerHealth.invulnerableTime = 0.3;
+                    }
                 }
             }
         }
