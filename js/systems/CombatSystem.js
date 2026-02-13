@@ -53,12 +53,16 @@ class CombatSystem {
 
         // Fire when cooldown is ready
         if (weapon.cooldown <= 0) {
-            const playerStats = player.getComponent('player').stats;
+            const playerComp = player.getComponent('player');
+            const playerStats = playerComp.stats;
             const baseFireRate = weapon.data.fireRate || 1;
             const fireRate = baseFireRate * playerStats.fireRate;
             weapon.cooldown = fireRate > 0 ? 1 / fireRate : 999;
             
-            this.fireWeapon(player, weapon);
+            // Set currentWeapon for UI
+            playerComp.currentWeapon = weapon.data;
+            
+            this.fireWeaponWithHeat(player, weapon);
         }
     }
 

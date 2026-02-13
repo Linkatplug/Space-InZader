@@ -279,8 +279,10 @@ class RenderSystem {
                 this.drawHealthBar(pos.x, pos.y - render.size - 10, health.current, health.max, isBoss);
             }
             
-            // Draw resistance indicator
-            this.drawEnemyResistanceIndicator(enemy);
+            // Draw resistance indicator if tactical UI enabled
+            if (!this.gameState || this.gameState.tacticalUIEnabled !== false) {
+                this.drawEnemyResistanceIndicator(enemy);
+            }
         });
     }
 

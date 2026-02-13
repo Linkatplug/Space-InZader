@@ -118,6 +118,10 @@ class UISystem {
         if (this.tacticalUI.container) {
             this.tacticalUI.container.style.display = this.tacticalUI.enabled ? 'block' : 'none';
         }
+        // Store state for RenderSystem to check
+        if (this.world && this.world.gameState) {
+            this.world.gameState.tacticalUIEnabled = this.tacticalUI.enabled;
+        }
         console.log(`[UI] tactical HUD ${this.tacticalUI.enabled ? 'enabled' : 'disabled'}`);
     }
 
@@ -192,8 +196,9 @@ class UISystem {
             explosive: '#FF0000'
         };
         
+        // Use canvas screen coordinates directly (data.x, data.y are already screen positions)
         text.style.cssText = `
-            position: absolute;
+            position: fixed;
             left: ${data.x || 400}px;
             top: ${data.y || 300}px;
             color: ${typeColors[data.damageType] || '#FFF'};
