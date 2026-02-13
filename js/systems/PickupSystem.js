@@ -158,11 +158,18 @@ class PickupSystem {
         const finalXP = xpValue * playerComp.stats.xpBonus;
         playerComp.xp += finalXP;
 
+        // P0 FIX: Debug log XP collection
+        logger.debug('XP', `Collected ${xpValue} XP (x${playerComp.stats.xpBonus.toFixed(2)} = ${finalXP.toFixed(1)}) → ${playerComp.xp.toFixed(0)}/${playerComp.xpRequired}`);
+
         // Check for level up
         while (playerComp.xp >= playerComp.xpRequired) {
             playerComp.xp -= playerComp.xpRequired;
             playerComp.level++;
+            const oldRequired = playerComp.xpRequired;
             playerComp.xpRequired = Math.floor(playerComp.xpRequired * 1.2);
+            
+            // P0 FIX: Debug log level up
+            logger.info('XP', `LEVEL UP! ${playerComp.level - 1} → ${playerComp.level} (XP required: ${oldRequired} → ${playerComp.xpRequired})`);
             
             // Update stats
             this.gameState.stats.highestLevel = Math.max(
@@ -243,19 +250,36 @@ class PickupSystem {
      */
     onLevelUp(player) {
         const playerPos = player.getComponent('position');
+        const playerComp = player.getComponent('player');
+        
+        // P0 FIX: Log level up trigger
+        logger.info('PickupSystem', `Level up triggered for player (Level ${playerComp.level})`);
         
         // Create level up particle effect
         this.createLevelUpEffect(playerPos.x, playerPos.y);
         
-        // Heal player slightly on level up
+        // Heal player defense layers on level up (20% of each layer)
+        const defense = player.getComponent('defense');
+        if (defense) {
+            defense.shield.current = Math.min(defense.shield.current + defense.shield.max * 0.2, defense.shield.max);
+            defense.armor.current = Math.min(defense.armor.current + defense.armor.max * 0.2, defense.armor.max);
+            defense.structure.current = Math.min(defense.structure.current + defense.structure.max * 0.2, defense.structure.max);
+            logger.debug('PickupSystem', 'Healed 20% of all defense layers on level up');
+        }
+        
+        // Legacy health support
         const health = player.getComponent('health');
         if (health) {
             health.current = Math.min(health.current + health.max * 0.2, health.max);
         }
         
-        // Pause game and show level up choices
-        // This would be handled by the main game loop
-        console.log('Level Up! Now level', player.getComponent('player').level);
+        // P0 FIX: Emit level up event so Game.js can handle UI
+        if (this.world && this.world.events) {
+            logger.debug('PickupSystem', 'Emitting playerLevelUp event');
+            this.world.events.emit('playerLevelUp', { player: player });
+        } else {
+            logger.warn('PickupSystem', 'Cannot emit playerLevelUp - no event bus!');
+        }
     }
 
     /**

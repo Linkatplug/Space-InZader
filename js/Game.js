@@ -255,6 +255,12 @@ class Game {
             this.gameState.selectedShip = e.detail.ship;
         });
 
+        // P0 FIX: Listen for player level up event from PickupSystem
+        this.world.events.on('playerLevelUp', (data) => {
+            logger.info('Game', 'Received playerLevelUp event');
+            this.triggerLevelUp();
+        });
+
         // Listen for boost selection - BULLETPROOF handler
         window.addEventListener('boostSelected', (e) => {
             try {
@@ -911,17 +917,40 @@ class Game {
     }
 
     triggerLevelUp() {
-        logger.info('Game', 'Player leveled up!');
-        this.gameState.setState(GameStates.LEVEL_UP);
+        const playerComp = this.player?.getComponent('player');
         
-        // Generate 3 random boosts
+        // P0 FIX: Enhanced debug logging
+        if (playerComp) {
+            logger.info('Game', `Player leveled up! Level ${playerComp.level}, XP: ${playerComp.xp.toFixed(0)}/${playerComp.xpRequired}`);
+        } else {
+            logger.error('Game', 'triggerLevelUp called but no player component!');
+            return;
+        }
+        
+        // Set game state to LEVEL_UP (pauses game)
+        this.gameState.setState(GameStates.LEVEL_UP);
+        logger.debug('Game', `Game state set to LEVEL_UP`);
+        
+        // Generate 3 random boost options
         const boosts = this.generateBoostOptions();
+        
+        // P0 FIX: Log generated options
+        if (boosts && boosts.length > 0) {
+            logger.info('Game', `Generated ${boosts.length} upgrade options: ${boosts.map(b => `${b.name} (Lv${b.currentLevel}→${b.currentLevel+1})`).join(', ')}`);
+        } else {
+            logger.warn('Game', 'No upgrade options generated!');
+        }
+        
         this.gameState.pendingBoosts = boosts;
         
+        // Show level up UI
+        logger.debug('Game', 'Calling ui.showLevelUp()');
         this.systems.ui.showLevelUp(boosts);
         
         // Play level up sound
-        this.audioManager.playSFX('levelup');
+        if (this.audioManager && this.audioManager.initialized) {
+            this.audioManager.playSFX('levelup');
+        }
     }
 
     generateBoostOptions() {
@@ -936,16 +965,23 @@ class Game {
         const shipId = playerComp.shipId || 'ION_FRIGATE';
         const shipData = window.ShipUpgradeData?.SHIPS?.[shipId];
         
+        // P0 FIX: Debug log ship data lookup
+        logger.debug('Game', `Looking up ship data for: ${shipId}`);
+        
         if (!shipData || !shipData.upgrades) {
-            logger.error('Game', `No ship upgrades found for ${shipId}`);
+            logger.error('Game', `No ship upgrades found for ${shipId}. ShipUpgradeData available: ${!!window.ShipUpgradeData}`);
             return options;
         }
+        
+        logger.debug('Game', `Ship ${shipId} has ${shipData.upgrades.length} total upgrades`);
 
         // Get all available upgrades (not maxed out)
         const availableUpgrades = shipData.upgrades.filter(upgrade => {
             const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
             return currentLevel < upgrade.maxLevel;
         });
+        
+        logger.debug('Game', `${availableUpgrades.length} upgrades available (not maxed)`);
 
         if (availableUpgrades.length === 0) {
             logger.warn('Game', `All upgrades maxed for ${shipId}`);
