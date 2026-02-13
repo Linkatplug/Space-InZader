@@ -253,9 +253,9 @@ class DebugOverlay {
                 
                 // Defense layers (priority) or legacy health
                 if (defense) {
-                    const shield = defense.layers.shield;
-                    const armor = defense.layers.armor;
-                    const structure = defense.layers.structure;
+                    const shield = defense.shield;
+                    const armor = defense.armor;
+                    const structure = defense.structure;
                     
                     playerHtml += '<span style="color: #00ffff;">DEFENSE LAYERS:</span><br>';
                     playerHtml += `  🛡️ Shield: ${Math.ceil(shield.current)}/${shield.max}<br>`;
