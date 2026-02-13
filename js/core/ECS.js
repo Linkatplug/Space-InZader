@@ -259,6 +259,7 @@ const Components = {
         xpRequired: 100,
         weapons: [],
         passives: [],
+        modules: [],            // Equipped modules from loot (max 6 slots)
         shipId: 'ION_FRIGATE',  // Current ship identifier
         upgrades: new Map(),    // Map<upgradeId, level> for ship upgrades
         stats: {

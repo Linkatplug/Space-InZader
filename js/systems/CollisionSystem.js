@@ -471,6 +471,17 @@ class CollisionSystem {
                 this.spawnPickup(pos.x + (Math.random() - 0.5) * 30, pos.y + (Math.random() - 0.5) * 30, 'health', healAmount);
             }
             
+            // Random chance to drop module (rare drops)
+            // Higher drop rate for bosses (3% vs 0.5%)
+            const moduleDropChance = isBoss ? 0.03 : 0.005;
+            
+            if (Math.random() < moduleDropChance && typeof window.ModuleData !== 'undefined' && window.ModuleData.MODULES) {
+                // Select random module
+                const moduleKeys = Object.keys(window.ModuleData.MODULES);
+                const randomModule = moduleKeys[Math.floor(Math.random() * moduleKeys.length)];
+                this.spawnModulePickup(pos.x + (Math.random() - 0.5) * 40, pos.y + (Math.random() - 0.5) * 40, randomModule);
+            }
+            
             // Chain Lightning/Chain Reaction
             // Get player to check for chain lightning stat
             const player = this.world.getEntitiesByType('player')[0];
@@ -598,6 +609,35 @@ class CollisionSystem {
         pickup.addComponent('collision', Components.Collision(8));
     }
 
+    /**
+     * Spawn a module pickup at the specified location
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {string} moduleId - Module identifier (e.g., 'SHIELD_BOOSTER')
+     */
+    spawnModulePickup(x, y, moduleId) {
+        const pickup = this.world.createEntity('pickup');
+        pickup.addComponent('position', Components.Position(x, y));
+        pickup.addComponent('velocity', Components.Velocity(0, 0));
+        
+        // Create pickup component with module type
+        const pickupComp = Components.Pickup('module', 0);
+        pickupComp.moduleId = moduleId; // Store module ID
+        pickupComp.magnetRange = 200; // Larger magnet range for modules
+        pickupComp.lifetime = 40; // Longer lifetime (40 seconds)
+        pickup.addComponent('pickup', pickupComp);
+        
+        // Module pickups are distinctive - purple with square shape
+        pickup.addComponent('renderable', Components.Renderable(
+            '#9b59b6', // Purple color for modules
+            14,         // Slightly larger
+            'square'    // Square shape to distinguish
+        ));
+        pickup.addComponent('collision', Components.Collision(12));
+        
+        console.log(`[Loot] Module spawned: ${moduleId} at (${x.toFixed(0)}, ${y.toFixed(0)})`);
+    }
+
     collectPickup(player, pickup) {
         const pickupComp = pickup.getComponent('pickup');
         const playerComp = player.getComponent('player');
@@ -634,9 +674,85 @@ class CollisionSystem {
             case 'noyaux':
                 this.gameState.stats.noyauxEarned += pickupComp.value;
                 break;
+                
+            case 'module':
+                this.collectModule(player, pickupComp.moduleId);
+                break;
         }
 
         this.world.removeEntity(pickup.id);
+    }
+
+    /**
+     * Collect Module from loot
+     * @param {Entity} player - Player entity
+     * @param {string} moduleId - Module identifier (e.g., 'SHIELD_BOOSTER')
+     */
+    collectModule(player, moduleId) {
+        const playerComp = player.getComponent('player');
+        const defense = player.getComponent('defense');
+        const heat = player.getComponent('heat');
+        
+        if (!playerComp) return;
+
+        // Check if ModuleData is available
+        if (typeof window.ModuleData === 'undefined' || !window.ModuleData.MODULES) {
+            console.error('[Loot] ModuleData not available');
+            return;
+        }
+
+        const moduleData = window.ModuleData.MODULES[moduleId];
+        if (!moduleData) {
+            console.error('[Loot] Invalid module ID:', moduleId);
+            return;
+        }
+
+        // Check max slots (6 modules max)
+        const MAX_MODULE_SLOTS = 6;
+        if (!playerComp.modules) {
+            playerComp.modules = [];
+        }
+
+        if (playerComp.modules.length >= MAX_MODULE_SLOTS) {
+            console.log('[Loot] Module slots full! Cannot pick up:', moduleData.name);
+            return;
+        }
+
+        // Add module to player's inventory
+        playerComp.modules.push({ id: moduleId });
+        
+        // Log acquisition
+        console.log(`[Loot] module acquired: ${moduleData.name} (${moduleId})`);
+
+        // Apply module effects immediately using ModuleSystem
+        if (typeof applyModulesToStats !== 'undefined') {
+            // Get base stats (snapshot before module application)
+            const baseStats = playerComp.baseStats ? { ...playerComp.baseStats } : { ...playerComp.stats };
+            
+            // Apply modules to stats
+            playerComp.stats = applyModulesToStats(playerComp, baseStats);
+            
+            // Apply to defense component if it exists
+            if (defense && playerComp.stats.moduleEffects) {
+                if (typeof applyModuleDefenseBonuses !== 'undefined') {
+                    applyModuleDefenseBonuses(defense, playerComp.stats.moduleEffects);
+                }
+                if (typeof applyModuleResistances !== 'undefined') {
+                    applyModuleResistances(defense, playerComp.stats.moduleEffects);
+                }
+            }
+            
+            // Apply to heat component if it exists
+            if (heat && playerComp.stats.moduleEffects) {
+                if (typeof applyModuleHeatEffects !== 'undefined') {
+                    applyModuleHeatEffects(heat, playerComp.stats.moduleEffects);
+                }
+            }
+            
+            console.log(`[Loot] Module effects applied. Shield: ${defense?.shield?.max || 'N/A'}, Armor: ${defense?.armor?.max || 'N/A'}, Structure: ${defense?.structure?.max || 'N/A'}`);
+        } else {
+            console.warn('[Loot] ModuleSystem functions not available');
+        }
     }
 
     levelUp(player) {

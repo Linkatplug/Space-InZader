@@ -134,6 +134,9 @@ class PickupSystem {
             case 'noyaux':
                 this.collectNoyaux(pickupComp.value);
                 break;
+            case 'module':
+                this.collectModule(player, pickupComp.moduleId);
+                break;
         }
 
         // Create collection particle effect
@@ -192,6 +195,89 @@ class PickupSystem {
     }
 
     /**
+     * Collect Module from loot
+     * @param {Entity} player - Player entity
+     * @param {string} moduleId - Module identifier (e.g., 'SHIELD_BOOSTER')
+     */
+    collectModule(player, moduleId) {
+        const playerComp = player.getComponent('player');
+        if (!playerComp) return;
+
+        // Check if ModuleData is available
+        if (typeof window.ModuleData === 'undefined' || !window.ModuleData.MODULES) {
+            console.error('[Loot] ModuleData not available');
+            return;
+        }
+
+        const moduleData = window.ModuleData.MODULES[moduleId];
+        if (!moduleData) {
+            console.error('[Loot] Invalid module ID:', moduleId);
+            return;
+        }
+
+        // Check max slots (6 modules max)
+        const MAX_MODULE_SLOTS = 6;
+        if (!playerComp.modules) {
+            playerComp.modules = [];
+        }
+
+        if (playerComp.modules.length >= MAX_MODULE_SLOTS) {
+            console.log('[Loot] Module slots full! Cannot pick up:', moduleData.name);
+            // Could implement "replace oldest" here if desired
+            return;
+        }
+
+        // Add module to player's inventory
+        playerComp.modules.push({ id: moduleId });
+        
+        // Log acquisition
+        console.log(`[Loot] module acquired: ${moduleData.name} (${moduleId})`);
+
+        // Apply module effects immediately
+        this.applyModuleEffects(player);
+    }
+
+    /**
+     * Apply all module effects to player stats and components
+     * @param {Entity} player - Player entity
+     */
+    applyModuleEffects(player) {
+        const playerComp = player.getComponent('player');
+        const defense = player.getComponent('defense');
+        const heat = player.getComponent('heat');
+        
+        if (!playerComp) return;
+
+        // Use ModuleSystem if available
+        if (typeof applyModulesToStats !== 'undefined') {
+            // Get base stats (snapshot before module application)
+            const baseStats = playerComp.baseStats ? { ...playerComp.baseStats } : { ...playerComp.stats };
+            
+            // Apply modules to stats
+            playerComp.stats = applyModulesToStats(playerComp, baseStats);
+            
+            // Apply to defense component if it exists
+            if (defense && playerComp.stats.moduleEffects) {
+                if (typeof applyModuleDefenseBonuses !== 'undefined') {
+                    applyModuleDefenseBonuses(defense, playerComp.stats.moduleEffects);
+                }
+                if (typeof applyModuleResistances !== 'undefined') {
+                    applyModuleResistances(defense, playerComp.stats.moduleEffects);
+                }
+            }
+            
+            // Apply to heat component if it exists
+            if (heat && playerComp.stats.moduleEffects) {
+                if (typeof applyModuleHeatEffects !== 'undefined') {
+                    applyModuleHeatEffects(heat, playerComp.stats.moduleEffects);
+                }
+            }
+        } else {
+            console.warn('[Loot] ModuleSystem functions not available');
+        }
+    }
+
+    /**
      * Handle level up
      * @param {Entity} player - Player entity
      */
@@ -222,11 +308,12 @@ class PickupSystem {
         const colors = {
             xp: '#00FFFF',
             health: '#00FF00',
-            noyaux: '#FFD700'
+            noyaux: '#FFD700',
+            module: '#9b59b6'  // Purple for modules
         };
         
         const color = colors[type] || '#FFFFFF';
-        const particleCount = 8;
+        const particleCount = type === 'module' ? 16 : 8; // More particles for modules
 
         for (let i = 0; i < particleCount; i++) {
             const angle = (i / particleCount) * Math.PI * 2;
@@ -317,6 +404,35 @@ class PickupSystem {
         } else {
             pickupComp.lifetime = 20; // 20 seconds
         }
+        
+        return pickup;
+    }
+
+    /**
+     * Create module pickup entity
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {string} moduleId - Module identifier (e.g., 'SHIELD_BOOSTER')
+     * @returns {Entity} Created module pickup
+     */
+    createModulePickup(x, y, moduleId) {
+        const pickup = this.world.createEntity('pickup');
+        
+        // Module pickups are distinctive - purple/magenta with diamond/square shape
+        pickup.addComponent('position', Components.Position(x, y));
+        pickup.addComponent('collision', Components.Collision(12)); // Larger collision
+        pickup.addComponent('renderable', Components.Renderable(
+            '#9b59b6', // Purple color for modules
+            12,
+            'square'   // Square shape to distinguish from other pickups
+        ));
+        
+        // Create pickup component with module type
+        const pickupComp = Components.Pickup('module', 0);
+        pickupComp.moduleId = moduleId; // Store module ID
+        pickupComp.magnetRange = 200; // Larger magnet range for modules
+        pickupComp.lifetime = 40; // Longer lifetime (40 seconds)
+        pickup.addComponent('pickup', pickupComp);
         
         return pickup;
     }
