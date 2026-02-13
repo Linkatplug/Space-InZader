@@ -52,10 +52,22 @@
             const resultsDiv = document.getElementById('test-results');
             try {
                 const details = fn();
-                resultsDiv.innerHTML += `<div class="test-result pass">✓ ${name}${details ? '<div class="detail">' + details + '</div>' : ''}</div>`;
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test-result pass';
+                testDiv.textContent = `✓ ${name}`;
+                if (details) {
+                    const detailDiv = document.createElement('div');
+                    detailDiv.className = 'detail';
+                    detailDiv.textContent = details;
+                    testDiv.appendChild(detailDiv);
+                }
+                resultsDiv.appendChild(testDiv);
                 console.log(`✓ ${name}`);
             } catch (error) {
-                resultsDiv.innerHTML += `<div class="test-result fail">✗ ${name}: ${error.message}</div>`;
+                const testDiv = document.createElement('div');
+                testDiv.className = 'test-result fail';
+                testDiv.textContent = `✗ ${name}: ${error.message}`;
+                resultsDiv.appendChild(testDiv);
                 console.error(`✗ ${name}:`, error);
             }
         }
