@@ -983,7 +983,10 @@ class Game {
                 return {
                     ...upgrade,
                     currentLevel,
-                    nextLevel: currentLevel + 1
+                    nextLevel: currentLevel + 1,
+                    // Add display properties for UI
+                    rarity: 'rare',  // Upgrades are treated as rare rarity
+                    color: '#9b59b6'  // Purple color for upgrades
                 };
             }) : [];
 
@@ -1028,7 +1031,10 @@ class Game {
                     return {
                         ...upgrade,
                         currentLevel,
-                        nextLevel: currentLevel + 1
+                        nextLevel: currentLevel + 1,
+                        // Add display properties for UI
+                        rarity: 'rare',  // Upgrades are treated as rare rarity
+                        color: '#9b59b6'  // Purple color for upgrades
                     };
                 }) : [];
                 
@@ -1106,7 +1112,10 @@ class Game {
             return {
                 ...upgrade,
                 currentLevel,
-                nextLevel: currentLevel + 1
+                nextLevel: currentLevel + 1,
+                // Add display properties for UI
+                rarity: 'rare',  // Upgrades are treated as rare rarity
+                color: '#9b59b6'  // Purple color for upgrades
             };
         }) : [];
         

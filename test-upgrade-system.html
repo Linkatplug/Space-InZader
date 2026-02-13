@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ship Upgrade System Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #00ff88;
+            border-bottom: 2px solid #00ff88;
+            padding-bottom: 5px;
+        }
+        .status {
+            background: #16213e;
+            border: 2px solid #0f4c75;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .check {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .pass { color: #00ff88; }
+        .fail { color: #ff3366; }
+        .ship {
+            background: #0f3460;
+            border: 1px solid #00adb5;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .upgrade {
+            background: #16213e;
+            border-left: 3px solid #9b59b6;
+            padding: 8px;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        button {
+            background: #00adb5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #00ffff;
+            color: #1a1a2e;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Ship Upgrade System Test</h1>
+    
+    <div class="status">
+        <h2>System Status</h2>
+        <div id="status-checks"></div>
+    </div>
+    
+    <div class="status">
+        <h2>Ship Upgrades</h2>
+        <div id="ship-upgrades"></div>
+    </div>
+    
+    <div class="status">
+        <h2>Test Actions</h2>
+        <button onclick="testShipUpgradeSystem()">Test ShipUpgradeSystem</button>
+        <button onclick="dumpToConsole()">Dump to Console</button>
+        <div id="test-results" style="margin-top: 15px;"></div>
+    </div>
+
+    <!-- Load all necessary scripts -->
+    <script src="js/utils/Logger.js"></script>
+    <script src="js/core/ECS.js"></script>
+    <script src="js/data/ShipUpgradeData.js"></script>
+    <script src="js/systems/ShipUpgradeSystem.js"></script>
+
+    <script>
+        // Display status checks
+        function displayStatus() {
+            const checks = [];
+            
+            // Check if ShipUpgradeData exists
+            checks.push({
+                name: 'ShipUpgradeData loaded',
+                pass: typeof window.ShipUpgradeData !== 'undefined'
+            });
+            
+            // Check if SHIPS exists
+            checks.push({
+                name: 'ShipUpgradeData.SHIPS exists',
+                pass: window.ShipUpgradeData?.SHIPS !== undefined
+            });
+            
+            // Check ships count
+            const shipsCount = window.ShipUpgradeData?.SHIPS ? Object.keys(window.ShipUpgradeData.SHIPS).length : 0;
+            checks.push({
+                name: `4 ships loaded (found ${shipsCount})`,
+                pass: shipsCount === 4
+            });
+            
+            // Check if ShipUpgradeSystem class exists
+            checks.push({
+                name: 'ShipUpgradeSystem class exists',
+                pass: typeof window.ShipUpgradeSystem !== 'undefined'
+            });
+            
+            // Check Components.Player has upgrades Map
+            checks.push({
+                name: 'Components.Player has upgrades field',
+                pass: typeof Components !== 'undefined' && typeof Components.Player === 'function'
+            });
+            
+            let html = '';
+            checks.forEach(check => {
+                const icon = check.pass ? '✓' : '✗';
+                const className = check.pass ? 'pass' : 'fail';
+                html += `<div class="check ${className}">${icon} ${check.name}</div>`;
+            });
+            
+            document.getElementById('status-checks').innerHTML = html;
+        }
+        
+        // Display ship upgrades
+        function displayShipUpgrades() {
+            if (!window.ShipUpgradeData?.SHIPS) {
+                document.getElementById('ship-upgrades').innerHTML = '<p class="fail">ShipUpgradeData not available</p>';
+                return;
+            }
+            
+            let html = '';
+            
+            for (const [shipKey, shipData] of Object.entries(window.ShipUpgradeData.SHIPS)) {
+                html += `<div class="ship">`;
+                html += `<h3>${shipData.name} (${shipKey})</h3>`;
+                html += `<p>${shipData.description}</p>`;
+                html += `<p><strong>${shipData.upgrades.length} upgrades:</strong></p>`;
+                
+                shipData.upgrades.forEach(upgrade => {
+                    html += `<div class="upgrade">`;
+                    html += `<strong>${upgrade.name}</strong> (${upgrade.id}) - Max Level: ${upgrade.maxLevel}<br>`;
+                    html += `<small>${upgrade.description}</small><br>`;
+                    html += `<small>Tags: ${upgrade.tags.join(', ')}</small>`;
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+            }
+            
+            document.getElementById('ship-upgrades').innerHTML = html;
+        }
+        
+        // Test ShipUpgradeSystem
+        function testShipUpgradeSystem() {
+            const results = [];
+            
+            try {
+                // Create a mock world
+                const world = new World();
+                
+                // Create a mock player entity
+                const player = world.createEntity('player');
+                const playerComp = Components.Player();
+                playerComp.shipId = 'ION_FRIGATE';
+                player.addComponent('player', playerComp);
+                
+                results.push({ text: '✓ Created mock player entity', pass: true });
+                
+                // Create ShipUpgradeSystem
+                const upgradeSystem = new ShipUpgradeSystem(world);
+                results.push({ text: '✓ Created ShipUpgradeSystem', pass: true });
+                
+                // Get available upgrades
+                const available = upgradeSystem.getAvailableUpgrades(player);
+                results.push({ 
+                    text: `✓ Got ${available.length} available upgrades`, 
+                    pass: available.length > 0 
+                });
+                
+                // Test applying an upgrade
+                if (available.length > 0) {
+                    const testUpgrade = available[0];
+                    upgradeSystem.incrementUpgrade(player, testUpgrade.id);
+                    
+                    const currentLevel = playerComp.upgrades.get(testUpgrade.id);
+                    results.push({ 
+                        text: `✓ Applied ${testUpgrade.name} - Level ${currentLevel}`, 
+                        pass: currentLevel === 1 
+                    });
+                    
+                    // Apply again
+                    upgradeSystem.incrementUpgrade(player, testUpgrade.id);
+                    const level2 = playerComp.upgrades.get(testUpgrade.id);
+                    results.push({ 
+                        text: `✓ Applied again - Level ${level2}`, 
+                        pass: level2 === 2 
+                    });
+                    
+                    // Calculate total effects
+                    const effects = upgradeSystem.calculateTotalUpgradeEffects(player);
+                    results.push({ 
+                        text: `✓ Calculated effects: ${Object.keys(effects).length} stat(s) modified`, 
+                        pass: Object.keys(effects).length > 0 
+                    });
+                    
+                    console.log('Total Upgrade Effects:', effects);
+                }
+                
+            } catch (error) {
+                results.push({ text: `✗ Error: ${error.message}`, pass: false });
+                console.error(error);
+            }
+            
+            let html = '<h3>Test Results</h3>';
+            results.forEach(result => {
+                const className = result.pass ? 'pass' : 'fail';
+                html += `<div class="check ${className}">${result.text}</div>`;
+            });
+            
+            document.getElementById('test-results').innerHTML = html;
+        }
+        
+        // Dump to console
+        function dumpToConsole() {
+            console.log('=== SHIP UPGRADE DATA ===');
+            console.log(window.ShipUpgradeData);
+            
+            console.log('\n=== SHIPS ===');
+            console.table(Object.keys(window.ShipUpgradeData?.SHIPS || {}).map(key => ({
+                key,
+                name: window.ShipUpgradeData.SHIPS[key].name,
+                upgrades: window.ShipUpgradeData.SHIPS[key].upgrades.length
+            })));
+            
+            console.log('\n=== ALL UPGRADES ===');
+            for (const [shipKey, shipData] of Object.entries(window.ShipUpgradeData?.SHIPS || {})) {
+                console.log(`\n${shipData.name}:`);
+                console.table(shipData.upgrades);
+            }
+            
+            alert('Data dumped to console (F12)');
+        }
+        
+        // Initialize on load
+        window.onload = () => {
+            displayStatus();
+            displayShipUpgrades();
+        };
+    </script>
+</body>
+</html>
