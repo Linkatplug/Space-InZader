@@ -3,12 +3,18 @@
  * @description Handles collision detection between entities
  */
 
+// Hit cooldown constant (200ms to prevent instant melt from tick collisions)
+const HIT_COOLDOWN_MS = 200;
+
 class CollisionSystem {
     constructor(world, gameState, audioManager, particleSystem = null) {
         this.world = world;
         this.gameState = gameState;
         this.audioManager = audioManager;
         this.particleSystem = particleSystem;
+        
+        // Hit cooldown tracking: Map<targetId_sourceId_damageType, timestamp>
+        this.hitCooldowns = new Map();
         
         // Black hole instant kill zone constants
         this.BLACK_HOLE_CENTER_KILL_RADIUS = 30; // pixels - instant death zone
@@ -216,8 +222,34 @@ class CollisionSystem {
                     playerPos.x, playerPos.y, playerCol.radius,
                     projPos.x, projPos.y, projCol.radius
                 )) {
-                    // Deal damage to player with damage type
-                    this.damagePlayer(player, projComp.damage, projComp.damageType || 'kinetic');
+                    // Check hit cooldown to prevent instant melt from tick collisions
+                    const now = performance.now();
+                    const sourceId = projComp.owner || 'unknown';
+                    const damageType = projComp.damageType || 'kinetic';
+                    const cooldownKey = `${player.id}_${sourceId}_${damageType}`;
+                    
+                    const lastHitTime = this.hitCooldowns.get(cooldownKey) || 0;
+                    const timeSinceLastHit = now - lastHitTime;
+                    
+                    if (timeSinceLastHit < HIT_COOLDOWN_MS) {
+                        // Still in cooldown, ignore this hit
+                        logger.debug('Collision', `Hit cooldown active (${timeSinceLastHit.toFixed(0)}ms < ${HIT_COOLDOWN_MS}ms) - ignoring damage`);
+                    } else {
+                        // Cooldown expired or first hit, deal damage
+                        this.damagePlayer(player, projComp.damage, damageType);
+                        
+                        // Update cooldown timestamp
+                        this.hitCooldowns.set(cooldownKey, now);
+                        
+                        // Clean up old cooldown entries (older than 1 second)
+                        if (this.hitCooldowns.size > 100) {
+                            for (const [key, timestamp] of this.hitCooldowns.entries()) {
+                                if (now - timestamp > 1000) {
+                                    this.hitCooldowns.delete(key);
+                                }
+                            }
+                        }
+                    }
                     
                     // Remove projectile
                     this.world.removeEntity(projectile.id);
@@ -324,9 +356,13 @@ class CollisionSystem {
 
             if (defenseSystem && typeof defenseSystem.applyDamage === 'function') {
                 const result = defenseSystem.applyDamage(player, damage, damageType);
-                this.gameState.stats.damageTaken += result.totalDamage;
+                this.gameState.stats.damageTaken += result.dealt;
                 
-                logger.info('Collision', `Player defense result: ${result.totalDamage.toFixed(1)} damage dealt to ${result.layersDamaged.join('+')}${result.destroyed ? ' - PLAYER DESTROYED' : ''}`);
+                // Log with actual dealt damage and layers hit
+                const layersInfo = Object.entries(result.layers || {})
+                    .map(([layer, dmg]) => `${layer}:${dmg.toFixed(1)}`)
+                    .join('+');
+                logger.info('Collision', `Player defense result: ${result.dealt.toFixed(1)} damage dealt (${result.incoming.toFixed(1)} incoming) to ${layersInfo || result.layer}${result.destroyed ? ' - PLAYER DESTROYED' : ''}`);
                 
                 // Visual feedback based on which layers were hit
                 if (this.screenEffects) {

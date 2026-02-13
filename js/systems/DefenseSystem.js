@@ -86,7 +86,7 @@ class DefenseSystem {
      * @param {Entity} entity - Target entity
      * @param {number} rawDamage - Raw damage before resistance
      * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
-     * @returns {Object} Damage result { totalDamage, layersDamaged, destroyed }
+     * @returns {Object} Damage result { incoming, dealt, layers, layer, destroyed }
      */
     applyDamage(entity, rawDamage, damageType = 'kinetic') {
         const defense = entity.getComponent('defense');
@@ -97,12 +97,26 @@ class DefenseSystem {
                 health.current -= rawDamage;
                 logger.debug('DefenseSystem', `Applied ${rawDamage} damage to ${entity.type} health (${health.current}/${health.max})`);
                 return {
+                    incoming: rawDamage,
+                    dealt: rawDamage,
+                    layers: { health: rawDamage },
+                    layer: 'health',
+                    destroyed: health.current <= 0,
+                    // Legacy compatibility
                     totalDamage: rawDamage,
-                    layersDamaged: ['health'],
-                    destroyed: health.current <= 0
+                    layersDamaged: ['health']
                 };
             }
-            return { totalDamage: 0, layersDamaged: [], destroyed: false };
+            return { 
+                incoming: rawDamage,
+                dealt: 0,
+                layers: {},
+                layer: '',
+                destroyed: false,
+                // Legacy compatibility
+                totalDamage: 0,
+                layersDamaged: []
+            };
         }
 
         // Log damage calculation start
@@ -115,6 +129,8 @@ class DefenseSystem {
         let remainingDamage = rawDamage;
         const layersDamaged = [];
         const damageLog = [];
+        const layersDamageDealt = {}; // Track damage dealt per layer
+        let lastLayerHit = '';
 
         // Layer order: shield -> armor -> structure
         const layers = [
@@ -136,6 +152,10 @@ class DefenseSystem {
             const beforeCurrent = layer.data.current;
             layer.data.current -= damageDealt;
             layersDamaged.push(layer.name);
+            
+            // Track damage dealt to this layer
+            layersDamageDealt[layer.name] = damageDealt;
+            lastLayerHit = layer.name;
 
             // Log damage to this layer
             damageLog.push({
@@ -180,6 +200,9 @@ class DefenseSystem {
 
         // Check if entity is destroyed (structure depleted)
         const destroyed = defense.structure.current <= 0;
+        
+        // Calculate total damage dealt
+        const totalDealt = rawDamage - remainingDamage;
 
         // Log damage summary
         if (damageLog.length > 0) {
@@ -190,9 +213,15 @@ class DefenseSystem {
         }
 
         return {
-            totalDamage: rawDamage - remainingDamage,
-            layersDamaged,
+            // New format
+            incoming: rawDamage,
+            dealt: totalDealt,
+            layers: layersDamageDealt,
+            layer: lastLayerHit,
             destroyed,
+            // Legacy compatibility (keep for backward compat)
+            totalDamage: totalDealt,
+            layersDamaged,
             damageType
         };
     }

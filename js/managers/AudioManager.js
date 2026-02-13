@@ -16,6 +16,9 @@ class AudioManager {
         this.muted = false;
         this.previousMasterVolume = 1.0;
         
+        // Track unknown sound types (warn once per type)
+        this.unknownSoundTypes = new Set();
+        
         // MP3 Music system - Update this list when adding new music files
         this.musicTracks = [
             'music/1263681_8-Bit-Flight.mp3',
@@ -215,7 +218,14 @@ class AudioManager {
                 this.playWarning(now);
                 break;
             default:
-                console.warn('Unknown sound type:', type);
+                // Fallback for unknown sound types - warn once and play a generic sound
+                if (!this.unknownSoundTypes.has(type)) {
+                    console.warn(`[AudioManager] Unknown sound type: "${type}" - falling back to 'hit' sound`);
+                    this.unknownSoundTypes.add(type);
+                }
+                // Fallback to hit sound (generic impact sound)
+                this.playHit(now, pitch);
+                break;
         }
     }
 
