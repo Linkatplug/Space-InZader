@@ -76,6 +76,14 @@ class HeatSystem {
         if (heat.current >= heat.max) {
             this.triggerOverheat(entity);
         }
+        
+        // Sync heat to playerComp for tactical UI (if this is a player)
+        if (entity.type === 'player') {
+            const playerComp = entity.getComponent('player');
+            if (playerComp) {
+                playerComp.heat = heat;
+            }
+        }
     }
 
     /**

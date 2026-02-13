@@ -456,7 +456,15 @@ class Game {
         
         this.player.addComponent('health', Components.Health(maxHealth, maxHealth));
         
-        // Add shield component (starts at 0)
+        // Add defense component (3-layer system: shield, armor, structure)
+        this.player.addComponent('defense', Components.Defense());
+        console.log('[Game] Added defense component to player');
+        
+        // Add heat component for weapon overheat management
+        this.player.addComponent('heat', Components.Heat(100, 10, 0));
+        console.log('[Game] Added heat component to player');
+        
+        // Add shield component (starts at 0, will be replaced by defense system)
         this.player.addComponent('shield', Components.Shield(0, 0, 0));
         
         const playerComp = Components.Player();
