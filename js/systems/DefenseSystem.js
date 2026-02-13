@@ -178,7 +178,7 @@ class DefenseSystem {
         if (!this.audioManager || !this.audioManager.initialized) return;
         
         const renderable = entity.getComponent('renderable');
-        const isBoss = renderable && renderable.size >= 50; // BOSS_SIZE_THRESHOLD
+        const isBoss = renderable && renderable.size >= BOSS_SIZE_THRESHOLD;
         
         if (entity.type === 'enemy') {
             if (isBoss) {
