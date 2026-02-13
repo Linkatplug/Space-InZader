@@ -69,6 +69,13 @@ class CombatSystem {
                 const dx = playerPos.x - enemyPos.x;
                 const dy = playerPos.y - enemyPos.y;
                 const angle = Math.atan2(dy, dx);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                logger.debug('Combat', `${enemy.type} firing at player`, {
+                    distance: Math.round(distance),
+                    damage: weapon.baseDamage,
+                    damageType: weapon.damageType
+                });
                 
                 // Create projectile
                 this.createProjectile(
@@ -937,8 +944,17 @@ class CombatSystem {
         // Check heat first
         const heat = player.getComponent('heat');
         if (heat && heat.overheated) {
+            logger.debug('Combat', `Weapon ${weapon.type} cannot fire - OVERHEATED (${heat.current.toFixed(0)}/${heat.max})`);
             return; // Cannot fire when overheated
         }
+        
+        // Log weapon fire
+        const weaponData = weapon.data || weapon;
+        logger.debug('Combat', `Firing ${weapon.type} Lv${weapon.level}`, {
+            damageType: weaponData.damageType || 'kinetic',
+            baseDamage: weaponData.baseDamage,
+            heat: weaponData.heat || 0
+        });
         
         // Fire the weapon normally
         this.fireWeapon(player, weapon);
