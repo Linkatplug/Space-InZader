@@ -405,23 +405,20 @@ class Game {
     }
 
     createPlayer() {
-        // Get ship from new ShipData.SHIPS
         const shipId = this.gameState.selectedShip || 'ION_FRIGATE';
         const ship = window.ShipData && window.ShipData.SHIPS ? window.ShipData.SHIPS[shipId] : null;
         
         if (!ship) {
             console.error('Invalid ship:', shipId);
-            // Fallback to ION_FRIGATE
             const fallbackShip = window.ShipData.SHIPS.ION_FRIGATE;
             if (!fallbackShip) {
                 console.error('Cannot create player - no ship data available');
                 return;
             }
             this.gameState.selectedShip = 'ION_FRIGATE';
-            return this.createPlayer(); // Retry with fallback
+            return this.createPlayer();
         }
 
-        // Apply meta-progression bonuses
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 
@@ -435,43 +432,36 @@ class Game {
         this.player.addComponent('velocity', Components.Velocity(0, 0));
         this.player.addComponent('collision', Components.Collision(15));
         
-        // Add defense layers from ship data
         const defenseLayers = {
             shield: {
-                max: ship.defenses.shieldMax,
-                current: ship.defenses.shieldMax,
+                max: 150,
+                current: 150,
                 resistances: { em: 0.3, kinetic: 0.2, thermal: 0.2, explosive: 0.2 }
             },
             armor: {
-                max: ship.defenses.armorMax,
-                current: ship.defenses.armorMax,
+                max: 100,
+                current: 100,
                 resistances: { em: 0.2, kinetic: 0.4, thermal: 0.25, explosive: 0.3 }
             },
             structure: {
-                max: ship.defenses.structureMax,
-                current: ship.defenses.structureMax,
+                max: 100,
+                current: 100,
                 resistances: { em: 0.1, kinetic: 0.1, thermal: 0.1, explosive: 0.1 }
             }
         };
         
         this.player.addComponent('defense', Components.Defense(defenseLayers));
         
-        // Add heat component with cooling multiplier from ship
         const baseHeatMax = 100;
-        const baseCoolingRate = 20; // base cooling per second
-        this.player.addComponent('heat', Components.Heat(
-            baseHeatMax,
-            baseCoolingRate * (ship.defenses.coolingMult || 1.0)
-        ));
+        const baseCoolingRate = 20;
+        this.player.addComponent('heat', Components.Heat(baseHeatMax, baseCoolingRate));
         
         const playerComp = Components.Player();
-        playerComp.speed = 220; // Base player speed
+        playerComp.speed = 220;
         playerComp.shipId = shipId;
         
-        // Initialize stats from DEFAULT_STATS blueprint to prevent undefined errors
         playerComp.stats = structuredClone(DEFAULT_STATS);
         
-        // Apply ship-specific stats
         playerComp.stats.damage = metaDamage;
         playerComp.stats.damageMultiplier = metaDamage;
         playerComp.stats.fireRate = 1.0;
@@ -481,15 +471,6 @@ class Game {
         playerComp.stats.maxHealth = 1;
         playerComp.stats.xpBonus = metaXP;
         
-        // Store ship mods for systems to use
-        playerComp.stats.shipMods = {
-            offense: ship.offense,
-            tradeoffs: ship.tradeoffs,
-            shieldRegenMult: ship.defenses.shieldRegenMult || 1.0,
-            coolingMult: ship.defenses.coolingMult || 1.0
-        };
-        
-        // Store base stats snapshot for delta calculations in UI
         playerComp.baseStats = {
             damageMultiplier: playerComp.stats.damageMultiplier,
             fireRateMultiplier: playerComp.stats.fireRateMultiplier,
@@ -505,7 +486,6 @@ class Game {
         
         this.player.addComponent('player', playerComp);
         
-        // Ship color (basic for now)
         const shipColors = {
             ION_FRIGATE: '#00FFFF',
             BALLISTIC_DESTROYER: '#FFFFFF',
@@ -519,17 +499,19 @@ class Game {
             'triangle'
         ));
 
-        // Add starting weapon
-        console.log('[Game] Adding starting weapon:', ship.startingWeaponId);
-        this.addWeaponToPlayer(ship.startingWeaponId);
+        const startingWeaponId = ship.startingWeapon || 'ion_blaster';
+        console.log('[Player] ship=', playerComp.shipId, 'startingWeapon=', startingWeaponId);
         
-        // Ensure currentWeapon is set for UI
+        this.addWeaponToPlayer(startingWeaponId);
+        
+        if (!playerComp.weapons || playerComp.weapons.length === 0) {
+            console.warn('[Player] No weapon added, forcing ion_blaster');
+            this.addWeaponToPlayer('ion_blaster');
+        }
+        
         if (playerComp.weapons && playerComp.weapons.length > 0) {
             const weapon = playerComp.weapons[0];
             playerComp.currentWeapon = weapon.data || weapon;
-            console.log('[Game] currentWeapon set:', playerComp.currentWeapon);
-        } else {
-            console.error('[Game] No weapons in player weapons array!');
         }
         
         console.log('Player created with ship:', shipId);

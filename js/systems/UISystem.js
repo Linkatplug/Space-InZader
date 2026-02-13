@@ -1121,7 +1121,6 @@ class UISystem {
     renderShipSelection() {
         this.shipSelection.innerHTML = '';
 
-        // Get ships from new ShipData.SHIPS
         const ships = window.ShipData && window.ShipData.SHIPS ? Object.values(window.ShipData.SHIPS) : [];
         
         if (ships.length === 0) {
@@ -1134,11 +1133,9 @@ class UISystem {
             card.className = 'ship-card';
             card.dataset.shipId = ship.id;
             
-            // Select first ship by default
             if (!this.selectedShipId) {
                 this.selectedShipId = ship.id;
                 card.classList.add('selected');
-                // Dispatch ship selected event for default selection
                 window.dispatchEvent(new CustomEvent('shipSelected', { 
                     detail: { ship: ship.id } 
                 }));
@@ -1146,7 +1143,6 @@ class UISystem {
                 card.classList.add('selected');
             }
 
-            // Get damage type badge color
             const damageTypeColors = {
                 em: '#00FFFF',
                 kinetic: '#FFFFFF',
@@ -1154,47 +1150,6 @@ class UISystem {
                 thermal: '#FF8C00'
             };
             const damageColor = damageTypeColors[ship.dominantDamageType] || '#FFFFFF';
-            
-            // Format bonuses - show first 2
-            const bonuses = [];
-            if (ship.offense.damageTypeMult) {
-                const type = Object.keys(ship.offense.damageTypeMult)[0];
-                const mult = ship.offense.damageTypeMult[type];
-                bonuses.push(`+${Math.round((mult - 1) * 100)}% ${type.toUpperCase()}`);
-            }
-            if (ship.offense.explosionRadiusMult) {
-                bonuses.push(`+${Math.round((ship.offense.explosionRadiusMult - 1) * 100)}% Explosion Radius`);
-            }
-            if (ship.offense.structureDamageMult) {
-                bonuses.push(`+${Math.round((ship.offense.structureDamageMult - 1) * 100)}% Structure DMG`);
-            }
-            if (ship.offense.kineticPenetrationBonus) {
-                bonuses.push(`+${Math.round(ship.offense.kineticPenetrationBonus * 100)}% Penetration`);
-            }
-            if (ship.defenses.shieldRegenMult !== 1.0) {
-                bonuses.push(`${ship.defenses.shieldRegenMult > 1 ? '+' : ''}${Math.round((ship.defenses.shieldRegenMult - 1) * 100)}% Shield Regen`);
-            }
-            if (ship.defenses.coolingMult > 1.0) {
-                bonuses.push(`+${Math.round((ship.defenses.coolingMult - 1) * 100)}% Cooling`);
-            }
-            
-            // Format tradeoffs - show first 2
-            const tradeoffs = [];
-            if (ship.tradeoffs.armorResistAllMult) {
-                tradeoffs.push(`${Math.round((ship.tradeoffs.armorResistAllMult - 1) * 100)}% Armor Resist`);
-            }
-            if (ship.tradeoffs.shieldResistAllMult) {
-                tradeoffs.push(`${Math.round((ship.tradeoffs.shieldResistAllMult - 1) * 100)}% Shield Resist`);
-            }
-            if (ship.tradeoffs.nonDominantHeatGenMult) {
-                tradeoffs.push(`+${Math.round((ship.tradeoffs.nonDominantHeatGenMult - 1) * 100)}% Heat (non-${ship.dominantDamageType})`);
-            }
-            if (ship.tradeoffs.globalFireRateMult) {
-                tradeoffs.push(`${Math.round((ship.tradeoffs.globalFireRateMult - 1) * 100)}% Fire Rate`);
-            }
-            if (ship.tradeoffs.globalHeatGenMult) {
-                tradeoffs.push(`+${Math.round((ship.tradeoffs.globalHeatGenMult - 1) * 100)}% Heat Gen`);
-            }
 
             card.innerHTML = `
                 <h3 style="margin-bottom: 8px; text-align: center;">${ship.icon} ${ship.name}</h3>
@@ -1204,18 +1159,6 @@ class UISystem {
                 <div style="margin-bottom: 8px; font-size: 11px; opacity: 0.9;">
                     ${ship.role}
                 </div>
-                <div style="font-size: 11px; opacity: 0.8; margin-bottom:8px;">
-                    <div>S: ${ship.defenses.shieldMax} / A: ${ship.defenses.armorMax} / St: ${ship.defenses.structureMax}</div>
-                </div>
-                <div style="font-size: 10px; opacity: 0.9; margin-bottom:4px; color:#00ff00;">
-                    ${bonuses.slice(0, 2).map(b => `+ ${b}`).join('<br>')}
-                </div>
-                <div style="font-size: 10px; opacity: 0.9; margin-bottom:8px; color:#ffaa00;">
-                    ${tradeoffs.slice(0, 2).map(t => `- ${t}`).join('<br>')}
-                </div>
-                <div style="font-size: 10px; opacity: 0.7; font-style: italic;">
-                    Passive: ${ship.passive.name}
-                </div>
             `;
 
             card.addEventListener('click', () => {
@@ -1223,7 +1166,6 @@ class UISystem {
                 card.classList.add('selected');
                 this.selectedShipId = ship.id;
                 
-                // Dispatch ship selected event
                 window.dispatchEvent(new CustomEvent('shipSelected', { 
                     detail: { ship: ship.id } 
                 }));
