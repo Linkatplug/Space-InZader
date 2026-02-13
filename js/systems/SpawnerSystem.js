@@ -12,7 +12,9 @@ class SpawnerSystem {
         // Spawning state
         this.spawnBudget = 0;
         this.spawnTimer = 0;
-        this.maxEnemiesOnScreen = 250;
+        this.maxEnemiesOnScreen = 50;  // Reduced from 250 for better early game
+        this.baseMaxEnemies = 50;
+        this.maxEnemiesCap = 150;  // Can scale up to this
         
         // Wave tracking
         this.waveNumber = 1;
@@ -36,6 +38,12 @@ class SpawnerSystem {
      */
     update(deltaTime, canSpawn = true) {
         const gameTime = this.gameState.stats.time;
+        
+        // Dynamically scale max enemies with game progression
+        this.maxEnemiesOnScreen = Math.min(
+            this.maxEnemiesCap,
+            this.baseMaxEnemies + Math.floor(gameTime / 120) * 10  // +10 every 2 minutes
+        );
         
         // Get current wave configuration
         const wave = this.getCurrentWave(gameTime);
@@ -330,32 +338,32 @@ class SpawnerSystem {
      */
     getCurrentWave(gameTime) {
         if (gameTime < 300) {
-            // 0-5 minutes - Early
+            // 0-5 minutes - Early (REDUCED for better early game experience)
             return {
-                budgetPerSecond: 2 + (gameTime / 60) * 0.5,
+                budgetPerSecond: 1.0 + (gameTime / 120) * 0.3,  // Much slower ramp
                 enemyPool: ['drone_basique', 'chasseur_rapide'],
-                spawnInterval: 2.0
+                spawnInterval: 3.5  // Increased from 2.0
             };
         } else if (gameTime < 600) {
             // 5-10 minutes - Mid
             return {
-                budgetPerSecond: 4 + ((gameTime - 300) / 60) * 0.8,
-                enemyPool: ['drone_basique', 'chasseur_rapide', 'tireur', 'tank'],
-                spawnInterval: 1.5
+                budgetPerSecond: 2.5 + ((gameTime - 300) / 90) * 0.6,
+                enemyPool: ['drone_basique', 'chasseur_rapide', 'tireur'],
+                spawnInterval: 2.5  // Increased from 1.5
             };
         } else if (gameTime < 1200) {
             // 10-20 minutes - Late
             return {
-                budgetPerSecond: 8 + ((gameTime - 600) / 60) * 1.2,
+                budgetPerSecond: 5 + ((gameTime - 600) / 90) * 0.8,
                 enemyPool: ['chasseur_rapide', 'tireur', 'tank', 'elite'],
-                spawnInterval: 1.0
+                spawnInterval: 1.5  // Increased from 1.0
             };
         } else {
             // 20+ minutes - Endgame
             return {
-                budgetPerSecond: 15 + ((gameTime - 1200) / 60) * 2.0,
+                budgetPerSecond: 10 + ((gameTime - 1200) / 120) * 1.5,
                 enemyPool: ['tank', 'elite'],
-                spawnInterval: 0.8
+                spawnInterval: 1.0  // Increased from 0.8
             };
         }
     }
