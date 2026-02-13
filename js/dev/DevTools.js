@@ -698,11 +698,6 @@ class DevTools {
         
         this.render();
     }
-                console.log('%c[DevTools] God Mode DISABLED - Player can take damage again', 'color: #ffaa00; font-weight: bold');
-            }
-            this.render();
-        }
-    }
     
     /**
      * Jump to a specific wave
