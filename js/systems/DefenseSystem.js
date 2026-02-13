@@ -75,6 +75,7 @@ class DefenseSystem {
             const health = entity.getComponent('health');
             if (health) {
                 health.current -= rawDamage;
+                logger.debug('DefenseSystem', `Applied ${rawDamage} damage to ${entity.type} health (${health.current}/${health.max})`);
                 return {
                     totalDamage: rawDamage,
                     layersDamaged: ['health'],
@@ -84,8 +85,16 @@ class DefenseSystem {
             return { totalDamage: 0, layersDamaged: [], destroyed: false };
         }
 
+        // Log damage calculation start
+        logger.debug('DefenseSystem', `Applying ${rawDamage} ${damageType} damage to ${entity.type}`, {
+            shield: `${defense.shield.current}/${defense.shield.max}`,
+            armor: `${defense.armor.current}/${defense.armor.max}`,
+            structure: `${defense.structure.current}/${defense.structure.max}`
+        });
+
         let remainingDamage = rawDamage;
         const layersDamaged = [];
+        const damageLog = [];
 
         // Layer order: shield -> armor -> structure
         const layers = [
@@ -104,8 +113,20 @@ class DefenseSystem {
 
             // Apply damage to layer
             const damageDealt = Math.min(layer.data.current, damageAfterResist);
+            const beforeCurrent = layer.data.current;
             layer.data.current -= damageDealt;
             layersDamaged.push(layer.name);
+
+            // Log damage to this layer
+            damageLog.push({
+                layer: layer.name,
+                rawDamage: remainingDamage.toFixed(1),
+                resistance: (resistance * 100).toFixed(0) + '%',
+                damageAfterResist: damageAfterResist.toFixed(1),
+                damageDealt: damageDealt.toFixed(1),
+                before: beforeCurrent.toFixed(1),
+                after: layer.data.current.toFixed(1)
+            });
 
             // Emit damage event for UI
             if (this.world.events) {
@@ -139,6 +160,14 @@ class DefenseSystem {
 
         // Check if entity is destroyed (structure depleted)
         const destroyed = defense.structure.current <= 0;
+
+        // Log damage summary
+        if (damageLog.length > 0) {
+            const summary = damageLog.map(d => 
+                `${d.layer}[${d.before}→${d.after}]: ${d.rawDamage}dmg * (1-${d.resistance}) = ${d.damageAfterResist} → dealt ${d.damageDealt}`
+            ).join(' | ');
+            logger.info('DefenseSystem', `${entity.type} took ${damageType} damage: ${summary}${destroyed ? ' → DESTROYED' : ''}`);
+        }
 
         return {
             totalDamage: rawDamage - remainingDamage,
