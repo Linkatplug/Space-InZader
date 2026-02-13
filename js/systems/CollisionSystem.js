@@ -300,56 +300,89 @@ class CollisionSystem {
     }
 
     damagePlayer(player, damage, damageType = 'kinetic') {
-        const health = player.getComponent('health');
-        const defense = player.getComponent('defense');
-        const shield = player.getComponent('shield');
         const playerComp = player.getComponent('player');
+        const defense = player.getComponent('defense');
         
-        if (!health || !playerComp) return;
-        
-        // God mode check - no damage taken
+        // Player component is required
+        if (!playerComp) return;
+
+        // Log incoming damage
+        logger.info('Collision', `Player taking ${damage.toFixed(1)} ${damageType} damage`);
+
+        // Use 3-layer defense system if available
+        if (defense) {
+            // God mode check for defense system
+            if (defense.godMode) {
+                logger.debug('Collision', 'Player in god mode - damage ignored');
+                return;
+            }
+
+            // Try to access DefenseSystem through multiple paths
+            const defenseSystem = (this.world && this.world.defenseSystem) || 
+                                 (this.game && this.game.systems && this.game.systems.defense) ||
+                                 this.defenseSystem;
+
+            if (defenseSystem && typeof defenseSystem.applyDamage === 'function') {
+                const result = defenseSystem.applyDamage(player, damage, damageType);
+                this.gameState.stats.damageTaken += result.totalDamage;
+                
+                logger.info('Collision', `Player defense result: ${result.totalDamage.toFixed(1)} damage dealt to ${result.layersDamaged.join('+')}${result.destroyed ? ' - PLAYER DESTROYED' : ''}`);
+                
+                // Visual feedback based on which layers were hit
+                if (this.screenEffects) {
+                    if (result.layersDamaged.includes('shield')) {
+                        this.screenEffects.flash('#00FFFF', 0.2, 0.1);
+                    } else if (result.layersDamaged.includes('armor')) {
+                        this.screenEffects.flash('#8B4513', 0.25, 0.12);
+                    } else if (result.layersDamaged.includes('structure')) {
+                        this.screenEffects.shake(5, 0.2);
+                        this.screenEffects.flash('#FF0000', 0.3, 0.15);
+                    }
+                }
+                
+                // Play hit sound
+                if (this.audioManager && this.audioManager.initialized) {
+                    this.audioManager.playSFX('hit', 1.2);
+                }
+                
+                // Check for death
+                if (result.destroyed) {
+                    // Set health to 0 if it exists for backward compatibility
+                    const health = player.getComponent('health');
+                    if (health) {
+                        health.current = 0;
+                    }
+                    logger.warn('Collision', 'Player health set to 0 - GAME OVER');
+                }
+                return;
+            } else if (this.world && this.world.events && this.world.events.emit) {
+                // Fallback: emit event so another system can handle
+                logger.debug('Collision', 'DefenseSystem not accessible, emitting requestPlayerDamage event');
+                this.world.events.emit('requestPlayerDamage', { 
+                    playerId: player.id, 
+                    damage, 
+                    damageType 
+                });
+                return;
+            }
+        }
+
+        // Legacy health system fallback (only if defense doesn't exist)
+        const health = player.getComponent('health');
+        if (!health) {
+            logger.warn('Collision', 'Player has no defense or health component - cannot apply damage');
+            return;
+        }
+
+        // God mode check for legacy health system
         if (health.godMode) {
             logger.debug('Collision', 'Player in god mode - damage ignored');
             return;
         }
 
-        // Log incoming damage
-        logger.info('Collision', `Player taking ${damage.toFixed(1)} ${damageType} damage`);
-
-        // Try new defense system first
-        if (defense && this.world && this.world.defenseSystem) {
-            const result = this.world.defenseSystem.applyDamage(player, damage, damageType);
-            this.gameState.stats.damageTaken += result.totalDamage;
-            
-            logger.info('Collision', `Player defense result: ${result.totalDamage.toFixed(1)} damage dealt to ${result.layersDamaged.join('+')}${result.destroyed ? ' - PLAYER DESTROYED' : ''}`);
-            
-            // Visual feedback based on which layers were hit
-            if (this.screenEffects) {
-                if (result.layersDamaged.includes('shield')) {
-                    this.screenEffects.flash('#00FFFF', 0.2, 0.1);
-                } else if (result.layersDamaged.includes('armor')) {
-                    this.screenEffects.flash('#8B4513', 0.25, 0.12);
-                } else if (result.layersDamaged.includes('structure')) {
-                    this.screenEffects.shake(5, 0.2);
-                    this.screenEffects.flash('#FF0000', 0.3, 0.15);
-                }
-            }
-            
-            // Play hit sound
-            if (this.audioManager && this.audioManager.initialized) {
-                this.audioManager.playSFX('hit', 1.2);
-            }
-            
-            // Check for death
-            if (result.destroyed) {
-                health.current = 0;
-                logger.warn('Collision', 'Player health set to 0 - GAME OVER');
-            }
-            return;
-        }
-
-        // Fallback to old system
         logger.debug('Collision', 'Using legacy health system for player damage');
+        
+        const shield = player.getComponent('shield');
         let remainingDamage = damage;
         
         // Shield absorbs damage first
