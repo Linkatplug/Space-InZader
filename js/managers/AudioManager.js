@@ -211,6 +211,9 @@ class AudioManager {
             case 'electric':
                 this.playElectric(now, pitch);
                 break;
+            case 'warning':
+                this.playWarning(now);
+                break;
             default:
                 console.warn('Unknown sound type:', type);
         }
@@ -399,6 +402,42 @@ class AudioManager {
 
         osc.start(time);
         osc.stop(time + 0.12);
+    }
+
+    /**
+     * Play warning/alert sound (for weather events)
+     */
+    playWarning(time) {
+        // Create a siren-like warning sound with two oscillating tones
+        const osc1 = this.context.createOscillator();
+        const osc2 = this.context.createOscillator();
+        const gain = this.context.createGain();
+
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+        
+        // Alternating frequencies for siren effect
+        osc1.frequency.setValueAtTime(800, time);
+        osc1.frequency.setValueAtTime(600, time + 0.2);
+        osc1.frequency.setValueAtTime(800, time + 0.4);
+        
+        osc2.frequency.setValueAtTime(600, time);
+        osc2.frequency.setValueAtTime(800, time + 0.2);
+        osc2.frequency.setValueAtTime(600, time + 0.4);
+
+        gain.gain.setValueAtTime(0.3, time);
+        gain.gain.setValueAtTime(0.4, time + 0.2);
+        gain.gain.setValueAtTime(0.3, time + 0.4);
+        gain.gain.exponentialRampToValueAtTime(0.01, time + 0.6);
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc1.start(time);
+        osc2.start(time);
+        osc1.stop(time + 0.6);
+        osc2.stop(time + 0.6);
     }
 
     /**
