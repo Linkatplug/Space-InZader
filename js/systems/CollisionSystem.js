@@ -338,6 +338,18 @@ class CollisionSystem {
         // Player component is required
         if (!playerComp) return;
 
+        // P0 FIX: Don't process damage if game is not running
+        if (!this.game || this.game.state.currentState !== 'RUNNING') {
+            logger.debug('Collision', 'Ignoring damage - game not running');
+            return;
+        }
+
+        // P0 FIX: Don't process damage if player already destroyed
+        if (defense && defense.structure.current <= 0) {
+            logger.debug('Collision', 'Ignoring damage - player already destroyed');
+            return;
+        }
+
         // Log incoming damage
         logger.info('Collision', `Player taking ${damage.toFixed(1)} ${damageType} damage`);
 

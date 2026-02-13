@@ -30,42 +30,67 @@ class HeatSystem {
         const heat = entity.getComponent('heat');
         if (!heat) return;
 
-        // Handle overheat timer
-        if (heat.overheated) {
-            heat.overheatTimer -= deltaTime;
+        // P0 FIX: Cooling ALWAYS active (even when overheated) to prevent soft-lock
+        // Apply cooling first (regardless of overheat state)
+        if (heat.current > 0) {
+            const maxCoolingBonus = typeof HEAT_SYSTEM !== 'undefined' 
+                ? HEAT_SYSTEM.MAX_COOLING_BONUS 
+                : 2.0;
+            const cappedCoolingBonus = Math.min(heat.coolingBonus || 0, maxCoolingBonus);
+            const effectiveCooling = heat.cooling * (1 + cappedCoolingBonus);
+            const coolingAmount = effectiveCooling * deltaTime;
+            heat.current = Math.max(0, heat.current - coolingAmount);
+        }
+
+        // P0 FIX: Hysteresis for overheat (prevent flickering)
+        // Enter overheat at 100%, exit at 60% to create clear recovery period
+        if (!heat.overheated && heat.current >= heat.max) {
+            // Trigger overheat
+            heat.overheated = true;
+            heat.disabledTimer = 2.0;
+            heat.overheatTimer = 2.0; // Legacy support
+            logger.info('Heat', `OVERHEAT start ${heat.disabledTimer.toFixed(1)}s`);
             
-            if (heat.overheatTimer <= 0) {
-                // Recovery from overheat
+            // Disable weapons if this is a player
+            if (entity.type === 'player' && this.gameState) {
+                this.gameState.weaponDisabled = true;
+            }
+        }
+        
+        // Handle overheat state
+        if (heat.overheated) {
+            // Count down timer
+            if (heat.disabledTimer > 0) {
+                heat.disabledTimer -= deltaTime;
+            }
+            if (heat.overheatTimer !== undefined) {
+                heat.overheatTimer -= deltaTime;
+            }
+            
+            // Clear overheat when heat drops below 60% of max (hysteresis)
+            if (heat.current <= heat.max * 0.6 && heat.disabledTimer <= 0) {
                 heat.overheated = false;
-                heat.current = typeof HEAT_SYSTEM !== 'undefined' 
-                    ? HEAT_SYSTEM.OVERHEAT_RECOVERY_VALUE 
-                    : 50;
-                    
+                heat.disabledTimer = 0;
+                heat.overheatTimer = 0;
+                logger.info('Heat', `OVERHEAT end`);
+                
                 // Re-enable weapons if this is a player
                 if (entity.type === 'player' && this.gameState) {
                     this.gameState.weaponDisabled = false;
                 }
             }
-            // Don't process cooling or passive heat while overheated
+            
+            // Don't add passive heat while overheated
             return;
         }
 
-        // Apply passive heat generation
-        heat.current += heat.passiveHeat * deltaTime;
-
-        // Apply cooling with cap enforcement
-        const maxCoolingBonus = typeof HEAT_SYSTEM !== 'undefined' 
-            ? HEAT_SYSTEM.MAX_COOLING_BONUS 
-            : 2.0;
-        const cappedCoolingBonus = Math.min(heat.coolingBonus || 0, maxCoolingBonus);
-        const effectiveCooling = heat.cooling * (1 + cappedCoolingBonus);
-        const coolingAmount = effectiveCooling * deltaTime;
-        heat.current = Math.max(0, heat.current - coolingAmount);
-
-        // Check for overheat
-        if (heat.current >= heat.max) {
-            this.triggerOverheat(entity);
+        // Apply passive heat generation (only when not overheated)
+        if (heat.passiveHeat) {
+            heat.current += heat.passiveHeat * deltaTime;
         }
+
+        // Ensure heat stays in valid range
+        heat.current = Math.max(0, Math.min(heat.max, heat.current));
     }
 
     /**

@@ -89,6 +89,19 @@ class DefenseSystem {
      * @returns {Object} Damage result { incoming, dealt, layers, layer, destroyed }
      */
     applyDamage(entity, rawDamage, damageType = 'kinetic') {
+        // P0 FIX: Don't process damage if game is not running
+        if (this.game && this.game.state.currentState !== 'RUNNING') {
+            return {
+                incoming: rawDamage,
+                dealt: 0,
+                layers: {},
+                layer: '',
+                destroyed: false,
+                totalDamage: 0,
+                layersDamaged: []
+            };
+        }
+
         const defense = entity.getComponent('defense');
         if (!defense) {
             // Fallback to old health system if no defense component
