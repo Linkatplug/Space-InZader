@@ -234,7 +234,9 @@ class DevTools {
     renderUtilitiesTab() {
         const player = this.game.world.getEntitiesByType('player')[0];
         const playerComp = player?.getComponent('player');
-        const health = player?.getComponent('health');
+        const defense = player?.getComponent('defense');
+        const health = player?.getComponent('health');  // Legacy fallback
+        const heat = player?.getComponent('heat');
         const waveNumber = this.game.systems.wave?.getWaveNumber() || 1;
         
         const statsHtml = playerComp ? `
@@ -321,8 +323,12 @@ class DevTools {
                 
                 <div class="utility-section">
                     <h3>Player Info</h3>
-                    ${health ? `<p>HP: ${health.current} / ${health.max}</p>` : ''}
-                    ${health && this.godModeEnabled ? `<p style="color: #00ff00;">🛡️ INVINCIBLE</p>` : ''}
+                    ${defense ? `
+                        <p>🛡️ Shield: ${Math.ceil(defense.shield.current)} / ${defense.shield.max}</p>
+                        <p>🛡️ Armor: ${Math.ceil(defense.armor.current)} / ${defense.armor.max}</p>
+                        <p>⚙️ Structure: ${Math.ceil(defense.structure.current)} / ${defense.structure.max}</p>
+                    ` : health ? `<p>HP: ${Math.ceil(health.current)} / ${health.max}</p>` : ''}
+                    ${(health && this.godModeEnabled) || (defense && this.godModeEnabled) ? `<p style="color: #00ff00;">🛡️ INVINCIBLE</p>` : ''}
                     ${playerComp ? `<p>Level: ${playerComp.level}</p>` : ''}
                     ${playerComp ? `<p>XP: ${playerComp.xp} / ${playerComp.xpToLevel}</p>` : ''}
                     ${playerComp ? `<p>Weapons: ${playerComp.weapons.length}</p>` : ''}
@@ -663,15 +669,35 @@ class DevTools {
             return;
         }
         
+        const defense = player.getComponent('defense');
         const health = player.getComponent('health');
-        if (health) {
+        
+        if (defense) {
+            // New defense system
             if (this.godModeEnabled) {
-                // Enable god mode - make player permanently invulnerable
-                health.godMode = true;
-                console.log('%c[DevTools] God Mode ENABLED - Player is now invincible! 🛡️', 'color: #00ff00; font-weight: bold; font-size: 14px');
+                defense.shield.current = defense.shield.max;
+                defense.armor.current = defense.armor.max;
+                defense.structure.current = defense.structure.max;
+                defense.godMode = true;
+                console.log('%c[DevTools] God Mode ENABLED (Defense System) - Player is now invincible! 🛡️', 'color: #00ff00; font-weight: bold; font-size: 14px');
             } else {
-                // Disable god mode
+                defense.godMode = false;
+                console.log('%c[DevTools] God Mode DISABLED ❌', 'color: #ff8800; font-weight: bold');
+            }
+        } else if (health) {
+            // Legacy health system fallback
+            if (this.godModeEnabled) {
+                health.current = health.max;
+                health.godMode = true;
+                console.log('%c[DevTools] God Mode ENABLED (Legacy Health) - Player is now invincible! 🛡️', 'color: #00ff00; font-weight: bold; font-size: 14px');
+            } else {
                 health.godMode = false;
+                console.log('%c[DevTools] God Mode DISABLED ❌', 'color: #ff8800; font-weight: bold');
+            }
+        }
+        
+        this.render();
+    }
                 console.log('%c[DevTools] God Mode DISABLED - Player can take damage again', 'color: #ffaa00; font-weight: bold');
             }
             this.render();
