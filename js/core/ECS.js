@@ -262,6 +262,10 @@ const Components = {
         modules: [],            // Equipped modules from loot (max 6 slots)
         shipId: 'ION_FRIGATE',  // Current ship identifier
         upgrades: new Map(),    // Map<upgradeId, level> for ship upgrades
+        // Required for tactical UI:
+        defenseLayers: null,    // Set by DefenseSystem - { shield: {}, armor: {}, structure: {} }
+        heat: null,             // Set by HeatSystem - { current, max, overheated }
+        currentWeapon: null,    // Reference to current weapon with damageType
         stats: {
             damage: 1,
             fireRate: 1,

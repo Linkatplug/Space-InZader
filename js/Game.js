@@ -71,6 +71,30 @@ class Game {
         
         // Core systems
         this.world = new World();
+        
+        // Simple event bus for UI communication
+        this.world.events = {
+            listeners: {},
+            on(event, callback) {
+                if (!this.listeners[event]) {
+                    this.listeners[event] = [];
+                }
+                this.listeners[event].push(callback);
+            },
+            emit(event, data) {
+                if (this.listeners[event]) {
+                    this.listeners[event].forEach(cb => {
+                        try {
+                            cb(data);
+                        } catch (err) {
+                            console.error(`[Event] Error in ${event} listener:`, err);
+                        }
+                    });
+                }
+            }
+        };
+        console.log('[Game] Event bus initialized');
+        
         this.gameState = new GameState();
         this.saveManager = new SaveManager();
         this.audioManager = new AudioManager();
