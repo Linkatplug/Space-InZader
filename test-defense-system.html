@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DefenseSystem Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #00ff00;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #333;
+        }
+        .pass {
+            background-color: #002200;
+            border-color: #00ff00;
+        }
+        .fail {
+            background-color: #220000;
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+        h1 {
+            color: #00ffff;
+        }
+        h2 {
+            color: #ffff00;
+        }
+        .detail {
+            margin-left: 20px;
+            color: #888;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <h1>DefenseSystem Test Suite</h1>
+    <div id="test-results"></div>
+
+    <script src="js/utils/Logger.js"></script>
+    <script src="js/utils/Math.js"></script>
+    <script src="js/core/ECS.js"></script>
+    <script src="js/core/GameState.js"></script>
+    <script src="js/core/DamagePacket.js"></script>
+    <script src="js/systems/DefenseSystem.js"></script>
+    <script>
+        // Test utility
+        function test(name, fn) {
+            const resultsDiv = document.getElementById('test-results');
+            try {
+                const details = fn();
+                resultsDiv.innerHTML += `<div class="test-result pass">✓ ${name}${details ? '<div class="detail">' + details + '</div>' : ''}</div>`;
+                console.log(`✓ ${name}`);
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="test-result fail">✗ ${name}: ${error.message}</div>`;
+                console.error(`✗ ${name}:`, error);
+            }
+        }
+
+        function assertEquals(actual, expected, message) {
+            if (actual !== expected) {
+                throw new Error(`${message}: expected ${expected}, got ${actual}`);
+            }
+        }
+
+        function assertApprox(actual, expected, tolerance, message) {
+            if (Math.abs(actual - expected) > tolerance) {
+                throw new Error(`${message}: expected ~${expected}, got ${actual}`);
+            }
+        }
+
+        // Setup
+        const world = new World();
+        const gameState = new GameState();
+        const defenseSystem = new DefenseSystem(world, gameState);
+
+        // Run tests
+        document.getElementById('test-results').innerHTML = '<h2>Running Tests...</h2>';
+
+        test('DefenseSystem can be instantiated', () => {
+            if (!defenseSystem) throw new Error('DefenseSystem not created');
+        });
+
+        test('Apply damage to entity with only health', () => {
+            const entity = world.createEntity('test');
+            entity.addComponent('health', { current: 100, max: 100 });
+            
+            const damage = new DamagePacket({
+                baseDamage: 30,
+                damageType: 'kinetic'
+            });
+            
+            const result = defenseSystem.applyDamage(entity, damage);
+            
+            const health = entity.getComponent('health');
+            assertEquals(health.current, 70, 'Health after damage');
+            assertEquals(result.structureDamage, 30, 'Structure damage');
+            assertEquals(result.destroyed, false, 'Entity not destroyed');
+            
+            return `Health: 100 → 70`;
+        });
+
+        test('Shield absorbs damage first', () => {
+            const entity = world.createEntity('test');
+            entity.addComponent('health', { current: 100, max: 100 });
+            entity.addComponent('shield', { current: 50, max: 50, regenDelay: 0, regenDelayMax: 3 });
+            
+            const damage = new DamagePacket({
+                baseDamage: 30,
+                damageType: 'energy'
+            });
+            
+            const result = defenseSystem.applyDamage(entity, damage);
+            
+            const health = entity.getComponent('health');
+            const shield = entity.getComponent('shield');
+            
+            assertEquals(shield.current, 20, 'Shield after damage');
+            assertEquals(health.current, 100, 'Health unchanged');
+            assertEquals(result.shieldDamage, 30, 'Shield damage');
+            assertEquals(result.structureDamage, 0, 'No structure damage');
+            
+            return `Shield: 50 → 20, Health: 100 (unchanged)`;
+        });
+
+        test('Damage overflow from shield to health', () => {
+            const entity = world.createEntity('test');
+            entity.addComponent('health', { current: 100, max: 100 });
+            entity.addComponent('shield', { current: 20, max: 50, regenDelay: 0, regenDelayMax: 3 });
+            
+            const damage = new DamagePacket({
+                baseDamage: 50,
+                damageType: 'energy'
+            });
+            
+            const result = defenseSystem.applyDamage(entity, damage);
+            
+            const health = entity.getComponent('health');
+            const shield = entity.getComponent('shield');
+            
+            assertEquals(shield.current, 0, 'Shield depleted');
+            assertEquals(health.current, 70, 'Health reduced by overflow');
+            assertEquals(result.shieldDamage, 20, 'Shield damage');
+            assertEquals(result.structureDamage, 30, 'Structure damage');
+            
+            return `Shield: 20 → 0, Health: 100 → 70`;
+        });
+
+        test('Shield penetration bypasses shield', () => {
+            const entity = world.createEntity('test');
+            entity.addComponent('health', { current: 100, max: 100 });
+            entity.addComponent('shield', { current: 50, max: 50, regenDelay: 0, regenDelayMax: 3 });
+            
+            const damage = new DamagePacket({
+                baseDamage: 40,
+                damageType: 'kinetic',
+                shieldPenetration: 0.5 // 50% penetration
+            });
+            
+            const result = defenseSystem.applyDamage(entity, damage);
+            
+            const health = entity.getComponent('health');
+            const shield = entity.getComponent('shield');
+            
+            // 50% of 40 = 20 penetrates, 20 hits shield
+            assertEquals(shield.current, 30, 'Shield absorbs non-penetrating damage');
+            assertEquals(health.current, 80, 'Health reduced by penetrating damage');
+            
+            return `Shield: 50 → 30, Health: 100 → 80 (20 penetrated)`;
+        });
+
+        test('Armor reduces damage', () => {
+            const entity = world.createEntity('player');
+            entity.addComponent('health', { current: 100, max: 100 });
+            entity.addComponent('player', { 
+                stats: { armor: 10 } 
+            });
+            
+            const damage = new DamagePacket({
+                baseDamage: 30,
+                damageType: 'kinetic'
+            });
+            
+            const result = defenseSystem.applyDamage(entity, damage);
+            
+            const health = entity.getComponent('health');
+            
+            // 30 - 10 = 20 damage
+            assertEquals(health.current, 80, 'Health after armor reduction');
+            assertEquals(result.armorReduction, 10, 'Armor reduction');
+            assertEquals(result.structureDamage, 20, 'Structure damage');
+            
+            return `Armor reduced 30 → 20 damage`;
+        });
+
+        test('Armor penetration bypasses armor', () => {
+            const entity = world.createEntity('player');
+            entity.addComponent('health', { current: 100, max: 100 });
+            entity.addComponent('player', { 
+                stats: { armor: 20 } 
+            });
+            
+            const damage = new DamagePacket({
+                baseDamage: 50,
+                damageType: 'explosive',
+                armorPenetration: 0.6 // 60% penetration
+            });
+            
+            const result = defenseSystem.applyDamage(entity, damage);
+            
+            const health = entity.getComponent('health');
+            
+            // 60% of 50 = 30 penetrates
+            // 40% of 50 = 20 hits armor, reduced by 20 to 1 (minimum)
+            // Total = 30 + 1 = 31
+            assertEquals(health.current, 69, 'Health after mixed damage');
+            
+            return `60% penetrated armor, 40% reduced by armor`;
+        });
+
+        test('Entity destroyed at 0 health', () => {
+            const entity = world.createEntity('test');
+            entity.addComponent('health', { current: 30, max: 100 });
+            
+            let destroyedEntity = null;
+            defenseSystem.onEntityDestroyed((e) => { destroyedEntity = e; });
+            
+            const damage = new DamagePacket({
+                baseDamage: 40,
+                damageType: 'energy'
+            });
+            
+            const result = defenseSystem.applyDamage(entity, damage);
+            
+            const health = entity.getComponent('health');
+            assertEquals(health.current, 0, 'Health capped at 0');
+            assertEquals(result.destroyed, true, 'Entity marked as destroyed');
+            assertEquals(destroyedEntity, entity, 'Destruction event fired');
+            
+            return `Entity destroyed at 0 health`;
+        });
+
+        test('God mode prevents all damage', () => {
+            const entity = world.createEntity('player');
+            entity.addComponent('health', { current: 100, max: 100, godMode: true });
+            
+            const damage = new DamagePacket({
+                baseDamage: 1000,
+                damageType: 'energy'
+            });
+            
+            const result = defenseSystem.applyDamage(entity, damage);
+            
+            const health = entity.getComponent('health');
+            assertEquals(health.current, 100, 'Health unchanged');
+            assertEquals(result.totalDamage, 0, 'No damage applied');
+            
+            return `God mode prevented 1000 damage`;
+        });
+
+        test('Invulnerability prevents damage', () => {
+            const entity = world.createEntity('player');
+            entity.addComponent('health', { current: 100, max: 100, invulnerable: true });
+            
+            const damage = new DamagePacket({
+                baseDamage: 50,
+                damageType: 'kinetic'
+            });
+            
+            const result = defenseSystem.applyDamage(entity, damage);
+            
+            const health = entity.getComponent('health');
+            assertEquals(health.current, 100, 'Health unchanged');
+            assertEquals(result.totalDamage, 0, 'No damage applied');
+            
+            return `Invulnerability prevented 50 damage`;
+        });
+
+        test('Complex scenario: shield + armor + penetration', () => {
+            const entity = world.createEntity('player');
+            entity.addComponent('health', { current: 100, max: 100 });
+            entity.addComponent('shield', { current: 30, max: 50, regenDelay: 0, regenDelayMax: 3 });
+            entity.addComponent('player', { stats: { armor: 15 } });
+            
+            const damage = new DamagePacket({
+                baseDamage: 60,
+                damageType: 'explosive',
+                shieldPenetration: 0.25, // 25% bypass shield
+                armorPenetration: 0.5    // 50% bypass armor
+            });
+            
+            const result = defenseSystem.applyDamage(entity, damage);
+            
+            const health = entity.getComponent('health');
+            const shield = entity.getComponent('shield');
+            
+            // 25% of 60 = 15 penetrates shield
+            // 75% of 60 = 45 hits shield, shield absorbs 30, 15 overflows
+            // Total after shield: 15 (penetration) + 15 (overflow) = 30
+            // Of that 30: 50% (15) penetrates armor, 50% (15) reduced by armor (15-15=1 min)
+            // Total damage: 15 + 1 = 16
+            
+            assertEquals(shield.current, 0, 'Shield depleted');
+            assertApprox(health.current, 84, 1, 'Health after complex damage');
+            
+            return `Shield + Armor + Penetration scenario`;
+        });
+
+        document.getElementById('test-results').innerHTML += '<h2>All Tests Complete!</h2>';
+    </script>
+</body>
+</html>
