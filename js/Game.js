@@ -431,9 +431,25 @@ class Game {
     }
 
     createPlayer() {
-        const shipData = ShipData.getShipData(this.gameState.selectedShip);
+        // Guard: default to ION_FRIGATE if no ship selected
+        if (!this.gameState.selectedShip) {
+            this.gameState.selectedShip = 'ION_FRIGATE';
+            console.log('[Game] No ship selected, defaulting to ION_FRIGATE');
+        }
+
+        // Get ship data from ShipUpgradeData
+        const shipId = this.gameState.selectedShip;
+        let shipData = null;
+        
+        if (window.ShipUpgradeData && window.ShipUpgradeData.SHIPS && window.ShipUpgradeData.SHIPS[shipId]) {
+            shipData = window.ShipUpgradeData.SHIPS[shipId];
+        } else {
+            // Fallback to ShipData for backward compatibility
+            shipData = ShipData.getShipData(shipId.toLowerCase());
+        }
+        
         if (!shipData) {
-            console.error('Invalid ship:', this.gameState.selectedShip);
+            console.error('Invalid ship:', shipId);
             return;
         }
 
@@ -470,15 +486,9 @@ class Game {
         const playerComp = Components.Player();
         playerComp.speed = shipData.baseStats.speed;
         
-        // Map ship to ShipUpgradeData ship ID
-        const shipIdMap = {
-            'equilibre': 'ION_FRIGATE',
-            'defenseur': 'BALLISTIC_DESTROYER',
-            'attaquant': 'CATACLYSM_CRUISER',
-            'technicien': 'TECH_NEXUS'
-        };
-        playerComp.shipId = shipIdMap[this.gameState.selectedShip] || 'ION_FRIGATE';
-        console.log(`Player ship mapped: ${this.gameState.selectedShip} -> ${playerComp.shipId}`);
+        // Use the ship ID directly (no more legacy mapping)
+        playerComp.shipId = shipId;
+        console.log(`[Game] Player ship: ${shipId}`);
         
         // Initialize stats from DEFAULT_STATS blueprint to prevent undefined errors
         playerComp.stats = structuredClone(DEFAULT_STATS);
@@ -651,8 +661,17 @@ class Game {
         // Reset stats to DEFAULT_STATS blueprint to prevent undefined errors
         playerComp.stats = structuredClone(DEFAULT_STATS);
         
-        // Apply ship-specific base stats
-        const shipData = ShipData.getShipData(this.gameState.selectedShip);
+        // Get ship data from ShipUpgradeData or fallback to ShipData
+        const shipId = this.gameState.selectedShip;
+        let shipData = null;
+        
+        if (window.ShipUpgradeData && window.ShipUpgradeData.SHIPS && window.ShipUpgradeData.SHIPS[shipId]) {
+            shipData = window.ShipUpgradeData.SHIPS[shipId];
+        } else {
+            // Fallback to ShipData for backward compatibility
+            shipData = ShipData.getShipData(shipId.toLowerCase());
+        }
+        
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 
@@ -1300,7 +1319,7 @@ class Game {
         }
 
         // Get ship upgrade data
-        const shipData = window.ShipUpgradeData?.getShipData(shipId);
+        const shipData = window.ShipUpgradeData?.getShipUpgrades(shipId);
         if (!shipData || !shipData.upgrades) {
             console.error(`[Game] No upgrade data for ship: ${shipId}`);
             return [];
