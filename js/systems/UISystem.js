@@ -196,9 +196,9 @@ class UISystem {
             explosive: '#FF0000'
         };
         
-        const canvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
-        let left = (data.x || 0);
-        let top = (data.y || 0);
+        const canvas = this.gameCanvas;
+        let left = data.x || 0;
+        let top = data.y || 0;
 
         if (canvas) {
             const rect = canvas.getBoundingClientRect();
@@ -318,6 +318,9 @@ class UISystem {
         this.statArmor = document.getElementById('statArmor');
         this.statLifesteal = document.getElementById('statLifesteal');
         this.statRegen = document.getElementById('statRegen');
+        
+        // Game canvas (for coordinate conversion)
+        this.gameCanvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
         this.statCrit = document.getElementById('statCrit');
         
         // Weapon and passive status elements

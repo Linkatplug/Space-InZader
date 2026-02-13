@@ -864,7 +864,7 @@ class CombatSystem {
         // Ensure UI can read the currently firing weapon
         const playerComp = player.getComponent('player');
         if (playerComp) {
-            // weapon is usually an object with .data
+            // Handle both weapon formats: objects with .data property or direct weapon objects
             playerComp.currentWeapon = (weapon && weapon.data) ? weapon.data : weapon;
         }
 
