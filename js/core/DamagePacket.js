@@ -56,9 +56,10 @@ class DamagePacket {
      * 
      * @private
      * @param {*} value - Value to validate
-     * @param {number} defaultValue - Default value if validation fails or value is undefined
+     * @param {number} defaultValue - Default value if value is undefined or null
      * @param {string} paramName - Parameter name for error messages
      * @returns {number} Validated ratio value
+     * @throws {Error} If value is not a valid ratio (0-1)
      */
     _validateRatio(value, defaultValue, paramName) {
         if (value === undefined || value === null) {

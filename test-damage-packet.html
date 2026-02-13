@@ -119,6 +119,12 @@
                 damageType: 'energy'
             });
             
+            // Verify Object.freeze() was called
+            if (!Object.isFrozen(packet)) {
+                throw new Error('Packet is not frozen');
+            }
+            
+            // Verify properties cannot be modified
             assertThrows(() => {
                 packet.baseDamage = 200;
                 // In strict mode, this would throw. Check if value didn't change
