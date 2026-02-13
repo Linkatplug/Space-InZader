@@ -1202,6 +1202,12 @@ class Game {
             if (health && health.current <= 0) {
                 this.gameOver();
             }
+            
+            // Check for game over with defense system
+            const defense = this.player.getComponent('defense');
+            if (defense && defense.structure.current <= 0) {
+                this.gameOver();
+            }
         }
         
         // Process pending entity removals

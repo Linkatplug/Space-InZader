@@ -53,8 +53,14 @@ class DefenseSystem {
         }
 
         // Apply regeneration if delay is over
+        // IMPORTANT: Don't regenerate structure if it's at 0 (player is destroyed)
         if (layer.regenDelay <= 0 && layer.regen > 0) {
-            layer.current = Math.min(layer.max, layer.current + layer.regen * deltaTime);
+            // For structure layer, don't regenerate if completely destroyed
+            if (layerName === 'structure' && layer.current <= 0) {
+                // Player is destroyed, no regeneration
+            } else {
+                layer.current = Math.min(layer.max, layer.current + layer.regen * deltaTime);
+            }
         }
 
         // Ensure current doesn't go below 0 or above max
