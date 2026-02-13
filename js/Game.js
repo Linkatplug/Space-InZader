@@ -99,7 +99,8 @@ class Game {
             wave: new WaveSystem(this.gameState),
             weather: new WeatherSystem(this.world, this.canvas, this.audioManager, this.gameState),
             defense: new DefenseSystem(this.world),
-            heat: new HeatSystem(this.world, this.gameState)
+            heat: new HeatSystem(this.world, this.gameState),
+            shipUpgrade: new ShipUpgradeSystem(this.world)
         };
         
         // Synergy system (initialized when game starts)
@@ -617,9 +618,35 @@ class Game {
         playerComp.stats.shieldRegen = 0;
         playerComp.stats.shieldRegenDelay = 3.0;
 
-        // Apply all passives
+        // Apply all passives (keeping for backwards compatibility with keystones)
         for (const passive of playerComp.passives) {
             PassiveData.applyPassiveEffects(passive, playerComp.stats);
+        }
+        
+        // Apply ship upgrades
+        if (this.systems && this.systems.shipUpgrade) {
+            const upgradeEffects = this.systems.shipUpgrade.calculateTotalUpgradeEffects(this.player);
+            
+            // Apply upgrade effects to stats
+            for (const [key, value] of Object.entries(upgradeEffects)) {
+                if (key.endsWith('Mult') || key.includes('Multiplier')) {
+                    // Multiplicative stat
+                    if (!playerComp.stats[key]) playerComp.stats[key] = 1;
+                    playerComp.stats[key] += value;
+                } else if (key.endsWith('Add') || key.includes('Bonus')) {
+                    // Additive stat
+                    if (!playerComp.stats[key]) playerComp.stats[key] = 0;
+                    playerComp.stats[key] += value;
+                } else if (key.endsWith('Chance')) {
+                    // Chance stat (0-1 range)
+                    if (!playerComp.stats[key]) playerComp.stats[key] = 0;
+                    playerComp.stats[key] = Math.min(1, playerComp.stats[key] + value);
+                } else {
+                    // Default: additive
+                    if (!playerComp.stats[key]) playerComp.stats[key] = 0;
+                    playerComp.stats[key] += value;
+                }
+            }
         }
         
         // Recalculate max HP using base stats vs derived stats formula
@@ -1022,7 +1049,8 @@ class Game {
             if (filtered.length > 0) {
                 const selected = MathUtils.randomChoice(filtered);
                 logger.info('Game', `Selected ${selected.type}: ${selected.key} (${rarity})`);
-                return {
+                
+                const boost = {
                     type: selected.type,
                     key: selected.key,
                     name: selected.data.name,
@@ -1030,6 +1058,14 @@ class Game {
                     rarity: selected.data.rarity,
                     color: selected.data.color
                 };
+                
+                // Add upgrade-specific fields
+                if (selected.type === 'upgrade') {
+                    boost.currentLevel = selected.currentLevel;
+                    boost.maxLevel = selected.maxLevel;
+                }
+                
+                return boost;
             }
         }
 
@@ -1058,21 +1094,25 @@ class Game {
             return true;
         });
         
-        // Get ALL available passives (not maxed)
-        const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
-            const passive = PassiveData.PASSIVES[key];
-            const savePassive = this.saveData.passives[passive.id];
-            if (!savePassive || !savePassive.unlocked) return false;
-            
-            const existingPassive = playerComp.passives.find(p => p.id === passive.id);
-            if (existingPassive && existingPassive.stacks >= passive.maxStacks) return false;
-            
-            return true;
-        });
+        // Get ALL available ship upgrades (not maxed)
+        const shipId = playerComp.shipId || 'ION_FRIGATE';
+        const shipData = window.ShipUpgradeData?.SHIPS?.[shipId];
+        
+        const availableUpgrades = shipData ? shipData.upgrades.filter(upgrade => {
+            const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
+            return currentLevel < upgrade.maxLevel;
+        }).map(upgrade => {
+            const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
+            return {
+                ...upgrade,
+                currentLevel,
+                nextLevel: currentLevel + 1
+            };
+        }) : [];
         
         const all = [
             ...availableWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
-            ...availablePassives.map(p => ({ type: 'passive', key: PassiveData.PASSIVES[p].id, data: PassiveData.PASSIVES[p] }))
+            ...availableUpgrades.map(u => ({ type: 'upgrade', key: u.id, data: u, currentLevel: u.currentLevel, maxLevel: u.maxLevel }))
         ];
         
         // Filter out duplicates
@@ -1087,8 +1127,10 @@ class Game {
                 key: selected.key,
                 name: selected.data.name,
                 description: selected.data.description,
-                rarity: selected.data.rarity,
-                color: selected.data.color
+                rarity: selected.data.rarity || 'common',
+                color: selected.data.color || '#888888',
+                currentLevel: selected.currentLevel,
+                maxLevel: selected.maxLevel
             };
         }
         
@@ -1140,6 +1182,15 @@ class Game {
             this.addWeaponToPlayer(boost.key);
         } else if (boost.type === 'passive') {
             this.addPassiveToPlayer(boost.key);
+        } else if (boost.type === 'upgrade') {
+            // Apply ship upgrade using ShipUpgradeSystem
+            if (this.systems && this.systems.shipUpgrade) {
+                this.systems.shipUpgrade.incrementUpgrade(this.player, boost.key);
+                this.recalculatePlayerStats();
+                logger.info('Game', `Applied upgrade: ${boost.key} (Level ${boost.currentLevel + 1}/${boost.maxLevel})`);
+            } else {
+                logger.error('Game', 'ShipUpgradeSystem not available');
+            }
         }
 
         logger.debug('Game', 'Boost applied successfully', boost);
