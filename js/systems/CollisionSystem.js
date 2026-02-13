@@ -4,11 +4,12 @@
  */
 
 class CollisionSystem {
-    constructor(world, gameState, audioManager, particleSystem = null) {
+    constructor(world, gameState, audioManager, particleSystem = null, defenseSystem = null) {
         this.world = world;
         this.gameState = gameState;
         this.audioManager = audioManager;
         this.particleSystem = particleSystem;
+        this.defenseSystem = defenseSystem;
         
         // Black hole instant kill zone constants
         this.BLACK_HOLE_CENTER_KILL_RADIUS = 30; // pixels - instant death zone
@@ -221,106 +222,56 @@ class CollisionSystem {
         }
     }
 
+    /**
+     * Apply damage to an enemy entity
+     * @deprecated Use DefenseSystem.applyDamage instead
+     */
     damageEnemy(enemy, damage, attacker = null) {
-        const health = enemy.getComponent('health');
-        const renderable = enemy.getComponent('renderable');
-        if (!health) return;
-
-        health.current -= damage;
-        this.gameState.stats.damageDealt += damage;
-        
-        // Check if this is a boss (large size)
-        const isBoss = renderable && renderable.size >= BOSS_SIZE_THRESHOLD;
-        
-        // Apply lifesteal if attacker is player
-        if (attacker && attacker.type === 'player') {
-            const playerComp = attacker.getComponent('player');
-            const playerHealth = attacker.getComponent('health');
-            
-            if (playerComp && playerHealth && playerComp.stats.lifesteal > 0) {
-                const healAmount = damage * playerComp.stats.lifesteal;
-                const newHealth = Math.min(playerHealth.max, playerHealth.current + healAmount);
-                if (newHealth > playerHealth.current) {
-                    playerHealth.current = newHealth;
-                    logger.debug('Combat', `Lifesteal healed ${healAmount.toFixed(1)} HP`);
-                    
-                    // Lifesteal sound
-                    if (this.audioManager && this.audioManager.initialized) {
-                        this.audioManager.playLifesteal();
-                    }
-                }
-            }
+        if (!this.defenseSystem) {
+            logger.error('CollisionSystem', 'DefenseSystem not available');
+            return;
         }
         
-        // Play hit sound
-        if (this.audioManager && this.audioManager.initialized) {
-            if (isBoss) {
-                this.audioManager.playBossHit();
-                
-                // Boss hit screen shake
-                if (this.screenEffects) {
-                    this.screenEffects.shake(3, 0.1);
-                    this.screenEffects.flash('#FFFFFF', 0.15, 0.08);
-                }
-            } else {
-                this.audioManager.playSFX('hit', MathUtils.randomFloat(0.9, 1.1));
-            }
-        }
-
-        if (health.current <= 0) {
+        // Create a basic damage packet with kinetic damage type
+        const damagePacket = new DamagePacket({
+            baseDamage: damage,
+            damageType: 'kinetic',
+            armorPenetration: 0,
+            shieldPenetration: 0,
+            critChance: 0,
+            critMultiplier: 1.0
+        });
+        
+        const result = this.defenseSystem.applyDamage(enemy, damagePacket, attacker);
+        
+        if (result.destroyed) {
             this.killEnemy(enemy);
         }
     }
 
+    /**
+     * Apply damage to a player entity
+     * @deprecated Use DefenseSystem.applyDamage instead
+     */
     damagePlayer(player, damage) {
-        const health = player.getComponent('health');
-        const shield = player.getComponent('shield');
-        const playerComp = player.getComponent('player');
-        
-        if (!health || !playerComp) return;
-        
-        // God mode check - no damage taken
-        if (health.godMode) return;
-
-        let remainingDamage = damage;
-        
-        // Shield absorbs damage first
-        if (shield && shield.current > 0) {
-            const shieldDamage = Math.min(shield.current, remainingDamage);
-            shield.current -= shieldDamage;
-            remainingDamage -= shieldDamage;
-            
-            // Reset shield regen delay when damaged
-            shield.regenDelay = shield.regenDelayMax;
-            
-            // Visual feedback for shield hit
-            if (this.screenEffects && shieldDamage > 0) {
-                this.screenEffects.flash('#00FFFF', 0.2, 0.1);
-            }
+        if (!this.defenseSystem) {
+            logger.error('CollisionSystem', 'DefenseSystem not available');
+            return;
         }
         
-        // Remaining damage goes to health (with armor reduction)
-        if (remainingDamage > 0) {
-            const actualDamage = Math.max(1, remainingDamage - playerComp.stats.armor);
-            health.current -= actualDamage;
-            this.gameState.stats.damageTaken += actualDamage;
-            
-            // Play hit sound
-            if (this.audioManager && this.audioManager.initialized) {
-                this.audioManager.playSFX('hit', 1.2);
-            }
-            
-            // Screen shake and flash on health hit
-            if (this.screenEffects) {
-                this.screenEffects.shake(5, 0.2);
-                this.screenEffects.flash('#FF0000', 0.3, 0.15);
-            }
-        }
-
-        if (health.current <= 0) {
-            health.current = 0;
-            // Game over handled by game loop
-        }
+        // Create a basic damage packet with kinetic damage type
+        const damagePacket = new DamagePacket({
+            baseDamage: damage,
+            damageType: 'kinetic',
+            armorPenetration: 0,
+            shieldPenetration: 0,
+            critChance: 0,
+            critMultiplier: 1.0
+        });
+        
+        this.defenseSystem.applyDamage(player, damagePacket, null);
+        
+        // Game over is handled by game loop
     }
 
     killEnemy(enemy) {
