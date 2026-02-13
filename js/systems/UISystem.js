@@ -1121,61 +1121,104 @@ class UISystem {
     renderShipSelection() {
         this.shipSelection.innerHTML = '';
 
-        // Get ships from ShipData
-        const ships = ShipData && ShipData.getAllShips ? ShipData.getAllShips() : this.getDefaultShips();
-        const saveData = window.game?.saveData || {};
-        const progress = saveData.meta || { maxWave: 0, bloodCritCount: 0 };
+        // Get ships from new ShipData.SHIPS
+        const ships = window.ShipData && window.ShipData.SHIPS ? Object.values(window.ShipData.SHIPS) : [];
+        
+        if (ships.length === 0) {
+            console.error('No ships found in ShipData.SHIPS');
+            return;
+        }
 
         ships.forEach(ship => {
             const card = document.createElement('div');
             card.className = 'ship-card';
             card.dataset.shipId = ship.id;
             
-            // Check if ship is locked
-            const isLocked = !ship.unlocked && ship.unlockCondition;
-            if (isLocked) {
-                card.classList.add('locked');
-            }
-
-            // Select first unlocked ship by default
-            if (!this.selectedShipId && !isLocked) {
+            // Select first ship by default
+            if (!this.selectedShipId) {
                 this.selectedShipId = ship.id;
                 card.classList.add('selected');
                 // Dispatch ship selected event for default selection
                 window.dispatchEvent(new CustomEvent('shipSelected', { 
                     detail: { ship: ship.id } 
                 }));
-            } else if (this.selectedShipId === ship.id && !isLocked) {
+            } else if (this.selectedShipId === ship.id) {
                 card.classList.add('selected');
             }
 
-            let unlockText = '';
-            if (isLocked) {
-                const cond = ship.unlockCondition;
-                if (cond.type === 'wave') {
-                    unlockText = `<div style="color:#ff4444;font-size:11px;margin-top:8px;">🔒 Reach Wave ${cond.value}</div>`;
-                } else if (cond.type === 'blood_crit_count') {
-                    unlockText = `<div style="color:#ff4444;font-size:11px;margin-top:8px;">🔒 Get ${cond.value} Blood Crits</div>`;
-                }
+            // Get damage type badge color
+            const damageTypeColors = {
+                em: '#00FFFF',
+                kinetic: '#FFFFFF',
+                explosive: '#FF0000',
+                thermal: '#FF8C00'
+            };
+            const damageColor = damageTypeColors[ship.dominantDamageType] || '#FFFFFF';
+            
+            // Format bonuses - show first 2
+            const bonuses = [];
+            if (ship.offense.damageTypeMult) {
+                const type = Object.keys(ship.offense.damageTypeMult)[0];
+                const mult = ship.offense.damageTypeMult[type];
+                bonuses.push(`+${Math.round((mult - 1) * 100)}% ${type.toUpperCase()}`);
+            }
+            if (ship.offense.explosionRadiusMult) {
+                bonuses.push(`+${Math.round((ship.offense.explosionRadiusMult - 1) * 100)}% Explosion Radius`);
+            }
+            if (ship.offense.structureDamageMult) {
+                bonuses.push(`+${Math.round((ship.offense.structureDamageMult - 1) * 100)}% Structure DMG`);
+            }
+            if (ship.offense.kineticPenetrationBonus) {
+                bonuses.push(`+${Math.round(ship.offense.kineticPenetrationBonus * 100)}% Penetration`);
+            }
+            if (ship.defenses.shieldRegenMult !== 1.0) {
+                bonuses.push(`${ship.defenses.shieldRegenMult > 1 ? '+' : ''}${Math.round((ship.defenses.shieldRegenMult - 1) * 100)}% Shield Regen`);
+            }
+            if (ship.defenses.coolingMult > 1.0) {
+                bonuses.push(`+${Math.round((ship.defenses.coolingMult - 1) * 100)}% Cooling`);
+            }
+            
+            // Format tradeoffs - show first 2
+            const tradeoffs = [];
+            if (ship.tradeoffs.armorResistAllMult) {
+                tradeoffs.push(`${Math.round((ship.tradeoffs.armorResistAllMult - 1) * 100)}% Armor Resist`);
+            }
+            if (ship.tradeoffs.shieldResistAllMult) {
+                tradeoffs.push(`${Math.round((ship.tradeoffs.shieldResistAllMult - 1) * 100)}% Shield Resist`);
+            }
+            if (ship.tradeoffs.nonDominantHeatGenMult) {
+                tradeoffs.push(`+${Math.round((ship.tradeoffs.nonDominantHeatGenMult - 1) * 100)}% Heat (non-${ship.dominantDamageType})`);
+            }
+            if (ship.tradeoffs.globalFireRateMult) {
+                tradeoffs.push(`${Math.round((ship.tradeoffs.globalFireRateMult - 1) * 100)}% Fire Rate`);
+            }
+            if (ship.tradeoffs.globalHeatGenMult) {
+                tradeoffs.push(`+${Math.round((ship.tradeoffs.globalHeatGenMult - 1) * 100)}% Heat Gen`);
             }
 
             card.innerHTML = `
-                <h3 style="color: ${ship.color}; margin-bottom: 10px; text-align: center;">${ship.name}</h3>
-                <div style="margin-bottom: 10px; font-size: 12px; line-height: 1.4;">
-                    ${ship.description}
+                <h3 style="margin-bottom: 8px; text-align: center;">${ship.icon} ${ship.name}</h3>
+                <div style="text-align:center; margin-bottom:8px;">
+                    <span style="background:${damageColor}; color:#000; padding:2px 6px; border-radius:3px; font-size:10px; font-weight:bold;">${ship.dominantDamageType.toUpperCase()}</span>
                 </div>
-                <div style="font-size: 11px; opacity: 0.8;">
-                    <div>HP: ${ship.baseStats.maxHealth}</div>
-                    <div>DMG: x${ship.baseStats.damageMultiplier.toFixed(2)}</div>
-                    <div>SPD: ${ship.baseStats.speed}</div>
-                    <div>Difficulty: ${ship.difficulty.toUpperCase()}</div>
+                <div style="margin-bottom: 8px; font-size: 11px; opacity: 0.9;">
+                    ${ship.role}
                 </div>
-                ${unlockText}
+                <div style="font-size: 11px; opacity: 0.8; margin-bottom:8px;">
+                    <div>S: ${ship.defenses.shieldMax} / A: ${ship.defenses.armorMax} / St: ${ship.defenses.structureMax}</div>
+                </div>
+                <div style="font-size: 10px; opacity: 0.9; margin-bottom:4px; color:#00ff00;">
+                    ${bonuses.slice(0, 2).map(b => `+ ${b}`).join('<br>')}
+                </div>
+                <div style="font-size: 10px; opacity: 0.9; margin-bottom:8px; color:#ffaa00;">
+                    ${tradeoffs.slice(0, 2).map(t => `- ${t}`).join('<br>')}
+                </div>
+                <div style="font-size: 10px; opacity: 0.7; font-style: italic;">
+                    Passive: ${ship.passive.name}
+                </div>
             `;
 
             card.addEventListener('click', () => {
-                if (isLocked) return; // Can't select locked ships
-                
                 document.querySelectorAll('.ship-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 this.selectedShipId = ship.id;

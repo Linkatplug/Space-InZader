@@ -405,20 +405,27 @@ class Game {
     }
 
     createPlayer() {
-        const shipData = ShipData.getShipData(this.gameState.selectedShip);
-        if (!shipData) {
-            console.error('Invalid ship:', this.gameState.selectedShip);
-            return;
+        // Get ship from new ShipData.SHIPS
+        const shipId = this.gameState.selectedShip || 'ION_FRIGATE';
+        const ship = window.ShipData && window.ShipData.SHIPS ? window.ShipData.SHIPS[shipId] : null;
+        
+        if (!ship) {
+            console.error('Invalid ship:', shipId);
+            // Fallback to ION_FRIGATE
+            const fallbackShip = window.ShipData.SHIPS.ION_FRIGATE;
+            if (!fallbackShip) {
+                console.error('Cannot create player - no ship data available');
+                return;
+            }
+            this.gameState.selectedShip = 'ION_FRIGATE';
+            return this.createPlayer(); // Retry with fallback
         }
 
         // Apply meta-progression bonuses
-        const metaHealth = this.saveData.upgrades.maxHealth * 10;
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 
         this.player = this.world.createEntity('player');
-        
-        const maxHealth = shipData.baseStats.maxHealth + metaHealth;
         
         this.player.addComponent('position', Components.Position(
             this.canvas.width / 2,
@@ -428,70 +435,100 @@ class Game {
         this.player.addComponent('velocity', Components.Velocity(0, 0));
         this.player.addComponent('collision', Components.Collision(15));
         
-        this.player.addComponent('health', Components.Health(maxHealth, maxHealth));
+        // Add defense layers from ship data
+        const defenseLayers = {
+            shield: {
+                max: ship.defenses.shieldMax,
+                current: ship.defenses.shieldMax,
+                resistances: { em: 0.3, kinetic: 0.2, thermal: 0.2, explosive: 0.2 }
+            },
+            armor: {
+                max: ship.defenses.armorMax,
+                current: ship.defenses.armorMax,
+                resistances: { em: 0.2, kinetic: 0.4, thermal: 0.25, explosive: 0.3 }
+            },
+            structure: {
+                max: ship.defenses.structureMax,
+                current: ship.defenses.structureMax,
+                resistances: { em: 0.1, kinetic: 0.1, thermal: 0.1, explosive: 0.1 }
+            }
+        };
         
-        // Add shield component (starts at 0)
-        this.player.addComponent('shield', Components.Shield(0, 0, 0));
+        this.player.addComponent('defense', Components.Defense(defenseLayers));
+        
+        // Add heat component with cooling multiplier from ship
+        const baseHeatMax = 100;
+        const baseCoolingRate = 20; // base cooling per second
+        this.player.addComponent('heat', Components.Heat(
+            baseHeatMax,
+            baseCoolingRate * (ship.defenses.coolingMult || 1.0)
+        ));
         
         const playerComp = Components.Player();
-        playerComp.speed = shipData.baseStats.speed;
-        
-        // Map ship to ShipUpgradeData ship ID
-        const shipIdMap = {
-            'equilibre': 'ION_FRIGATE',
-            'defenseur': 'BALLISTIC_DESTROYER',
-            'attaquant': 'CATACLYSM_CRUISER',
-            'technicien': 'TECH_NEXUS'
-        };
-        playerComp.shipId = shipIdMap[this.gameState.selectedShip] || 'ION_FRIGATE';
-        console.log(`Player ship mapped: ${this.gameState.selectedShip} -> ${playerComp.shipId}`);
+        playerComp.speed = 220; // Base player speed
+        playerComp.shipId = shipId;
         
         // Initialize stats from DEFAULT_STATS blueprint to prevent undefined errors
         playerComp.stats = structuredClone(DEFAULT_STATS);
         
-        // Apply ship-specific stats (using metaDamage and metaXP from above)
-        playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
-        playerComp.stats.damageMultiplier = shipData.baseStats.damageMultiplier * metaDamage;
-        playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier;
-        playerComp.stats.fireRateMultiplier = shipData.baseStats.fireRateMultiplier;
-        playerComp.stats.speed = shipData.baseStats.speed / 200; // Normalize speed
-        playerComp.stats.speedMultiplier = 1;
+        // Apply ship-specific stats
+        playerComp.stats.damage = metaDamage;
+        playerComp.stats.damageMultiplier = metaDamage;
+        playerComp.stats.fireRate = 1.0;
+        playerComp.stats.fireRateMultiplier = 1.0;
+        playerComp.stats.speed = 1.0;
+        playerComp.stats.speedMultiplier = 1.0;
         playerComp.stats.maxHealth = 1;
-        playerComp.stats.critChance = shipData.baseStats.critChance;
-        playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
-        playerComp.stats.lifesteal = shipData.baseStats.lifesteal;
-        playerComp.stats.healthRegen = shipData.baseStats.healthRegen || 0;
         playerComp.stats.xpBonus = metaXP;
-        playerComp.stats.armor = shipData.baseStats.armor || 0;
+        
+        // Store ship mods for systems to use
+        playerComp.stats.shipMods = {
+            offense: ship.offense,
+            tradeoffs: ship.tradeoffs,
+            shieldRegenMult: ship.defenses.shieldRegenMult || 1.0,
+            coolingMult: ship.defenses.coolingMult || 1.0
+        };
         
         // Store base stats snapshot for delta calculations in UI
-        // This represents ship stats + meta progression before any passives
         playerComp.baseStats = {
             damageMultiplier: playerComp.stats.damageMultiplier,
             fireRateMultiplier: playerComp.stats.fireRateMultiplier,
             speed: playerComp.stats.speed,
-            maxHealth: maxHealth,
-            armor: playerComp.stats.armor,
-            critChance: playerComp.stats.critChance,
-            critDamage: playerComp.stats.critDamage,
-            lifesteal: playerComp.stats.lifesteal,
-            healthRegen: playerComp.stats.healthRegen,
+            armor: 0,
+            critChance: 0.05,
+            critDamage: 1.5,
+            lifesteal: 0,
+            healthRegen: 0,
             rangeMultiplier: 1,
             projectileSpeedMultiplier: 1
         };
         
         this.player.addComponent('player', playerComp);
         
+        // Ship color (basic for now)
+        const shipColors = {
+            ION_FRIGATE: '#00FFFF',
+            BALLISTIC_DESTROYER: '#FFFFFF',
+            CATACLYSM_CRUISER: '#FF0000',
+            TECH_NEXUS: '#FF8C00'
+        };
+        
         this.player.addComponent('renderable', Components.Renderable(
-            shipData.color,
+            shipColors[shipId] || '#00FFFF',
             15,
             'triangle'
         ));
 
         // Add starting weapon
-        this.addWeaponToPlayer(shipData.startingWeapon);
+        this.addWeaponToPlayer(ship.startingWeaponId);
         
-        console.log('Player created:', this.player);
+        // Ensure currentWeapon is set for UI
+        if (playerComp.weapons && playerComp.weapons.length > 0) {
+            const weapon = playerComp.weapons[0];
+            playerComp.currentWeapon = weapon.data || weapon;
+        }
+        
+        console.log('Player created with ship:', shipId);
     }
 
     addWeaponToPlayer(weaponType) {
@@ -617,23 +654,22 @@ class Game {
         // Reset stats to DEFAULT_STATS blueprint to prevent undefined errors
         playerComp.stats = structuredClone(DEFAULT_STATS);
         
-        // Apply ship-specific base stats
-        const shipData = ShipData.getShipData(this.gameState.selectedShip);
+        // Apply ship-specific base stats (new ship system doesn't have these stats)
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 
-        playerComp.stats.damage = shipData.baseStats.damageMultiplier * metaDamage;
-        playerComp.stats.damageMultiplier = shipData.baseStats.damageMultiplier * metaDamage;
-        playerComp.stats.fireRate = shipData.baseStats.fireRateMultiplier;
-        playerComp.stats.fireRateMultiplier = shipData.baseStats.fireRateMultiplier;
-        playerComp.stats.speed = shipData.baseStats.speed / 200; // Normalize speed
+        playerComp.stats.damage = metaDamage;
+        playerComp.stats.damageMultiplier = metaDamage;
+        playerComp.stats.fireRate = 1.0;
+        playerComp.stats.fireRateMultiplier = 1.0;
+        playerComp.stats.speed = 1.0;
         playerComp.stats.speedMultiplier = 1;
-        playerComp.stats.critChance = shipData.baseStats.critChance;
-        playerComp.stats.critDamage = shipData.baseStats.critMultiplier;
-        playerComp.stats.lifesteal = shipData.baseStats.lifesteal;
-        playerComp.stats.healthRegen = shipData.baseStats.healthRegen || 0;
+        playerComp.stats.critChance = 0.05;
+        playerComp.stats.critDamage = 1.5;
+        playerComp.stats.lifesteal = 0;
+        playerComp.stats.healthRegen = 0;
         playerComp.stats.xpBonus = metaXP;
-        playerComp.stats.armor = shipData.baseStats.armor || 0;
+        playerComp.stats.armor = 0;
         playerComp.stats.projectileSpeed = 1;
         playerComp.stats.projectileSpeedMultiplier = 1;
         playerComp.stats.range = 1;
@@ -853,11 +889,14 @@ class Game {
         if (!playerComp) return options;
 
         const luck = playerComp.stats.luck;
-        const shipData = ShipData.getShipData(this.gameState.selectedShip);
+        // Old ship system - keystones not implemented for new ships yet
+        // const shipData = ShipData.getShipData(this.gameState.selectedShip);
         
+        // TODO: Implement keystone system for new ships
         // Check if we should offer keystone
-        const keystone = KeystoneData.getKeystoneForClass(shipData.id);
+        // const keystone = KeystoneData.getKeystoneForClass(shipData.id);
         let keystoneOffered = false;
+        const keystone = null; // Disabled for now
         if (keystone && !this.keystonesOffered.has(keystone.id)) {
             // 25% chance to offer keystone if not yet obtained
             if (Math.random() < 0.25) {
@@ -913,9 +952,9 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return null;
 
-        const shipData = ShipData.getShipData(this.gameState.selectedShip);
-        const preferredTags = shipData.preferredTags || [];
-        const bannedTags = shipData.bannedTags || [];
+        // Old ship system - tags not implemented for new ships yet
+        const preferredTags = [];
+        const bannedTags = [];
         
         // Progressive constraint relaxation:
         // 0: Use all constraints (preferred tags, rarity, banned tags)
