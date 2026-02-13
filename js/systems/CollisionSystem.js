@@ -82,6 +82,13 @@ class CollisionSystem {
                     projPos.x, projPos.y, projCol.radius,
                     enemyPos.x, enemyPos.y, enemyCol.radius
                 )) {
+                    // Log collision
+                    logger.debug('Collision', `Projectile hit ${enemy.type} at (${Math.round(enemyPos.x)},${Math.round(enemyPos.y)})`, {
+                        damage: projComp.damage,
+                        damageType: projComp.damageType || 'kinetic',
+                        orbital: projComp.orbital || false
+                    });
+                    
                     // Deal damage to enemy (pass owner entity for lifesteal)
                     this.damageEnemy(enemy, projComp.damage, ownerEntity, projComp.damageType || 'kinetic');
                     
@@ -301,12 +308,20 @@ class CollisionSystem {
         if (!health || !playerComp) return;
         
         // God mode check - no damage taken
-        if (health.godMode) return;
+        if (health.godMode) {
+            logger.debug('Collision', 'Player in god mode - damage ignored');
+            return;
+        }
+
+        // Log incoming damage
+        logger.info('Collision', `Player taking ${damage.toFixed(1)} ${damageType} damage`);
 
         // Try new defense system first
         if (defense && this.world && this.world.defenseSystem) {
             const result = this.world.defenseSystem.applyDamage(player, damage, damageType);
             this.gameState.stats.damageTaken += result.totalDamage;
+            
+            logger.info('Collision', `Player defense result: ${result.totalDamage.toFixed(1)} damage dealt to ${result.layersDamaged.join('+')}${result.destroyed ? ' - PLAYER DESTROYED' : ''}`);
             
             // Visual feedback based on which layers were hit
             if (this.screenEffects) {
@@ -328,11 +343,13 @@ class CollisionSystem {
             // Check for death
             if (result.destroyed) {
                 health.current = 0;
+                logger.warn('Collision', 'Player health set to 0 - GAME OVER');
             }
             return;
         }
 
         // Fallback to old system
+        logger.debug('Collision', 'Using legacy health system for player damage');
         let remainingDamage = damage;
         
         // Shield absorbs damage first
@@ -659,8 +676,12 @@ class CollisionSystem {
         switch (pickupComp.type) {
             case 'xp':
                 if (playerComp) {
-                    const xpGained = pickupComp.value * playerComp.stats.xpBonus;
+                    const baseXP = pickupComp.value;
+                    const xpGained = baseXP * playerComp.stats.xpBonus;
+                    const oldXP = playerComp.xp;
                     playerComp.xp += xpGained;
+                    
+                    logger.debug('Collision', `XP collected: ${baseXP} * ${playerComp.stats.xpBonus.toFixed(2)} = ${xpGained.toFixed(1)} (${oldXP.toFixed(0)} → ${playerComp.xp.toFixed(0)}/${playerComp.xpRequired})`);
                     
                     // Check for level up
                     if (playerComp.xp >= playerComp.xpRequired) {
@@ -671,12 +692,15 @@ class CollisionSystem {
                 
             case 'health':
                 if (health) {
+                    const oldHealth = health.current;
                     health.current = Math.min(health.max, health.current + pickupComp.value);
+                    logger.info('Collision', `Health pickup: +${pickupComp.value} (${oldHealth.toFixed(0)} → ${health.current.toFixed(0)}/${health.max})`);
                 }
                 break;
                 
             case 'noyaux':
                 this.gameState.stats.noyauxEarned += pickupComp.value;
+                logger.info('Collision', `Noyaux collected: +${pickupComp.value} (total: ${this.gameState.stats.noyauxEarned})`);
                 break;
                 
             case 'module':
