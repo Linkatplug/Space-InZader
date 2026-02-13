@@ -546,6 +546,7 @@ class UISystem {
         // Update defense layers or fallback to legacy health
         const defense = player.getComponent('defense');
         const health = player.getComponent('health');
+        const heat = player.getComponent('heat');
         
         if (defense) {
             // Show new defense system (Shield/Armor/Structure)
@@ -600,18 +601,20 @@ class UISystem {
         
         // Update heat/overheat gauge
         if (this.heatBar && this.heatFill && this.heatDisplay) {
-            const heat = playerComp?.heat ?? 0;
-            const heatMax = playerComp?.heatMax ?? 100;
-            
-            if (heatMax > 0 && heat > 0) {
+            if (heat && heat.max > 0) {
                 this.heatBar.style.display = 'block';
                 this.heatDisplay.style.display = 'block';
-                this.heatValue.textContent = `${Math.ceil(heat)}/${heatMax}`;
-                const heatPercent = (heat / heatMax) * 100;
+                this.heatValue.textContent = `${Math.ceil(heat.current)}/${heat.max}`;
+                const heatPercent = (heat.current / heat.max) * 100;
                 this.heatFill.style.width = `${Math.max(0, Math.min(100, heatPercent))}%`;
                 
-                // Change color based on heat level
-                if (heatPercent >= 80) {
+                // Change color based on heat level and overheat status
+                if (heat.overheated) {
+                    this.heatFill.style.background = 'linear-gradient(to right, #ff0000, #cc0000)';
+                    if (this.heatValue) {
+                        this.heatValue.textContent = `⚠️ OVERHEATED`;
+                    }
+                } else if (heatPercent >= 80) {
                     this.heatFill.style.background = 'linear-gradient(to right, #ff4444, #ff0000)';
                 } else if (heatPercent >= 50) {
                     this.heatFill.style.background = 'linear-gradient(to right, #ffaa00, #ff6600)';
