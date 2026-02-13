@@ -833,17 +833,35 @@ class Game {
     }
 
     triggerLevelUp() {
+        console.log('=== LEVEL UP TRIGGERED ===');
         logger.info('Game', 'Player leveled up!');
+        
+        console.log('[triggerLevelUp] Setting state to LEVEL_UP');
         this.gameState.setState(GameStates.LEVEL_UP);
         
+        console.log('[triggerLevelUp] Generating boost options...');
         // Generate 3 random boosts
         const boosts = this.generateBoostOptions();
         this.gameState.pendingBoosts = boosts;
         
+        console.log(`[triggerLevelUp] Generated ${boosts.length} boosts:`, boosts.map(b => b?.key || 'null'));
+        
+        if (boosts.length === 0) {
+            console.error('[triggerLevelUp] ERROR: No boosts generated! Player will be stuck!');
+            console.error('[triggerLevelUp] Forcing game to resume as emergency fallback...');
+            this.gameState.setState(GameStates.RUNNING);
+            this.running = true;
+            return;
+        }
+        
+        console.log('[triggerLevelUp] Showing level up UI...');
         this.systems.ui.showLevelUp(boosts);
         
+        console.log('[triggerLevelUp] Playing level up sound...');
         // Play level up sound
         this.audioManager.playSFX('levelup');
+        
+        console.log('[triggerLevelUp] Complete. Game is now in LEVEL_UP state, waiting for player selection.');
     }
 
     generateBoostOptions() {
