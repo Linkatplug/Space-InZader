@@ -130,7 +130,7 @@ class CollisionSystem {
             
             if (!playerPos || !playerCol || !playerHealth) continue;
             
-            // FIX: Increase i-frames to 400ms (was 500ms)
+            // FIX: Set i-frames to 400ms (was 500ms in enemy collision, 300ms in projectile)
             if (playerHealth.invulnerable || playerHealth.godMode) {
                 // Silently skip - expected during invulnerability frames or when god mode is active
                 continue;
