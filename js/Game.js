@@ -553,6 +553,8 @@ class Game {
             } else {
                 logger.warn('Game', `Weapon ${weaponType} already at max level`);
             }
+            // Update existing weapon data reference
+            existing.data = weaponData;
         } else {
             // Add new weapon
             playerComp.weapons.push({
@@ -563,6 +565,12 @@ class Game {
                 evolved: false
             });
             logger.info('Game', `Added weapon: ${weaponType}`);
+        }
+
+        // Set currentWeapon to the equipped weapon for UI display
+        if (playerComp.weapons && playerComp.weapons.length > 0) {
+            const weapon = playerComp.weapons[0];
+            playerComp.currentWeapon = weapon.data || weapon;
         }
 
         this.systems.ui.updateHUD();
