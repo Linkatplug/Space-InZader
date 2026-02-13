@@ -212,7 +212,15 @@ class AudioManager {
                 this.playElectric(now, pitch);
                 break;
             default:
-                console.warn('Unknown sound type:', type);
+                // FIX: Fallback to ui_click sound for unknown types, or silently ignore
+                // Only warn once per unknown type to avoid spam
+                if (!this.unknownSoundWarnings) this.unknownSoundWarnings = new Set();
+                if (!this.unknownSoundWarnings.has(type)) {
+                    console.warn(`[AudioManager] Unknown sound type: ${type}, using fallback`);
+                    this.unknownSoundWarnings.add(type);
+                }
+                // Play a generic click sound as fallback
+                this.playPickup(now, 1.0);
         }
     }
 

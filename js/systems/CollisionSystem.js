@@ -17,9 +17,23 @@ class CollisionSystem {
         this.BLACK_HOLE_DEATH_FLASH_COLOR = '#9400D3'; // Purple
         this.BLACK_HOLE_DEATH_FLASH_INTENSITY = 0.5;
         this.BLACK_HOLE_DEATH_FLASH_DURATION = 0.5;
+        
+        // FIX: Hit cooldown tracking per damage source (200ms cooldown)
+        this.hitCooldowns = new Map(); // Map<sourceId, cooldownTime>
+        this.HIT_COOLDOWN_DURATION = 0.2; // 200ms between hits from same source
     }
 
     update(deltaTime) {
+        // Update hit cooldowns
+        for (const [sourceId, cooldown] of this.hitCooldowns.entries()) {
+            const newCooldown = cooldown - deltaTime;
+            if (newCooldown <= 0) {
+                this.hitCooldowns.delete(sourceId);
+            } else {
+                this.hitCooldowns.set(sourceId, newCooldown);
+            }
+        }
+        
         // Update orbital projectile hit cooldowns
         const projectiles = this.world.getEntitiesByType('projectile');
         for (const projectile of projectiles) {
@@ -115,6 +129,8 @@ class CollisionSystem {
             const playerHealth = player.getComponent('health');
             
             if (!playerPos || !playerCol || !playerHealth) continue;
+            
+            // FIX: Increase i-frames to 400ms (was 500ms)
             if (playerHealth.invulnerable || playerHealth.godMode) {
                 // Silently skip - expected during invulnerability frames or when god mode is active
                 continue;
@@ -126,21 +142,30 @@ class CollisionSystem {
                 const enemyComp = enemy.getComponent('enemy');
                 
                 if (!enemyPos || !enemyCol || !enemyComp) continue;
+                
+                // FIX: Check hit cooldown for this enemy
+                const sourceId = `enemy_${enemy.id}`;
+                if (this.hitCooldowns.has(sourceId)) {
+                    continue; // Still on cooldown for this enemy
+                }
 
                 if (MathUtils.circleCollision(
                     playerPos.x, playerPos.y, playerCol.radius,
                     enemyPos.x, enemyPos.y, enemyCol.radius
                 )) {
-                    console.log(`[CollisionSystem] Player collision with enemy! Damage: ${enemyComp.damage}`);
+                    console.log(`[CollisionSystem] Player collision with enemy ${enemy.id}! Damage: ${enemyComp.damage}`);
                     
                     // Deal damage to player
                     this.damagePlayer(player, enemyComp.damage);
                     
-                    // Add invulnerability frames
-                    playerHealth.invulnerable = true;
-                    playerHealth.invulnerableTime = 0.5; // 0.5 seconds
+                    // FIX: Add hit cooldown for this enemy (200ms)
+                    this.hitCooldowns.set(sourceId, this.HIT_COOLDOWN_DURATION);
                     
-                    console.log('[CollisionSystem] Invulnerability activated for 0.5s');
+                    // FIX: Add i-frames (400ms)
+                    playerHealth.invulnerable = true;
+                    playerHealth.invulnerableTime = 0.4;
+                    
+                    console.log('[CollisionSystem] Invulnerability activated for 400ms, hit cooldown for this enemy: 200ms');
                 }
             }
         }
@@ -209,6 +234,12 @@ class CollisionSystem {
                 // Check if projectile is from enemy (owner is an enemy entity)
                 const ownerEntity = this.world.getEntity(projComp.owner);
                 if (!ownerEntity || ownerEntity.type !== 'enemy') continue;
+                
+                // FIX: Check hit cooldown for this projectile
+                const sourceId = `projectile_${projectile.id}`;
+                if (this.hitCooldowns.has(sourceId)) {
+                    continue; // Still on cooldown
+                }
 
                 if (MathUtils.circleCollision(
                     playerPos.x, playerPos.y, playerCol.radius,
@@ -220,9 +251,10 @@ class CollisionSystem {
                     // Remove projectile
                     this.world.removeEntity(projectile.id);
                     
-                    // Add invulnerability frames
+                    // FIX: Add hit cooldown (200ms) and i-frames (400ms)
+                    this.hitCooldowns.set(sourceId, this.HIT_COOLDOWN_DURATION);
                     playerHealth.invulnerable = true;
-                    playerHealth.invulnerableTime = 0.3;
+                    playerHealth.invulnerableTime = 0.4;
                 }
             }
         }

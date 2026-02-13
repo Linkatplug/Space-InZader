@@ -19,7 +19,24 @@ class AISystem {
         
         if (!player) return;
 
+        // Get canvas bounds for despawn check
+        const canvas = document.getElementById('gameCanvas');
+        const canvasWidth = canvas ? canvas.width : 1920;
+        const canvasHeight = canvas ? canvas.height : 1080;
+        const DESPAWN_MARGIN = 200; // Despawn if >200px outside screen
+
         for (const enemy of enemies) {
+            // Check for off-screen despawn
+            const pos = enemy.getComponent('position');
+            if (pos) {
+                if (pos.x < -DESPAWN_MARGIN || pos.x > canvasWidth + DESPAWN_MARGIN ||
+                    pos.y < -DESPAWN_MARGIN || pos.y > canvasHeight + DESPAWN_MARGIN) {
+                    console.log(`[AISystem] Despawning off-screen enemy at (${pos.x.toFixed(0)}, ${pos.y.toFixed(0)})`);
+                    this.world.removeEntity(enemy.id);
+                    continue;
+                }
+            }
+            
             this.updateEnemyAI(enemy, player, deltaTime);
         }
     }
@@ -532,7 +549,10 @@ class AISystem {
         if (enemyComp.attackCooldown > 0) return;
 
         const distance = MathUtils.distance(enemyPos.x, enemyPos.y, playerPos.x, playerPos.y);
-        const range = attackPattern.range || 300;
+        
+        // FIX: Add maximum firing range (420px)
+        const MAX_ENEMY_FIRE_RANGE = 420;
+        const range = Math.min(attackPattern.range || 300, MAX_ENEMY_FIRE_RANGE);
 
         if (distance <= range) {
             if (attackPattern.type === 'shoot') {
