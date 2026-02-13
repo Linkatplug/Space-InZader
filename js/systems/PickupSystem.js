@@ -157,6 +157,8 @@ class PickupSystem {
         // Apply XP bonus
         const finalXP = xpValue * playerComp.stats.xpBonus;
         playerComp.xp += finalXP;
+        
+        console.log(`💎 [PickupSystem] XP +${finalXP.toFixed(1)} (Total: ${playerComp.xp.toFixed(1)}/${playerComp.xpRequired})`);
 
         // Check for level up
         while (playerComp.xp >= playerComp.xpRequired) {
@@ -283,6 +285,10 @@ class PickupSystem {
      */
     onLevelUp(player) {
         const playerPos = player.getComponent('position');
+        const playerComp = player.getComponent('player');
+        
+        console.log(`⭐ [PickupSystem] LEVEL UP! Player reached level ${playerComp.level}`);
+        console.log(`[PickupSystem] XP Progress: ${playerComp.xp.toFixed(1)}/${playerComp.xpRequired} (Next level at ${playerComp.xpRequired})`);
         
         // Create level up particle effect
         this.createLevelUpEffect(playerPos.x, playerPos.y);
@@ -293,9 +299,13 @@ class PickupSystem {
             health.current = Math.min(health.current + health.max * 0.2, health.max);
         }
         
-        // Pause game and show level up choices
-        // This would be handled by the main game loop
-        console.log('Level Up! Now level', player.getComponent('player').level);
+        // Emit LEVEL_UP event to pause game and show UI
+        if (this.world.events) {
+            console.log('[PickupSystem] Emitting LEVEL_UP event...');
+            this.world.events.emit('LEVEL_UP', { player, level: playerComp.level });
+        } else {
+            console.error('[PickupSystem] ERROR: No event bus available!');
+        }
     }
 
     /**

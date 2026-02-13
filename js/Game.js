@@ -346,6 +346,32 @@ class Game {
             }
         });
 
+        // Listen for LEVEL_UP event from PickupSystem
+        this.world.events.on('LEVEL_UP', (data) => {
+            console.log(`[Game] LEVEL_UP event received - Player level ${data.level}`);
+            
+            // Pause the game
+            this.gameState.setState(GameStates.LEVEL_UP);
+            this.running = false;
+            
+            // Generate 3 upgrade options from ShipUpgradeData
+            const options = this.generateLevelUpOptions(data.player);
+            console.log(`[Game] Generated ${options.length} upgrade options:`, options.map(o => o.id));
+            
+            if (options.length === 0) {
+                console.error('[Game] No upgrade options available! Resuming game...');
+                this.gameState.setState(GameStates.RUNNING);
+                this.running = true;
+                return;
+            }
+            
+            // Show level up UI
+            this.systems.ui.showLevelUp(options, 0);
+            
+            // Play level up sound
+            this.audioManager.playSFX('levelup');
+        });
+
         // Initialize audio on first user interaction
         let audioInitialized = false;
         const initAudio = () => {
@@ -1245,6 +1271,75 @@ class Game {
         }
 
         logger.debug('Game', 'Boost applied successfully', boost);
+    }
+
+    /**
+     * Generate level-up upgrade options from ShipUpgradeData
+     * @param {Entity} player - Player entity
+     * @returns {Array} Array of 3 upgrade options
+     */
+    generateLevelUpOptions(player) {
+        const playerComp = player.getComponent('player');
+        if (!playerComp) {
+            console.error('[Game] generateLevelUpOptions: No player component');
+            return [];
+        }
+
+        const shipId = playerComp.shipId || this.gameState.selectedShip;
+        if (!shipId) {
+            console.error('[Game] generateLevelUpOptions: No ship selected');
+            return [];
+        }
+
+        // Get ship upgrade data
+        const shipData = window.ShipUpgradeData?.getShipData(shipId);
+        if (!shipData || !shipData.upgrades) {
+            console.error(`[Game] No upgrade data for ship: ${shipId}`);
+            return [];
+        }
+
+        console.log(`[Game] Generating upgrades for ${shipData.name}, ${shipData.upgrades.length} available`);
+
+        // Get current player upgrades
+        const currentUpgrades = playerComp.upgrades || new Map();
+
+        // Filter available upgrades (not maxed)
+        const availableUpgrades = shipData.upgrades.filter(upgrade => {
+            const currentLevel = currentUpgrades.get(upgrade.id) || 0;
+            return currentLevel < upgrade.maxLevel;
+        });
+
+        if (availableUpgrades.length === 0) {
+            console.warn('[Game] No upgrades available (all maxed)');
+            return [];
+        }
+
+        // Select 3 random upgrades (or fewer if not enough available)
+        const count = Math.min(3, availableUpgrades.length);
+        const selected = [];
+        const pool = [...availableUpgrades];
+
+        for (let i = 0; i < count; i++) {
+            const index = Math.floor(Math.random() * pool.length);
+            const upgrade = pool.splice(index, 1)[0];
+            const currentLevel = currentUpgrades.get(upgrade.id) || 0;
+
+            selected.push({
+                type: 'upgrade',
+                key: upgrade.id,
+                id: upgrade.id,
+                name: upgrade.name,
+                description: upgrade.description,
+                currentLevel: currentLevel,
+                maxLevel: upgrade.maxLevel,
+                data: upgrade,
+                rarity: 'common' // Ship upgrades are always common
+            });
+        }
+
+        console.log(`[Game] Selected ${selected.length} upgrades:`, selected.map(s => `${s.name} (${s.currentLevel}/${s.maxLevel})`));
+
+        return selected;
     }
 
     pauseGame() {

@@ -30,16 +30,26 @@ class HeatSystem {
         const heat = entity.getComponent('heat');
         if (!heat) return;
 
-        // Handle overheat timer
+        // Handle overheat timer - FIX: Initialize timer if undefined
         if (heat.overheated) {
+            // Safety check: initialize timer if somehow undefined
+            if (typeof heat.overheatTimer !== 'number') {
+                console.warn('[HeatSystem] overheatTimer was undefined! Initializing to 1.0s');
+                heat.overheatTimer = 1.0;
+            }
+            
             heat.overheatTimer -= deltaTime;
             
             if (heat.overheatTimer <= 0) {
-                // Recovery from overheat
-                heat.overheated = false;
-                heat.current = typeof HEAT_SYSTEM !== 'undefined' 
+                // Recovery from overheat with hysteresis (60% recovery point)
+                const recoveryValue = typeof HEAT_SYSTEM !== 'undefined' 
                     ? HEAT_SYSTEM.OVERHEAT_RECOVERY_VALUE 
-                    : 50;
+                    : heat.max * 0.6; // 60% hysteresis
+                
+                heat.overheated = false;
+                heat.current = recoveryValue;
+                
+                console.log(`✅ [HeatSystem] OVERHEAT RECOVERED - Heat at ${recoveryValue.toFixed(1)}/${heat.max}`);
                     
                 // Re-enable weapons if this is a player
                 if (entity.type === 'player' && this.gameState) {
@@ -97,14 +107,17 @@ class HeatSystem {
         const heat = entity.getComponent('heat');
         if (!heat) return;
 
-        heat.overheated = true;
-        heat.overheatTimer = typeof HEAT_SYSTEM !== 'undefined'
+        // FIX: Always initialize overheatTimer properly
+        const disableDuration = typeof HEAT_SYSTEM !== 'undefined'
             ? HEAT_SYSTEM.OVERHEAT_DISABLE_DURATION
-            : 2.0;
+            : 1.5; // Default 1.5 seconds
+            
+        heat.overheated = true;
+        heat.overheatTimer = disableDuration; // CRITICAL: Always set this!
         heat.current = heat.max; // Keep at max during overheat
 
         // Visual/audio feedback
-        console.log('⚠️ OVERHEAT! Weapons disabled for', heat.overheatTimer, 'seconds');
+        console.log(`🔥 [HeatSystem] OVERHEAT START - Weapons disabled for ${disableDuration.toFixed(1)}s`);
         
         // Store overheat state in gameState if it's a player
         if (entity.type === 'player' && this.gameState) {
