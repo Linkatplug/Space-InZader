@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DamagePacket Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #00ff00;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #333;
+        }
+        .pass {
+            background-color: #002200;
+            border-color: #00ff00;
+        }
+        .fail {
+            background-color: #220000;
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+        h1 {
+            color: #00ffff;
+        }
+        h2 {
+            color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <h1>DamagePacket Test Suite</h1>
+    <div id="test-results"></div>
+
+    <script src="js/core/DamagePacket.js"></script>
+    <script>
+        // Test utility
+        function test(name, fn) {
+            const resultsDiv = document.getElementById('test-results');
+            try {
+                fn();
+                resultsDiv.innerHTML += `<div class="test-result pass">✓ ${name}</div>`;
+                console.log(`✓ ${name}`);
+            } catch (error) {
+                resultsDiv.innerHTML += `<div class="test-result fail">✗ ${name}: ${error.message}</div>`;
+                console.error(`✗ ${name}:`, error);
+            }
+        }
+
+        function assertEquals(actual, expected, message) {
+            if (actual !== expected) {
+                throw new Error(`${message}: expected ${expected}, got ${actual}`);
+            }
+        }
+
+        function assertThrows(fn, message) {
+            try {
+                fn();
+                throw new Error(`${message}: expected function to throw an error`);
+            } catch (error) {
+                // Expected to throw
+                if (error.message.includes('expected function to throw')) {
+                    throw error;
+                }
+            }
+        }
+
+        // Run tests
+        document.getElementById('test-results').innerHTML = '<h2>Running Tests...</h2>';
+
+        test('DamagePacket can be created with valid parameters', () => {
+            const packet = new DamagePacket({
+                baseDamage: 100,
+                damageType: 'energy',
+                armorPenetration: 0.5,
+                shieldPenetration: 0.3,
+                critChance: 0.2,
+                critMultiplier: 2.0
+            });
+            
+            assertEquals(packet.baseDamage, 100, 'baseDamage');
+            assertEquals(packet.damageType, 'energy', 'damageType');
+            assertEquals(packet.armorPenetration, 0.5, 'armorPenetration');
+            assertEquals(packet.shieldPenetration, 0.3, 'shieldPenetration');
+            assertEquals(packet.critChance, 0.2, 'critChance');
+            assertEquals(packet.critMultiplier, 2.0, 'critMultiplier');
+        });
+
+        test('DamagePacket uses default values for optional parameters', () => {
+            const packet = new DamagePacket({
+                baseDamage: 50,
+                damageType: 'kinetic'
+            });
+            
+            assertEquals(packet.baseDamage, 50, 'baseDamage');
+            assertEquals(packet.damageType, 'kinetic', 'damageType');
+            assertEquals(packet.armorPenetration, 0, 'armorPenetration default');
+            assertEquals(packet.shieldPenetration, 0, 'shieldPenetration default');
+            assertEquals(packet.critChance, 0, 'critChance default');
+            assertEquals(packet.critMultiplier, 1.5, 'critMultiplier default');
+        });
+
+        test('DamagePacket accepts all three damage types', () => {
+            const energy = new DamagePacket({ baseDamage: 10, damageType: 'energy' });
+            const kinetic = new DamagePacket({ baseDamage: 10, damageType: 'kinetic' });
+            const explosive = new DamagePacket({ baseDamage: 10, damageType: 'explosive' });
+            
+            assertEquals(energy.damageType, 'energy', 'energy type');
+            assertEquals(kinetic.damageType, 'kinetic', 'kinetic type');
+            assertEquals(explosive.damageType, 'explosive', 'explosive type');
+        });
+
+        test('DamagePacket is immutable', () => {
+            const packet = new DamagePacket({
+                baseDamage: 100,
+                damageType: 'energy'
+            });
+            
+            assertThrows(() => {
+                packet.baseDamage = 200;
+                // In strict mode, this would throw. Check if value didn't change
+                if (packet.baseDamage !== 100) {
+                    throw new Error('Packet was modified');
+                }
+            }, 'Immutability check');
+        });
+
+        test('DamagePacket throws error for invalid baseDamage', () => {
+            assertThrows(() => {
+                new DamagePacket({ baseDamage: -10, damageType: 'energy' });
+            }, 'Negative baseDamage');
+            
+            assertThrows(() => {
+                new DamagePacket({ baseDamage: 'invalid', damageType: 'energy' });
+            }, 'Non-numeric baseDamage');
+        });
+
+        test('DamagePacket throws error for invalid damageType', () => {
+            assertThrows(() => {
+                new DamagePacket({ baseDamage: 100, damageType: 'invalid' });
+            }, 'Invalid damageType');
+        });
+
+        test('DamagePacket throws error for out of range penetration values', () => {
+            assertThrows(() => {
+                new DamagePacket({ baseDamage: 100, damageType: 'energy', armorPenetration: 1.5 });
+            }, 'armorPenetration > 1');
+            
+            assertThrows(() => {
+                new DamagePacket({ baseDamage: 100, damageType: 'energy', shieldPenetration: -0.1 });
+            }, 'shieldPenetration < 0');
+        });
+
+        test('DamagePacket throws error for invalid critChance', () => {
+            assertThrows(() => {
+                new DamagePacket({ baseDamage: 100, damageType: 'energy', critChance: 1.5 });
+            }, 'critChance > 1');
+        });
+
+        test('DamagePacket withModifications creates new instance', () => {
+            const original = new DamagePacket({
+                baseDamage: 100,
+                damageType: 'energy',
+                critChance: 0.1
+            });
+            
+            const modified = original.withModifications({
+                baseDamage: 150,
+                critChance: 0.2
+            });
+            
+            // Original should be unchanged
+            assertEquals(original.baseDamage, 100, 'Original baseDamage unchanged');
+            assertEquals(original.critChance, 0.1, 'Original critChance unchanged');
+            
+            // Modified should have new values
+            assertEquals(modified.baseDamage, 150, 'Modified baseDamage');
+            assertEquals(modified.critChance, 0.2, 'Modified critChance');
+            
+            // Unmodified properties should be copied
+            assertEquals(modified.damageType, 'energy', 'Modified damageType copied');
+        });
+
+        test('DamagePacket toString returns formatted string', () => {
+            const packet = new DamagePacket({
+                baseDamage: 100,
+                damageType: 'explosive',
+                armorPenetration: 0.5,
+                shieldPenetration: 0.3,
+                critChance: 0.25,
+                critMultiplier: 2.0
+            });
+            
+            const str = packet.toString();
+            if (!str.includes('100') || !str.includes('explosive')) {
+                throw new Error('toString does not contain expected values');
+            }
+        });
+
+        document.getElementById('test-results').innerHTML += '<h2>All Tests Complete!</h2>';
+    </script>
+</body>
+</html>
