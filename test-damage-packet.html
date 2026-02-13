@@ -160,6 +160,16 @@
             }, 'critChance > 1');
         });
 
+        test('DamagePacket throws error for invalid critMultiplier', () => {
+            assertThrows(() => {
+                new DamagePacket({ baseDamage: 100, damageType: 'energy', critMultiplier: -1 });
+            }, 'Negative critMultiplier');
+            
+            assertThrows(() => {
+                new DamagePacket({ baseDamage: 100, damageType: 'energy', critMultiplier: 0 });
+            }, 'Zero critMultiplier');
+        });
+
         test('DamagePacket withModifications creates new instance', () => {
             const original = new DamagePacket({
                 baseDamage: 100,

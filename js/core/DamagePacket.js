@@ -45,9 +45,7 @@ class DamagePacket {
         this.armorPenetration = this._validateRatio(config.armorPenetration, 0, 'armorPenetration');
         this.shieldPenetration = this._validateRatio(config.shieldPenetration, 0, 'shieldPenetration');
         this.critChance = this._validateRatio(config.critChance, 0, 'critChance');
-        this.critMultiplier = typeof config.critMultiplier === 'number' && config.critMultiplier > 0 
-            ? config.critMultiplier 
-            : 1.5;
+        this.critMultiplier = this._validateCritMultiplier(config.critMultiplier);
 
         // Make the object immutable
         Object.freeze(this);
@@ -73,6 +71,24 @@ class DamagePacket {
     }
 
     /**
+     * Validates the critical hit multiplier value.
+     * 
+     * @private
+     * @param {*} value - Value to validate
+     * @returns {number} Validated multiplier value
+     * @throws {Error} If value is invalid
+     */
+    _validateCritMultiplier(value) {
+        if (value === undefined || value === null) {
+            return 1.5; // Default value
+        }
+        if (typeof value !== 'number' || value <= 0) {
+            throw new Error('critMultiplier must be a positive number');
+        }
+        return value;
+    }
+
+    /**
      * Creates a copy of this damage packet with modified properties.
      * Useful for applying modifiers while maintaining immutability.
      * 
@@ -81,12 +97,13 @@ class DamagePacket {
      */
     withModifications(modifications) {
         return new DamagePacket({
-            baseDamage: modifications.baseDamage !== undefined ? modifications.baseDamage : this.baseDamage,
-            damageType: modifications.damageType !== undefined ? modifications.damageType : this.damageType,
-            armorPenetration: modifications.armorPenetration !== undefined ? modifications.armorPenetration : this.armorPenetration,
-            shieldPenetration: modifications.shieldPenetration !== undefined ? modifications.shieldPenetration : this.shieldPenetration,
-            critChance: modifications.critChance !== undefined ? modifications.critChance : this.critChance,
-            critMultiplier: modifications.critMultiplier !== undefined ? modifications.critMultiplier : this.critMultiplier
+            baseDamage: this.baseDamage,
+            damageType: this.damageType,
+            armorPenetration: this.armorPenetration,
+            shieldPenetration: this.shieldPenetration,
+            critChance: this.critChance,
+            critMultiplier: this.critMultiplier,
+            ...modifications
         });
     }
 
