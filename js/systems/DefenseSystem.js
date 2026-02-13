@@ -36,17 +36,31 @@ class DefenseSystem {
         if (!defense) return;
 
         // Update each layer
-        this.updateLayer(defense.shield, deltaTime);
-        this.updateLayer(defense.armor, deltaTime);
-        this.updateLayer(defense.structure, deltaTime);
+        this.updateLayer(defense.shield, deltaTime, 'shield');
+        this.updateLayer(defense.armor, deltaTime, 'armor');
+        this.updateLayer(defense.structure, deltaTime, 'structure');
     }
 
     /**
      * Update a single defense layer
      * @param {Object} layer - Defense layer component
      * @param {number} deltaTime - Time elapsed
+     * @param {string} layerName - Name of the layer (shield, armor, structure)
      */
-    updateLayer(layer, deltaTime) {
+    updateLayer(layer, deltaTime, layerName) {
+        // Defensive guards to prevent crashes
+        if (!layer || typeof layer !== 'object') {
+            console.warn('[DefenseSystem] Invalid layer object received');
+            return;
+        }
+        if (!layerName || typeof layerName !== 'string') {
+            console.warn('[DefenseSystem] Invalid layerName received');
+            return;
+        }
+
+        // Debug log for testing stability (temporary)
+        console.debug('[DefenseSystem] Updating layer:', layerName);
+
         // Update regen delay
         if (layer.regenDelay > 0) {
             layer.regenDelay -= deltaTime;
