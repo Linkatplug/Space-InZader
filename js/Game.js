@@ -411,6 +411,16 @@ class Game {
         const playerComp = Components.Player();
         playerComp.speed = shipData.baseStats.speed;
         
+        // Map ship to ShipUpgradeData ship ID
+        const shipIdMap = {
+            'equilibre': 'ION_FRIGATE',
+            'defenseur': 'BALLISTIC_DESTROYER',
+            'attaquant': 'CATACLYSM_CRUISER',
+            'technicien': 'TECH_NEXUS'
+        };
+        playerComp.shipId = shipIdMap[this.gameState.selectedShip] || 'ION_FRIGATE';
+        console.log(`Player ship mapped: ${this.gameState.selectedShip} -> ${playerComp.shipId}`);
+        
         // Initialize stats from DEFAULT_STATS blueprint to prevent undefined errors
         playerComp.stats = structuredClone(DEFAULT_STATS);
         
@@ -918,34 +928,41 @@ class Game {
                 return true;
             });
 
-            // Get available passives with tag filtering
-            const availablePassives = Object.keys(PassiveData.PASSIVES).filter(key => {
-                const passive = PassiveData.PASSIVES[key];
-                const savePassive = this.saveData.passives[passive.id];
-                if (!savePassive || !savePassive.unlocked) return false;
-                if (useRarityFilter && passive.rarity !== rarity) return false;
+            // Get available ship upgrades (NOT maxed out)
+            const shipId = playerComp.shipId || 'ION_FRIGATE';
+            const shipData = window.ShipUpgradeData?.SHIPS?.[shipId];
+            
+            const availableUpgrades = shipData ? shipData.upgrades.filter(upgrade => {
+                const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
+                if (currentLevel >= upgrade.maxLevel) return false;
                 
-                // Check if passive already at maxStacks
-                const existing = playerComp.passives.find(p => p.id === passive.id);
-                if (existing && existing.stacks >= passive.maxStacks) return false;
+                // Treat upgrades as 'rare' rarity for now (can be enhanced later)
+                if (useRarityFilter && rarity !== 'rare') return false;
                 
                 // Filter by banned tags (unless relaxed)
                 if (useBannedTags) {
-                    const hasBannedTag = passive.tags?.some(t => bannedTags.includes(t));
+                    const hasBannedTag = upgrade.tags?.some(t => bannedTags.includes(t));
                     if (hasBannedTag) return false;
                 }
                 
                 // If using preferred tags, check for match
                 if (usePreferred) {
-                    return passive.tags?.some(t => preferredTags.includes(t));
+                    return upgrade.tags?.some(t => preferredTags.includes(t));
                 }
                 
                 return true;
-            });
+            }).map(upgrade => {
+                const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
+                return {
+                    ...upgrade,
+                    currentLevel,
+                    nextLevel: currentLevel + 1
+                };
+            }) : [];
 
             let all = [
                 ...availableWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
-                ...availablePassives.map(p => ({ type: 'passive', key: PassiveData.PASSIVES[p].id, data: PassiveData.PASSIVES[p] }))
+                ...availableUpgrades.map(u => ({ type: 'upgrade', key: u.id, data: u, currentLevel: u.currentLevel, maxLevel: u.maxLevel }))
             ];
 
             // FIX: If preferred pool is empty, fallback to global pool for this rarity
@@ -968,24 +985,29 @@ class Game {
                     return true;
                 });
                 
-                const globalPassives = Object.keys(PassiveData.PASSIVES).filter(key => {
-                    const passive = PassiveData.PASSIVES[key];
-                    const savePassive = this.saveData.passives[passive.id];
-                    if (!savePassive || !savePassive.unlocked) return false;
-                    if (passive.rarity !== rarity) return false;
+                const globalUpgrades = shipData ? shipData.upgrades.filter(upgrade => {
+                    const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
+                    if (currentLevel >= upgrade.maxLevel) return false;
                     
-                    const existing = playerComp.passives.find(p => p.id === passive.id);
-                    if (existing && existing.stacks >= passive.maxStacks) return false;
+                    // Treat upgrades as 'rare' rarity
+                    if (rarity !== 'rare') return false;
                     
-                    const hasBannedTag = passive.tags?.some(t => bannedTags.includes(t));
+                    const hasBannedTag = upgrade.tags?.some(t => bannedTags.includes(t));
                     if (hasBannedTag) return false;
                     
                     return true;
-                });
+                }).map(upgrade => {
+                    const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
+                    return {
+                        ...upgrade,
+                        currentLevel,
+                        nextLevel: currentLevel + 1
+                    };
+                }) : [];
                 
                 all = [
                     ...globalWeapons.map(w => ({ type: 'weapon', key: WeaponData.WEAPONS[w].id, data: WeaponData.WEAPONS[w] })),
-                    ...globalPassives.map(p => ({ type: 'passive', key: PassiveData.PASSIVES[p].id, data: PassiveData.PASSIVES[p] }))
+                    ...globalUpgrades.map(u => ({ type: 'upgrade', key: u.id, data: u, currentLevel: u.currentLevel, maxLevel: u.maxLevel }))
                 ];
             }
 

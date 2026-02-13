@@ -259,6 +259,8 @@ const Components = {
         xpRequired: 100,
         weapons: [],
         passives: [],
+        shipId: 'ION_FRIGATE',  // Current ship identifier
+        upgrades: new Map(),    // Map<upgradeId, level> for ship upgrades
         stats: {
             damage: 1,
             fireRate: 1,
