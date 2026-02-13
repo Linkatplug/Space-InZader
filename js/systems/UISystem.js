@@ -196,11 +196,20 @@ class UISystem {
             explosive: '#FF0000'
         };
         
-        // Use canvas screen coordinates directly (data.x, data.y are already screen positions)
+        const canvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
+        let left = (data.x || 0);
+        let top = (data.y || 0);
+
+        if (canvas) {
+            const rect = canvas.getBoundingClientRect();
+            left = rect.left + left;
+            top = rect.top + top;
+        }
+
         text.style.cssText = `
             position: fixed;
-            left: ${data.x || 400}px;
-            top: ${data.y || 300}px;
+            left: ${left}px;
+            top: ${top}px;
             color: ${typeColors[data.damageType] || '#FFF'};
             font-size: 20px;
             font-weight: bold;

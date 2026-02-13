@@ -861,6 +861,13 @@ class CombatSystem {
      * @param {Object} weapon - Weapon data
      */
     fireWeaponWithHeat(player, weapon) {
+        // Ensure UI can read the currently firing weapon
+        const playerComp = player.getComponent('player');
+        if (playerComp) {
+            // weapon is usually an object with .data
+            playerComp.currentWeapon = (weapon && weapon.data) ? weapon.data : weapon;
+        }
+
         // Check heat first
         const heat = player.getComponent('heat');
         if (heat && heat.overheated) {
