@@ -60,15 +60,17 @@ class HeatSystem {
             return;
         }
 
-        // Apply passive heat generation
-        heat.current += heat.passiveHeat * deltaTime;
+        // Apply passive heat generation (guard against undefined)
+        const passiveHeat = heat.passiveHeat ?? 0;
+        heat.current += passiveHeat * deltaTime;
 
-        // Apply cooling with cap enforcement
+        // Apply cooling with cap enforcement (guard against undefined)
         const maxCoolingBonus = typeof HEAT_SYSTEM !== 'undefined' 
             ? HEAT_SYSTEM.MAX_COOLING_BONUS 
             : 2.0;
+        const cooling = heat.cooling ?? 1;
         const cappedCoolingBonus = Math.min(heat.coolingBonus || 0, maxCoolingBonus);
-        const effectiveCooling = heat.cooling * (1 + cappedCoolingBonus);
+        const effectiveCooling = cooling * (1 + cappedCoolingBonus);
         const coolingAmount = effectiveCooling * deltaTime;
         heat.current = Math.max(0, heat.current - coolingAmount);
 

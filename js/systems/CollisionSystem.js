@@ -704,11 +704,15 @@ class CollisionSystem {
         switch (pickupComp.type) {
             case 'xp':
                 if (playerComp) {
-                    const xpBefore = playerComp.xp;
-                    const xpGained = pickupComp.value * playerComp.stats.xpBonus;
+                    const xpBonus = playerComp.stats?.xpBonus ?? 1;
+                    const xpGained = pickupComp.value * xpBonus;
                     playerComp.xp += xpGained;
                     
-                    console.log(`[CollisionSystem] XP collected: +${xpGained.toFixed(1)} (${xpBefore.toFixed(1)} -> ${playerComp.xp.toFixed(1)}/${playerComp.xpRequired})`);
+                    // Guard against NaN
+                    if (!Number.isFinite(playerComp.xp)) {
+                        console.error('[CollisionSystem] XP became NaN, resetting to 0');
+                        playerComp.xp = 0;
+                    }
                     
                     // Check for level up
                     if (playerComp.xp >= playerComp.xpRequired) {

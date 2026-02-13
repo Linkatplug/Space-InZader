@@ -154,11 +154,20 @@ class PickupSystem {
     collectXP(player, xpValue) {
         const playerComp = player.getComponent('player');
         
-        // Apply XP bonus
-        const finalXP = xpValue * playerComp.stats.xpBonus;
+        // Apply XP bonus with guard against undefined
+        const xpBonus = playerComp.stats?.xpBonus ?? 1;
+        const finalXP = xpValue * xpBonus;
         playerComp.xp += finalXP;
         
-        console.log(`💎 [PickupSystem] XP +${finalXP.toFixed(1)} (Total: ${playerComp.xp.toFixed(1)}/${playerComp.xpRequired})`);
+        // Guard against NaN
+        if (!Number.isFinite(playerComp.xp)) {
+            console.error('[PickupSystem] XP became NaN, resetting to 0');
+            playerComp.xp = 0;
+        }
+        if (!Number.isFinite(playerComp.xpRequired)) {
+            console.error('[PickupSystem] xpRequired became NaN, resetting to 100');
+            playerComp.xpRequired = 100;
+        }
 
         // Check for level up
         while (playerComp.xp >= playerComp.xpRequired) {
@@ -171,6 +180,8 @@ class PickupSystem {
                 this.gameState.stats.highestLevel,
                 playerComp.level
             );
+            
+            console.log(`⭐ [PickupSystem] LEVEL UP! Level ${playerComp.level} reached`);
             
             // Trigger level up
             this.onLevelUp(player);
