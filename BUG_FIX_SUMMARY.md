@@ -72,10 +72,10 @@ Player damage system has multiple components:
 4. Invulnerability timer countdown (Game.js update loop)
 
 **All components verified as functional:**
-- ✅ Collision detection works (lines 108-147)
-- ✅ Invulnerability set correctly (line 135-136, 217-218)  
-- ✅ Invulnerability timer decrements (Game.js:1387-1390)
-- ✅ Damage applied via DefenseSystem (line 311-329)
+- ✅ Collision detection works (checkPlayerEnemyCollisions function)
+- ✅ Invulnerability set correctly (after collision damage)
+- ✅ Invulnerability timer decrements (Game.js update loop)
+- ✅ Damage applied via DefenseSystem (damagePlayer function)
 - ✅ God mode OFF by default (only enabled via DevTools)
 
 **Why user might think damage is broken:**

@@ -116,7 +116,7 @@ class CollisionSystem {
             
             if (!playerPos || !playerCol || !playerHealth) continue;
             if (playerHealth.invulnerable || playerHealth.godMode) {
-                // Silently skip - this is expected during invulnerability frames
+                // Silently skip - expected during invulnerability frames or when god mode is active
                 continue;
             }
 
@@ -801,9 +801,7 @@ class CollisionSystem {
             console.log('[CollisionSystem] Triggering level up UI via window.game.triggerLevelUp()');
             window.game.triggerLevelUp();
         } else {
-            console.error('[CollisionSystem] ERROR: window.game is not defined! Level up UI will not show.');
-            console.error('[CollisionSystem] This means the level increased but no upgrade choices will appear.');
-            console.error('[CollisionSystem] Player is now level', playerComp.level, 'but cannot choose upgrades.');
+            console.error(`[CollisionSystem] ERROR: window.game is not defined! Level up UI will not show.\nThis means the level increased but no upgrade choices will appear.\nPlayer is now level ${playerComp.level} but cannot choose upgrades.`);
         }
     }
     
