@@ -268,35 +268,57 @@ class SpawnerSystem {
             // Log spawn with defense values
             console.log(`[Spawn] ${enemyData.profileId} S/A/St=${profile.defense.shield}/${profile.defense.armor}/${profile.defense.structure} dmgType=${profile.attackDamageType}`);
         } else {
-            // Fallback to old health system
-            enemy.addComponent('health', Components.Health(enemyData.health, enemyData.health));
+            // Fallback to old health system - create health component directly
+            const health = {
+                current: enemyData.health,
+                max: enemyData.health,
+                invulnerable: false,
+                invulnerableTime: 0,
+                godMode: false
+            };
+            enemy.addComponent('health', health);
         }
         
-        enemy.addComponent('collision', Components.Collision(enemyData.size));
-        enemy.addComponent('renderable', Components.Renderable(
-            enemyData.color,
-            enemyData.size,
-            'circle'
-        ));
-        enemy.addComponent('enemy', Components.Enemy(
-            enemyData.aiType,
-            enemyData.health,
-            enemyData.damage,
-            enemyData.speed,
-            enemyData.xpValue
-        ));
+        // Create collision component directly
+        const collision = {
+            radius: enemyData.size,
+            type: 'enemy'
+        };
+        enemy.addComponent('collision', collision);
         
-        // Set enemy data properties
-        const enemyComp = enemy.getComponent('enemy');
-        enemyComp.attackPattern = enemyData.attackPattern;
-        enemyComp.armor = enemyData.armor || 0;
-        enemyComp.splitCount = enemyData.splitCount || 0;
-        enemyComp.splitType = enemyData.splitType || null;
+        // Create renderable component directly
+        const renderable = {
+            color: enemyData.color,
+            size: enemyData.size,
+            shape: 'circle',
+            visible: true,
+            layer: 1,
+            alpha: 1.0,
+            blendMode: 'normal'
+        };
+        enemy.addComponent('renderable', renderable);
+        
+        // Create enemy component directly
+        const enemyComponent = {
+            type: enemyData.aiType,
+            maxHealth: enemyData.health,
+            health: enemyData.health,
+            damage: enemyData.damage,
+            speed: enemyData.speed,
+            xpValue: enemyData.xpValue,
+            baseSpeed: enemyData.speed,
+            attackPattern: enemyData.attackPattern,
+            armor: enemyData.armor || 0,
+            splitCount: enemyData.splitCount || 0,
+            splitType: enemyData.splitType || null
+        };
         
         // Add attack damage type if available
         if (enemyData.attackDamageType) {
-            enemyComp.attackDamageType = enemyData.attackDamageType;
+            enemyComponent.attackDamageType = enemyData.attackDamageType;
         }
+        
+        enemy.addComponent('enemy', enemyComponent);
         
         // Add enemy weapon for shooting
         const damageType = (enemyData.profileId && window.EnemyProfiles && window.EnemyProfiles.PROFILES[enemyData.profileId]) 
@@ -310,7 +332,7 @@ class SpawnerSystem {
             'explosive': '#FF0000'
         };
         
-        enemyComp.enemyWeapon = {
+        enemyComponent.enemyWeapon = {
             damageType: damageType,
             baseDamage: 6,
             fireRate: 0.8,
@@ -320,12 +342,15 @@ class SpawnerSystem {
             cooldown: 0
         };
         
-        // Add boss component if boss
+        // Add boss component if boss - create directly
         if (isBoss) {
-            enemy.addComponent('boss', Components.Boss(
-                1,
-                ['chase', 'spiral', 'enrage']
-            ));
+            const bossComponent = {
+                phase: 1,
+                patterns: ['chase', 'spiral', 'enrage'],
+                phaseTimer: 0,
+                nextPhaseThreshold: 0.5
+            };
+            enemy.addComponent('boss', bossComponent);
         }
         
         return enemy;
