@@ -115,7 +115,10 @@ class CollisionSystem {
             const playerHealth = player.getComponent('health');
             
             if (!playerPos || !playerCol || !playerHealth) continue;
-            if (playerHealth.invulnerable || playerHealth.godMode) continue;
+            if (playerHealth.invulnerable || playerHealth.godMode) {
+                // Silently skip - this is expected during invulnerability frames
+                continue;
+            }
 
             for (const enemy of enemies) {
                 const enemyPos = enemy.getComponent('position');
@@ -128,12 +131,16 @@ class CollisionSystem {
                     playerPos.x, playerPos.y, playerCol.radius,
                     enemyPos.x, enemyPos.y, enemyCol.radius
                 )) {
+                    console.log(`[CollisionSystem] Player collision with enemy! Damage: ${enemyComp.damage}`);
+                    
                     // Deal damage to player
                     this.damagePlayer(player, enemyComp.damage);
                     
                     // Add invulnerability frames
                     playerHealth.invulnerable = true;
                     playerHealth.invulnerableTime = 0.5; // 0.5 seconds
+                    
+                    console.log('[CollisionSystem] Invulnerability activated for 0.5s');
                 }
             }
         }
@@ -294,15 +301,25 @@ class CollisionSystem {
         const shield = player.getComponent('shield');
         const playerComp = player.getComponent('player');
         
-        if (!health || !playerComp) return;
+        if (!health || !playerComp) {
+            console.error('[CollisionSystem] damagePlayer: Missing health or player component');
+            return;
+        }
         
         // God mode check - no damage taken
-        if (health.godMode) return;
+        if (health.godMode) {
+            console.warn('[CollisionSystem] damagePlayer: God mode is active! No damage taken.');
+            return;
+        }
+
+        console.log(`[CollisionSystem] damagePlayer: Applying ${damage} ${damageType} damage`);
 
         // Try new defense system first
         if (defense && this.world && this.world.defenseSystem) {
             const result = this.world.defenseSystem.applyDamage(player, damage, damageType);
             this.gameState.stats.damageTaken += result.totalDamage;
+            
+            console.log(`[CollisionSystem] Damage applied via DefenseSystem. Total damage: ${result.totalDamage}, Layers: ${result.layersDamaged.join(', ')}`);
             
             // Visual feedback based on which layers were hit
             if (this.screenEffects) {
@@ -655,11 +672,15 @@ class CollisionSystem {
         switch (pickupComp.type) {
             case 'xp':
                 if (playerComp) {
+                    const xpBefore = playerComp.xp;
                     const xpGained = pickupComp.value * playerComp.stats.xpBonus;
                     playerComp.xp += xpGained;
                     
+                    console.log(`[CollisionSystem] XP collected: +${xpGained.toFixed(1)} (${xpBefore.toFixed(1)} -> ${playerComp.xp.toFixed(1)}/${playerComp.xpRequired})`);
+                    
                     // Check for level up
                     if (playerComp.xp >= playerComp.xpRequired) {
+                        console.log('[CollisionSystem] XP threshold reached! Triggering level up...');
                         this.levelUp(player);
                     }
                 }
@@ -757,7 +778,12 @@ class CollisionSystem {
 
     levelUp(player) {
         const playerComp = player.getComponent('player');
-        if (!playerComp) return;
+        if (!playerComp) {
+            console.error('[CollisionSystem] levelUp: No player component found');
+            return;
+        }
+
+        console.log(`[CollisionSystem] Level up! Current level: ${playerComp.level}, XP: ${playerComp.xp}/${playerComp.xpRequired}`);
 
         playerComp.level++;
         playerComp.xp -= playerComp.xpRequired;
@@ -768,9 +794,16 @@ class CollisionSystem {
             playerComp.level
         );
 
+        console.log(`[CollisionSystem] New level: ${playerComp.level}, Next XP required: ${playerComp.xpRequired}`);
+
         // Trigger level up screen
         if (window.game) {
+            console.log('[CollisionSystem] Triggering level up UI via window.game.triggerLevelUp()');
             window.game.triggerLevelUp();
+        } else {
+            console.error('[CollisionSystem] ERROR: window.game is not defined! Level up UI will not show.');
+            console.error('[CollisionSystem] This means the level increased but no upgrade choices will appear.');
+            console.error('[CollisionSystem] Player is now level', playerComp.level, 'but cannot choose upgrades.');
         }
     }
     
