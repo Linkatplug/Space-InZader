@@ -69,8 +69,9 @@ class CollisionSystem {
                 const enemyPos = enemy.getComponent('position');
                 const enemyCol = enemy.getComponent('collision');
                 const enemyHealth = enemy.getComponent('health');
+                const enemyDefense = enemy.getComponent('defense');
                 
-                if (!enemyPos || !enemyCol || !enemyHealth) continue;
+                if (!enemyPos || !enemyCol || (!enemyHealth && !enemyDefense)) continue;
 
                 // Skip if orbital projectile is on cooldown for this enemy
                 if (projComp.orbital && projComp.hitCooldown && projComp.hitCooldown[enemy.id] > 0) {
@@ -82,7 +83,7 @@ class CollisionSystem {
                     enemyPos.x, enemyPos.y, enemyCol.radius
                 )) {
                     // Deal damage to enemy (pass owner entity for lifesteal)
-                    this.damageEnemy(enemy, projComp.damage, ownerEntity);
+                    this.damageEnemy(enemy, projComp.damage, ownerEntity, projComp.damageType || 'kinetic');
                     
                     // Don't remove orbital projectiles - they persist and keep damaging
                     if (projComp.orbital) {
@@ -960,8 +961,15 @@ class CollisionSystem {
                 if (distance < this.BLACK_HOLE_CENTER_KILL_RADIUS) {
                     // INSTANT KILL - Enemy is in the center of the black hole
                     const enemyHealth = enemy.getComponent('health');
+                    const enemyDefense = enemy.getComponent('defense');
                     if (enemyHealth) {
                         enemyHealth.current = 0; // Instant death
+                        console.log('%c[Black Hole] Enemy sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
+                    } else if (enemyDefense) {
+                        // Kill all defense layers
+                        enemyDefense.shield.current = 0;
+                        enemyDefense.armor.current = 0;
+                        enemyDefense.structure.current = 0;
                         console.log('%c[Black Hole] Enemy sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
                     }
                 } else if (distance < blackHoleComp.damageRadius) {

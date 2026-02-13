@@ -208,7 +208,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
         }
     }
@@ -246,7 +247,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
         }
     }
@@ -281,7 +283,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
             
             // Make it homing
@@ -367,7 +370,8 @@ class CombatSystem {
             player.id,
             weapon.type,
             piercing,
-            weapon.data.color
+            weapon.data.color,
+            (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
         );
     }
 
@@ -397,7 +401,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
             
             const mineComp = mine.getComponent('projectile');
@@ -432,7 +437,8 @@ class CombatSystem {
             player.id,
             weapon.type,
             piercing,
-            weapon.data.color
+            weapon.data.color,
+            (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
         );
         
         const projComp = projectile.getComponent('projectile');
@@ -477,7 +483,8 @@ class CombatSystem {
             player.id,
             weapon.type,
             stats.piercing,
-            weapon.data.color
+            weapon.data.color,
+            (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
         );
     }
 
@@ -507,7 +514,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
             
             const projComp = projectile.getComponent('projectile');
@@ -591,7 +599,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
             
             const projComp = projectile.getComponent('projectile');
@@ -635,7 +644,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 levelData.piercing || 999,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
             
             // Make it look like a beam - elongated projectile
@@ -683,7 +693,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
         }
     }
@@ -702,7 +713,7 @@ class CombatSystem {
      * @param {string} color - Projectile color
      * @returns {Entity} Created projectile
      */
-    createProjectile(x, y, angle, damage, speed, lifetime, owner, weaponType, piercing, color) {
+    createProjectile(x, y, angle, damage, speed, lifetime, owner, weaponType, piercing, color, damageType = 'kinetic') {
         const projectile = this.world.createEntity('projectile');
         
         // Get player stats for size modifier
@@ -732,6 +743,7 @@ class CombatSystem {
         
         const projComp = projectile.getComponent('projectile');
         projComp.piercing = piercing;
+        projComp.damageType = damageType || 'kinetic';
         
         return projectile;
     }
