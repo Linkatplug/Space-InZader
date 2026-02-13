@@ -4,9 +4,12 @@
  */
 
 class AISystem {
-    constructor(world, gameState) {
+    constructor(world, canvas) {
         this.world = world;
-        this.gameState = gameState;
+        this.canvas = canvas;
+        
+        // P1 FIX: Enemy Bounds - Combat space margins
+        this.COMBAT_MARGIN = 200;
     }
 
     /**
@@ -70,6 +73,9 @@ class AISystem {
 
         // Handle attacks
         this.handleEnemyAttack(enemy, player, deltaTime);
+        
+        // P1 FIX: Enemy Bounds - Keep enemies in combat space
+        this.enforceEnemyBounds(enemy, deltaTime);
     }
 
     /**
@@ -914,5 +920,68 @@ class AISystem {
         ));
         
         return projectile;
+    }
+    
+    /**
+     * P1 FIX: Enforce enemy bounds - keep enemies in combat space
+     * @param {Entity} enemy - Enemy entity
+     * @param {number} deltaTime - Time elapsed
+     */
+    enforceEnemyBounds(enemy, deltaTime) {
+        if (!this.canvas) return;
+        
+        const enemyPos = enemy.getComponent('position');
+        const enemyComp = enemy.getComponent('enemy');
+        if (!enemyPos || !enemyComp) return;
+        
+        const margin = this.COMBAT_MARGIN;
+        const bounds = {
+            left: -margin,
+            right: this.canvas.width + margin,
+            top: -margin,
+            bottom: this.canvas.height + margin
+        };
+        
+        // Check if enemy is out of bounds
+        let outOfBounds = false;
+        let pullX = 0, pullY = 0;
+        
+        if (enemyPos.x < bounds.left) {
+            outOfBounds = true;
+            pullX = 1;
+        } else if (enemyPos.x > bounds.right) {
+            outOfBounds = true;
+            pullX = -1;
+        }
+        
+        if (enemyPos.y < bounds.top) {
+            outOfBounds = true;
+            pullY = 1;
+        } else if (enemyPos.y > bounds.bottom) {
+            outOfBounds = true;
+            pullY = -1;
+        }
+        
+        if (outOfBounds) {
+            // Track time out of bounds
+            enemy.timeOutOfBounds = (enemy.timeOutOfBounds || 0) + deltaTime;
+            
+            // After 5 seconds out of bounds, despawn
+            if (enemy.timeOutOfBounds > 5.0) {
+                logger.debug('AI', `Despawning enemy ${enemy.id} - out of bounds too long (${enemy.timeOutOfBounds.toFixed(1)}s)`);
+                this.world.removeEntity(enemy);
+                return;
+            }
+            
+            // Apply gentle steering back to combat space
+            const pullStrength = enemyComp.speed * 0.5;
+            enemyPos.x += pullX * pullStrength * deltaTime;
+            enemyPos.y += pullY * pullStrength * deltaTime;
+            
+            logger.debug('AI', `Enemy ${enemy.id} out of bounds - steering back (${enemy.timeOutOfBounds.toFixed(1)}s)`);
+        } else {
+            // Reset timer when back in bounds
+            enemy.timeOutOfBounds = 0;
+        }
     }
 }

@@ -50,6 +50,9 @@ class CombatSystem {
         const playerPos = player.getComponent('position');
         if (!playerPos) return;
         
+        // P1 FIX: Fire Distance Limit
+        const MAX_FIRE_DISTANCE = 700;
+        
         for (const enemy of enemies) {
             const enemyComp = enemy.getComponent('enemy');
             const enemyPos = enemy.getComponent('position');
@@ -70,6 +73,12 @@ class CombatSystem {
                 const dy = playerPos.y - enemyPos.y;
                 const angle = Math.atan2(dy, dx);
                 const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // P1 FIX: Don't fire if too far away
+                if (distance > MAX_FIRE_DISTANCE) {
+                    logger.debug('Combat', `${enemy.type} too far to fire (${Math.round(distance)}px > ${MAX_FIRE_DISTANCE}px)`);
+                    continue;
+                }
                 
                 logger.debug('Combat', `${enemy.type} firing at player`, {
                     distance: Math.round(distance),
