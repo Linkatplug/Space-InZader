@@ -250,7 +250,20 @@ class SpawnerSystem {
         
         enemy.addComponent('position', Components.Position(x, y));
         enemy.addComponent('velocity', Components.Velocity(0, 0));
-        enemy.addComponent('health', Components.Health(enemyData.health, enemyData.health));
+        
+        // Add defense component if profile has defense layers
+        if (enemyData.defenseLayers && window.EnemyProfiles && window.EnemyProfiles.PROFILES[enemyData.profileId]) {
+            const profile = window.EnemyProfiles.PROFILES[enemyData.profileId];
+            const defense = window.EnemyProfiles.createEnemyDefense(profile);
+            enemy.addComponent('defense', defense);
+            
+            // Log spawn with defense values
+            console.log(`[Spawn] ${enemyData.profileId} S/A/St=${profile.defense.shield}/${profile.defense.armor}/${profile.defense.structure} dmgType=${profile.attackDamageType}`);
+        } else {
+            // Fallback to old health system
+            enemy.addComponent('health', Components.Health(enemyData.health, enemyData.health));
+        }
+        
         enemy.addComponent('collision', Components.Collision(enemyData.size));
         enemy.addComponent('renderable', Components.Renderable(
             enemyData.color,
@@ -271,6 +284,11 @@ class SpawnerSystem {
         enemyComp.armor = enemyData.armor || 0;
         enemyComp.splitCount = enemyData.splitCount || 0;
         enemyComp.splitType = enemyData.splitType || null;
+        
+        // Add attack damage type if available
+        if (enemyData.attackDamageType) {
+            enemyComp.attackDamageType = enemyData.attackDamageType;
+        }
         
         // Add boss component if boss
         if (isBoss) {
@@ -358,6 +376,55 @@ class SpawnerSystem {
      * @returns {Object} Enemy data
      */
     getEnemyData(enemyId) {
+        // Map old enemy IDs to new EnemyProfiles
+        const enemyMapping = {
+            'drone_basique': 'SCOUT_DRONE',
+            'chasseur_rapide': 'INTERCEPTOR',
+            'tank': 'ARMORED_CRUISER',
+            'tireur': 'PLASMA_ENTITY',
+            'elite': 'SIEGE_HULK',
+            'boss': 'ELITE_DESTROYER',
+            'tank_boss': 'SIEGE_HULK',
+            'swarm_boss': 'VOID_CARRIER',
+            'sniper_boss': 'PLASMA_ENTITY'
+        };
+        
+        // Get profile ID (use mapping or direct if already a profile ID)
+        const profileId = enemyMapping[enemyId] || enemyId;
+        
+        // Get profile from EnemyProfiles
+        if (window.EnemyProfiles && window.EnemyProfiles.PROFILES && window.EnemyProfiles.PROFILES[profileId]) {
+            const profile = window.EnemyProfiles.PROFILES[profileId];
+            
+            // Convert profile to enemy data format
+            return {
+                id: profile.id,
+                name: profile.name,
+                health: profile.defense.shield + profile.defense.armor + profile.defense.structure, // Total HP for scaling
+                damage: 10, // Base damage (will be overridden by profile)
+                speed: profile.speed,
+                xpValue: profile.xpValue,
+                aiType: profile.aiType,
+                size: profile.size,
+                color: profile.color,
+                secondaryColor: profile.secondaryColor || profile.color,
+                spawnCost: profile.spawnCost,
+                attackPattern: profile.attackPattern || { type: 'none' },
+                armor: 0, // Armor is now in defense layers
+                
+                // New profile properties
+                profileId: profileId,
+                attackDamageType: profile.attackDamageType,
+                defenseLayers: profile.defense,
+                weakness: profile.weakness,
+                isBoss: profile.isBoss || false,
+                splitCount: profile.splitCount || 0,
+                splitType: profile.splitType || null
+            };
+        }
+        
+        // Fallback to old hardcoded data if profile not found
+        console.warn(`[SpawnerSystem] Enemy profile not found: ${profileId}, using fallback`);
         const enemies = {
             drone_basique: {
                 id: 'drone_basique',
