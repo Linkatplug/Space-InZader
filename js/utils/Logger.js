@@ -13,9 +13,9 @@ const LogLevel = {
 
 class Logger {
     constructor() {
-        this.currentLevel = LogLevel.INFO;
-        this.enabled = false;
-        this.maxLogs = 100;
+        this.currentLevel = LogLevel.DEBUG; // Changed to DEBUG for development
+        this.enabled = true; // Enabled by default for debugging
+        this.maxLogs = 200; // Increased log buffer
         this.logs = [];
         this.categories = new Set();
         
