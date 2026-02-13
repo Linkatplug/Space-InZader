@@ -468,9 +468,15 @@ class Game {
         
         this.player.addComponent('defense', defense);
         
-        const baseHeatMax = 100;
-        const baseCoolingRate = 20;
-        this.player.addComponent('heat', Components.Heat(baseHeatMax, baseCoolingRate));
+        // Heat component with exact schema for HeatSystem
+        const heat = {
+            current: 0,
+            max: 100,
+            cooling: 10,
+            overheated: false,
+            disabledTimer: 0
+        };
+        this.player.addComponent('heat', heat);
         
         const playerComp = Components.Player();
         playerComp.speed = 220;
