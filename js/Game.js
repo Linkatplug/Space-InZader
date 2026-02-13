@@ -551,12 +551,18 @@ class Game {
 
         console.log('[Game] Looking up weapon:', weaponType);
         console.log('[Game] WeaponData available:', typeof WeaponData !== 'undefined');
-        const weaponData = WeaponData.getWeaponData(weaponType);
+        console.log('[Game] window.WeaponData available:', typeof window.WeaponData !== 'undefined');
+        
+        // Try both WeaponData and window.WeaponData
+        const weaponDataSource = typeof WeaponData !== 'undefined' ? WeaponData : window.WeaponData;
+        console.log('[Game] Using weaponDataSource:', weaponDataSource);
+        
+        const weaponData = weaponDataSource ? weaponDataSource.getWeaponData(weaponType) : null;
         console.log('[Game] Weapon data result:', weaponData);
         
         if (!weaponData) {
             console.error('[Game] Failed to get weapon data for:', weaponType);
-            console.error('[Game] Available weapons:', WeaponData.WEAPONS ? Object.keys(WeaponData.WEAPONS) : 'NONE');
+            console.error('[Game] Available weapons:', weaponDataSource && weaponDataSource.WEAPONS ? Object.keys(weaponDataSource.WEAPONS) : 'NONE');
             logger.error('Game', `Invalid weapon: ${weaponType}`);
             return;
         }
