@@ -408,11 +408,13 @@ class Game {
         const shipId = this.gameState.selectedShip || 'ION_FRIGATE';
         const ship = window.ShipData && window.ShipData.SHIPS ? window.ShipData.SHIPS[shipId] : null;
         
+        logger.info('Game', `Creating player with ship: ${shipId}`);
+        
         if (!ship) {
-            console.error('Invalid ship:', shipId);
+            logger.error('Game', `Invalid ship: ${shipId}`);
             const fallbackShip = window.ShipData.SHIPS.ION_FRIGATE;
             if (!fallbackShip) {
-                console.error('Cannot create player - no ship data available');
+                logger.error('Game', 'Cannot create player - no ship data available');
                 return;
             }
             this.gameState.selectedShip = 'ION_FRIGATE';
@@ -421,6 +423,8 @@ class Game {
 
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
+        
+        logger.debug('Game', 'Meta upgrades', { metaDamage, metaXP });
 
         this.player = this.world.createEntity('player');
         
@@ -500,21 +504,23 @@ class Game {
         ));
 
         const startingWeaponId = ship.startingWeapon || 'ion_blaster';
-        console.log('[Player] ship=', playerComp.shipId, 'startingWeapon=', startingWeaponId);
+        logger.info('Game', `Player setup: ship=${playerComp.shipId} startingWeapon=${startingWeaponId}`);
+        logger.info('Game', `Defense layers: Shield=${defenseLayers.shield.max} Armor=${defenseLayers.armor.max} Structure=${defenseLayers.structure.max}`);
         
         this.addWeaponToPlayer(startingWeaponId);
         
         if (!playerComp.weapons || playerComp.weapons.length === 0) {
-            console.warn('[Player] No weapon added, forcing ion_blaster');
+            logger.warn('Game', 'No weapon added, forcing ion_blaster');
             this.addWeaponToPlayer('ion_blaster');
         }
         
         if (playerComp.weapons && playerComp.weapons.length > 0) {
             const weapon = playerComp.weapons[0];
             playerComp.currentWeapon = weapon.data || weapon;
+            logger.info('Game', `Player created successfully with ${playerComp.weapons.length} weapon(s)`);
+        } else {
+            logger.error('Game', 'Player created but has NO WEAPONS!');
         }
-        
-        console.log('Player created with ship:', shipId);
     }
 
     addWeaponToPlayer(weaponType) {
@@ -888,13 +894,16 @@ class Game {
         const options = [];
         const playerComp = this.player.getComponent('player');
         
-        if (!playerComp) return options;
+        if (!playerComp) {
+            logger.warn('Game', 'Cannot generate boost options - no player component');
+            return options;
+        }
 
         const shipId = playerComp.shipId || 'ION_FRIGATE';
         const shipData = window.ShipUpgradeData?.SHIPS?.[shipId];
         
         if (!shipData || !shipData.upgrades) {
-            console.error('[LevelUp] No ship upgrades found for', shipId);
+            logger.error('Game', `No ship upgrades found for ${shipId}`);
             return options;
         }
 
@@ -905,7 +914,7 @@ class Game {
         });
 
         if (availableUpgrades.length === 0) {
-            console.warn('[LevelUp] All upgrades maxed for', shipId);
+            logger.warn('Game', `All upgrades maxed for ${shipId}`);
             return options;
         }
 
@@ -930,7 +939,7 @@ class Game {
             });
         }
 
-        console.log('[LevelUp] ship=', shipId, 'options=', options.map(o => `${o.key}(${o.currentLevel}/${o.maxLevel})`));
+        logger.info('Game', `Level-up options for ${shipId}:`, options.map(o => `${o.key} Lv${o.currentLevel}→${o.currentLevel+1}/${o.maxLevel}`).join(', '));
 
         return options;
     }
