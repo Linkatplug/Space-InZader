@@ -32,6 +32,60 @@ class CombatSystem {
             // Update blade halo if active
             this.updateBladeHalo(player, playerComp, deltaTime);
         }
+        
+        // Update enemy firing
+        this.updateEnemyFiring(deltaTime);
+    }
+    
+    /**
+     * Update enemy firing at player
+     * @param {number} deltaTime - Time elapsed since last frame
+     */
+    updateEnemyFiring(deltaTime) {
+        const enemies = this.world.getEntitiesByType('enemy');
+        const player = this.world.getEntitiesByType('player')[0];
+        
+        if (!player) return;
+        
+        const playerPos = player.getComponent('position');
+        if (!playerPos) return;
+        
+        for (const enemy of enemies) {
+            const enemyComp = enemy.getComponent('enemy');
+            const enemyPos = enemy.getComponent('position');
+            
+            if (!enemyComp || !enemyPos || !enemyComp.enemyWeapon) continue;
+            
+            const weapon = enemyComp.enemyWeapon;
+            
+            // Update cooldown
+            weapon.cooldown -= deltaTime;
+            
+            // Fire when ready
+            if (weapon.cooldown <= 0) {
+                weapon.cooldown = 1 / weapon.fireRate;
+                
+                // Calculate angle toward player
+                const dx = playerPos.x - enemyPos.x;
+                const dy = playerPos.y - enemyPos.y;
+                const angle = Math.atan2(dy, dx);
+                
+                // Create projectile
+                this.createProjectile(
+                    enemyPos.x,
+                    enemyPos.y,
+                    angle,
+                    weapon.baseDamage,
+                    weapon.projectileSpeed,
+                    5, // lifetime
+                    'enemy', // owner
+                    'direct', // weaponType
+                    0, // piercing
+                    weapon.color,
+                    weapon.damageType
+                );
+            }
+        }
     }
 
     /**

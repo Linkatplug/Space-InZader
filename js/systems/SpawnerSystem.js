@@ -290,6 +290,28 @@ class SpawnerSystem {
             enemyComp.attackDamageType = enemyData.attackDamageType;
         }
         
+        // Add enemy weapon for shooting
+        const damageType = (enemyData.profileId && window.EnemyProfiles && window.EnemyProfiles.PROFILES[enemyData.profileId]) 
+            ? window.EnemyProfiles.PROFILES[enemyData.profileId].attackDamageType 
+            : 'kinetic';
+        
+        const colorMap = {
+            'em': '#00FFFF',
+            'thermal': '#FF8C00',
+            'kinetic': '#888888',
+            'explosive': '#FF0000'
+        };
+        
+        enemyComp.enemyWeapon = {
+            damageType: damageType,
+            baseDamage: 6,
+            fireRate: 0.8,
+            projectileSpeed: 220,
+            projectileSize: 4,
+            color: colorMap[damageType] || '#888888',
+            cooldown: 0
+        };
+        
         // Add boss component if boss
         if (isBoss) {
             enemy.addComponent('boss', Components.Boss(
