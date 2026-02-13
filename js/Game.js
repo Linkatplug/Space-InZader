@@ -882,330 +882,51 @@ class Game {
         
         if (!playerComp) return options;
 
-        const luck = playerComp.stats.luck;
-        // Old ship system - keystones not implemented for new ships yet
-        // const shipData = ShipData.getShipData(this.gameState.selectedShip);
+        const shipId = playerComp.shipId || 'ION_FRIGATE';
+        const shipData = window.ShipUpgradeData?.SHIPS?.[shipId];
         
-        // TODO: Implement keystone system for new ships
-        // Check if we should offer keystone
-        // const keystone = KeystoneData.getKeystoneForClass(shipData.id);
-        let keystoneOffered = false;
-        const keystone = null; // Disabled for now
-        if (keystone && !this.keystonesOffered.has(keystone.id)) {
-            // 25% chance to offer keystone if not yet obtained
-            if (Math.random() < 0.25) {
-                options.push({
-                    type: 'passive',
-                    key: keystone.id,
-                    data: keystone,
-                    isKeystone: true
-                });
-                keystoneOffered = true;
-            }
-        }
-        
-        // Determine if rare guarantee applies
-        let forceRare = false;
-        if (this.levelsUntilRareGuarantee <= 0) {
-            forceRare = true;
-            this.levelsUntilRareGuarantee = 4;
-        } else {
-            this.levelsUntilRareGuarantee--;
+        if (!shipData || !shipData.upgrades) {
+            console.error('[LevelUp] No ship upgrades found for', shipId);
+            return options;
         }
 
-        // Generate remaining options (3 total, or 2 if keystone offered)
-        const numOptions = keystoneOffered ? 2 : 3;
-        let attempts = 0;
-        const maxAttempts = 100; // Prevent infinite loops
-        
-        while (options.length < (keystoneOffered ? 3 : 3) && attempts < maxAttempts) {
-            const constraintLevel = Math.floor(attempts / 20); // Relax constraints every 20 attempts
-            const boost = this.selectRandomBoost(luck, options, forceRare && options.length === (keystoneOffered ? 1 : 0), constraintLevel);
-            if (boost) {
-                options.push(boost);
-                attempts = 0; // Reset attempts on success
-            } else {
-                attempts++;
-            }
+        // Get all available upgrades (not maxed out)
+        const availableUpgrades = shipData.upgrades.filter(upgrade => {
+            const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
+            return currentLevel < upgrade.maxLevel;
+        });
+
+        if (availableUpgrades.length === 0) {
+            console.warn('[LevelUp] All upgrades maxed for', shipId);
+            return options;
         }
+
+        // Randomly select 3 upgrades (or fewer if not enough available)
+        const numOptions = Math.min(3, availableUpgrades.length);
+        const shuffled = [...availableUpgrades].sort(() => Math.random() - 0.5);
         
-        // Fallback: If still not enough options, try absolute last resort
-        while (options.length < (keystoneOffered ? 3 : 3)) {
-            const boost = this.selectRandomBoostLastResort(options);
-            if (boost) {
-                options.push(boost);
-            } else {
-                break; // No more options possible
-            }
+        for (let i = 0; i < numOptions; i++) {
+            const upgrade = shuffled[i];
+            const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
+            
+            options.push({
+                type: 'upgrade',
+                key: upgrade.id,
+                name: upgrade.name,
+                description: upgrade.description,
+                currentLevel: currentLevel,
+                maxLevel: upgrade.maxLevel,
+                rarity: 'rare',
+                color: '#9b59b6',
+                data: upgrade
+            });
         }
+
+        console.log('[LevelUp] ship=', shipId, 'options=', options.map(o => `${o.key}(${o.currentLevel}/${o.maxLevel})`));
 
         return options;
     }
 
-    selectRandomBoost(luck, existing, forceRare = false, constraintLevel = 0) {
-        const playerComp = this.player.getComponent('player');
-        if (!playerComp) return null;
-
-        // Old ship system - tags not implemented for new ships yet
-        const preferredTags = [];
-        const bannedTags = [];
-        
-        // Progressive constraint relaxation:
-        // 0: Use all constraints (preferred tags, rarity, banned tags)
-        // 1: Ignore preferred tags
-        // 2: Ignore rarity restrictions
-        // 3: Ignore banned tags (last resort)
-        const usePreferredTags = constraintLevel < 1;
-        const useRarityFilter = constraintLevel < 2;
-        const useBannedTags = constraintLevel < 3;
-        
-        // Try rarities in order based on luck, with fallbacks
-        const rarities = ['legendary', 'epic', 'rare', 'common'];
-        
-        // Determine starting rarity based on luck or force rare
-        let startIndex;
-        if (forceRare) {
-            startIndex = 2; // Force rare or better
-        } else {
-            const roll = Math.random() + luck * 0.1;
-            
-            if (roll > 0.95) startIndex = 0; // legendary
-            else if (roll > 0.8) startIndex = 1; // epic
-            else if (roll > 0.5) startIndex = 2; // rare
-            else startIndex = 3; // common
-        }
-        
-        // If not using rarity filter, try all rarities
-        if (!useRarityFilter) {
-            startIndex = 0;
-        }
-
-        // Try each rarity starting from the rolled one
-        for (let i = startIndex; i < rarities.length; i++) {
-            const rarity = rarities[i];
-            
-            // 60% chance to use preferred tags, 40% for global pool (only if using preferred tags)
-            const usePreferred = usePreferredTags && Math.random() < 0.6;
-            
-            // Get available weapons with tag filtering
-            const availableWeapons = Object.keys(window.WeaponData.WEAPONS).filter(key => {
-                const weapon = window.WeaponData.WEAPONS[key];
-                const saveWeapon = this.saveData.weapons[weapon.id];
-                if (!saveWeapon || !saveWeapon.unlocked) return false;
-                if (useRarityFilter && weapon.rarity !== rarity) return false;
-                
-                // Check if weapon already at max level
-                const existing = playerComp.weapons.find(w => w.type === weapon.id);
-                if (existing && existing.level >= weapon.maxLevel) return false;
-                
-                // Filter by banned tags (unless relaxed)
-                if (useBannedTags) {
-                    const hasBannedTag = weapon.tags?.some(t => bannedTags.includes(t));
-                    if (hasBannedTag) return false;
-                }
-                
-                // If using preferred tags, check for match
-                if (usePreferred) {
-                    return weapon.tags?.some(t => preferredTags.includes(t));
-                }
-                
-                return true;
-            });
-
-            // Get available ship upgrades (NOT maxed out)
-            const shipId = playerComp.shipId || 'ION_FRIGATE';
-            const shipData = window.ShipUpgradeData?.SHIPS?.[shipId];
-            
-            const availableUpgrades = shipData ? shipData.upgrades.filter(upgrade => {
-                const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
-                if (currentLevel >= upgrade.maxLevel) return false;
-                
-                // Treat upgrades as 'rare' rarity for now (can be enhanced later)
-                if (useRarityFilter && rarity !== 'rare') return false;
-                
-                // Filter by banned tags (unless relaxed)
-                if (useBannedTags) {
-                    const hasBannedTag = upgrade.tags?.some(t => bannedTags.includes(t));
-                    if (hasBannedTag) return false;
-                }
-                
-                // If using preferred tags, check for match
-                if (usePreferred) {
-                    return upgrade.tags?.some(t => preferredTags.includes(t));
-                }
-                
-                return true;
-            }).map(upgrade => {
-                const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
-                return {
-                    ...upgrade,
-                    currentLevel,
-                    nextLevel: currentLevel + 1,
-                    // Add display properties for UI
-                    rarity: 'rare',  // Upgrades are treated as rare rarity
-                    color: '#9b59b6'  // Purple color for upgrades
-                };
-            }) : [];
-
-            let all = [
-                ...availableWeapons.map(w => ({ type: 'weapon', key: window.WeaponData.WEAPONS[w].id, data: window.WeaponData.WEAPONS[w] })),
-                ...availableUpgrades.map(u => ({ type: 'upgrade', key: u.id, data: u, currentLevel: u.currentLevel, maxLevel: u.maxLevel }))
-            ];
-
-            // FIX: If preferred pool is empty, fallback to global pool for this rarity
-            if (all.length === 0 && usePreferred) {
-                logger.debug('Game', `No preferred options at ${rarity}, trying global pool`);
-                
-                // Retry without preferred filter
-                const globalWeapons = Object.keys(window.WeaponData.WEAPONS).filter(key => {
-                    const weapon = window.WeaponData.WEAPONS[key];
-                    const saveWeapon = this.saveData.weapons[weapon.id];
-                    if (!saveWeapon || !saveWeapon.unlocked) return false;
-                    if (weapon.rarity !== rarity) return false;
-                    
-                    const existing = playerComp.weapons.find(w => w.type === weapon.id);
-                    if (existing && existing.level >= weapon.maxLevel) return false;
-                    
-                    const hasBannedTag = weapon.tags?.some(t => bannedTags.includes(t));
-                    if (hasBannedTag) return false;
-                    
-                    return true;
-                });
-                
-                const globalUpgrades = shipData ? shipData.upgrades.filter(upgrade => {
-                    const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
-                    if (currentLevel >= upgrade.maxLevel) return false;
-                    
-                    // Treat upgrades as 'rare' rarity
-                    if (rarity !== 'rare') return false;
-                    
-                    const hasBannedTag = upgrade.tags?.some(t => bannedTags.includes(t));
-                    if (hasBannedTag) return false;
-                    
-                    return true;
-                }).map(upgrade => {
-                    const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
-                    return {
-                        ...upgrade,
-                        currentLevel,
-                        nextLevel: currentLevel + 1,
-                        // Add display properties for UI
-                        rarity: 'rare',  // Upgrades are treated as rare rarity
-                        color: '#9b59b6'  // Purple color for upgrades
-                    };
-                }) : [];
-                
-                all = [
-                    ...globalWeapons.map(w => ({ type: 'weapon', key: window.WeaponData.WEAPONS[w].id, data: window.WeaponData.WEAPONS[w] })),
-                    ...globalUpgrades.map(u => ({ type: 'upgrade', key: u.id, data: u, currentLevel: u.currentLevel, maxLevel: u.maxLevel }))
-                ];
-            }
-
-            // Filter out duplicates
-            const filtered = all.filter(item => {
-                return !existing.some(e => e.type === item.type && e.key === item.key);
-            });
-
-            logger.debug('Game', `Rarity ${rarity}: found ${filtered.length} options (before dedup: ${all.length})`);
-
-            // If we found options, select one
-            if (filtered.length > 0) {
-                const selected = MathUtils.randomChoice(filtered);
-                logger.info('Game', `Selected ${selected.type}: ${selected.key} (${rarity})`);
-                
-                const boost = {
-                    type: selected.type,
-                    key: selected.key,
-                    name: selected.data.name,
-                    description: selected.data.description,
-                    rarity: selected.data.rarity,
-                    color: selected.data.color
-                };
-                
-                // Add upgrade-specific fields
-                if (selected.type === 'upgrade') {
-                    boost.currentLevel = selected.currentLevel;
-                    boost.maxLevel = selected.maxLevel;
-                }
-                
-                return boost;
-            }
-        }
-
-        logger.warn('Game', 'No boost options available at any rarity level');
-
-        // No options available at any rarity level
-        return null;
-    }
-    
-    /**
-     * Last resort boost selection - ignores all constraints except duplicates
-     */
-    selectRandomBoostLastResort(existing) {
-        const playerComp = this.player.getComponent('player');
-        if (!playerComp) return null;
-        
-        // Get ALL available weapons (not maxed)
-        const availableWeapons = Object.keys(window.WeaponData.WEAPONS).filter(key => {
-            const weapon = window.WeaponData.WEAPONS[key];
-            const saveWeapon = this.saveData.weapons[weapon.id];
-            if (!saveWeapon || !saveWeapon.unlocked) return false;
-            
-            const existingWeapon = playerComp.weapons.find(w => w.type === weapon.id);
-            if (existingWeapon && existingWeapon.level >= weapon.maxLevel) return false;
-            
-            return true;
-        });
-        
-        // Get ALL available ship upgrades (not maxed)
-        const shipId = playerComp.shipId || 'ION_FRIGATE';
-        const shipData = window.ShipUpgradeData?.SHIPS?.[shipId];
-        
-        const availableUpgrades = shipData ? shipData.upgrades.filter(upgrade => {
-            const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
-            return currentLevel < upgrade.maxLevel;
-        }).map(upgrade => {
-            const currentLevel = playerComp.upgrades.get(upgrade.id) || 0;
-            return {
-                ...upgrade,
-                currentLevel,
-                nextLevel: currentLevel + 1,
-                // Add display properties for UI
-                rarity: 'rare',  // Upgrades are treated as rare rarity
-                color: '#9b59b6'  // Purple color for upgrades
-            };
-        }) : [];
-        
-        const all = [
-            ...availableWeapons.map(w => ({ type: 'weapon', key: window.WeaponData.WEAPONS[w].id, data: window.WeaponData.WEAPONS[w] })),
-            ...availableUpgrades.map(u => ({ type: 'upgrade', key: u.id, data: u, currentLevel: u.currentLevel, maxLevel: u.maxLevel }))
-        ];
-        
-        // Filter out duplicates
-        const filtered = all.filter(item => {
-            return !existing.some(e => e.type === item.type && e.key === item.key);
-        });
-        
-        if (filtered.length > 0) {
-            const selected = MathUtils.randomChoice(filtered);
-            return {
-                type: selected.type,
-                key: selected.key,
-                name: selected.data.name,
-                description: selected.data.description,
-                rarity: selected.data.rarity || 'common',
-                color: selected.data.color || '#888888',
-                currentLevel: selected.currentLevel,
-                maxLevel: selected.maxLevel
-            };
-        }
-        
-        return null;
-    }
-
-    /**
-     * Update music theme based on game intensity
-     */
     updateMusicTheme() {
         if (!this.audioManager || !this.audioManager.initialized) return;
 
@@ -1244,19 +965,23 @@ class Game {
 
         logger.info('Game', `Applying boost: ${boost.type} - ${boost.name}`);
 
-        if (boost.type === 'weapon') {
-            this.addWeaponToPlayer(boost.key);
-        } else if (boost.type === 'passive') {
-            this.addPassiveToPlayer(boost.key);
-        } else if (boost.type === 'upgrade') {
+        if (boost.type === 'upgrade') {
             // Apply ship upgrade using ShipUpgradeSystem
             if (this.systems && this.systems.shipUpgrade) {
                 this.systems.shipUpgrade.incrementUpgrade(this.player, boost.key);
                 this.recalculatePlayerStats();
-                logger.info('Game', `Applied upgrade: ${boost.key} (Level ${boost.currentLevel + 1}/${boost.maxLevel})`);
+                const newLevel = boost.currentLevel + 1;
+                console.log('[LevelUp] applied', boost.key, 'level', newLevel, '/', boost.maxLevel);
+                logger.info('Game', `Applied upgrade: ${boost.key} (Level ${newLevel}/${boost.maxLevel})`);
             } else {
                 logger.error('Game', 'ShipUpgradeSystem not available');
             }
+        } else if (boost.type === 'weapon') {
+            // Keep weapon functionality for edge cases, but it won't be offered in level-up
+            this.addWeaponToPlayer(boost.key);
+        } else if (boost.type === 'passive') {
+            // Keep passive functionality for edge cases, but it won't be offered in level-up
+            this.addPassiveToPlayer(boost.key);
         }
 
         logger.debug('Game', 'Boost applied successfully', boost);
