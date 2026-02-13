@@ -501,7 +501,6 @@ class UISystem {
         if (!player) return;
 
         const playerComp = player.getComponent('player');
-        const health = player.getComponent('health');
 
         if (playerComp) {
             // Update time
