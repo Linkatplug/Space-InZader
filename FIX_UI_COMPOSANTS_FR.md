@@ -8,14 +8,14 @@
 ## ❌ PROBLÈMES RAPPORTÉS
 
 ### En Français:
-1. **"La barre d XP dans le jeux n est pas fonctionel"**
+1. **"La barre d'XP dans le jeu n'est pas fonctionnelle"**
    - La barre d'XP ne s'affichait pas correctement
 
-2. **"Le joueur ne recois pas de degat les bouclier armure structure des bouge pas"**
+2. **"Le joueur ne reçoit pas de dégâts, les boucliers, armure, structure ne bougent pas"**
    - Le joueur ne prenait pas de dégâts
    - Les barres de défense (bouclier, armure, structure) ne bougeaient pas
 
-3. **"Le ennemies sorte encore du cadre"**
+3. **"Les ennemis sortent encore du cadre"**
    - Les ennemis sortaient de l'écran
 
 ---
