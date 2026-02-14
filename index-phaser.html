@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space InZader - Phaser Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 100%);
+            font-family: 'Courier New', monospace;
+            color: #00ffff;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.5), 0 0 100px rgba(0, 255, 255, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff, 0 0 30px #00ffff;
+        }
+
+        .info {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #00ff00;
+            text-shadow: 0 0 5px #00ff00;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid #00ffff;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            margin: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 SPACE INZADER 🚀</h1>
+    <div id="gameContainer"></div>
+    <div class="info">
+        <div>
+            <span class="badge">⚡ Phaser 3 Edition</span>
+            <span class="badge">🎮 WASD to move</span>
+            <span class="badge">ESC to pause</span>
+        </div>
+        <div style="margin-top: 10px; font-size: 0.7em; opacity: 0.6;">
+            Ported from vanilla JS to Phaser 3 game engine
+        </div>
+    </div>
+
+    <!-- Load existing game data (compatible with both versions) -->
+    <script src="js/constants.js"></script>
+    <script src="js/data/BalanceConstants.js"></script>
+    <script src="js/data/ShipData.js"></script>
+    <script src="js/data/EnemyProfiles.js"></script>
+    <script src="js/data/NewWeaponData.js"></script>
+    <script src="js/data/WeaponDataBridge.js"></script>
+    <script src="js/data/PassiveData.js"></script>
+    <script src="js/data/DefenseData.js"></script>
+    <script src="js/data/ModuleData.js"></script>
+    <script src="js/data/SynergyData.js"></script>
+    <script src="js/data/TagSynergyData.js"></script>
+    <script src="js/data/KeystoneData.js"></script>
+    <script src="js/data/LootData.js"></script>
+    <script src="js/data/HeatData.js"></script>
+    <script src="js/data/ShipUpgradeData.js"></script>
+    
+    <!-- Load ECS core (reusable) -->
+    <script src="js/core/ECS.js"></script>
+    <script src="js/core/GameState.js"></script>
+    
+    <!-- Phaser game module (loaded by Vite) -->
+    <script type="module" src="phaser/main.js"></script>
+</body>
+</html>
