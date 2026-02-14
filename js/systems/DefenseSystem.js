@@ -71,8 +71,10 @@ class DefenseSystem {
             return;
         }
 
-        // Debug log for testing stability (temporary)
-        console.debug('[DefenseSystem] Updating layer:', layerName);
+        // Only log layer updates in debug mode (to avoid console spam every frame)
+        if (window.DEBUG_DEFENSE) {
+            console.debug('[DefenseSystem] Updating layer:', layerName);
+        }
 
         // Update regen delay
         if (layer.regenDelay > 0) {
