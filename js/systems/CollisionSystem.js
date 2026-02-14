@@ -144,14 +144,13 @@ class CollisionSystem {
             const playerPos = player.getComponent('position');
             const playerCol = player.getComponent('collision');
             const playerHealth = player.getComponent('health');
+            const playerDefense = player.getComponent('defense');
             
-            if (!playerPos || !playerCol || !playerHealth) continue;
+            if (!playerPos || !playerCol || (!playerHealth && !playerDefense)) continue;
             
-            // FIX: Set i-frames to 400ms (was 500ms in enemy collision, 300ms in projectile)
-            if (playerHealth.invulnerable || playerHealth.godMode) {
-                // Silently skip - expected during invulnerability frames or when god mode is active
-                continue;
-            }
+            // BUG FIX: Check invulnerability on defense component (player uses defense, not health)
+            if (playerDefense && (playerDefense.invulnerable || playerDefense.godMode)) continue;
+            if (playerHealth && (playerHealth.invulnerable || playerHealth.godMode)) continue;
 
             for (const enemy of enemies) {
                 const enemyPos = enemy.getComponent('position');
@@ -178,9 +177,14 @@ class CollisionSystem {
                     // FIX: Add hit cooldown for this enemy (200ms)
                     this.hitCooldowns.set(sourceId, this.HIT_COOLDOWN_DURATION);
                     
-                    // FIX: Add i-frames (400ms)
-                    playerHealth.invulnerable = true;
-                    playerHealth.invulnerableTime = 0.4;
+                    // BUG FIX: Set invulnerability on defense component (player no longer has health)
+                    if (playerDefense) {
+                        playerDefense.invulnerable = true;
+                        playerDefense.invulnerableTime = 0.4;
+                    } else if (playerHealth) {
+                        playerHealth.invulnerable = true;
+                        playerHealth.invulnerableTime = 0.4;
+                    }
                     
                     console.log('[CollisionSystem] Invulnerability activated for 400ms, hit cooldown for this enemy: 200ms');
                 }
@@ -240,6 +244,9 @@ class CollisionSystem {
             const playerDefense = player.getComponent('defense');
             
             if (!playerPos || !playerCol || (!playerHealth && !playerDefense)) continue;
+            
+            // BUG FIX: Check invulnerability on defense component (player uses defense, not health)
+            if (playerDefense && (playerDefense.invulnerable || playerDefense.godMode)) continue;
             if (playerHealth && (playerHealth.invulnerable || playerHealth.godMode)) continue;
 
             for (const projectile of projectiles) {
@@ -297,8 +304,15 @@ class CollisionSystem {
                     
                     // FIX: Add hit cooldown (200ms) and i-frames (400ms)
                     this.hitCooldowns.set(sourceId, this.HIT_COOLDOWN_DURATION);
-                    playerHealth.invulnerable = true;
-                    playerHealth.invulnerableTime = 0.4;
+                    
+                    // BUG FIX: Set invulnerability on defense component (player no longer has health)
+                    if (playerDefense) {
+                        playerDefense.invulnerable = true;
+                        playerDefense.invulnerableTime = 0.4;
+                    } else if (playerHealth) {
+                        playerHealth.invulnerable = true;
+                        playerHealth.invulnerableTime = 0.4;
+                    }
                 }
             }
         }
