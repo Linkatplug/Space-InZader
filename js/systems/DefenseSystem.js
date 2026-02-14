@@ -139,12 +139,31 @@ class DefenseSystem {
      * @private
      * @param {Object} layer - Layer data
      * @param {string} damageType - Damage type
-     * @returns {Object} Resistance calculation { baseResistance, effectiveResistance }
+     * @returns {Object} Resistance calculation { baseResistance, bonusResistance, totalResistance, effectiveResistance }
      */
     computeLayerResistance(layer, damageType) {
-        const baseResistance = (layer.data.resistances && layer.data.resistances[damageType]) || 0;
-        const effectiveResistance = Math.max(0, baseResistance * (1 - layer.penetration));
-        return { baseResistance, effectiveResistance };
+        // Get base resistance from layer
+        const baseResistance = (layer.data.baseResistances && layer.data.baseResistances[damageType]) || 0;
+        
+        // Get bonus resistance (defaults to 0 if not set)
+        const bonusResistance = (layer.data.bonusResistances && layer.data.bonusResistances[damageType]) || 0;
+        
+        // Compute total resistance (base + bonus)
+        const totalResistance = baseResistance + bonusResistance;
+        
+        // Clamp total resistance between -1 and RESISTANCE_CAP
+        const resistCap = typeof RESISTANCE_CAP !== 'undefined' ? RESISTANCE_CAP : 0.75;
+        const clampedResistance = Math.max(-1, Math.min(resistCap, totalResistance));
+        
+        // Apply penetration to the total resistance
+        const effectiveResistance = Math.max(0, clampedResistance * (1 - layer.penetration));
+        
+        return { 
+            baseResistance, 
+            bonusResistance,
+            totalResistance: clampedResistance,
+            effectiveResistance 
+        };
     }
 
     /**
@@ -531,18 +550,24 @@ class DefenseSystem {
      * @param {Entity} entity - Entity to modify
      * @param {string} layerName - Layer to modify (shield, armor, structure)
      * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
-     * @param {number} amount - Amount to ADD to resistance (can be negative)
+     * @param {number} amount - Amount to ADD to bonus resistance (can be negative)
      */
     modifyLayerResistance(entity, layerName, damageType, amount) {
         const defense = entity.getComponent('defense');
         if (!defense || !defense[layerName]) return;
 
         const layer = defense[layerName];
-        if (layer.resistances[damageType] !== undefined) {
-            // ADDITIVE stacking with 75% hard cap
-            const resistCap = typeof RESISTANCE_CAP !== 'undefined' ? RESISTANCE_CAP : 0.75;
-            layer.resistances[damageType] = Math.max(0, Math.min(resistCap, layer.resistances[damageType] + amount));
+        
+        // Initialize bonusResistances if it doesn't exist (backward compatibility)
+        if (!layer.bonusResistances) {
+            layer.bonusResistances = {};
         }
+        
+        // Get current bonus (default to 0)
+        const currentBonus = layer.bonusResistances[damageType] || 0;
+        
+        // Set new bonus value (no clamping here - clamping happens in computeLayerResistance)
+        layer.bonusResistances[damageType] = currentBonus + amount;
     }
     
     /**
