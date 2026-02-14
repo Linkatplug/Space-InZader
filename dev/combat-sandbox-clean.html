@@ -172,16 +172,15 @@
         </div>
     </div>
 
+    <!-- Utils (must load first) -->
+    <script src="../js/utils/Logger.js"></script>
+    <script src="../js/utils/Math.js"></script>
+    
     <!-- Core ECS -->
     <script src="../js/core/ECS.js"></script>
     <script src="../js/core/GameState.js"></script>
-    <script src="../js/core/Components.js"></script>
-    
-    <!-- Utils -->
-    <script src="../js/utils/Math.js"></script>
     
     <!-- Data -->
-    <script src="../js/data/Constants.js"></script>
     <script src="../js/data/DefenseData.js"></script>
     <script src="../js/data/EnemyProfiles.js"></script>
     <script src="../js/data/NewWeaponData.js"></script>
@@ -194,6 +193,12 @@
     <script src="../js/systems/DefenseSystem.js"></script>
     <script src="../js/systems/CollisionSystem.js"></script>
     <script src="../js/systems/SpawnerSystem.js"></script>
+
+    <script>
+        // Create global logger instance (required by systems)
+        window.logger = new Logger();
+        logger.enabled = true;
+    </script>
 
     <script>
         // Global state
