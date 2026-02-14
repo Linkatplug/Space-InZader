@@ -139,12 +139,12 @@ class DefenseSystem {
      * @private
      * @param {Object} layer - Layer data
      * @param {string} damageType - Damage type
-     * @returns {number} Effective resistance
+     * @returns {Object} Resistance calculation { baseResistance, effectiveResistance }
      */
     computeLayerResistance(layer, damageType) {
         const baseResistance = (layer.data.resistances && layer.data.resistances[damageType]) || 0;
         const effectiveResistance = Math.max(0, baseResistance * (1 - layer.penetration));
-        return effectiveResistance;
+        return { baseResistance, effectiveResistance };
     }
 
     /**
@@ -321,11 +321,10 @@ class DefenseSystem {
             if (layer.data.current <= 0) continue;
 
             // Compute effective resistance with penetration
-            const effectiveResistance = this.computeLayerResistance(layer, damagePacket.damageType);
-            const baseResistance = (layer.data.resistances && layer.data.resistances[damagePacket.damageType]) || 0;
+            const resistances = this.computeLayerResistance(layer, damagePacket.damageType);
             
             // Apply damage to this layer
-            const layerResult = this.applyDamageToLayer(context, layer, effectiveResistance);
+            const layerResult = this.applyDamageToLayer(context, layer, resistances.effectiveResistance);
             
             // Track damage to this layer
             context.layersDamaged.push(layer.name);
@@ -336,9 +335,9 @@ class DefenseSystem {
             context.damageLog.push({
                 layer: layer.name,
                 rawDamage: context.remainingDamage.toFixed(1),
-                baseResistance: (baseResistance * 100).toFixed(0) + '%',
+                baseResistance: (resistances.baseResistance * 100).toFixed(0) + '%',
                 penetration: layer.penetration > 0 ? (layer.penetration * 100).toFixed(0) + '%' : 'none',
-                effectiveResistance: (effectiveResistance * 100).toFixed(0) + '%',
+                effectiveResistance: (resistances.effectiveResistance * 100).toFixed(0) + '%',
                 damageAfterResist: layerResult.damageAfterResist.toFixed(1),
                 damageDealt: layerResult.damageDealt.toFixed(1),
                 before: layerResult.beforeCurrent.toFixed(1),
@@ -353,7 +352,7 @@ class DefenseSystem {
                     layerHit: layer.name,
                     finalDamage: layerResult.damageDealt,
                     damageType: damagePacket.damageType,
-                    resistUsed: effectiveResistance,
+                    resistUsed: resistances.effectiveResistance,
                     isCrit: damagePacket.critMultiplier > 1,
                     x: pos ? pos.x : 0,
                     y: pos ? pos.y : 0
@@ -369,7 +368,7 @@ class DefenseSystem {
             context.remainingDamage = this.checkLayerBreak(
                 layerResult.damageAfterResist,
                 layerResult.damageDealt,
-                effectiveResistance
+                resistances.effectiveResistance
             );
         }
 
@@ -402,7 +401,7 @@ class DefenseSystem {
             console.log(`  Shield: ${defense.shield.current.toFixed(1)}/${defense.shield.max}`);
             console.log(`  Armor: ${defense.armor.current.toFixed(1)}/${defense.armor.max}`);
             console.log(`  Structure: ${defense.structure.current.toFixed(1)}/${defense.structure.max}`);
-            console.log(`  Total dealt: ${totalDealt.toFixed(1)}, Overkill: ${context.remainingDamage.toFixed(1)}`);
+            console.log(`  Total dealt: ${totalDealt.toFixed(1)}, Remaining: ${context.remainingDamage.toFixed(1)}`);
             if (destroyed) {
                 console.log(`  ⚠️ ENTITY DESTROYED`);
             }
