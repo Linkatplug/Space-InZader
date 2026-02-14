@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weapon & Enemy System Demo - Space InZader Phaser</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 100%);
+            font-family: 'Courier New', monospace;
+            color: #00ffff;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px #00ffff, 0 0 20px #00ffff;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #00ff00;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .section {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            color: #00ffff;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+            text-shadow: 0 0 5px #00ffff;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #00ccff;
+            border-radius: 5px;
+            padding: 15px;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: #00ffff;
+            box-shadow: 0 5px 15px rgba(0, 255, 255, 0.3);
+        }
+
+        .card h3 {
+            color: #ffff00;
+            margin-bottom: 8px;
+            font-size: 1.2em;
+        }
+
+        .card .type {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin: 5px 5px 5px 0;
+        }
+
+        .type.em { background: #00ccff; color: #000; }
+        .type.thermal { background: #ff6600; color: #fff; }
+        .type.kinetic { background: #cccccc; color: #000; }
+        .type.explosive { background: #ff0066; color: #fff; }
+
+        .behavior {
+            background: #00ff00;
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            display: inline-block;
+            margin: 5px 0;
+        }
+
+        .stats {
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #aaaaaa;
+        }
+
+        .stats div {
+            margin: 3px 0;
+        }
+
+        .defense-layers {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .layer {
+            flex: 1;
+            height: 10px;
+            border-radius: 2px;
+        }
+
+        .shield { background: #00ccff; }
+        .armor { background: #ffaa00; }
+        .structure { background: #ff0000; }
+
+        .weakness {
+            color: #ff6666;
+            font-weight: bold;
+        }
+
+        .play-button {
+            display: block;
+            width: 200px;
+            margin: 30px auto;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #00ccff, #0088ff);
+            color: #000;
+            text-align: center;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2em;
+            border-radius: 8px;
+            border: 2px solid #00ffff;
+            transition: all 0.3s;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .play-button:hover {
+            background: linear-gradient(135deg, #00ffff, #00ccff);
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+        }
+
+        .info {
+            background: rgba(0, 255, 0, 0.1);
+            border-left: 3px solid #00ff00;
+            padding: 10px 15px;
+            margin: 15px 0;
+            font-size: 0.95em;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+            font-size: 0.9em;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 15px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Weapon & Enemy System Demo</h1>
+        <div class="subtitle">Space InZader - Phaser Edition</div>
+
+        <a href="index-phaser.html" class="play-button">▶ PLAY GAME</a>
+
+        <div class="info">
+            <strong>✅ Implemented:</strong> 8 weapon types with 5 different behaviors (direct, homing, beam, pulse, chain) and 6 enemy types with unique AI behaviors. Full 3-layer defense system with damage type effectiveness.
+        </div>
+
+        <!-- WEAPONS SECTION -->
+        <div class="section">
+            <h2>⚔️ Weapon System (8 Types)</h2>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00ccff;"></div>
+                    <span>EM (Anti-Shield)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff6600;"></div>
+                    <span>Thermal (Anti-Structure)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #cccccc;"></div>
+                    <span>Kinetic (Anti-Armor)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff0066;"></div>
+                    <span>Explosive (AoE)</span>
+                </div>
+            </div>
+
+            <div class="grid">
+                <!-- EM Weapons -->
+                <div class="card">
+                    <h3>⚡ Ion Blaster</h3>
+                    <span class="type em">EM</span>
+                    <span class="type">Direct</span>
+                    <div class="stats">
+                        <div>💥 Damage: 22</div>
+                        <div>🔥 Fire Rate: 3.0/s</div>
+                        <div>🎯 Role: Rapid anti-shield</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>💫 EMP Pulse</h3>
+                    <span class="type em">EM</span>
+                    <span class="type">AoE</span>
+                    <div class="stats">
+                        <div>💥 Damage: 60</div>
+                        <div>🔥 Fire Rate: 0.8/s</div>
+                        <div>📏 Radius: 100</div>
+                        <div>🎯 Role: Shield burst</div>
+                    </div>
+                </div>
+
+                <!-- Thermal Weapons -->
+                <div class="card">
+                    <h3>☀️ Solar Flare</h3>
+                    <span class="type thermal">Thermal</span>
+                    <span class="type">AoE</span>
+                    <div class="stats">
+                        <div>💥 Damage: 50</div>
+                        <div>🔥 Fire Rate: 1.0/s</div>
+                        <div>📏 Radius: 90</div>
+                        <div>🎯 Role: Area burn</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🔥 Thermal Lance</h3>
+                    <span class="type thermal">Thermal</span>
+                    <span class="type">Beam</span>
+                    <div class="stats">
+                        <div>💥 Damage: 35</div>
+                        <div>🔥 Fire Rate: 2.0/s</div>
+                        <div>🎯 Role: Structure melt</div>
+                    </div>
+                </div>
+
+                <!-- Kinetic Weapons -->
+                <div class="card">
+                    <h3>🔫 Auto Cannon</h3>
+                    <span class="type kinetic">Kinetic</span>
+                    <span class="type">Direct</span>
+                    <div class="stats">
+                        <div>💥 Damage: 28</div>
+                        <div>🔥 Fire Rate: 4.0/s</div>
+                        <div>🎯 Role: Armor shred</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>⚙️ Gauss Repeater</h3>
+                    <span class="type kinetic">Kinetic</span>
+                    <span class="type">Direct</span>
+                    <div class="stats">
+                        <div>💥 Damage: 18</div>
+                        <div>🔥 Fire Rate: 6.0/s</div>
+                        <div>🎯 Role: Sustained DPS</div>
+                    </div>
+                </div>
+
+                <!-- Explosive Weapons -->
+                <div class="card">
+                    <h3>💣 Gravity Bomb</h3>
+                    <span class="type explosive">Explosive</span>
+                    <span class="type">Homing</span>
+                    <div class="stats">
+                        <div>💥 Damage: 90</div>
+                        <div>🔥 Fire Rate: 0.5/s</div>
+                        <div>📏 Radius: 110</div>
+                        <div>🎯 Role: Seeking explosive</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🌊 Shockwave Emitter</h3>
+                    <span class="type explosive">Explosive</span>
+                    <span class="type">AoE</span>
+                    <div class="stats">
+                        <div>💥 Damage: 70</div>
+                        <div>🔥 Fire Rate: 0.7/s</div>
+                        <div>📏 Radius: 130</div>
+                        <div>🎯 Role: Crowd control</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info" style="margin-top: 20px;">
+                <strong>Weapon Behaviors:</strong> Direct (straight projectiles), Homing (tracking missiles), Beam (instant hit), Pulse (AoE from player), Chain (arcs between enemies). All weapons have auto-targeting!
+            </div>
+        </div>
+
+        <!-- ENEMIES SECTION -->
+        <div class="section">
+            <h2>👾 Enemy System (6 Types)</h2>
+
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color shield"></div>
+                    <span>Shield (Blue)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color armor"></div>
+                    <span>Armor (Orange)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color structure"></div>
+                    <span>Structure (Red)</span>
+                </div>
+            </div>
+
+            <div class="grid">
+                <div class="card">
+                    <h3>🛸 Scout Drone</h3>
+                    <span class="behavior">Chase</span>
+                    <div class="defense-layers">
+                        <div class="layer shield" style="flex: 100;"></div>
+                        <div class="layer armor" style="flex: 35;"></div>
+                        <div class="layer structure" style="flex: 45;"></div>
+                    </div>
+                    <div class="stats">
+                        <div>💚 Total HP: 180</div>
+                        <div>🏃 Speed: Fast (120)</div>
+                        <div class="weakness">⚠️ Weak: Kinetic</div>
+                        <div>⭐ XP: 5</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🛡️ Armored Cruiser</h3>
+                    <span class="behavior">Chase</span>
+                    <div class="defense-layers">
+                        <div class="layer shield" style="flex: 40;"></div>
+                        <div class="layer armor" style="flex: 300;"></div>
+                        <div class="layer structure" style="flex: 150;"></div>
+                    </div>
+                    <div class="stats">
+                        <div>💚 Total HP: 490</div>
+                        <div>🏃 Speed: Slow (70)</div>
+                        <div class="weakness">⚠️ Weak: Explosive</div>
+                        <div>⭐ XP: 20</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🌟 Plasma Entity</h3>
+                    <span class="behavior">Weave</span>
+                    <div class="defense-layers">
+                        <div class="layer shield" style="flex: 80;"></div>
+                        <div class="layer armor" style="flex: 40;"></div>
+                        <div class="layer structure" style="flex: 200;"></div>
+                    </div>
+                    <div class="stats">
+                        <div>💚 Total HP: 320</div>
+                        <div>🏃 Speed: Medium (90)</div>
+                        <div class="weakness">⚠️ Weak: Thermal</div>
+                        <div>⭐ XP: 18</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🏔️ Siege Hulk</h3>
+                    <span class="behavior">Slow Advance</span>
+                    <div class="defense-layers">
+                        <div class="layer shield" style="flex: 60;"></div>
+                        <div class="layer armor" style="flex: 250;"></div>
+                        <div class="layer structure" style="flex: 300;"></div>
+                    </div>
+                    <div class="stats">
+                        <div>💚 Total HP: 610</div>
+                        <div>🏃 Speed: Very Slow (50)</div>
+                        <div class="weakness">⚠️ Weak: Explosive</div>
+                        <div>⭐ XP: 30</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>⚡ Interceptor</h3>
+                    <span class="behavior">Aggressive</span>
+                    <div class="defense-layers">
+                        <div class="layer shield" style="flex: 120;"></div>
+                        <div class="layer armor" style="flex: 70;"></div>
+                        <div class="layer structure" style="flex: 80;"></div>
+                    </div>
+                    <div class="stats">
+                        <div>💚 Total HP: 270</div>
+                        <div>🏃 Speed: Fast (120)</div>
+                        <div class="weakness">⚠️ Weak: EM</div>
+                        <div>⭐ XP: 15</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>👑 Elite Destroyer</h3>
+                    <span class="behavior">Tactical</span>
+                    <div class="defense-layers">
+                        <div class="layer shield" style="flex: 150;"></div>
+                        <div class="layer armor" style="flex: 120;"></div>
+                        <div class="layer structure" style="flex: 150;"></div>
+                    </div>
+                    <div class="stats">
+                        <div>💚 Total HP: 420</div>
+                        <div>🏃 Speed: Medium (100)</div>
+                        <div class="weakness">⚠️ Weak: Varies</div>
+                        <div>⭐ XP: 40</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info" style="margin-top: 20px;">
+                <strong>AI Behaviors:</strong> Chase (direct pursuit), Weave (side-to-side movement), Slow Advance (steady descent), Aggressive (1.5x speed pursuit), Tactical (keeps distance and circles).
+            </div>
+        </div>
+
+        <!-- COMBAT SYSTEM -->
+        <div class="section">
+            <h2>⚔️ Combat System</h2>
+
+            <h3 style="color: #ffff00; margin-top: 15px;">Damage Type Effectiveness</h3>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                <div class="card">
+                    <h3>⚡ EM Damage</h3>
+                    <div class="stats">
+                        <div style="color: #00ff00;">✓ vs Shield: 150%</div>
+                        <div style="color: #ff6666;">✗ vs Armor: 50%</div>
+                        <div>○ vs Structure: 100%</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🔥 Thermal Damage</h3>
+                    <div class="stats">
+                        <div>○ vs Shield: 100%</div>
+                        <div style="color: #ff6666;">✗ vs Armor: 50%</div>
+                        <div style="color: #00ff00;">✓ vs Structure: 130%</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>🔫 Kinetic Damage</h3>
+                    <div class="stats">
+                        <div>○ vs Shield: 100%</div>
+                        <div style="color: #00ff00;">✓ vs Armor: 120%</div>
+                        <div>○ vs Structure: 100%</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>💣 Explosive Damage</h3>
+                    <div class="stats">
+                        <div>○ vs Shield: 100%</div>
+                        <div style="color: #00ff00;">✓ vs Armor: 120%</div>
+                        <div>○ vs Structure: 100%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info" style="margin-top: 15px;">
+                <strong>Strategy:</strong> Use EM weapons against shielded enemies, Kinetic/Explosive against armored foes, and Thermal against exposed structure. Each enemy also has a specific weakness for 150% bonus damage!
+            </div>
+        </div>
+
+        <!-- FEATURES -->
+        <div class="section">
+            <h2>✨ Features</h2>
+            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <div class="card">
+                    <h3>🎯 Auto-Targeting</h3>
+                    <p style="font-size: 0.9em; margin-top: 8px;">Weapons automatically find and fire at the nearest enemy</p>
+                </div>
+                <div class="card">
+                    <h3>🎨 Visual Variety</h3>
+                    <p style="font-size: 0.9em; margin-top: 8px;">Each enemy type has unique shape and color</p>
+                </div>
+                <div class="card">
+                    <h3>💥 Hit Effects</h3>
+                    <p style="font-size: 0.9em; margin-top: 8px;">Particle explosions and damage numbers on every hit</p>
+                </div>
+                <div class="card">
+                    <h3>🌊 Wave System</h3>
+                    <p style="font-size: 0.9em; margin-top: 8px;">Increasing difficulty with progressive enemy types</p>
+                </div>
+                <div class="card">
+                    <h3>🛡️ Defense Layers</h3>
+                    <p style="font-size: 0.9em; margin-top: 8px;">3-layer system: Shield → Armor → Structure</p>
+                </div>
+                <div class="card">
+                    <h3>🤖 Smart AI</h3>
+                    <p style="font-size: 0.9em; margin-top: 8px;">5 different behavior patterns for tactical combat</p>
+                </div>
+            </div>
+        </div>
+
+        <a href="index-phaser.html" class="play-button" style="margin-top: 40px;">▶ PLAY NOW</a>
+
+        <div style="text-align: center; margin: 30px 0; color: #666; font-size: 0.9em;">
+            <p>Space InZader - Phaser Edition</p>
+            <p>Weapon & Enemy System Implementation Demo</p>
+        </div>
+    </div>
+</body>
+</html>
