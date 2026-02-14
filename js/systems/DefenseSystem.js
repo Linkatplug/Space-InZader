@@ -125,7 +125,7 @@ class DefenseSystem {
         const defense = entity.getComponent('defense');
         if (!defense) {
             // No defense component found - entity cannot take damage
-            logger.warn('DefenseSystem', `Entity ${entity.type} has no defense component - cannot apply damage`);
+            logger.warn('DefenseSystem', `Entity ${entity.type} has no defense component and cannot take damage. Ensure createDefenseComponent() was called during entity creation.`);
             return { 
                 incoming: damagePacket.getFinalDamage(),
                 dealt: 0,
@@ -170,7 +170,8 @@ class DefenseSystem {
             const baseResistance = (layer.data.resistances && layer.data.resistances[damagePacket.damageType]) || 0;
             
             // Apply penetration: reduces effective resistance
-            // Penetration directly reduces resistance (e.g., 50% penetration = half resistance)
+            // Formula: effectiveResistance = baseResistance * (1 - penetration)
+            // Example: 50% penetration on 40% base resistance = 40% * (1 - 0.5) = 20% effective resistance
             const effectiveResistance = Math.max(0, baseResistance * (1 - layer.penetration));
             
             // Apply resistance to calculate damage after resist

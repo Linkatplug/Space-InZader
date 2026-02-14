@@ -6,6 +6,9 @@
 // Hit cooldown constant (200ms to prevent instant melt from tick collisions)
 const HIT_COOLDOWN_MS = 200;
 
+// Instant kill damage for special cases (e.g., black hole center)
+const INSTANT_KILL_DAMAGE = 999999;
+
 class CollisionSystem {
     constructor(world, gameState, audioManager, particleSystem = null) {
         this.world = world;
@@ -389,6 +392,13 @@ class CollisionSystem {
         // Apply damage through DefenseSystem (the only authority for defense modifications)
         if (defense && this.world && this.world.defenseSystem) {
             const result = this.world.defenseSystem.applyDamage(player, damage, damageType);
+            
+            // Validate result
+            if (!result || typeof result.dealt !== 'number') {
+                logger.error('Collision', 'DefenseSystem.applyDamage() returned invalid result');
+                return;
+            }
+            
             this.gameState.stats.damageTaken += result.dealt;
             
             // Log with actual dealt damage and layers hit
@@ -1017,9 +1027,14 @@ class CollisionSystem {
                     // INSTANT KILL - Enemy is in the center of the black hole
                     // Apply massive damage through DefenseSystem (the only authority)
                     if (this.world && this.world.defenseSystem) {
-                        // Apply 999999 damage to ensure instant kill through DefenseSystem
-                        this.world.defenseSystem.applyDamage(enemy, 999999, 'kinetic');
-                        console.log('%c[Black Hole] Enemy sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
+                        const result = this.world.defenseSystem.applyDamage(enemy, INSTANT_KILL_DAMAGE, 'kinetic');
+                        if (result.destroyed) {
+                            console.log('%c[Black Hole] Enemy sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
+                        } else {
+                            logger.warn('Collision', 'Black hole instant kill failed - enemy survived');
+                        }
+                    } else {
+                        logger.error('Collision', 'DefenseSystem not available for black hole instant kill');
                     }
                 } else if (distance < blackHoleComp.damageRadius) {
                     // Normal damage zone - outside the instant kill center
