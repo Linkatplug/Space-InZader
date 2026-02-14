@@ -35,10 +35,10 @@ class DefenseSystem {
         const defense = entity.getComponent('defense');
         if (!defense) return;
 
-        // Update each layer
-        this.updateLayer(defense.shield, deltaTime);
-        this.updateLayer(defense.armor, deltaTime);
-        this.updateLayer(defense.structure, deltaTime);
+        // Update each layer (must pass layerName to avoid validation warnings)
+        this.updateLayer(defense.shield, deltaTime, 'shield');
+        this.updateLayer(defense.armor, deltaTime, 'armor');
+        this.updateLayer(defense.structure, deltaTime, 'structure');
         
         // Sync defense to playerComp for tactical UI (if this is a player)
         if (entity.type === 'player') {
@@ -92,9 +92,20 @@ class DefenseSystem {
     /**
      * Apply damage to an entity's defense layers using DamagePacket
      * This is the ONLY method that should modify shield, armor, and structure
+     * 
+     * REQUIRED PACKET STRUCTURE:
+     * {
+     *   baseDamage: number,       // Base damage amount
+     *   damageType: string,        // 'em', 'thermal', 'kinetic', or 'explosive'
+     *   shieldPenetration?: number, // Optional: 0-1 (reduces shield resistance)
+     *   armorPenetration?: number,  // Optional: 0-1 (reduces armor resistance)
+     *   critChance?: number,        // Optional: 0-1 (not used here, for weapon calc)
+     *   critMultiplier?: number     // Optional: multiplier applied to baseDamage
+     * }
+     * 
      * @param {Entity} entity - Target entity
-     * @param {DamagePacket|number} damagePacketOrAmount - DamagePacket or raw damage (for backward compatibility)
-     * @param {string} damageType - Damage type (for backward compatibility when using raw number)
+     * @param {DamagePacket|number} damagePacketOrAmount - DamagePacket (preferred) or raw damage (legacy support)
+     * @param {string} damageType - Damage type (only used for legacy raw number calls)
      * @returns {Object} Damage result { incoming, dealt, layers, layer, destroyed }
      */
     applyDamage(entity, damagePacketOrAmount, damageType = 'kinetic') {
@@ -113,13 +124,40 @@ class DefenseSystem {
         }
 
         // Support both DamagePacket and legacy (number, damageType) signatures
+        // LEGACY SUPPORT: Convert raw number to DamagePacket for backward compatibility
         let damagePacket;
         if (typeof damagePacketOrAmount === 'number') {
             // Legacy call: applyDamage(entity, damage, damageType)
+            logger.warn('DefenseSystem', `Legacy applyDamage call detected with raw number. Please use DamagePacket instead.`);
             damagePacket = new DamagePacket(damagePacketOrAmount, damageType);
-        } else {
+        } else if (damagePacketOrAmount && typeof damagePacketOrAmount === 'object') {
             // New call: applyDamage(entity, damagePacket)
+            // Validate it has the required structure
+            if (!damagePacketOrAmount.baseDamage && !damagePacketOrAmount.damage) {
+                logger.error('DefenseSystem', 'Invalid damage packet: missing baseDamage field', damagePacketOrAmount);
+                return { 
+                    incoming: 0,
+                    dealt: 0,
+                    layers: {},
+                    layer: '',
+                    destroyed: false,
+                    totalDamage: 0,
+                    layersDamaged: []
+                };
+            }
             damagePacket = damagePacketOrAmount;
+        } else {
+            // Invalid call
+            logger.error('DefenseSystem', 'Invalid applyDamage call: must pass DamagePacket or number', damagePacketOrAmount);
+            return { 
+                incoming: 0,
+                dealt: 0,
+                layers: {},
+                layer: '',
+                destroyed: false,
+                totalDamage: 0,
+                layersDamaged: []
+            };
         }
 
         const defense = entity.getComponent('defense');

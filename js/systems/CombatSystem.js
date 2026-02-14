@@ -949,7 +949,9 @@ class CombatSystem {
                     // CombatSystem detected hit - delegate damage to DefenseSystem
                     // Blade halo uses kinetic damage type (spinning blades = physical)
                     if (this.world.defenseSystem) {
-                        const result = this.world.defenseSystem.applyDamage(enemy, damagePerTick, 'kinetic');
+                        // Use DamagePacket for proper damage application
+                        const damagePacket = DamagePacket.simple(damagePerTick, 'kinetic');
+                        const result = this.world.defenseSystem.applyDamage(enemy, damagePacket);
                         // DefenseSystem handles entity destruction via entityDestroyed event
                     }
                 }
@@ -1065,8 +1067,10 @@ class CombatSystem {
         }
         
         // Delegate all damage application to DefenseSystem (the only authority)
+        // Use DamagePacket for proper damage structure
         if (this.world.defenseSystem) {
-            return this.world.defenseSystem.applyDamage(target, damage, damageType);
+            const damagePacket = DamagePacket.simple(damage, damageType);
+            return this.world.defenseSystem.applyDamage(target, damagePacket);
         }
         
         // No DefenseSystem available - log error and return empty result

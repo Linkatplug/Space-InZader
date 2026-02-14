@@ -314,8 +314,9 @@ class CollisionSystem {
         let destroyed = false;
         
         if (defense && this.world && this.world.defenseSystem) {
-            // Use new defense system
-            const result = this.world.defenseSystem.applyDamage(enemy, damage, damageType);
+            // Use new defense system with DamagePacket
+            const damagePacket = DamagePacket.simple(damage, damageType);
+            const result = this.world.defenseSystem.applyDamage(enemy, damagePacket);
             actualDamage = result.totalDamage;
             destroyed = result.destroyed;
         } else if (health) {
@@ -390,8 +391,10 @@ class CollisionSystem {
         console.log(`[CollisionSystem] damagePlayer: Applying ${damage} ${damageType} damage`);
 
         // Apply damage through DefenseSystem (the only authority for defense modifications)
+        // Use DamagePacket for proper structure
         if (defense && this.world && this.world.defenseSystem) {
-            const result = this.world.defenseSystem.applyDamage(player, damage, damageType);
+            const damagePacket = DamagePacket.simple(damage, damageType);
+            const result = this.world.defenseSystem.applyDamage(player, damagePacket);
             
             // Validate result
             if (!result || typeof result.dealt !== 'number') {
@@ -1026,8 +1029,10 @@ class CollisionSystem {
                 if (distance < this.BLACK_HOLE_CENTER_KILL_RADIUS) {
                     // INSTANT KILL - Enemy is in the center of the black hole
                     // Apply massive damage through DefenseSystem (the only authority)
+                    // Use DamagePacket for proper structure
                     if (this.world && this.world.defenseSystem) {
-                        const result = this.world.defenseSystem.applyDamage(enemy, INSTANT_KILL_DAMAGE, 'kinetic');
+                        const damagePacket = DamagePacket.simple(INSTANT_KILL_DAMAGE, 'kinetic');
+                        const result = this.world.defenseSystem.applyDamage(enemy, damagePacket);
                         if (result.destroyed) {
                             console.log('%c[Black Hole] Enemy sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
                         } else {
