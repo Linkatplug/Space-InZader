@@ -364,8 +364,11 @@
         function gameLoop(currentTime) {
             if (!running) return;
             
-            const deltaTime = Math.min((currentTime - lastTime) / 1000, 0.1);
+            let deltaTime = (currentTime - lastTime) / 1000;
             lastTime = currentTime;
+            
+            // Clamp deltaTime to prevent teleporting
+            deltaTime = Math.min(deltaTime, 0.1);
             
             // Update systems based on flags
             if (systemFlags.movement) systems.movement.update(deltaTime);
