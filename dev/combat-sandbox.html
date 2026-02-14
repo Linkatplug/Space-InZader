@@ -243,6 +243,17 @@
             // This cleanly disables wave spawning, weather, UI updates, and audio at engine level
             game = new Game({ sandboxMode: true });
             
+            // Override additional UI methods that try to access DOM elements
+            // These are called by the game but reference elements that don't exist in sandbox
+            if (game.systems.ui) {
+                game.systems.ui.updateHUD = function() {};
+                game.systems.ui.showScreen = function() {};
+                game.systems.ui.showWaveAnnouncement = function() {};
+                game.systems.ui.showLevelUp = function() {};
+                game.systems.ui.showGameOver = function() {};
+                console.log('[Combat Sandbox] UI methods overridden to prevent DOM errors');
+            }
+            
             // Set selected ship
             game.gameState.selectedShip = 'ION_FRIGATE';
             

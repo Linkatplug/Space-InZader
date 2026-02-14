@@ -458,15 +458,46 @@
 
         // Initialize game with dev mode
         function initDevSandbox() {
-            console.log('[DevSandbox] Initializing professional combat sandbox with sandboxMode...');
+            console.log('[DevSandbox] Initializing professional combat sandbox...');
 
-            // Create game instance with sandboxMode enabled
-            // This cleanly disables wave spawning, weather, UI updates, and audio at engine level
-            game = new Game({ sandboxMode: true });
+            // Create game instance
+            game = new Game();
             
-            // Override setupUIListeners to prevent DOM errors
+            // Disable UI and Audio initialization methods BEFORE startGame
+            console.log('[DevSandbox] Disabling UI and Audio systems...');
+            
+            // Override methods that touch DOM elements
             game.setupUIListeners = function() {
                 console.log('[DevSandbox] UI listeners disabled');
+            };
+            
+            // Replace UI system with stub that does nothing
+            game.systems.ui = {
+                showScreen: () => {},
+                showWaveAnnouncement: () => {},
+                showLevelUp: () => {},
+                showGameOver: () => {},
+                showPauseMenu: () => {},
+                hidePauseMenu: () => {},
+                showScoreboard: () => {},
+                hideScoreboard: () => {},
+                showNameEntryDialog: () => {},
+                hideNameEntryDialog: () => {},
+                updateHUD: () => {},
+                update: () => {},
+                waveSystem: null
+            };
+            
+            // Disable audio initialization
+            game.audioManager = {
+                init: () => {},
+                playSound: () => {},
+                playMusic: () => {},
+                stopMusic: () => {},
+                stopAll: () => {},
+                setVolume: () => {},
+                startBackgroundMusic: () => {},
+                stopBackgroundMusic: () => {}
             };
             
             // Store original update method
