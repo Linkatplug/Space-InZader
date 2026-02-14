@@ -258,9 +258,11 @@ class SynergySystem {
             const dist = Math.sqrt(dx * dx + dy * dy);
             
             if (dist <= radius) {
-                const enemyHealth = enemy.getComponent('health');
-                if (enemyHealth) {
-                    enemyHealth.current -= damage;
+                // Use DefenseSystem to apply damage properly
+                const defense = enemy.getComponent('defense');
+                if (defense && this.world?.defenseSystem) {
+                    const damagePacket = DamagePacket.simple(damage, 'explosive');
+                    this.world.defenseSystem.applyDamage(enemy, damagePacket);
                 }
             }
         });
