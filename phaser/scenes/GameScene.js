@@ -4,6 +4,8 @@
  */
 
 import Phaser from 'phaser';
+import { PhaserWeaponSystem } from '../systems/PhaserWeaponSystem.js';
+import { PhaserEnemySystem } from '../systems/PhaserEnemySystem.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -37,9 +39,15 @@ export default class GameScene extends Phaser.Scene {
         
         // Start game loop (Phaser handles this automatically via update())
         this.gameRunning = true;
+
+        // Wave progression
         this.time.addEvent({
-            delay: 1000,
-            callback: this.spawnEnemy,
+            delay: 30000, // New wave every 30 seconds
+            callback: () => {
+                if (this.enemySystem) {
+                    this.enemySystem.nextWave();
+                }
+            },
             callbackScope: this,
             loop: true
         });
@@ -166,11 +174,17 @@ export default class GameScene extends Phaser.Scene {
     }
     
     initializeSystems() {
-        // Here we would initialize the ported systems
-        // For now, basic game logic
-        this.enemies = [];
-        this.projectiles = [];
-        this.particles = [];
+        // Initialize weapon system with starting weapons
+        this.weaponSystem = new PhaserWeaponSystem(this);
+        this.weaponSystem.initializePlayerWeapons([
+            'ion_blaster',      // EM - Rapid fire
+            'solar_flare'       // Thermal - Burst damage
+        ]);
+
+        // Initialize enemy system
+        this.enemySystem = new PhaserEnemySystem(this);
+
+        console.log('Systems initialized: Weapons, Enemies');
     }
     
     update(time, delta) {
@@ -184,11 +198,16 @@ export default class GameScene extends Phaser.Scene {
         // Update player movement
         this.updatePlayer(dt);
         
-        // Update enemies
-        this.updateEnemies(dt);
+        // Update weapon system
+        if (this.weaponSystem) {
+            const enemies = this.enemySystem ? this.enemySystem.getEnemies() : [];
+            this.weaponSystem.update(dt, this.playerData, enemies);
+        }
         
-        // Update projectiles
-        this.updateProjectiles(dt);
+        // Update enemy system
+        if (this.enemySystem) {
+            this.enemySystem.update(dt, this.playerData);
+        }
         
         // Update HUD
         this.updateHUD();
@@ -252,41 +271,7 @@ export default class GameScene extends Phaser.Scene {
         this.player.y = this.playerData.y;
     }
     
-    updateEnemies(dt) {
-        this.enemies.forEach((enemy, index) => {
-            // Simple AI: move toward player
-            const dx = this.playerData.x - enemy.x;
-            const dy = this.playerData.y - enemy.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            
-            if (dist > 0) {
-                enemy.x += (dx / dist) * enemy.speed * dt;
-                enemy.y += (dy / dist) * enemy.speed * dt;
-            }
-            
-            enemy.graphics.x = enemy.x;
-            enemy.graphics.y = enemy.y;
-            
-            // Remove if off screen
-            if (enemy.y > this.cameras.main.height + 50) {
-                enemy.graphics.destroy();
-                this.enemies.splice(index, 1);
-            }
-        });
-    }
-    
-    updateProjectiles(dt) {
-        this.projectiles.forEach((proj, index) => {
-            proj.y -= proj.speed * dt;
-            proj.graphics.y = proj.y;
-            
-            // Remove if off screen
-            if (proj.y < -50) {
-                proj.graphics.destroy();
-                this.projectiles.splice(index, 1);
-            }
-        });
-    }
+
     
     updateHUD() {
         // Update health bar
@@ -304,63 +289,47 @@ export default class GameScene extends Phaser.Scene {
     }
     
     checkCollisions() {
-        // Player-Enemy collisions
-        this.enemies.forEach(enemy => {
+        if (!this.enemySystem || !this.weaponSystem) return;
+
+        const enemies = this.enemySystem.getEnemies();
+
+        // Weapon projectile collisions
+        enemies.forEach(enemy => {
+            // Check projectile hits
+            const projectileHits = this.weaponSystem.checkProjectileCollision(enemy);
+            projectileHits.forEach(hit => {
+                this.enemySystem.damageEnemy(enemy, hit.damage, hit.damageType);
+                
+                if (enemy.destroyed) {
+                    this.addScore(enemy.data.xpValue * 10 || 100);
+                }
+            });
+
+            // Check AoE hits
+            const aoeHits = this.weaponSystem.checkAoECollision(enemy);
+            aoeHits.forEach(hit => {
+                this.enemySystem.damageEnemy(enemy, hit.damage, hit.damageType);
+                
+                if (enemy.destroyed) {
+                    this.addScore(enemy.data.xpValue * 10 || 100);
+                }
+            });
+
+            // Player-enemy collision
             const dx = this.playerData.x - enemy.x;
             const dy = this.playerData.y - enemy.y;
             const dist = Math.sqrt(dx * dx + dy * dy);
             
-            if (dist < 30) {
-                this.damagePlayer(10);
+            if (dist < 35) {
+                this.damagePlayer(5);
                 // Push enemy away
-                enemy.x -= dx * 0.1;
-                enemy.y -= dy * 0.1;
+                enemy.vx = -(dx / dist) * 100;
+                enemy.vy = -(dy / dist) * 100;
             }
-        });
-        
-        // Projectile-Enemy collisions
-        this.projectiles.forEach((proj, pIndex) => {
-            this.enemies.forEach((enemy, eIndex) => {
-                const dx = proj.x - enemy.x;
-                const dy = proj.y - enemy.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                
-                if (dist < 25) {
-                    // Hit!
-                    enemy.health -= 25;
-                    proj.graphics.destroy();
-                    this.projectiles.splice(pIndex, 1);
-                    
-                    if (enemy.health <= 0) {
-                        enemy.graphics.destroy();
-                        this.enemies.splice(eIndex, 1);
-                        this.addScore(100);
-                    }
-                }
-            });
         });
     }
     
-    spawnEnemy() {
-        if (!this.gameRunning) return;
-        
-        const x = Phaser.Math.Between(50, this.cameras.main.width - 50);
-        const y = -30;
-        
-        const graphics = this.add.graphics();
-        graphics.fillStyle(0xff0000, 1);
-        graphics.fillCircle(0, 0, 15);
-        graphics.x = x;
-        graphics.y = y;
-        graphics.setDepth(5);
-        
-        this.enemies.push({
-            x, y,
-            graphics,
-            speed: 50,
-            health: 100
-        });
-    }
+
     
     damagePlayer(amount) {
         this.playerData.health -= amount;
