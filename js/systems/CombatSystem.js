@@ -1,6 +1,21 @@
 /**
  * @file CombatSystem.js
  * @description Handles weapon firing, combat mechanics, and projectile creation
+ * 
+ * SEPARATION OF RESPONSIBILITIES:
+ * - CombatSystem: Detects hits, calculates damage multipliers, creates DamagePackets
+ * - DefenseSystem: Applies damage to entities (shield/armor/structure), the ONLY authority for defense modification
+ * 
+ * CombatSystem MUST NOT:
+ * - Directly modify health, shield, armor, or structure
+ * - Apply damage to entities
+ * - Destroy entities based on health
+ * 
+ * CombatSystem SHOULD:
+ * - Detect weapon hits
+ * - Calculate final damage (multipliers, crits, synergies)
+ * - Call DefenseSystem.applyDamage() to delegate damage application
+ * - Create and manage projectiles
  */
 
 // Sound probability constants for weapons
@@ -873,6 +888,12 @@ class CombatSystem {
     
     /**
      * Update spinning blade halo (Lame Tournoyante)
+     * 
+     * RESPONSIBILITY: CombatSystem detects hits and delegates damage to DefenseSystem
+     * - Detects enemies in range
+     * - Calculates damage amount
+     * - Calls DefenseSystem.applyDamage() to apply damage
+     * 
      * @param {Entity} player - Player entity
      * @param {Object} playerComp - Player component
      * @param {number} deltaTime - Time elapsed
@@ -912,7 +933,7 @@ class CombatSystem {
         if (halo.lastTickTime >= halo.tickRate) {
             halo.lastTickTime = 0;
             
-            // Apply damage to nearby enemies
+            // Detect hits and delegate damage to DefenseSystem
             const playerPos = player.getComponent('position');
             if (!playerPos) return;
             
@@ -925,12 +946,11 @@ class CombatSystem {
                 
                 const dist = MathUtils.distance(playerPos.x, playerPos.y, enemyPos.x, enemyPos.y);
                 if (dist <= orbitRadius) {
-                    const enemyHealth = enemy.getComponent('health');
-                    if (enemyHealth) {
-                        enemyHealth.current -= damagePerTick;
-                        if (enemyHealth.current <= 0) {
-                            this.world.removeEntity(enemy.id);
-                        }
+                    // CombatSystem detected hit - delegate damage to DefenseSystem
+                    // Blade halo uses kinetic damage type (spinning blades = physical)
+                    if (this.world.defenseSystem) {
+                        const result = this.world.defenseSystem.applyDamage(enemy, damagePerTick, 'kinetic');
+                        // DefenseSystem handles entity destruction via entityDestroyed event
                     }
                 }
             }
@@ -996,12 +1016,19 @@ class CombatSystem {
     }
     
     /**
-     * Calculate damage with new defense system
+     * Calculate damage with defense system
+     * 
+     * RESPONSIBILITY: CombatSystem calculates final damage and delegates to DefenseSystem
+     * - Applies attacker's damage multipliers (stats, modules, synergies, crits)
+     * - Creates final damage value
+     * - Delegates actual damage application to DefenseSystem.applyDamage()
+     * - Does NOT modify health/defense directly
+     * 
      * @param {Entity} attacker - Attacking entity
      * @param {Entity} target - Target entity
      * @param {number} baseDamage - Base damage
      * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
-     * @returns {Object} Damage result
+     * @returns {Object} Damage result from DefenseSystem
      */
     calculateDamageWithDefense(attacker, target, baseDamage, damageType = 'kinetic') {
         // Apply attacker's damage multipliers
@@ -1037,27 +1064,21 @@ class CombatSystem {
             }
         }
         
-        // Apply damage through defense system
+        // Delegate all damage application to DefenseSystem (the only authority)
         if (this.world.defenseSystem) {
             return this.world.defenseSystem.applyDamage(target, damage, damageType);
         }
         
-        // Fallback to old health system
-        const health = target.getComponent('health');
-        if (health) {
-            health.current -= damage;
-            return {
-                totalDamage: damage,
-                layersDamaged: ['health'],
-                destroyed: health.current <= 0,
-                damageType
-            };
-        }
-        
+        // No DefenseSystem available - log error and return empty result
+        logger.error('Combat', 'DefenseSystem not available - cannot apply damage');
         return {
+            incoming: damage,
+            dealt: 0,
+            layers: {},
+            layer: '',
+            destroyed: false,
             totalDamage: 0,
             layersDamaged: [],
-            destroyed: false,
             damageType
         };
     }
