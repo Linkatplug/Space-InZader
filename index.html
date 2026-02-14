@@ -172,53 +172,6 @@
             top: 10px;
             left: 10px;
         }
-        
-        .hud-top-right {
-            top: 10px;
-            right: 10px;
-            max-width: 250px;
-        }
-        
-        .stats-display {
-            background: rgba(10, 10, 26, 0.85);
-            border: 2px solid #00ffff;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            line-height: 1.6;
-        }
-        
-        .stats-display-title {
-            color: #ffaa00;
-            font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 14px;
-            text-align: center;
-        }
-        
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 3px 0;
-            color: #00ffff;
-        }
-        
-        .stat-label {
-            color: #aaa;
-        }
-        
-        .stat-value {
-            color: #00ffff;
-            font-weight: bold;
-        }
-        
-        .stat-value.negative {
-            color: #ff4444;
-        }
-        
-        .stat-value.positive {
-            color: #44ff44;
-        }
 
         .hud-top-center {
             top: 10px;
@@ -291,43 +244,49 @@
 
         /* Defense Layer Bars */
         .defense-bar {
-            width: 200px;
-            height: 15px;
+            width: 400px;
+            height: 30px;
             position: relative;
-            margin-top: 3px;
+            margin-top: 6px;
         }
         
         .shield-bar {
             background: rgba(0, 255, 255, 0.2);
-            border: 2px solid #00ffff;
+            border: 4px solid #00ffff;
         }
         
         .shield-fill {
+            width: 0;
             height: 100%;
             background: linear-gradient(90deg, #00ddff, #00ffff);
             transition: width 0.3s;
+            margin-left: auto; /* Align right - empties from left */
         }
         
         .armor-bar {
             background: rgba(139, 69, 19, 0.3);
-            border: 2px solid #8B4513;
+            border: 4px solid #8B4513;
         }
         
         .armor-fill {
+            width: 0;
             height: 100%;
             background: linear-gradient(90deg, #8B4513, #CD853F);
             transition: width 0.3s;
+            margin-left: auto; /* Align right - empties from left */
         }
         
         .structure-bar {
             background: rgba(255, 0, 0, 0.3);
-            border: 2px solid #ff0000;
+            border: 4px solid #ff0000;
         }
         
         .structure-fill {
+            width: 0;
             height: 100%;
             background: linear-gradient(90deg, #ff0000, #ff6600);
             transition: width 0.3s;
+            margin-left: auto; /* Align right - empties from left */
         }
         
         .xp-bar {
@@ -1398,39 +1357,6 @@
             <div class="hud hud-top-left" id="hudTopLeft">
                 <div>Temps: <span id="timeDisplay">0:00</span></div>
             </div>
-            <div class="hud hud-top-right" id="hudTopRight">
-                <div class="stats-display" id="statsDisplay">
-                    <div class="stats-display-title">📊 STATS</div>
-                    <div class="stat-row">
-                        <span class="stat-label">Dégâts:</span>
-                        <span class="stat-value" id="statDamage">100%</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Cadence:</span>
-                        <span class="stat-value" id="statFireRate">100%</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Vitesse:</span>
-                        <span class="stat-value" id="statSpeed">220</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Armure:</span>
-                        <span class="stat-value" id="statArmor">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Vol de vie:</span>
-                        <span class="stat-value" id="statLifesteal">0%</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Régén:</span>
-                        <span class="stat-value" id="statRegen">0.0/s</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Crit:</span>
-                        <span class="stat-value" id="statCrit">5%</span>
-                    </div>
-                </div>
-            </div>
             <div class="hud hud-top-center" id="hudTopCenter">
                 <div>
                     <span style="color: #ffaa00; font-weight: bold;">Vague <span id="waveDisplay">1</span></span>
@@ -1446,17 +1372,17 @@
                     <div class="defense-bar shield-bar" id="shieldBar">
                         <div class="shield-fill" id="shieldFill"></div>
                     </div>
-                    <div style="margin-top: 2px; font-size: 11px;">🛡️ BOUCLIER: <span id="shieldValue">0/0</span></div>
+                    <div style="margin-top: 4px; font-size: 22px;">🛡️ BOUCLIER: <span id="shieldValue">0/0</span></div>
                     
                     <div class="defense-bar armor-bar" id="armorBar">
                         <div class="armor-fill" id="armorFill"></div>
                     </div>
-                    <div style="margin-top: 2px; font-size: 11px;">🛡️ ARMURE: <span id="armorValue">0/0</span></div>
+                    <div style="margin-top: 4px; font-size: 22px;">🛡️ ARMURE: <span id="armorValue">0/0</span></div>
                     
                     <div class="defense-bar structure-bar" id="structureBar">
                         <div class="structure-fill" id="structureFill"></div>
                     </div>
-                    <div style="margin-top: 2px; font-size: 11px;">⚙️ STRUCTURE: <span id="structureValue">0/0</span></div>
+                    <div style="margin-top: 4px; font-size: 22px;">⚙️ STRUCTURE: <span id="structureValue">0/0</span></div>
                 </div>
             </div>
             <div class="hud hud-bottom-center" id="hudBottomCenter">

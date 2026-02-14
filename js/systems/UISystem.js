@@ -44,192 +44,6 @@ class UISystem {
         
         // Track missing stats warnings to avoid spam
         this.missingStatsWarned = new Set();
-        
-        // Tactical UI state
-        this.tacticalUI = {
-            enabled: true,
-            container: null,
-            defenseUI: null,
-            heatUI: null,
-            weaponTypeUI: null,
-            floatingTexts: []
-        };
-        
-        // Initialize tactical UI
-        this.initTacticalUI();
-    }
-
-    /**
-     * Initialize tactical UI components
-     */
-    initTacticalUI() {
-        if (!window.EnhancedUIComponents) {
-            console.warn('[UI] EnhancedUIComponents not found, skipping tactical UI');
-            return;
-        }
-
-        try {
-            // Create container
-            const container = document.createElement('div');
-            container.id = 'tactical-ui-container';
-            container.style.cssText = 'position:absolute;top:10px;left:10px;z-index:100;pointer-events:none;';
-            document.body.appendChild(container);
-            this.tacticalUI.container = container;
-
-            // Defense UI container
-            const defenseContainer = document.createElement('div');
-            defenseContainer.id = 'defense-ui';
-            container.appendChild(defenseContainer);
-
-            // Heat UI container  
-            const heatContainer = document.createElement('div');
-            heatContainer.id = 'heat-ui';
-            heatContainer.style.marginTop = '10px';
-            container.appendChild(heatContainer);
-
-            // Weapon type UI container
-            const weaponContainer = document.createElement('div');
-            weaponContainer.id = 'weapon-type-ui';
-            weaponContainer.style.marginTop = '10px';
-            container.appendChild(weaponContainer);
-
-            // Instantiate components
-            const Components = window.EnhancedUIComponents;
-            this.tacticalUI.defenseUI = new Components.ThreeLayerDefenseUI(defenseContainer);
-            this.tacticalUI.heatUI = new Components.HeatGaugeUI(heatContainer);
-            this.tacticalUI.weaponTypeUI = new Components.WeaponDamageTypeDisplay(weaponContainer);
-
-            // Subscribe to damage events
-            if (this.world.events) {
-                this.world.events.on('damageApplied', (data) => this.onDamageApplied(data));
-            }
-
-            console.log('[UI] Tactical UI components initialized');
-        } catch (err) {
-            console.error('[UI] Error initializing tactical UI:', err);
-        }
-    }
-
-    /**
-     * Toggle tactical UI visibility
-     */
-    toggleTacticalUI() {
-        this.tacticalUI.enabled = !this.tacticalUI.enabled;
-        if (this.tacticalUI.container) {
-            this.tacticalUI.container.style.display = this.tacticalUI.enabled ? 'block' : 'none';
-        }
-        // Store state for RenderSystem to check
-        if (this.world && this.world.gameState) {
-            this.world.gameState.tacticalUIEnabled = this.tacticalUI.enabled;
-        }
-        console.log(`[UI] tactical HUD ${this.tacticalUI.enabled ? 'enabled' : 'disabled'}`);
-    }
-
-    /**
-     * Update tactical UI components
-     */
-    updateTacticalUI() {
-        if (!this.tacticalUI.enabled || !this.tacticalUI.defenseUI) return;
-
-        const player = this.world.getEntitiesByType('player')[0];
-        if (!player) return;
-
-        try {
-            // Update defense bars
-            const defense = player.getComponent('defense');
-            if (defense && this.tacticalUI.defenseUI) {
-                this.tacticalUI.defenseUI.update(defense);
-            }
-
-            // Update heat gauge
-            const heat = player.getComponent('heat');
-            if (heat && this.tacticalUI.heatUI) {
-                this.tacticalUI.heatUI.update(heat);
-            }
-
-            // Update weapon type display
-            const playerComp = player.getComponent('player');
-            if (playerComp && playerComp.currentWeapon && this.tacticalUI.weaponTypeUI) {
-                const damageType = playerComp.currentWeapon.damageType || 'kinetic';
-                this.tacticalUI.weaponTypeUI.update(damageType);
-            }
-        } catch (err) {
-            console.error('[UI] Error updating tactical UI:', err);
-        }
-    }
-
-    /**
-     * Handle damage applied event
-     */
-    onDamageApplied(data) {
-        this.createFloatingDamage(data);
-        
-        const layerEmojis = {
-            shield: '🟦 BOUCLIER',
-            armor: '🟫 ARMURE', 
-            structure: '🔧 STRUCTURE'
-        };
-        const layerName = layerEmojis[data.layerHit] || data.layerHit;
-        console.log(`[Combat] ${layerName} -${Math.round(data.finalDamage)}`);
-    }
-
-    /**
-     * Create floating damage text
-     */
-    createFloatingDamage(data) {
-        // Limit active floating texts
-        if (this.tacticalUI.floatingTexts.length >= 10) {
-            const oldest = this.tacticalUI.floatingTexts.shift();
-            if (oldest && oldest.parentNode) {
-                oldest.parentNode.removeChild(oldest);
-            }
-        }
-
-        const text = document.createElement('div');
-        text.className = 'floating-damage';
-        text.textContent = `-${Math.round(data.finalDamage)}`;
-        
-        const typeColors = {
-            em: '#00FFFF',
-            thermal: '#FF8C00',
-            kinetic: '#FFFFFF',
-            explosive: '#FF0000'
-        };
-        
-        const canvas = this.gameCanvas;
-        let left = data.x || 0;
-        let top = data.y || 0;
-
-        if (canvas) {
-            const rect = canvas.getBoundingClientRect();
-            left = rect.left + left;
-            top = rect.top + top;
-        }
-
-        text.style.cssText = `
-            position: fixed;
-            left: ${left}px;
-            top: ${top}px;
-            color: ${typeColors[data.damageType] || '#FFF'};
-            font-size: 20px;
-            font-weight: bold;
-            pointer-events: none;
-            animation: floatUp 1s ease-out forwards;
-            z-index: 1000;
-        `;
-
-        document.body.appendChild(text);
-        this.tacticalUI.floatingTexts.push(text);
-
-        setTimeout(() => {
-            if (text.parentNode) {
-                text.parentNode.removeChild(text);
-            }
-            const index = this.tacticalUI.floatingTexts.indexOf(text);
-            if (index > -1) {
-                this.tacticalUI.floatingTexts.splice(index, 1);
-            }
-        }, 1000);
     }
 
     /**
@@ -310,23 +124,8 @@ class UISystem {
         this.structureFill = document.getElementById('structureFill');
         this.structureValue = document.getElementById('structureValue');
         
-        // Heat/Overheat elements
-        this.heatBar = document.getElementById('heatBar');
-        this.heatFill = document.getElementById('heatFill');
-        this.heatDisplay = document.getElementById('heatDisplay');
-        this.heatValue = document.getElementById('heatValue');
-        
-        // Stats display elements
-        this.statDamage = document.getElementById('statDamage');
-        this.statFireRate = document.getElementById('statFireRate');
-        this.statSpeed = document.getElementById('statSpeed');
-        this.statArmor = document.getElementById('statArmor');
-        this.statLifesteal = document.getElementById('statLifesteal');
-        this.statRegen = document.getElementById('statRegen');
-        
         // Game canvas (for coordinate conversion)
         this.gameCanvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
-        this.statCrit = document.getElementById('statCrit');
         
         // Weapon and passive status elements
         this.weaponList = document.getElementById('weaponList');
@@ -511,26 +310,6 @@ class UISystem {
             console.log("[XP DEBUG]", playerComp.xp, playerComp.xpRequired);
             const xpPercent = (playerComp.xp / playerComp.xpRequired) * 100;
             this.xpFill.style.width = `${Math.min(100, xpPercent)}%`;
-            
-            // Update real-time stats display with safe access (nullish coalescing)
-            if (playerComp.stats) {
-                const stats = playerComp.stats;
-                const damageMultiplier = stats.damageMultiplier ?? 1;
-                const fireRateMultiplier = stats.fireRateMultiplier ?? 1;
-                const speed = stats.speed ?? 1;
-                const armor = stats.armor ?? 0;
-                const lifesteal = stats.lifesteal ?? 0;
-                const shieldRegen = stats.shieldRegen ?? 0;
-                const critChance = stats.critChance ?? 0;
-                
-                this.statDamage.textContent = `${Math.round(damageMultiplier * 100)}%`;
-                this.statFireRate.textContent = `${Math.round(fireRateMultiplier * 100)}%`;
-                this.statSpeed.textContent = `${Math.round(speed)}`;
-                this.statArmor.textContent = `${Math.round(armor)}`;
-                this.statLifesteal.textContent = `${Math.round(lifesteal * 100)}%`;
-                this.statRegen.textContent = `${shieldRegen.toFixed(1)}/s`;
-                this.statCrit.textContent = `${Math.round(critChance * 100)}%`;
-            }
         }
 
         // Update defense layers (player uses 3-layer defense system)
@@ -573,36 +352,6 @@ class UISystem {
         } else {
             // No defense component - hide defense UI
             if (this.defenseLayers) this.defenseLayers.style.display = 'none';
-        }
-        
-        // === HEAT SYSTEM ===
-        // Heat bar displays current heat from HeatSystem component
-        // Connected to actual heat.current value from entity's heat component
-        if (this.heatBar && this.heatFill && this.heatDisplay) {
-            if (heat && heat.max > 0) {
-                this.heatBar.style.display = 'block';
-                this.heatDisplay.style.display = 'block';
-                this.heatValue.textContent = `${Math.ceil(heat.current)}/${heat.max}`;
-                const heatPercent = (heat.current / heat.max) * 100;
-                this.heatFill.style.width = `${Math.max(0, Math.min(100, heatPercent))}%`;
-                
-                // Change color based on heat level and overheat status
-                if (heat.overheated) {
-                    this.heatFill.style.background = 'linear-gradient(to right, #ff0000, #cc0000)';
-                    if (this.heatValue) {
-                        this.heatValue.textContent = `⚠️ OVERHEATED`;
-                    }
-                } else if (heatPercent >= 80) {
-                    this.heatFill.style.background = 'linear-gradient(to right, #ff4444, #ff0000)';
-                } else if (heatPercent >= 50) {
-                    this.heatFill.style.background = 'linear-gradient(to right, #ffaa00, #ff6600)';
-                } else {
-                    this.heatFill.style.background = 'linear-gradient(to right, #ffcc00, #ff9900)';
-                }
-            } else {
-                this.heatBar.style.display = 'none';
-                this.heatDisplay.style.display = 'none';
-            }
         }
 
         // Update weapon display
