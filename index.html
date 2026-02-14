@@ -330,23 +330,6 @@
             transition: width 0.3s;
         }
         
-        /* Legacy health bar (hidden by default, fallback for old system) */
-        .health-bar {
-            width: 200px;
-            height: 15px;
-            background: rgba(255, 0, 0, 0.3);
-            border: 2px solid #ff0000;
-            position: relative;
-            margin-top: 3px;
-            display: none;
-        }
-
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff0000, #ff6600);
-            transition: width 0.3s;
-        }
-
         .xp-bar {
             width: 300px;
             height: 15px;
@@ -1474,14 +1457,6 @@
                         <div class="structure-fill" id="structureFill"></div>
                     </div>
                     <div style="margin-top: 2px; font-size: 11px;">⚙️ STRUCTURE: <span id="structureValue">0/0</span></div>
-                </div>
-                
-                <!-- Legacy health bar (fallback for old system) -->
-                <div id="legacyHealth" style="display: none;">
-                    <div class="health-bar">
-                        <div class="health-fill" id="healthFill"></div>
-                    </div>
-                    <div style="margin-top: 5px;">PV: <span id="hpDisplay">100/100</span></div>
                 </div>
             </div>
             <div class="hud hud-bottom-center" id="hudBottomCenter">
