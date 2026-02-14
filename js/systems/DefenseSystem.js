@@ -9,6 +9,13 @@ window.DEBUG_DEFENSE = window.DEBUG_DEFENSE || false;
  */
 
 class DefenseSystem {
+    /**
+     * Valid defense layer names
+     * @static
+     * @constant {string[]}
+     */
+    static VALID_LAYERS = ['shield', 'armor', 'structure'];
+
     constructor(world) {
         this.world = world;
     }
@@ -618,9 +625,8 @@ class DefenseSystem {
         }
 
         // Validate layer exists
-        const validLayers = ['shield', 'armor', 'structure'];
-        if (!validLayers.includes(layerName)) {
-            console.warn(`[DefenseSystem] addResistanceModifier: Invalid layer name "${layerName}". Must be one of: ${validLayers.join(', ')}`);
+        if (!DefenseSystem.VALID_LAYERS.includes(layerName)) {
+            console.warn(`[DefenseSystem] addResistanceModifier: Invalid layer name "${layerName}". Must be one of: ${DefenseSystem.VALID_LAYERS.join(', ')}`);
             return false;
         }
 
@@ -663,9 +669,8 @@ class DefenseSystem {
         }
 
         // Validate layer exists
-        const validLayers = ['shield', 'armor', 'structure'];
-        if (!validLayers.includes(layerName)) {
-            console.warn(`[DefenseSystem] removeResistanceModifier: Invalid layer name "${layerName}". Must be one of: ${validLayers.join(', ')}`);
+        if (!DefenseSystem.VALID_LAYERS.includes(layerName)) {
+            console.warn(`[DefenseSystem] removeResistanceModifier: Invalid layer name "${layerName}". Must be one of: ${DefenseSystem.VALID_LAYERS.join(', ')}`);
             return false;
         }
 
@@ -713,9 +718,8 @@ class DefenseSystem {
         }
 
         // Validate layer exists
-        const validLayers = ['shield', 'armor', 'structure'];
-        if (!validLayers.includes(layerName)) {
-            console.warn(`[DefenseSystem] clearResistanceModifiers: Invalid layer name "${layerName}". Must be one of: ${validLayers.join(', ')}`);
+        if (!DefenseSystem.VALID_LAYERS.includes(layerName)) {
+            console.warn(`[DefenseSystem] clearResistanceModifiers: Invalid layer name "${layerName}". Must be one of: ${DefenseSystem.VALID_LAYERS.join(', ')}`);
             return false;
         }
 
