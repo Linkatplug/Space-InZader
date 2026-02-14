@@ -323,8 +323,7 @@ class RenderSystem {
             const bonusRes = layerData.bonusResistances || {};
             const base = baseRes[damageType] || 0;
             const bonus = bonusRes[damageType] || 0;
-            const total = base + bonus;
-            totalResist += total;
+            totalResist += base + bonus;
             layerCount++;
         }
         if (defense.armor.current > 0) {
@@ -333,8 +332,7 @@ class RenderSystem {
             const bonusRes = layerData.bonusResistances || {};
             const base = baseRes[damageType] || 0;
             const bonus = bonusRes[damageType] || 0;
-            const total = base + bonus;
-            totalResist += total;
+            totalResist += base + bonus;
             layerCount++;
         }
         if (defense.structure.current > 0) {
@@ -343,8 +341,7 @@ class RenderSystem {
             const bonusRes = layerData.bonusResistances || {};
             const base = baseRes[damageType] || 0;
             const bonus = bonusRes[damageType] || 0;
-            const total = base + bonus;
-            totalResist += total;
+            totalResist += base + bonus;
             layerCount++;
         }
 
