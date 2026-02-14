@@ -542,7 +542,7 @@ class Game {
             kills: 0,
             level: 1,
             xp: 0,
-            xpToNext: 100,
+            xpRequired: 100,
             weapons: [],
             modules: [],
             upgrades: new Map(),

@@ -508,6 +508,7 @@ class UISystem {
 
             // Update level and XP
             this.levelDisplay.textContent = playerComp.level;
+            console.log("[XP DEBUG]", playerComp.xp, playerComp.xpRequired);
             const xpPercent = (playerComp.xp / playerComp.xpRequired) * 100;
             this.xpFill.style.width = `${Math.min(100, xpPercent)}%`;
             
