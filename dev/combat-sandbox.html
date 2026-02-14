@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combat Sandbox - Real Game Class</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a1a;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #000;
+            border: 2px solid #00ff00;
+        }
+
+        #debugPanel {
+            width: 350px;
+            background: rgba(10, 10, 26, 0.95);
+            border-left: 2px solid #00ff00;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .section {
+            border: 1px solid #00ff00;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .section h2 {
+            color: #00ff00;
+            font-size: 18px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #00ff00 0%, #00aa00 100%);
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px 0;
+            border-radius: 3px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            width: 100%;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        .button:active {
+            transform: scale(0.95);
+        }
+
+        .stat-line {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .stat-label {
+            color: #888;
+        }
+
+        .stat-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .info {
+            background: rgba(0, 255, 0, 0.1);
+            padding: 10px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-top: 10px;
+            color: #00ff00;
+        }
+
+        /* Hide default UI elements that Game creates */
+        #ui, .menu-screen, .level-up-screen, .game-over-screen, .meta-screen {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1200" height="800"></canvas>
+        <!-- UI elements for Game class (will be hidden) -->
+        <div id="ui"></div>
+    </div>
+
+    <div id="debugPanel">
+        <div class="section">
+            <h2>Combat Sandbox</h2>
+            <div class="info">
+                Using Real Game Class<br>
+                WaveSystem: Disabled<br>
+                UISystem: Disabled<br>
+                AudioManager: Disabled
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Spawn Control</h2>
+            <button class="button" onclick="spawnScout(1)">Spawn 1 Scout</button>
+            <button class="button" onclick="spawnScout(5)">Spawn 5 Scouts</button>
+            <button class="button" onclick="spawnElite()">Spawn Elite</button>
+            <button class="button" onclick="clearEnemies()">Clear All Enemies</button>
+            <button class="button" onclick="resetPlayer()">Reset Player HP</button>
+        </div>
+
+        <div class="section">
+            <h2>Live Stats</h2>
+            <div class="stat-line">
+                <span class="stat-label">Enemies:</span>
+                <span class="stat-value" id="enemyCount">0</span>
+            </div>
+            <div class="stat-line">
+                <span class="stat-label">Shield:</span>
+                <span class="stat-value" id="shieldHP">---</span>
+            </div>
+            <div class="stat-line">
+                <span class="stat-label">Armor:</span>
+                <span class="stat-value" id="armorHP">---</span>
+            </div>
+            <div class="stat-line">
+                <span class="stat-label">Structure:</span>
+                <span class="stat-value" id="structureHP">---</span>
+            </div>
+            <div class="stat-line">
+                <span class="stat-label">Total HP:</span>
+                <span class="stat-value" id="totalHP">---</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Info</h2>
+            <div class="info">
+                • WASD to move<br>
+                • Weapons fire automatically<br>
+                • No wave system<br>
+                • Manual spawn only<br>
+                • Real Game architecture
+            </div>
+        </div>
+    </div>
+
+    <!-- Load all game scripts in exact order from index.html -->
+    <script src="../js/constants.js"></script>
+    <script src="../js/utils/Math.js"></script>
+    <script src="../js/utils/Logger.js"></script>
+    <script src="../js/utils/DebugOverlay.js"></script>
+    <script src="../js/utils/ScreenEffects.js"></script>
+    <script src="../js/core/ECS.js"></script>
+    <script src="../js/core/GameState.js"></script>
+    <script src="../js/core/stats/ShipStats.js"></script>
+    <script src="../js/core/stats/FinalStatsCalculator.js"></script>
+    <script src="../js/data/PassiveData.js"></script>
+    <script src="../js/data/ShipData.js"></script>
+    <script src="../js/data/SynergyData.js"></script>
+    <script src="../js/data/KeystoneData.js"></script>
+    <script src="../js/data/DefenseData.js"></script>
+    <script src="../js/data/HeatData.js"></script>
+    <script src="../js/data/NewWeaponData.js"></script>
+    <script src="../js/data/ModuleData.js"></script>
+    <script src="../js/data/EnemyProfiles.js"></script>
+    <script src="../js/data/LootData.js"></script>
+    <script src="../js/data/TagSynergyData.js"></script>
+    <script src="../js/data/BalanceConstants.js"></script>
+    <script src="../js/data/ShipUpgradeData.js"></script>
+    <script src="../js/data/WeaponDataBridge.js"></script>
+    <script src="../js/ui/EnhancedUIComponents.js"></script>
+    <script src="../js/systems/MovementSystem.js"></script>
+    <script src="../js/systems/CombatSystem.js"></script>
+    <script src="../js/systems/CollisionSystem.js"></script>
+    <script src="../js/systems/AISystem.js"></script>
+    <script src="../js/systems/SpawnerSystem.js"></script>
+    <script src="../js/systems/PickupSystem.js"></script>
+    <script src="../js/systems/RenderSystem.js"></script>
+    <script src="../js/systems/UISystem.js"></script>
+    <script src="../js/systems/ParticleSystem.js"></script>
+    <script src="../js/systems/WaveSystem.js"></script>
+    <script src="../js/systems/SynergySystem.js"></script>
+    <script src="../js/systems/WeatherSystem.js"></script>
+    <script src="../js/systems/DefenseSystem.js"></script>
+    <script src="../js/systems/HeatSystem.js"></script>
+    <script src="../js/systems/ModuleSystem.js"></script>
+    <script src="../js/systems/ShipUpgradeSystem.js"></script>
+    <script src="../js/managers/SaveManager.js"></script>
+    <script src="../js/managers/ScoreManager.js"></script>
+    <script src="../js/managers/AudioManager.js"></script>
+    <script src="../js/dev/ContentAuditor.js"></script>
+    <script src="../js/dev/DevTools.js"></script>
+    <script src="../js/Game.js"></script>
+
+    <script>
+        // Global game instance
+        let game;
+
+        // Initialize the sandbox
+        function init() {
+            console.log('[Combat Sandbox] Initializing with real Game class...');
+
+            // Override setupUIListeners on prototype before instantiation
+            // This prevents errors with missing UI DOM elements
+            Game.prototype.setupUIListeners = function() {
+                console.log('[Combat Sandbox] UI listeners disabled (prototype override)');
+            };
+
+            // Create the real Game instance
+            game = new Game();
+            
+            // Disable WaveSystem before starting
+            if (game.systems.wave) {
+                console.log('[Combat Sandbox] Disabling WaveSystem');
+                game.systems.wave.update = function() {};
+                game.systems.wave.spawnWave = function() {};
+            }
+
+            // Disable UISystem before starting
+            if (game.systems.ui) {
+                console.log('[Combat Sandbox] Disabling UISystem');
+                game.systems.ui.update = function() {};
+                game.systems.ui.updateHUD = function() {};
+                game.systems.ui.showScreen = function() {};
+                game.systems.ui.showWaveAnnouncement = function() {};
+                game.systems.ui.showLevelUp = function() {};
+                game.systems.ui.showGameOver = function() {};
+            }
+
+            // Disable AudioManager before starting
+            if (game.audioManager) {
+                console.log('[Combat Sandbox] Disabling AudioManager');
+                game.audioManager.init = function() {};
+                game.audioManager.play = function() {};
+                game.audioManager.playSound = function() {};
+                game.audioManager.playMusic = function() {};
+                game.audioManager.stopAll = function() {};
+                game.audioManager.stopMusic = function() {};
+                game.audioManager.update = function() {};
+                game.audioManager.setVolume = function() {};
+                game.audioManager.startBackgroundMusic = function() {};
+                game.audioManager.stopBackgroundMusic = function() {};
+            }
+
+            // Set selected ship
+            game.gameState.selectedShip = 'ION_FRIGATE';
+            
+            // Start the game (this will initialize everything)
+            console.log('[Combat Sandbox] Starting game...');
+            game.startGame();
+            
+            console.log('[Combat Sandbox] Game started successfully');
+            console.log('[Combat Sandbox] Player:', game.player);
+            console.log('[Combat Sandbox] World:', game.world);
+            console.log('[Combat Sandbox] Systems:', game.systems);
+
+            // Start stats update loop
+            setInterval(updateStats, 100);
+        }
+
+        // Spawn scout enemies
+        function spawnScout(count) {
+            if (!game || !game.systems.spawner) {
+                console.error('[Combat Sandbox] Game not initialized');
+                return;
+            }
+
+            console.log(`[Combat Sandbox] Spawning ${count} scout(s)`);
+            
+            const canvas = game.canvas;
+            
+            for (let i = 0; i < count; i++) {
+                // Spawn near center with random offset
+                const x = canvas.width / 2 + (Math.random() - 0.5) * 400;
+                const y = canvas.height / 2 + (Math.random() - 0.5) * 400;
+                
+                // Create enemy data object with profileId
+                const enemyData = {
+                    profileId: 'SCOUT_DRONE',
+                    level: 1
+                };
+                
+                // Use SpawnerSystem.createEnemy
+                game.systems.spawner.createEnemy(x, y, enemyData, false);
+            }
+        }
+
+        // Spawn elite enemy
+        function spawnElite() {
+            if (!game || !game.systems.spawner) {
+                console.error('[Combat Sandbox] Game not initialized');
+                return;
+            }
+
+            console.log('[Combat Sandbox] Spawning elite enemy');
+            
+            const canvas = game.canvas;
+            
+            // Spawn at center
+            const x = canvas.width / 2;
+            const y = canvas.height / 2 - 100;
+            
+            // Create enemy data object with profileId
+            const enemyData = {
+                profileId: 'SIEGE_HULK',
+                level: 1
+            };
+            
+            game.systems.spawner.createEnemy(x, y, enemyData, false);
+        }
+
+        // Clear all enemies
+        function clearEnemies() {
+            if (!game || !game.world) {
+                console.error('[Combat Sandbox] Game not initialized');
+                return;
+            }
+
+            console.log('[Combat Sandbox] Clearing all enemies');
+            
+            const enemies = game.world.getEntitiesByType('enemy');
+            enemies.forEach(enemy => {
+                game.world.removeEntity(enemy.id);
+            });
+            
+            // Process removals immediately
+            game.world.processPendingRemovals();
+        }
+
+        // Reset player HP
+        function resetPlayer() {
+            if (!game || !game.player) {
+                console.error('[Combat Sandbox] Game not initialized');
+                return;
+            }
+
+            console.log('[Combat Sandbox] Resetting player HP');
+            
+            const defense = game.player.getComponent('defense');
+            if (defense) {
+                defense.shield.current = defense.shield.max;
+                defense.armor.current = defense.armor.max;
+                defense.structure.current = defense.structure.max;
+            }
+        }
+
+        // Update stats display
+        function updateStats() {
+            if (!game || !game.world || !game.player) return;
+
+            // Enemy count
+            const enemies = game.world.getEntitiesByType('enemy');
+            document.getElementById('enemyCount').textContent = enemies.length;
+
+            // Player HP
+            const defense = game.player.getComponent('defense');
+            if (defense) {
+                const shield = defense.shield;
+                const armor = defense.armor;
+                const structure = defense.structure;
+                
+                document.getElementById('shieldHP').textContent = 
+                    `${Math.round(shield.current)}/${shield.max}`;
+                document.getElementById('armorHP').textContent = 
+                    `${Math.round(armor.current)}/${armor.max}`;
+                document.getElementById('structureHP').textContent = 
+                    `${Math.round(structure.current)}/${structure.max}`;
+                
+                const total = Math.round(shield.current + armor.current + structure.current);
+                const maxTotal = shield.max + armor.max + structure.max;
+                document.getElementById('totalHP').textContent = `${total}/${maxTotal}`;
+            }
+        }
+
+        // Start when page loads
+        window.addEventListener('load', () => {
+            console.log('[Combat Sandbox] Page loaded, initializing...');
+            init();
+        });
+    </script>
+</body>
+</html>
