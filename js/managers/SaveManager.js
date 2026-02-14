@@ -3,6 +3,23 @@
  * @description Manages game save data using LocalStorage
  */
 
+/**
+ * Legacy weapon ID migration map
+ * Maps old weapon IDs to new weapon IDs in the 24-weapon system
+ * null values indicate weapons that should be removed (no equivalent)
+ */
+const LEGACY_TO_NEW_WEAPON_MAP = {
+    'laser_frontal': 'ion_blaster',
+    'mitraille': 'auto_cannon',
+    'missiles_guides': 'overload_missile',
+    'orbes_orbitaux': 'orbital_strike',
+    'rayon_vampirique': null,  // No direct equivalent - remove
+    'mines': 'incinerator_mine',
+    'arc_electrique': 'arc_disruptor',
+    'tourelle_drone': 'em_drone_wing',
+    'lame_tournoyante': null  // Passive ability, not a weapon - remove
+};
+
 class SaveManager {
     constructor() {
         this.saveKey = 'spaceInZader_save';
@@ -78,6 +95,8 @@ class SaveManager {
                 const data = JSON.parse(saved);
                 // Merge with defaults for new fields
                 const merged = this.mergeSaveData(this.defaultSave, data);
+                // Migrate legacy weapon IDs to new weapon system
+                this.migrateLegacyWeapons(merged);
                 // Auto-add missing weapons and passives from data files
                 this.ensureAllContentExists(merged);
                 return merged;
@@ -88,6 +107,67 @@ class SaveManager {
         const defaultSave = this.createDefaultSave();
         this.ensureAllContentExists(defaultSave);
         return defaultSave;
+    }
+    
+    /**
+     * Migrate legacy weapon IDs to new weapon system
+     * 
+     * This method handles the transition from the old weapon system to the new 24-weapon system.
+     * It safely converts legacy weapon IDs to their new equivalents without breaking existing saves.
+     * 
+     * Migration rules:
+     * 1. Check each legacy weapon ID in the save data
+     * 2. If a mapping exists and the new weapon isn't already unlocked, transfer the unlock state
+     * 3. If mapping is null (no equivalent), simply remove the legacy entry
+     * 4. Always remove the legacy weapon entry after processing to prevent duplicates
+     * 
+     * Defensive approach: Never overwrite an existing unlock for the new weapon ID.
+     * This ensures that if a player already has the new weapon unlocked, we don't reset it.
+     * 
+     * @param {Object} saveData - The save data object to migrate
+     */
+    migrateLegacyWeapons(saveData) {
+        // Ensure weapons object exists
+        if (!saveData.weapons) {
+            saveData.weapons = {};
+            return;
+        }
+        
+        let migratedCount = 0;
+        let removedCount = 0;
+        
+        // Process each legacy weapon ID
+        for (const legacyId in LEGACY_TO_NEW_WEAPON_MAP) {
+            // Check if this legacy weapon exists in the save data
+            if (saveData.weapons[legacyId]) {
+                const newId = LEGACY_TO_NEW_WEAPON_MAP[legacyId];
+                const legacyUnlockState = saveData.weapons[legacyId];
+                
+                if (newId !== null) {
+                    // Mapping exists: transfer unlock state to new weapon ID
+                    // Only transfer if the new weapon doesn't already exist (defensive)
+                    if (!saveData.weapons[newId]) {
+                        saveData.weapons[newId] = { ...legacyUnlockState };
+                        migratedCount++;
+                        console.log(`SaveManager: Migrated ${legacyId} -> ${newId} (unlocked: ${legacyUnlockState.unlocked})`);
+                    } else {
+                        console.log(`SaveManager: Skipped migration ${legacyId} -> ${newId} (new weapon already exists)`);
+                    }
+                } else {
+                    // No mapping (null): weapon has no equivalent in new system
+                    removedCount++;
+                    console.log(`SaveManager: Removed legacy weapon ${legacyId} (no equivalent in new system)`);
+                }
+                
+                // Remove the legacy entry to prevent duplicates
+                delete saveData.weapons[legacyId];
+            }
+        }
+        
+        // Log summary if any migrations occurred
+        if (migratedCount > 0 || removedCount > 0) {
+            console.log(`SaveManager: Migration complete - ${migratedCount} weapons migrated, ${removedCount} removed`);
+        }
     }
     
     /**
