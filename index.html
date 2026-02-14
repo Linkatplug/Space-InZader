@@ -163,7 +163,7 @@
             position: absolute;
             color: #00ffff;
             text-shadow: 0 0 5px #000;
-            font-size: 32px;
+            font-size: 16px;
             pointer-events: none;
             display: none;
         }
@@ -199,42 +199,42 @@
         
         .weapon-status {
             background: rgba(10, 10, 26, 0.8);
-            border: 2px solid #00ffff;
-            padding: 16px;
-            margin-bottom: 16px;
-            border-radius: 6px;
-            font-size: 26px;
+            border: 1px solid #00ffff;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-radius: 3px;
+            font-size: 13px;
         }
         
         .weapon-status-title {
             color: #ffaa00;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         
         .weapon-item {
-            margin: 4px 0;
+            margin: 2px 0;
             color: #00ffff;
         }
         
         .passive-status {
             background: rgba(10, 10, 26, 0.8);
-            border: 2px solid #aa44ff;
-            padding: 16px;
-            border-radius: 6px;
-            font-size: 24px;
-            max-height: 400px;
+            border: 1px solid #aa44ff;
+            padding: 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            max-height: 200px;
             overflow-y: auto;
         }
         
         .passive-status-title {
             color: #aa44ff;
             font-weight: bold;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
         
         .passive-item {
-            margin: 4px 0;
+            margin: 2px 0;
             color: #ccccff;
         }
         
@@ -260,6 +260,7 @@
             height: 100%;
             background: linear-gradient(90deg, #00ddff, #00ffff);
             transition: width 0.3s;
+            margin-left: auto; /* Align right - empties from left */
         }
         
         .armor-bar {
@@ -272,6 +273,7 @@
             height: 100%;
             background: linear-gradient(90deg, #8B4513, #CD853F);
             transition: width 0.3s;
+            margin-left: auto; /* Align right - empties from left */
         }
         
         .structure-bar {
@@ -284,11 +286,12 @@
             height: 100%;
             background: linear-gradient(90deg, #ff0000, #ff6600);
             transition: width 0.3s;
+            margin-left: auto; /* Align right - empties from left */
         }
         
         .xp-bar {
-            width: 600px;
-            height: 30px;
+            width: 300px;
+            height: 15px;
             background: rgba(0, 255, 0, 0.3);
             border: 2px solid #00ff00;
             position: relative;
