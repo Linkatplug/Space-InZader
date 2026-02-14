@@ -182,7 +182,7 @@ class Game {
         
         // Apply sandbox mode if enabled
         if (this.sandboxMode) {
-            console.log("[Game] Sandbox mode enabled");
+            logger.info('Game', 'Sandbox mode enabled');
             
             // Disable wave spawning
             if (this.systems.wave) {
