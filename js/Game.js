@@ -575,9 +575,13 @@ class Game {
         };
         this.player.addComponent('renderable', renderable);
 
-        const startingWeaponId = ship.startingWeapon || 'ion_blaster';
+        const startingWeaponId = (shipInfo && shipInfo.startingWeapon) || shipData.startingWeapon || 'ion_blaster';
         logger.info('Game', `Player setup: ship=${playerComp.shipId} startingWeapon=${startingWeaponId}`);
-        logger.info('Game', `Defense layers: Shield=${defense.shield.max} Armor=${defense.armor.max} Structure=${defense.structure.max}`);
+        
+        const defenseComp = this.player.getComponent('defense');
+        if (defenseComp) {
+            logger.info('Game', `Defense layers: Shield=${defenseComp.shield.max} Armor=${defenseComp.armor.max} Structure=${defenseComp.structure.max}`);
+        }
         
         this.addWeaponToPlayer(startingWeaponId);
         
