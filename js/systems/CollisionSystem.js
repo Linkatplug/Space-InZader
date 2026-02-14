@@ -280,6 +280,20 @@ class CollisionSystem {
                     continue;
                 }
                 
+                // 🔍 REQUESTED DEBUG: Log collision check details BEFORE ANY filtering
+                console.log(
+                    "[DEBUG COLLISION CHECK]",
+                    {
+                        projectileId: projectile.id,
+                        projectileOwner: projComp.owner,
+                        projectileTag: projectile.type,
+                        playerId: player.id,
+                        playerTags: player.type,
+                        projectilePos: { x: projPos.x, y: projPos.y },
+                        playerPos: { x: playerPos.x, y: playerPos.y }
+                    }
+                );
+                
                 // 🔍 DEBUG: Log projectile details BEFORE owner check
                 console.log(`[DEBUG COLLISION] Checking projectile ${projectile.id}:`, {
                     owner: projComp.owner,
@@ -305,6 +319,18 @@ class CollisionSystem {
                 const dy = playerPos.y - projPos.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
                 const collisionThreshold = playerCol.radius + projCol.radius;
+                
+                // 🔍 REQUESTED DEBUG: Log distance and radius details
+                console.log(
+                    "[DEBUG DISTANCE]",
+                    {
+                        distance: distance,
+                        projectileRadius: projCol.radius,
+                        playerRadius: playerCol.radius,
+                        sum: projCol.radius + playerCol.radius
+                    }
+                );
+                
                 console.log(`[DEBUG COLLISION] Distance check:`, {
                     distance: distance.toFixed(1),
                     threshold: collisionThreshold.toFixed(1),
