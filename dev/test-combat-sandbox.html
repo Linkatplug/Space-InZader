@@ -300,6 +300,10 @@
             // Initialize systems
             const gameState = new GameState();
             
+            // Configure GameState minimally
+            gameState.isPaused = false;
+            gameState.isGameOver = false;
+            
             systems = {
                 defense: new DefenseSystem(world),
                 ai: new AISystem(world, canvas),
@@ -316,6 +320,15 @@
             
             // Setup input
             setupInput();
+            
+            // Wrap DefenseSystem.applyDamage to track player damage
+            const originalApplyDamage = systems.defense.applyDamage.bind(systems.defense);
+            systems.defense.applyDamage = function(entity, damagePacket) {
+                if (entity === player) {
+                    damageTaken += damagePacket.amount || damagePacket.damage || 0;
+                }
+                return originalApplyDamage(entity, damagePacket);
+            };
             
             // Start game loop
             running = true;
@@ -380,6 +393,7 @@
             const playerComp = {
                 speed: 250,
                 level: 1,
+                weapons: [], // Empty weapons array for CombatSystem
                 currentWeapon: {
                     damageType: 'kinetic',
                     damage: 10,
@@ -498,6 +512,7 @@
             console.log('[Sandbox] Clearing all enemies');
             const enemies = world.getEntitiesByType('enemy');
             enemies.forEach(enemy => world.removeEntity(enemy.id));
+            world.processPendingRemovals();
             updateStats();
         }
         
@@ -512,6 +527,7 @@
                 defense.armor.regenDelay = 0;
                 defense.structure.regenDelay = 0;
             }
+            world.processPendingRemovals();
             updateStats();
         }
         
@@ -643,11 +659,15 @@
                 if (keys['d'] || keys['arrowright']) vel.vx = playerComp.speed;
             }
             
-            // Update systems
+            // Update systems (correct order)
             systems.movement.update(dt);
             systems.ai.update(dt);
+            systems.combat.update(dt);
             systems.defense.update(dt);
             systems.collision.update(dt);
+            
+            // Process pending entity removals
+            world.processPendingRemovals();
             
             // Update projectile lifetimes
             const projectiles = world.getEntitiesByType('projectile');
