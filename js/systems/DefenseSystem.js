@@ -1,3 +1,8 @@
+// === DEFENSE DEBUG MODE ===
+// Set window.DEBUG_DEFENSE = true in browser console to enable detailed logging
+// Set window.DEBUG_DEFENSE = false to disable (default)
+window.DEBUG_DEFENSE = window.DEBUG_DEFENSE || false;
+
 /**
  * @file DefenseSystem.js
  * @description Manages the 3-layer defense system and regeneration
@@ -81,7 +86,20 @@ class DefenseSystem {
             if (layerName === 'structure' && layer.current <= 0) {
                 // Player is destroyed, no regeneration
             } else {
+                const oldValue = layer.current;
                 layer.current = Math.min(layer.max, layer.current + layer.regen * deltaTime);
+                const regenAmount = layer.current - oldValue;
+                
+                // === DEBUG: Log regeneration tick ===
+                if (window.DEBUG_DEFENSE && regenAmount > 0) {
+                    console.log(`[DefenseSystem DEBUG] Regen tick: ${layerName}`);
+                    console.log(`  Before: ${oldValue.toFixed(1)}/${layer.max}`);
+                    console.log(`  After: ${layer.current.toFixed(1)}/${layer.max}`);
+                    console.log(`  Regenerated: +${regenAmount.toFixed(1)}`);
+                    if (layer.current >= layer.max) {
+                        console.log(`  ✅ ${layerName} FULLY RESTORED`);
+                    }
+                }
             }
         }
 
@@ -292,6 +310,18 @@ class DefenseSystem {
                 return `${d.layer}[${d.before}→${d.after}]: ${d.rawDamage}dmg * (1-${d.effectiveResistance}${penetrationInfo}) = ${d.damageAfterResist} → dealt ${d.damageDealt}`;
             }).join(' | ');
             logger.info('DefenseSystem', `${entity.type} took ${damagePacket.damageType} damage: ${summary}${destroyed ? ' → DESTROYED' : ''}`);
+        }
+        
+        // === DEBUG: Log damage results ===
+        if (window.DEBUG_DEFENSE) {
+            console.log(`[DefenseSystem DEBUG] Entity ${entity.id} after damage:`);
+            console.log(`  Shield: ${defense.shield.current.toFixed(1)}/${defense.shield.max}`);
+            console.log(`  Armor: ${defense.armor.current.toFixed(1)}/${defense.armor.max}`);
+            console.log(`  Structure: ${defense.structure.current.toFixed(1)}/${defense.structure.max}`);
+            console.log(`  Total dealt: ${totalDealt.toFixed(1)}, Overkill: ${overkill.toFixed(1)}`);
+            if (destroyed) {
+                console.log(`  ⚠️ ENTITY DESTROYED`);
+            }
         }
 
         return {
