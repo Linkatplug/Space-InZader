@@ -675,9 +675,12 @@ class DevTools {
         if (defense) {
             // New defense system
             if (this.godModeEnabled) {
-                defense.shield.current = defense.shield.max;
-                defense.armor.current = defense.armor.max;
-                defense.structure.current = defense.structure.max;
+                // Use DefenseSystem to heal layers (the only authority)
+                if (this.game.world.defenseSystem) {
+                    this.game.world.defenseSystem.healLayer(player, 'shield', defense.shield.max);
+                    this.game.world.defenseSystem.healLayer(player, 'armor', defense.armor.max);
+                    this.game.world.defenseSystem.healLayer(player, 'structure', defense.structure.max);
+                }
                 defense.godMode = true;
                 console.log('%c[DevTools] God Mode ENABLED (Defense System) - Player is now invincible! 🛡️', 'color: #00ff00; font-weight: bold; font-size: 14px');
             } else {
