@@ -460,6 +460,9 @@ class Game {
 
         this.player = this.world.createEntity('player');
         
+        // Initialize dirty flag for stat recalculation
+        this.player.statsDirty = false;
+        
         this.player.addComponent('position', Components.Position(
             this.canvas.width / 2,
             this.canvas.height / 2
