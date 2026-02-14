@@ -261,6 +261,9 @@ class SpawnerSystem {
     createEnemy(x, y, enemyData, isBoss) {
         const enemy = this.world.createEntity('enemy');
         
+        // Initialize dirty flag for stat recalculation
+        enemy.statsDirty = false;
+        
         enemy.addComponent('position', Components.Position(x, y));
         enemy.addComponent('velocity', Components.Velocity(0, 0));
         

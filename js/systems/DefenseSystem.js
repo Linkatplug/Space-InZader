@@ -647,6 +647,9 @@ class DefenseSystem {
         // Add the new value to existing bonus
         layer.bonusResistances[damageType] = currentBonus + value;
 
+        // Mark entity stats as dirty after modifying resistances
+        this.markStatsDirty(entity);
+
         return true;
     }
 
@@ -699,6 +702,9 @@ class DefenseSystem {
             layer.bonusResistances[damageType] = newBonus;
         }
 
+        // Mark entity stats as dirty after modifying resistances
+        this.markStatsDirty(entity);
+
         return true;
     }
 
@@ -732,6 +738,30 @@ class DefenseSystem {
         // Clear all bonus resistances by resetting to empty object
         layer.bonusResistances = {};
 
+        // Mark entity stats as dirty after clearing resistances
+        this.markStatsDirty(entity);
+
         return true;
+    }
+
+    /**
+     * Mark entity stats as dirty for recalculation
+     * PUBLIC API: Use this to mark an entity's stats as needing recalculation
+     * @param {Entity} entity - Entity to mark as dirty
+     */
+    markStatsDirty(entity) {
+        if (entity) {
+            entity.statsDirty = true;
+        }
+    }
+
+    /**
+     * Check if entity stats are dirty
+     * PUBLIC API: Use this to check if an entity's stats need recalculation
+     * @param {Entity} entity - Entity to check
+     * @returns {boolean} True if entity stats are dirty
+     */
+    isStatsDirty(entity) {
+        return !!entity.statsDirty;
     }
 }
