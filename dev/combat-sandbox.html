@@ -231,7 +231,7 @@
 
         // Initialize the sandbox
         function init() {
-            console.log('[Combat Sandbox] Initializing with real Game class...');
+            console.log('[Combat Sandbox] Initializing with sandboxMode...');
 
             // Override setupUIListeners on prototype before instantiation
             // This prevents errors with missing UI DOM elements
@@ -239,42 +239,21 @@
                 console.log('[Combat Sandbox] UI listeners disabled (prototype override)');
             };
 
-            // Create the real Game instance
-            game = new Game();
+            // Create the real Game instance with sandboxMode enabled
+            // This cleanly disables wave spawning, weather, UI updates, and audio at engine level
+            game = new Game({ sandboxMode: true });
             
-            // Disable WaveSystem before starting
-            if (game.systems.wave) {
-                console.log('[Combat Sandbox] Disabling WaveSystem');
-                game.systems.wave.update = function() {};
-                game.systems.wave.spawnWave = function() {};
-            }
-
-            // Disable UISystem before starting
+            // Override additional UI methods that try to access DOM elements
+            // These are called by the game but reference elements that don't exist in sandbox
             if (game.systems.ui) {
-                console.log('[Combat Sandbox] Disabling UISystem');
-                game.systems.ui.update = function() {};
                 game.systems.ui.updateHUD = function() {};
                 game.systems.ui.showScreen = function() {};
                 game.systems.ui.showWaveAnnouncement = function() {};
                 game.systems.ui.showLevelUp = function() {};
                 game.systems.ui.showGameOver = function() {};
+                console.log('[Combat Sandbox] UI methods overridden to prevent DOM errors');
             }
-
-            // Disable AudioManager before starting
-            if (game.audioManager) {
-                console.log('[Combat Sandbox] Disabling AudioManager');
-                game.audioManager.init = function() {};
-                game.audioManager.play = function() {};
-                game.audioManager.playSound = function() {};
-                game.audioManager.playMusic = function() {};
-                game.audioManager.stopAll = function() {};
-                game.audioManager.stopMusic = function() {};
-                game.audioManager.update = function() {};
-                game.audioManager.setVolume = function() {};
-                game.audioManager.startBackgroundMusic = function() {};
-                game.audioManager.stopBackgroundMusic = function() {};
-            }
-
+            
             // Set selected ship
             game.gameState.selectedShip = 'ION_FRIGATE';
             

@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandbox Mode - Unit Tests</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a1a;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #00ff00;
+            margin-bottom: 20px;
+        }
+
+        .test-result {
+            border: 2px solid #00ff00;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+
+        .test-result.pass {
+            background: rgba(0, 255, 0, 0.1);
+            border-color: #00ff00;
+        }
+
+        .test-result.fail {
+            background: rgba(255, 0, 0, 0.1);
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+
+        .test-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .test-detail {
+            margin: 5px 0 5px 20px;
+            font-size: 14px;
+        }
+
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+            font-size: 18px;
+        }
+
+        .summary.all-pass {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .summary.some-fail {
+            background: rgba(255, 0, 0, 0.2);
+            border-color: #ff0000;
+        }
+
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Sandbox Mode Unit Tests</h1>
+    <div id="test-results"></div>
+    <div id="summary"></div>
+    
+    <!-- Canvas for Game.js to work -->
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <!-- Minimal test script to verify Game.js changes -->
+    <script>
+        // Mock minimal requirements for Game.js to instantiate
+        const GameStates = {
+            MENU: 'MENU',
+            RUNNING: 'RUNNING',
+            PAUSED: 'PAUSED',
+            LEVEL_UP: 'LEVEL_UP',
+            GAME_OVER: 'GAME_OVER',
+            META_SCREEN: 'META_SCREEN'
+        };
+
+        class World {
+            constructor() {
+                this.entities = [];
+            }
+            clear() {}
+        }
+
+        class GameState {
+            constructor() {
+                this.state = GameStates.MENU;
+                this.selectedShip = 'ION_FRIGATE';
+            }
+            setState(state) { this.state = state; }
+            isState(state) { return this.state === state; }
+            resetStats() {
+                this.stats = { time: 0 };
+            }
+        }
+
+        class SaveManager {
+            load() {
+                return {
+                    settings: {
+                        musicVolume: 0.5,
+                        sfxVolume: 0.5
+                    }
+                };
+            }
+        }
+
+        class AudioManager {
+            setMusicVolume() {}
+            setSFXVolume() {}
+            play() {}
+            stopAll() {}
+        }
+
+        class ScoreManager {}
+        class ScreenEffects {
+            constructor() {}
+            reset() {}
+        }
+
+        class DebugOverlay {
+            constructor() {}
+        }
+
+        // Mock systems
+        class MockSystem {
+            constructor() {}
+            update() {}
+            reset() {}
+        }
+
+        const MovementSystem = MockSystem;
+        const ParticleSystem = MockSystem;
+        const CollisionSystem = class extends MockSystem {
+            constructor(world, state, audio, particle) {
+                super();
+                this.particleSystem = null;
+                this.screenEffects = null;
+            }
+        };
+        const CombatSystem = MockSystem;
+        const AISystem = MockSystem;
+        const SpawnerSystem = class extends MockSystem {
+            setWaveNumber() {}
+            triggerWaveSpawns() {}
+        };
+        const PickupSystem = MockSystem;
+        const RenderSystem = class extends MockSystem {
+            constructor(canvas, world, state) {
+                super();
+                this.screenEffects = null;
+            }
+        };
+        const UISystem = class extends MockSystem {
+            showScreen() {}
+            showWaveAnnouncement() {}
+        };
+        const WaveSystem = class extends MockSystem {
+            constructor() {
+                super();
+                this.onWaveStart = null;
+            }
+            getWaveNumber() { return 1; }
+        };
+        const WeatherSystem = MockSystem;
+        const DefenseSystem = class extends MockSystem {
+            constructor(world) {
+                super();
+            }
+        };
+        const HeatSystem = class extends MockSystem {
+            constructor(world, state) {
+                super();
+            }
+        };
+        const ShipUpgradeSystem = MockSystem;
+
+        const logger = {
+            info: () => {}
+        };
+
+        // Mock UI elements
+        const mockElement = {
+            addEventListener: () => {}
+        };
+        document.getElementById = (id) => {
+            if (id === 'gameCanvas') {
+                return document.querySelector('#gameCanvas');
+            }
+            return mockElement;
+        };
+    </script>
+
+    <!-- Load Game.js -->
+    <script src="js/Game.js"></script>
+
+    <script>
+        // Test suite
+        const tests = [];
+        let passed = 0;
+        let failed = 0;
+
+        function addTest(name, testFn) {
+            tests.push({ name, testFn });
+        }
+
+        function runTests() {
+            const resultsDiv = document.getElementById('test-results');
+            resultsDiv.innerHTML = '';
+
+            tests.forEach(test => {
+                try {
+                    const result = test.testFn();
+                    if (result.pass) {
+                        passed++;
+                        resultsDiv.innerHTML += `
+                            <div class="test-result pass">
+                                <div class="test-name">✓ ${test.name}</div>
+                                ${result.details.map(d => `<div class="test-detail">${d}</div>`).join('')}
+                            </div>
+                        `;
+                    } else {
+                        failed++;
+                        resultsDiv.innerHTML += `
+                            <div class="test-result fail">
+                                <div class="test-name">✗ ${test.name}</div>
+                                ${result.details.map(d => `<div class="test-detail">${d}</div>`).join('')}
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    failed++;
+                    resultsDiv.innerHTML += `
+                        <div class="test-result fail">
+                            <div class="test-name">✗ ${test.name}</div>
+                            <div class="test-detail">ERROR: ${error.message}</div>
+                        </div>
+                    `;
+                }
+            });
+
+            const summaryDiv = document.getElementById('summary');
+            const allPass = failed === 0;
+            summaryDiv.className = `summary ${allPass ? 'all-pass' : 'some-fail'}`;
+            summaryDiv.innerHTML = `
+                <strong>Test Summary:</strong> ${passed} passed, ${failed} failed out of ${tests.length} total tests
+                ${allPass ? '<br>✓ All tests passed!' : '<br>✗ Some tests failed'}
+            `;
+        }
+
+        // Capture console.log to verify sandbox message
+        let consoleMessages = [];
+        const originalLog = console.log;
+        console.log = function(...args) {
+            consoleMessages.push(args.join(' '));
+            originalLog.apply(console, args);
+        };
+
+        // Test 1: Default constructor (no options)
+        addTest('Default constructor creates game with sandboxMode=false', () => {
+            consoleMessages = [];
+            const game = new Game();
+            
+            const details = [
+                `sandboxMode: ${game.sandboxMode}`,
+                `Type: ${typeof game.sandboxMode}`,
+                `Strict false: ${game.sandboxMode === false}`
+            ];
+            
+            return {
+                pass: game.sandboxMode === false,
+                details
+            };
+        });
+
+        // Test 2: Constructor with empty options
+        addTest('Constructor with {} creates game with sandboxMode=false', () => {
+            consoleMessages = [];
+            const game = new Game({});
+            
+            const details = [
+                `sandboxMode: ${game.sandboxMode}`,
+                `Strict false: ${game.sandboxMode === false}`
+            ];
+            
+            return {
+                pass: game.sandboxMode === false,
+                details
+            };
+        });
+
+        // Test 3: Constructor with sandboxMode=true
+        addTest('Constructor with { sandboxMode: true } enables sandbox mode', () => {
+            consoleMessages = [];
+            const game = new Game({ sandboxMode: true });
+            
+            const hasSandboxMessage = consoleMessages.some(msg => msg.includes('[Game] Sandbox mode enabled'));
+            
+            const details = [
+                `sandboxMode: ${game.sandboxMode}`,
+                `Strict true: ${game.sandboxMode === true}`,
+                `Console message found: ${hasSandboxMessage}`,
+                `Wave update disabled: ${game.systems.wave.update.toString() === '() => {}'}`
+            ];
+            
+            return {
+                pass: game.sandboxMode === true && hasSandboxMessage,
+                details
+            };
+        });
+
+        // Test 4: Constructor with sandboxMode=false
+        addTest('Constructor with { sandboxMode: false } keeps sandbox mode disabled', () => {
+            consoleMessages = [];
+            const game = new Game({ sandboxMode: false });
+            
+            const hasSandboxMessage = consoleMessages.some(msg => msg.includes('[Game] Sandbox mode enabled'));
+            
+            const details = [
+                `sandboxMode: ${game.sandboxMode}`,
+                `Strict false: ${game.sandboxMode === false}`,
+                `No sandbox message: ${!hasSandboxMessage}`
+            ];
+            
+            return {
+                pass: game.sandboxMode === false && !hasSandboxMessage,
+                details
+            };
+        });
+
+        // Test 5: Other options don't affect sandboxMode
+        addTest('Constructor with other options keeps sandboxMode=false', () => {
+            consoleMessages = [];
+            const game = new Game({ foo: 'bar', test: 123 });
+            
+            const details = [
+                `sandboxMode: ${game.sandboxMode}`,
+                `Strict false: ${game.sandboxMode === false}`
+            ];
+            
+            return {
+                pass: game.sandboxMode === false,
+                details
+            };
+        });
+
+        // Test 6: Verify wave system is disabled in sandbox mode
+        addTest('Wave system update is replaced in sandbox mode', () => {
+            const normalGame = new Game();
+            const sandboxGame = new Game({ sandboxMode: true });
+            
+            const normalUpdateStr = normalGame.systems.wave.update.toString();
+            const sandboxUpdateStr = sandboxGame.systems.wave.update.toString();
+            
+            const details = [
+                `Normal wave update is function: ${typeof normalGame.systems.wave.update === 'function'}`,
+                `Sandbox wave update is empty function: ${sandboxUpdateStr === '() => {}'}`
+            ];
+            
+            return {
+                pass: sandboxUpdateStr === '() => {}',
+                details
+            };
+        });
+
+        // Test 7: Verify weather system is disabled in sandbox mode
+        addTest('Weather system update is replaced in sandbox mode', () => {
+            const sandboxGame = new Game({ sandboxMode: true });
+            
+            const details = [
+                `Weather update is empty function: ${sandboxGame.systems.weather.update.toString() === '() => {}'}`
+            ];
+            
+            return {
+                pass: sandboxGame.systems.weather.update.toString() === '() => {}',
+                details
+            };
+        });
+
+        // Test 8: Verify audio is disabled in sandbox mode
+        addTest('Audio manager is disabled in sandbox mode', () => {
+            const sandboxGame = new Game({ sandboxMode: true });
+            
+            const details = [
+                `Audio play is empty function: ${sandboxGame.audioManager.play.toString() === '() => {}'}`
+            ];
+            
+            return {
+                pass: sandboxGame.audioManager.play.toString() === '() => {}',
+                details
+            };
+        });
+
+        // Test 9: Verify normal game keeps active systems
+        addTest('Normal game keeps active wave system', () => {
+            const game = new Game();
+            
+            // The original update should be longer than an empty function
+            const updateStr = game.systems.wave.update.toString();
+            
+            const details = [
+                `Wave update is not empty: ${updateStr !== '() => {}'}`
+            ];
+            
+            return {
+                pass: updateStr !== '() => {}',
+                details
+            };
+        });
+
+        // Run all tests on page load
+        window.addEventListener('DOMContentLoaded', runTests);
+    </script>
+</body>
+</html>

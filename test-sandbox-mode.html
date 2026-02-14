@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sandbox Mode Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a1a;
+            font-family: 'Courier New', monospace;
+            color: #00ff00;
+            padding: 20px;
+        }
+
+        .test-section {
+            border: 2px solid #00ff00;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        h1, h2 {
+            color: #00ff00;
+            margin-bottom: 15px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #00ff00 0%, #00aa00 100%);
+            color: #000;
+            border: none;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 5px;
+            border-radius: 3px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+            color: #00ff00;
+            margin-top: 10px;
+        }
+
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 3px;
+        }
+
+        .status.success {
+            background: rgba(0, 255, 0, 0.2);
+            border: 1px solid #00ff00;
+        }
+
+        .status.fail {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+
+        .info {
+            color: #888;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Sandbox Mode Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Normal Game Instantiation</h2>
+        <button class="button" onclick="testNormalGame()">Test new Game()</button>
+        <div id="test1-result"></div>
+        <div class="info">
+            Expected: sandboxMode should be false, systems should be active
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Sandbox Mode Enabled</h2>
+        <button class="button" onclick="testSandboxMode()">Test new Game({ sandboxMode: true })</button>
+        <div id="test2-result"></div>
+        <div class="info">
+            Expected: sandboxMode should be true, systems should be disabled, console message logged
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Sandbox Mode Explicitly False</h2>
+        <button class="button" onclick="testSandboxFalse()">Test new Game({ sandboxMode: false })</button>
+        <div id="test3-result"></div>
+        <div class="info">
+            Expected: sandboxMode should be false, systems should be active
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Other Options Ignored</h2>
+        <button class="button" onclick="testOtherOptions()">Test new Game({ foo: 'bar' })</button>
+        <div id="test4-result"></div>
+        <div class="info">
+            Expected: sandboxMode should be false, other options should not affect behavior
+        </div>
+    </div>
+
+    <!-- Load all game scripts in correct order -->
+    <script src="js/constants.js"></script>
+    <script src="js/utils/Logger.js"></script>
+    <script src="js/core/Entity.js"></script>
+    <script src="js/core/Component.js"></script>
+    <script src="js/core/World.js"></script>
+    <script src="js/core/GameState.js"></script>
+    
+    <!-- Components -->
+    <script src="js/core/components/Position.js"></script>
+    <script src="js/core/components/Velocity.js"></script>
+    <script src="js/core/components/Sprite.js"></script>
+    <script src="js/core/components/Health.js"></script>
+    <script src="js/core/components/Weapon.js"></script>
+    <script src="js/core/components/Input.js"></script>
+    <script src="js/core/components/Enemy.js"></script>
+    <script src="js/core/components/Projectile.js"></script>
+    <script src="js/core/components/Particle.js"></script>
+    <script src="js/core/components/XP.js"></script>
+    <script src="js/core/components/Stats.js"></script>
+    <script src="js/core/components/Level.js"></script>
+    <script src="js/core/components/Shield.js"></script>
+    <script src="js/core/components/Defense.js"></script>
+    <script src="js/core/components/Heat.js"></script>
+    
+    <!-- Systems -->
+    <script src="js/systems/MovementSystem.js"></script>
+    <script src="js/systems/ParticleSystem.js"></script>
+    <script src="js/systems/CollisionSystem.js"></script>
+    <script src="js/systems/CombatSystem.js"></script>
+    <script src="js/systems/AISystem.js"></script>
+    <script src="js/systems/SpawnerSystem.js"></script>
+    <script src="js/systems/PickupSystem.js"></script>
+    <script src="js/systems/RenderSystem.js"></script>
+    <script src="js/systems/UISystem.js"></script>
+    <script src="js/systems/WaveSystem.js"></script>
+    <script src="js/systems/WeatherSystem.js"></script>
+    <script src="js/systems/DefenseSystem.js"></script>
+    <script src="js/systems/HeatSystem.js"></script>
+    <script src="js/systems/ShipUpgradeSystem.js"></script>
+    <script src="js/systems/SynergySystem.js"></script>
+    
+    <!-- Managers -->
+    <script src="js/managers/AudioManager.js"></script>
+    <script src="js/managers/SaveManager.js"></script>
+    <script src="js/managers/ScoreManager.js"></script>
+    
+    <!-- UI -->
+    <script src="js/ui/ScreenEffects.js"></script>
+    <script src="js/ui/DebugOverlay.js"></script>
+    
+    <!-- Data -->
+    <script src="js/data/ShipData.js"></script>
+    <script src="js/data/WeaponData.js"></script>
+    <script src="js/data/PassiveData.js"></script>
+    <script src="js/data/EnemyData.js"></script>
+    <script src="js/data/ShipUpgradeData.js"></script>
+    
+    <!-- Main Game -->
+    <script src="js/Game.js"></script>
+
+    <script>
+        // Helper function to display results
+        function displayResult(elementId, passed, message, details) {
+            const element = document.getElementById(elementId);
+            const statusClass = passed ? 'success' : 'fail';
+            const statusText = passed ? '✓ PASS' : '✗ FAIL';
+            
+            element.innerHTML = `
+                <div class="status ${statusClass}">
+                    <strong>${statusText}</strong>: ${message}
+                </div>
+                ${details ? `<pre>${details}</pre>` : ''}
+            `;
+        }
+
+        // Capture console.log to verify sandbox message
+        let lastConsoleLog = null;
+        const originalLog = console.log;
+        console.log = function(...args) {
+            lastConsoleLog = args.join(' ');
+            originalLog.apply(console, args);
+        };
+
+        function testNormalGame() {
+            try {
+                lastConsoleLog = null;
+                const game = new Game();
+                
+                const checks = [];
+                checks.push(`sandboxMode: ${game.sandboxMode}`);
+                checks.push(`sandboxMode === false: ${game.sandboxMode === false}`);
+                checks.push(`Wave system active: ${typeof game.systems.wave.update === 'function' && game.systems.wave.update.toString().length > 20}`);
+                checks.push(`Console message: ${lastConsoleLog || 'none'}`);
+                
+                const passed = game.sandboxMode === false && 
+                              !lastConsoleLog?.includes('Sandbox mode enabled');
+                
+                displayResult('test1-result', passed, 
+                    'Normal game should have sandboxMode = false',
+                    checks.join('\n'));
+            } catch (error) {
+                displayResult('test1-result', false, 'Error during test', error.toString());
+            }
+        }
+
+        function testSandboxMode() {
+            try {
+                lastConsoleLog = null;
+                const game = new Game({ sandboxMode: true });
+                
+                const checks = [];
+                checks.push(`sandboxMode: ${game.sandboxMode}`);
+                checks.push(`sandboxMode === true: ${game.sandboxMode === true}`);
+                checks.push(`Wave system disabled: ${game.systems.wave.update.toString() === '() => {}'}`);
+                checks.push(`Weather system disabled: ${game.systems.weather.update.toString() === '() => {}'}`);
+                checks.push(`Audio play disabled: ${game.audioManager.play.toString() === '() => {}'}`);
+                checks.push(`Console message: ${lastConsoleLog || 'none'}`);
+                
+                const passed = game.sandboxMode === true && 
+                              lastConsoleLog?.includes('Sandbox mode enabled');
+                
+                displayResult('test2-result', passed, 
+                    'Sandbox mode should be enabled with systems disabled',
+                    checks.join('\n'));
+            } catch (error) {
+                displayResult('test2-result', false, 'Error during test', error.toString());
+            }
+        }
+
+        function testSandboxFalse() {
+            try {
+                lastConsoleLog = null;
+                const game = new Game({ sandboxMode: false });
+                
+                const checks = [];
+                checks.push(`sandboxMode: ${game.sandboxMode}`);
+                checks.push(`sandboxMode === false: ${game.sandboxMode === false}`);
+                checks.push(`Wave system active: ${typeof game.systems.wave.update === 'function' && game.systems.wave.update.toString().length > 20}`);
+                
+                const passed = game.sandboxMode === false;
+                
+                displayResult('test3-result', passed, 
+                    'Explicit sandboxMode: false should work like normal',
+                    checks.join('\n'));
+            } catch (error) {
+                displayResult('test3-result', false, 'Error during test', error.toString());
+            }
+        }
+
+        function testOtherOptions() {
+            try {
+                lastConsoleLog = null;
+                const game = new Game({ foo: 'bar', test: 123 });
+                
+                const checks = [];
+                checks.push(`sandboxMode: ${game.sandboxMode}`);
+                checks.push(`sandboxMode === false: ${game.sandboxMode === false}`);
+                checks.push(`Other options don't break game: true`);
+                
+                const passed = game.sandboxMode === false;
+                
+                displayResult('test4-result', passed, 
+                    'Other options should not affect game behavior',
+                    checks.join('\n'));
+            } catch (error) {
+                displayResult('test4-result', false, 'Error during test', error.toString());
+            }
+        }
+
+        // Info
+        console.log('%c[Sandbox Test] Page loaded. Click buttons to run tests.', 'color: #00ff00; font-weight: bold');
+    </script>
+</body>
+</html>
