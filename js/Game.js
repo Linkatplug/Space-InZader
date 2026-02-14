@@ -352,6 +352,32 @@ class Game {
             }
         });
 
+        // Listen for LEVEL_UP event from PickupSystem
+        this.world.events.on('LEVEL_UP', (data) => {
+            console.log(`[Game] LEVEL_UP event received - Player level ${data.level}`);
+            
+            // Pause the game
+            this.gameState.setState(GameStates.LEVEL_UP);
+            this.running = false;
+            
+            // Generate 3 upgrade options from ShipUpgradeData
+            const options = this.generateLevelUpOptions(data.player);
+            console.log(`[Game] Generated ${options.length} upgrade options:`, options.map(o => o.id));
+            
+            if (options.length === 0) {
+                console.error('[Game] No upgrade options available! Resuming game...');
+                this.gameState.setState(GameStates.RUNNING);
+                this.running = true;
+                return;
+            }
+            
+            // Show level up UI
+            this.systems.ui.showLevelUp(options, 0);
+            
+            // Play level up sound
+            this.audioManager.playSFX('levelup');
+        });
+
         // Initialize audio on first user interaction
         let audioInitialized = false;
         const initAudio = () => {
@@ -411,20 +437,26 @@ class Game {
     }
 
     createPlayer() {
-        const shipId = this.gameState.selectedShip || 'ION_FRIGATE';
-        const ship = window.ShipData && window.ShipData.SHIPS ? window.ShipData.SHIPS[shipId] : null;
-        
-        logger.info('Game', `Creating player with ship: ${shipId}`);
-        
-        if (!ship) {
-            logger.error('Game', `Invalid ship: ${shipId}`);
-            const fallbackShip = window.ShipData.SHIPS.ION_FRIGATE;
-            if (!fallbackShip) {
-                logger.error('Game', 'Cannot create player - no ship data available');
-                return;
-            }
+        // Guard: default to ION_FRIGATE if no ship selected
+        if (!this.gameState.selectedShip) {
             this.gameState.selectedShip = 'ION_FRIGATE';
-            return this.createPlayer();
+            console.log('[Game] No ship selected, defaulting to ION_FRIGATE');
+        }
+
+        // Get ship data from ShipUpgradeData
+        const shipId = this.gameState.selectedShip;
+        let shipData = null;
+        
+        if (window.ShipUpgradeData && window.ShipUpgradeData.SHIPS && window.ShipUpgradeData.SHIPS[shipId]) {
+            shipData = window.ShipUpgradeData.SHIPS[shipId];
+        } else {
+            // Fallback to ShipData for backward compatibility
+            shipData = ShipData.getShipData(shipId.toLowerCase());
+        }
+        
+        if (!shipData) {
+            console.error('Invalid ship:', shipId);
+            return;
         }
 
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
@@ -442,35 +474,25 @@ class Game {
         this.player.addComponent('velocity', Components.Velocity(0, 0));
         this.player.addComponent('collision', Components.Collision(15));
         
-        // Defense component with proper schema for DefenseSystem
-        const defense = {
-            shield: {
-                current: 120,
-                max: 120,
-                regen: 8,
-                regenDelay: 0,
-                regenDelayMax: 3
-            },
-            armor: {
-                current: 150,
-                max: 150,
-                regen: 0,
-                regenDelay: 0,
-                regenDelayMax: 0
-            },
-            structure: {
-                current: 130,
-                max: 130,
-                regen: 0.5,
-                regenDelay: 0,
-                regenDelayMax: 0
-            },
-            resistances: {
-                shield: { em: 0.0, thermal: 0.2, kinetic: 0.4, explosive: 0.5 },
-                armor: { em: 0.5, thermal: 0.35, kinetic: 0.25, explosive: 0.1 },
-                structure: { em: 0.3, thermal: 0.0, kinetic: 0.15, explosive: 0.2 }
-            }
-        };
+        this.player.addComponent('health', Components.Health(maxHealth, maxHealth));
+        
+        // Add defense component (3-layer system: shield, armor, structure)
+        this.player.addComponent('defense', Components.Defense());
+        console.log('[Game] Added defense component to player');
+        
+        // Add heat component for weapon overheat management
+        this.player.addComponent('heat', Components.Heat(100, 10, 0));
+        console.log('[Game] Added heat component to player');
+        
+        // Add shield component (starts at 0, will be replaced by defense system)
+        this.player.addComponent('shield', Components.Shield(0, 0, 0));
+        
+        const playerComp = Components.Player();
+        playerComp.speed = shipData.baseStats.speed;
+        
+        // Use the ship ID directly (no more legacy mapping)
+        playerComp.shipId = shipId;
+        console.log(`[Game] Player ship: ${shipId}`);
         
         this.player.addComponent('defense', defense);
         
@@ -702,7 +724,17 @@ class Game {
         // Reset stats to DEFAULT_STATS blueprint to prevent undefined errors
         playerComp.stats = structuredClone(DEFAULT_STATS);
         
-        // Apply ship-specific base stats (new ship system doesn't have these stats)
+        // Get ship data from ShipUpgradeData or fallback to ShipData
+        const shipId = this.gameState.selectedShip;
+        let shipData = null;
+        
+        if (window.ShipUpgradeData && window.ShipUpgradeData.SHIPS && window.ShipUpgradeData.SHIPS[shipId]) {
+            shipData = window.ShipUpgradeData.SHIPS[shipId];
+        } else {
+            // Fallback to ShipData for backward compatibility
+            shipData = ShipData.getShipData(shipId.toLowerCase());
+        }
+        
         const metaDamage = 1 + (this.saveData.upgrades.baseDamage * 0.05);
         const metaXP = 1 + (this.saveData.upgrades.xpBonus * 0.1);
 
@@ -917,21 +949,15 @@ class Game {
     }
 
     triggerLevelUp() {
-        const playerComp = this.player?.getComponent('player');
+        console.log('=== LEVEL UP TRIGGERED ===');
+        logger.info('Game', 'Player leveled up!');
         
-        // P0 FIX: Enhanced debug logging
-        if (playerComp) {
-            logger.info('Game', `Player leveled up! Level ${playerComp.level}, XP: ${playerComp.xp.toFixed(0)}/${playerComp.xpRequired}`);
-        } else {
-            logger.error('Game', 'triggerLevelUp called but no player component!');
-            return;
-        }
-        
-        // Set game state to LEVEL_UP (pauses game)
+        console.log('[triggerLevelUp] Setting state to LEVEL_UP');
         this.gameState.setState(GameStates.LEVEL_UP);
         logger.debug('Game', `Game state set to LEVEL_UP`);
         
-        // Generate 3 random boost options
+        console.log('[triggerLevelUp] Generating boost options...');
+        // Generate 3 random boosts
         const boosts = this.generateBoostOptions();
         
         // P0 FIX: Log generated options
@@ -943,14 +969,24 @@ class Game {
         
         this.gameState.pendingBoosts = boosts;
         
-        // Show level up UI
-        logger.debug('Game', 'Calling ui.showLevelUp()');
+        console.log(`[triggerLevelUp] Generated ${boosts.length} boosts:`, boosts.map(b => b?.key || 'null'));
+        
+        if (boosts.length === 0) {
+            console.error('[triggerLevelUp] ERROR: No boosts generated! Player will be stuck!');
+            console.error('[triggerLevelUp] Forcing game to resume as emergency fallback...');
+            this.gameState.setState(GameStates.RUNNING);
+            this.running = true;
+            return;
+        }
+        
+        console.log('[triggerLevelUp] Showing level up UI...');
         this.systems.ui.showLevelUp(boosts);
         
+        console.log('[triggerLevelUp] Playing level up sound...');
         // Play level up sound
-        if (this.audioManager && this.audioManager.initialized) {
-            this.audioManager.playSFX('levelup');
-        }
+        this.audioManager.playSFX('levelup');
+        
+        console.log('[triggerLevelUp] Complete. Game is now in LEVEL_UP state, waiting for player selection.');
     }
 
     generateBoostOptions() {
@@ -1072,6 +1108,75 @@ class Game {
         }
 
         logger.debug('Game', 'Boost applied successfully', boost);
+    }
+
+    /**
+     * Generate level-up upgrade options from ShipUpgradeData
+     * @param {Entity} player - Player entity
+     * @returns {Array} Array of 3 upgrade options
+     */
+    generateLevelUpOptions(player) {
+        const playerComp = player.getComponent('player');
+        if (!playerComp) {
+            console.error('[Game] generateLevelUpOptions: No player component');
+            return [];
+        }
+
+        const shipId = playerComp.shipId || this.gameState.selectedShip;
+        if (!shipId) {
+            console.error('[Game] generateLevelUpOptions: No ship selected');
+            return [];
+        }
+
+        // Get ship upgrade data
+        const shipData = window.ShipUpgradeData?.getShipUpgrades(shipId);
+        if (!shipData || !shipData.upgrades) {
+            console.error(`[Game] No upgrade data for ship: ${shipId}`);
+            return [];
+        }
+
+        console.log(`[Game] Generating upgrades for ${shipData.name}, ${shipData.upgrades.length} available`);
+
+        // Get current player upgrades
+        const currentUpgrades = playerComp.upgrades || new Map();
+
+        // Filter available upgrades (not maxed)
+        const availableUpgrades = shipData.upgrades.filter(upgrade => {
+            const currentLevel = currentUpgrades.get(upgrade.id) || 0;
+            return currentLevel < upgrade.maxLevel;
+        });
+
+        if (availableUpgrades.length === 0) {
+            console.warn('[Game] No upgrades available (all maxed)');
+            return [];
+        }
+
+        // Select 3 random upgrades (or fewer if not enough available)
+        const count = Math.min(3, availableUpgrades.length);
+        const selected = [];
+        const pool = [...availableUpgrades];
+
+        for (let i = 0; i < count; i++) {
+            const index = Math.floor(Math.random() * pool.length);
+            const upgrade = pool.splice(index, 1)[0];
+            const currentLevel = currentUpgrades.get(upgrade.id) || 0;
+
+            selected.push({
+                type: 'upgrade',
+                key: upgrade.id,
+                id: upgrade.id,
+                name: upgrade.name,
+                description: upgrade.description,
+                currentLevel: currentLevel,
+                maxLevel: upgrade.maxLevel,
+                data: upgrade,
+                rarity: 'common' // Ship upgrades are always common
+            });
+        }
+
+        console.log(`[Game] Selected ${selected.length} upgrades:`, selected.map(s => `${s.name} (${s.currentLevel}/${s.maxLevel})`));
+
+        return selected;
     }
 
     pauseGame() {

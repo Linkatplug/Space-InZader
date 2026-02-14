@@ -36,9 +36,17 @@ class DefenseSystem {
         if (!defense) return;
 
         // Update each layer
-        this.updateLayer(defense.shield, deltaTime, 'shield');
-        this.updateLayer(defense.armor, deltaTime, 'armor');
-        this.updateLayer(defense.structure, deltaTime, 'structure');
+        this.updateLayer(defense.shield, deltaTime);
+        this.updateLayer(defense.armor, deltaTime);
+        this.updateLayer(defense.structure, deltaTime);
+        
+        // Sync defense to playerComp for tactical UI (if this is a player)
+        if (entity.type === 'player') {
+            const playerComp = entity.getComponent('player');
+            if (playerComp) {
+                playerComp.defenseLayers = defense;
+            }
+        }
     }
 
     /**

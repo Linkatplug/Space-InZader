@@ -23,9 +23,23 @@ class CollisionSystem {
         this.BLACK_HOLE_DEATH_FLASH_COLOR = '#9400D3'; // Purple
         this.BLACK_HOLE_DEATH_FLASH_INTENSITY = 0.5;
         this.BLACK_HOLE_DEATH_FLASH_DURATION = 0.5;
+        
+        // FIX: Hit cooldown tracking per damage source (200ms cooldown)
+        this.hitCooldowns = new Map(); // Map<sourceId, cooldownTime>
+        this.HIT_COOLDOWN_DURATION = 0.2; // 200ms between hits from same source
     }
 
     update(deltaTime) {
+        // Update hit cooldowns
+        for (const [sourceId, cooldown] of this.hitCooldowns.entries()) {
+            const newCooldown = cooldown - deltaTime;
+            if (newCooldown <= 0) {
+                this.hitCooldowns.delete(sourceId);
+            } else {
+                this.hitCooldowns.set(sourceId, newCooldown);
+            }
+        }
+        
         // Update orbital projectile hit cooldowns
         const projectiles = this.world.getEntitiesByType('projectile');
         for (const projectile of projectiles) {
@@ -129,7 +143,12 @@ class CollisionSystem {
             const playerHealth = player.getComponent('health');
             
             if (!playerPos || !playerCol || !playerHealth) continue;
-            if (playerHealth.invulnerable || playerHealth.godMode) continue;
+            
+            // FIX: Set i-frames to 400ms (was 500ms in enemy collision, 300ms in projectile)
+            if (playerHealth.invulnerable || playerHealth.godMode) {
+                // Silently skip - expected during invulnerability frames or when god mode is active
+                continue;
+            }
 
             for (const enemy of enemies) {
                 const enemyPos = enemy.getComponent('position');
@@ -137,17 +156,30 @@ class CollisionSystem {
                 const enemyComp = enemy.getComponent('enemy');
                 
                 if (!enemyPos || !enemyCol || !enemyComp) continue;
+                
+                // FIX: Check hit cooldown for this enemy
+                const sourceId = `enemy_${enemy.id}`;
+                if (this.hitCooldowns.has(sourceId)) {
+                    continue; // Still on cooldown for this enemy
+                }
 
                 if (MathUtils.circleCollision(
                     playerPos.x, playerPos.y, playerCol.radius,
                     enemyPos.x, enemyPos.y, enemyCol.radius
                 )) {
+                    console.log(`[CollisionSystem] Player collision with enemy ${enemy.id}! Damage: ${enemyComp.damage}`);
+                    
                     // Deal damage to player
                     this.damagePlayer(player, enemyComp.damage);
                     
-                    // Add invulnerability frames
+                    // FIX: Add hit cooldown for this enemy (200ms)
+                    this.hitCooldowns.set(sourceId, this.HIT_COOLDOWN_DURATION);
+                    
+                    // FIX: Add i-frames (400ms)
                     playerHealth.invulnerable = true;
-                    playerHealth.invulnerableTime = 0.5; // 0.5 seconds
+                    playerHealth.invulnerableTime = 0.4;
+                    
+                    console.log('[CollisionSystem] Invulnerability activated for 400ms, hit cooldown for this enemy: 200ms');
                 }
             }
         }
@@ -216,7 +248,13 @@ class CollisionSystem {
                 
                 // Check if projectile is from enemy (owner is an enemy entity or 'enemy' string)
                 const ownerEntity = this.world.getEntity(projComp.owner);
-                if (projComp.owner !== 'enemy' && (!ownerEntity || ownerEntity.type !== 'enemy')) continue;
+                if (!ownerEntity || ownerEntity.type !== 'enemy') continue;
+                
+                // FIX: Check hit cooldown for this projectile
+                const sourceId = `projectile_${projectile.id}`;
+                if (this.hitCooldowns.has(sourceId)) {
+                    continue; // Still on cooldown
+                }
 
                 if (MathUtils.circleCollision(
                     playerPos.x, playerPos.y, playerCol.radius,
@@ -254,11 +292,10 @@ class CollisionSystem {
                     // Remove projectile
                     this.world.removeEntity(projectile.id);
                     
-                    // Add invulnerability frames (only if using health component)
-                    if (playerHealth) {
-                        playerHealth.invulnerable = true;
-                        playerHealth.invulnerableTime = 0.3;
-                    }
+                    // FIX: Add hit cooldown (200ms) and i-frames (400ms)
+                    this.hitCooldowns.set(sourceId, this.HIT_COOLDOWN_DURATION);
+                    playerHealth.invulnerable = true;
+                    playerHealth.invulnerableTime = 0.4;
                 }
             }
         }
@@ -335,30 +372,41 @@ class CollisionSystem {
         const playerComp = player.getComponent('player');
         const defense = player.getComponent('defense');
         
-        // Player component is required
-        if (!playerComp) return;
-
-        // P0 FIX: Don't process damage if game is not running
-        if (!this.game || this.game.state.currentState !== 'RUNNING') {
-            logger.debug('Collision', 'Ignoring damage - game not running');
+        if (!health || !playerComp) {
+            console.error('[CollisionSystem] damagePlayer: Missing health or player component');
+            return;
+        }
+        
+        // God mode check - no damage taken
+        if (health.godMode) {
+            console.warn('[CollisionSystem] damagePlayer: God mode is active! No damage taken.');
             return;
         }
 
-        // P0 FIX: Don't process damage if player already destroyed
-        if (defense && defense.structure.current <= 0) {
-            logger.debug('Collision', 'Ignoring damage - player already destroyed');
-            return;
-        }
+        console.log(`[CollisionSystem] damagePlayer: Applying ${damage} ${damageType} damage`);
 
-        // Log incoming damage
-        logger.info('Collision', `Player taking ${damage.toFixed(1)} ${damageType} damage`);
-
-        // Use 3-layer defense system if available
-        if (defense) {
-            // God mode check for defense system
-            if (defense.godMode) {
-                logger.debug('Collision', 'Player in god mode - damage ignored');
-                return;
+        // Try new defense system first
+        if (defense && this.world && this.world.defenseSystem) {
+            const result = this.world.defenseSystem.applyDamage(player, damage, damageType);
+            this.gameState.stats.damageTaken += result.totalDamage;
+            
+            console.log(`[CollisionSystem] Damage applied via DefenseSystem. Total damage: ${result.totalDamage}, Layers: ${result.layersDamaged.join(', ')}`);
+            
+            // Visual feedback based on which layers were hit
+            if (this.screenEffects) {
+                if (result.layersDamaged.includes('shield')) {
+                    this.screenEffects.flash('#00FFFF', 0.2, 0.1);
+                } else if (result.layersDamaged.includes('armor')) {
+                    this.screenEffects.flash('#8B4513', 0.25, 0.12);
+                } else if (result.layersDamaged.includes('structure')) {
+                    this.screenEffects.shake(5, 0.2);
+                    this.screenEffects.flash('#FF0000', 0.3, 0.15);
+                }
+            }
+            
+            // Play hit sound
+            if (this.audioManager && this.audioManager.initialized) {
+                this.audioManager.playSFX('hit', 1.2);
             }
 
             // Try to access DefenseSystem through multiple paths
@@ -757,15 +805,19 @@ class CollisionSystem {
         switch (pickupComp.type) {
             case 'xp':
                 if (playerComp) {
-                    const baseXP = pickupComp.value;
-                    const xpGained = baseXP * playerComp.stats.xpBonus;
-                    const oldXP = playerComp.xp;
+                    const xpBonus = playerComp.stats?.xpBonus ?? 1;
+                    const xpGained = pickupComp.value * xpBonus;
                     playerComp.xp += xpGained;
                     
-                    logger.debug('Collision', `XP collected: ${baseXP} * ${playerComp.stats.xpBonus.toFixed(2)} = ${xpGained.toFixed(1)} (${oldXP.toFixed(0)} → ${playerComp.xp.toFixed(0)}/${playerComp.xpRequired})`);
+                    // Guard against NaN
+                    if (!Number.isFinite(playerComp.xp)) {
+                        console.error('[CollisionSystem] XP became NaN, resetting to 0');
+                        playerComp.xp = 0;
+                    }
                     
                     // Check for level up
                     if (playerComp.xp >= playerComp.xpRequired) {
+                        console.log('[CollisionSystem] XP threshold reached! Triggering level up...');
                         this.levelUp(player);
                     }
                 }
@@ -844,7 +896,12 @@ class CollisionSystem {
 
     levelUp(player) {
         const playerComp = player.getComponent('player');
-        if (!playerComp) return;
+        if (!playerComp) {
+            console.error('[CollisionSystem] levelUp: No player component found');
+            return;
+        }
+
+        console.log(`[CollisionSystem] Level up! Current level: ${playerComp.level}, XP: ${playerComp.xp}/${playerComp.xpRequired}`);
 
         playerComp.level++;
         playerComp.xp -= playerComp.xpRequired;
@@ -855,9 +912,14 @@ class CollisionSystem {
             playerComp.level
         );
 
+        console.log(`[CollisionSystem] New level: ${playerComp.level}, Next XP required: ${playerComp.xpRequired}`);
+
         // Trigger level up screen
         if (window.game) {
+            console.log('[CollisionSystem] Triggering level up UI via window.game.triggerLevelUp()');
             window.game.triggerLevelUp();
+        } else {
+            console.error(`[CollisionSystem] ERROR: window.game is not defined! Level up UI will not show.\nThis means the level increased but no upgrade choices will appear.\nPlayer is now level ${playerComp.level} but cannot choose upgrades.`);
         }
     }
     

@@ -154,9 +154,20 @@ class PickupSystem {
     collectXP(player, xpValue) {
         const playerComp = player.getComponent('player');
         
-        // Apply XP bonus
-        const finalXP = xpValue * playerComp.stats.xpBonus;
+        // Apply XP bonus with guard against undefined
+        const xpBonus = playerComp.stats?.xpBonus ?? 1;
+        const finalXP = xpValue * xpBonus;
         playerComp.xp += finalXP;
+        
+        // Guard against NaN
+        if (!Number.isFinite(playerComp.xp)) {
+            console.error('[PickupSystem] XP became NaN, resetting to 0');
+            playerComp.xp = 0;
+        }
+        if (!Number.isFinite(playerComp.xpRequired)) {
+            console.error('[PickupSystem] xpRequired became NaN, resetting to 100');
+            playerComp.xpRequired = 100;
+        }
 
         // P0 FIX: Debug log XP collection
         logger.debug('XP', `Collected ${xpValue} XP (x${playerComp.stats.xpBonus.toFixed(2)} = ${finalXP.toFixed(1)}) → ${playerComp.xp.toFixed(0)}/${playerComp.xpRequired}`);
@@ -176,6 +187,8 @@ class PickupSystem {
                 this.gameState.stats.highestLevel,
                 playerComp.level
             );
+            
+            console.log(`⭐ [PickupSystem] LEVEL UP! Level ${playerComp.level} reached`);
             
             // Trigger level up
             this.onLevelUp(player);
@@ -252,8 +265,8 @@ class PickupSystem {
         const playerPos = player.getComponent('position');
         const playerComp = player.getComponent('player');
         
-        // P0 FIX: Log level up trigger
-        logger.info('PickupSystem', `Level up triggered for player (Level ${playerComp.level})`);
+        console.log(`⭐ [PickupSystem] LEVEL UP! Player reached level ${playerComp.level}`);
+        console.log(`[PickupSystem] XP Progress: ${playerComp.xp.toFixed(1)}/${playerComp.xpRequired} (Next level at ${playerComp.xpRequired})`);
         
         // Create level up particle effect
         this.createLevelUpEffect(playerPos.x, playerPos.y);
@@ -273,12 +286,12 @@ class PickupSystem {
             health.current = Math.min(health.current + health.max * 0.2, health.max);
         }
         
-        // P0 FIX: Emit level up event so Game.js can handle UI
-        if (this.world && this.world.events) {
-            logger.debug('PickupSystem', 'Emitting playerLevelUp event');
-            this.world.events.emit('playerLevelUp', { player: player });
+        // Emit LEVEL_UP event to pause game and show UI
+        if (this.world.events) {
+            console.log('[PickupSystem] Emitting LEVEL_UP event...');
+            this.world.events.emit('LEVEL_UP', { player, level: playerComp.level });
         } else {
-            logger.warn('PickupSystem', 'Cannot emit playerLevelUp - no event bus!');
+            console.error('[PickupSystem] ERROR: No event bus available!');
         }
     }
 

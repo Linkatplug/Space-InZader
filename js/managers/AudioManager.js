@@ -218,14 +218,15 @@ class AudioManager {
                 this.playWarning(now);
                 break;
             default:
-                // Fallback for unknown sound types - warn once and play a generic sound
-                if (!this.unknownSoundTypes.has(type)) {
-                    console.warn(`[AudioManager] Unknown sound type: "${type}" - falling back to 'hit' sound`);
-                    this.unknownSoundTypes.add(type);
+                // FIX: Fallback to ui_click sound for unknown types, or silently ignore
+                // Only warn once per unknown type to avoid spam
+                if (!this.unknownSoundWarnings) this.unknownSoundWarnings = new Set();
+                if (!this.unknownSoundWarnings.has(type)) {
+                    console.warn(`[AudioManager] Unknown sound type: ${type}, using fallback`);
+                    this.unknownSoundWarnings.add(type);
                 }
-                // Fallback to hit sound (generic impact sound)
-                this.playHit(now, pitch);
-                break;
+                // Play a generic click sound as fallback
+                this.playPickup(now, 1.0);
         }
     }
 
