@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combat Dev Sandbox</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            overflow: hidden;
+        }
+
+        #topBar {
+            background: #1a1a1a;
+            border-bottom: 2px solid #00ff00;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 {
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            font-size: 1.5em;
+            margin: 0;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 220px);
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #gameCanvas {
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+
+        #controlPanel {
+            background: #1a1a1a;
+            border-top: 2px solid #00ff00;
+            padding: 15px 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .panel-section {
+            background: #0f0f0f;
+            border: 1px solid #00ff00;
+            border-radius: 4px;
+            padding: 10px;
+        }
+
+        .panel-section h3 {
+            color: #00ffff;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #00ff00;
+            padding-bottom: 5px;
+        }
+
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        button {
+            background: #1a1a1a;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 8px 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            flex: 1;
+            min-width: 100px;
+        }
+
+        button:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 0.85em;
+        }
+
+        .stat-label {
+            color: #888;
+        }
+
+        .stat-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .toggle-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .toggle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px;
+            background: #0a0a0a;
+            border-radius: 3px;
+        }
+
+        .toggle-item label {
+            font-size: 0.85em;
+        }
+
+        .toggle-button {
+            min-width: 60px;
+            padding: 4px 8px;
+            font-size: 0.75em;
+        }
+
+        .toggle-button.active {
+            background: #00ff00;
+            color: #000;
+        }
+
+        .layer-display {
+            font-size: 0.85em;
+            padding: 3px 0;
+        }
+
+        .layer-name {
+            color: #ffaa00;
+            display: inline-block;
+            width: 70px;
+        }
+
+        .layer-hp {
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <div id="topBar">
+        <h1>⚔️ Combat Dev Sandbox</h1>
+        <div style="color: #888; font-size: 0.9em;">Press WASD to move • Click to fire</div>
+    </div>
+
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+    </div>
+
+    <div id="controlPanel">
+        <div class="panel-section">
+            <h3>Spawn Controls</h3>
+            <div class="button-group">
+                <button onclick="spawnScout(1)">Spawn 1 Scout</button>
+                <button onclick="spawnScout(5)">Spawn 5 Scouts</button>
+                <button onclick="spawnElite()">Spawn 1 Elite</button>
+                <button onclick="clearEnemies()">Clear All Enemies</button>
+                <button onclick="resetPlayer()">Reset Player HP</button>
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <h3>Player Status</h3>
+            <div id="playerStats">
+                <div class="layer-display">
+                    <span class="layer-name">Shield:</span>
+                    <span class="layer-hp" id="shieldHP">0/0</span>
+                </div>
+                <div class="layer-display">
+                    <span class="layer-name">Armor:</span>
+                    <span class="layer-hp" id="armorHP">0/0</span>
+                </div>
+                <div class="layer-display">
+                    <span class="layer-name">Structure:</span>
+                    <span class="layer-hp" id="structureHP">0/0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total HP:</span>
+                    <span class="stat-value" id="totalHP">0/0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Enemies:</span>
+                    <span class="stat-value" id="enemyCount">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-section">
+            <h3>Combat Stats & Debug</h3>
+            <div class="stat-row">
+                <span class="stat-label">Shots/sec:</span>
+                <span class="stat-value" id="shotsPerSec">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Damage/sec:</span>
+                <span class="stat-value" id="damagePerSec">0</span>
+            </div>
+            <div class="toggle-group" style="margin-top: 10px;">
+                <div class="toggle-item">
+                    <label>Combat Debug:</label>
+                    <button class="toggle-button" id="combatDebugBtn" onclick="toggleCombatDebug()">OFF</button>
+                </div>
+                <div class="toggle-item">
+                    <label>Defense Debug:</label>
+                    <button class="toggle-button" id="defenseDebugBtn" onclick="toggleDefenseDebug()">OFF</button>
+                </div>
+                <div class="toggle-item">
+                    <label>Collision Debug:</label>
+                    <button class="toggle-button" id="collisionDebugBtn" onclick="toggleCollisionDebug()">OFF</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Systems -->
+    <script src="../js/utils/Math.js"></script>
+    <script src="../js/utils/Logger.js"></script>
+    <script src="../js/core/ECS.js"></script>
+    <script src="../js/core/GameState.js"></script>
+    <script src="../js/core/stats/ShipStats.js"></script>
+    
+    <!-- Data -->
+    <script src="../js/data/DefenseData.js"></script>
+    <script src="../js/data/EnemyProfiles.js"></script>
+    <script src="../js/data/ShipData.js"></script>
+    <script src="../js/data/NewWeaponData.js"></script>
+    
+    <!-- Systems -->
+    <script src="../js/systems/DefenseSystem.js"></script>
+    <script src="../js/systems/AISystem.js"></script>
+    <script src="../js/systems/CollisionSystem.js"></script>
+    <script src="../js/systems/CombatSystem.js"></script>
+    <script src="../js/systems/MovementSystem.js"></script>
+
+    <script>
+        // Global state
+        let world, player, systems;
+        let canvas, ctx;
+        let lastTime = 0;
+        let running = false;
+        
+        // Stats tracking
+        let shotsFired = 0;
+        let damageTaken = 0;
+        let lastStatsUpdate = 0;
+        let shotsPerSecond = 0;
+        let damagePerSecond = 0;
+        
+        // Debug flags
+        let combatDebug = false;
+        let defenseDebug = false;
+        let collisionDebug = false;
+        
+        // Use global logger (already initialized by Logger.js)
+        if (typeof logger !== 'undefined') {
+            logger.enabled = false; // Keep quiet by default
+        }
+        
+        // Initialize the sandbox
+        function init() {
+            console.log('[Sandbox] Initializing Combat Dev Sandbox...');
+            
+            // Setup canvas
+            canvas = document.getElementById('gameCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // Create ECS world
+            world = new World();
+            
+            // Initialize systems
+            const gameState = new GameState();
+            
+            // Configure GameState minimally
+            gameState.isPaused = false;
+            gameState.isGameOver = false;
+            
+            systems = {
+                defense: new DefenseSystem(world),
+                ai: new AISystem(world, canvas),
+                collision: new CollisionSystem(world, gameState, null, null),
+                combat: new CombatSystem(world, gameState, null),
+                movement: new MovementSystem(world, canvas)
+            };
+            
+            // Link defense system to world for access by other systems
+            world.defenseSystem = systems.defense;
+            
+            // Create player
+            createPlayer();
+            
+            // Setup input
+            setupInput();
+            
+            // Wrap DefenseSystem.applyDamage to track player damage
+            const originalApplyDamage = systems.defense.applyDamage.bind(systems.defense);
+            systems.defense.applyDamage = function(entity, damagePacket) {
+                if (entity === player) {
+                    damageTaken += damagePacket.amount || damagePacket.damage || 0;
+                }
+                return originalApplyDamage(entity, damagePacket);
+            };
+            
+            // Start game loop
+            running = true;
+            requestAnimationFrame(gameLoop);
+            
+            console.log('[Sandbox] Initialization complete');
+        }
+        
+        // Create player entity
+        function createPlayer() {
+            player = world.createEntity('player');
+            
+            // Position at center
+            player.addComponent('position', Components.Position(
+                canvas.width / 2,
+                canvas.height / 2
+            ));
+            
+            player.addComponent('velocity', Components.Velocity(0, 0));
+            player.addComponent('collision', Components.Collision(15));
+            
+            // Get ship data
+            const shipInfo = window.ShipData?.SHIPS?.['ION_FRIGATE'];
+            
+            // Setup defense layers
+            const layerResistances = window.DefenseData?.LAYER_RESISTANCES || {
+                shield: { em: 0, thermal: 0.2, kinetic: 0.4, explosive: 0.5 },
+                armor: { em: 0.5, thermal: 0.35, kinetic: 0.25, explosive: 0.1 },
+                structure: { em: 0.3, thermal: 0, kinetic: 0.15, explosive: 0.2 }
+            };
+            
+            const defense = {
+                shield: {
+                    current: shipInfo?.baseStats?.maxShield || 150,
+                    max: shipInfo?.baseStats?.maxShield || 150,
+                    regen: shipInfo?.baseStats?.shieldRegen || 8,
+                    regenDelay: 0,
+                    regenDelayMax: 3,
+                    resistances: { ...layerResistances.shield }
+                },
+                armor: {
+                    current: shipInfo?.baseStats?.maxArmor || 120,
+                    max: shipInfo?.baseStats?.maxArmor || 120,
+                    regen: 0,
+                    regenDelay: 0,
+                    regenDelayMax: 0,
+                    resistances: { ...layerResistances.armor }
+                },
+                structure: {
+                    current: shipInfo?.baseStats?.maxStructure || 100,
+                    max: shipInfo?.baseStats?.maxStructure || 100,
+                    regen: 0.5,
+                    regenDelay: 0,
+                    regenDelayMax: 0,
+                    resistances: { ...layerResistances.structure }
+                }
+            };
+            
+            player.addComponent('defense', defense);
+            
+            // Add player component
+            const playerComp = {
+                speed: 250,
+                level: 1,
+                weapons: [], // Empty weapons array for CombatSystem
+                currentWeapon: {
+                    damageType: 'kinetic',
+                    damage: 10,
+                    fireRate: 0.2
+                },
+                lastFireTime: 0,
+                stats: {
+                    speed: 1,
+                    damage: 1,
+                    fireRate: 1
+                }
+            };
+            
+            player.addComponent('player', playerComp);
+            
+            // Add renderable
+            player.addComponent('renderable', {
+                color: '#00ffff',
+                size: 15,
+                shape: 'triangle'
+            });
+            
+            console.log('[Sandbox] Player created');
+        }
+        
+        // Spawn enemies
+        function spawnScout(count = 1) {
+            console.log(`[Sandbox] Spawning ${count} scout(s)`);
+            
+            for (let i = 0; i < count; i++) {
+                const profile = window.EnemyProfiles.PROFILES.SCOUT_DRONE;
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 300 + Math.random() * 200;
+                const x = canvas.width / 2 + Math.cos(angle) * distance;
+                const y = canvas.height / 2 + Math.sin(angle) * distance;
+                
+                const enemy = world.createEntity('enemy');
+                enemy.addComponent('position', Components.Position(x, y));
+                enemy.addComponent('velocity', Components.Velocity(0, 0));
+                enemy.addComponent('collision', Components.Collision(profile.size));
+                
+                // Create defense
+                const defense = window.EnemyProfiles.createEnemyDefense(profile);
+                enemy.addComponent('defense', defense);
+                
+                // Enemy component
+                const enemyComp = {
+                    type: profile.aiType,
+                    speed: profile.speed,
+                    damage: 10,
+                    attackCooldown: 0,
+                    attackPattern: {
+                        type: 'shoot',
+                        cooldown: 2.0,
+                        range: 300,
+                        damage: 8
+                    }
+                };
+                enemy.addComponent('enemy', enemyComp);
+                
+                // Renderable
+                enemy.addComponent('renderable', {
+                    color: profile.color,
+                    size: profile.size,
+                    shape: 'circle'
+                });
+            }
+            
+            updateStats();
+        }
+        
+        function spawnElite() {
+            console.log('[Sandbox] Spawning elite');
+            
+            const profile = window.EnemyProfiles.PROFILES.SIEGE_HULK;
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 400;
+            const x = canvas.width / 2 + Math.cos(angle) * distance;
+            const y = canvas.height / 2 + Math.sin(angle) * distance;
+            
+            const enemy = world.createEntity('enemy');
+            enemy.addComponent('position', Components.Position(x, y));
+            enemy.addComponent('velocity', Components.Velocity(0, 0));
+            enemy.addComponent('collision', Components.Collision(profile.size));
+            
+            // Create defense
+            const defense = window.EnemyProfiles.createEnemyDefense(profile);
+            enemy.addComponent('defense', defense);
+            
+            // Enemy component
+            const enemyComp = {
+                type: profile.aiType,
+                speed: profile.speed,
+                damage: 15,
+                attackCooldown: 0,
+                attackPattern: {
+                    type: 'special',
+                    cooldown: 1.5,
+                    range: 350,
+                    damage: 12
+                }
+            };
+            enemy.addComponent('enemy', enemyComp);
+            
+            // Renderable
+            enemy.addComponent('renderable', {
+                color: profile.color,
+                size: profile.size,
+                shape: 'circle'
+            });
+            
+            updateStats();
+        }
+        
+        function clearEnemies() {
+            console.log('[Sandbox] Clearing all enemies');
+            const enemies = world.getEntitiesByType('enemy');
+            enemies.forEach(enemy => world.removeEntity(enemy.id));
+            world.processPendingRemovals();
+            updateStats();
+        }
+        
+        function resetPlayer() {
+            console.log('[Sandbox] Resetting player HP');
+            const defense = player.getComponent('defense');
+            if (defense) {
+                defense.shield.current = defense.shield.max;
+                defense.armor.current = defense.armor.max;
+                defense.structure.current = defense.structure.max;
+                defense.shield.regenDelay = 0;
+                defense.armor.regenDelay = 0;
+                defense.structure.regenDelay = 0;
+            }
+            world.processPendingRemovals();
+            updateStats();
+        }
+        
+        // Debug toggles
+        function toggleCombatDebug() {
+            combatDebug = !combatDebug;
+            const btn = document.getElementById('combatDebugBtn');
+            btn.textContent = combatDebug ? 'ON' : 'OFF';
+            btn.classList.toggle('active', combatDebug);
+            console.log('[Sandbox] Combat debug:', combatDebug);
+        }
+        
+        function toggleDefenseDebug() {
+            defenseDebug = !defenseDebug;
+            const btn = document.getElementById('defenseDebugBtn');
+            btn.textContent = defenseDebug ? 'ON' : 'OFF';
+            btn.classList.toggle('active', defenseDebug);
+            console.log('[Sandbox] Defense debug:', defenseDebug);
+        }
+        
+        function toggleCollisionDebug() {
+            collisionDebug = !collisionDebug;
+            const btn = document.getElementById('collisionDebugBtn');
+            btn.textContent = collisionDebug ? 'ON' : 'OFF';
+            btn.classList.toggle('active', collisionDebug);
+            console.log('[Sandbox] Collision debug:', collisionDebug);
+        }
+        
+        // Input handling
+        const keys = {};
+        
+        function setupInput() {
+            document.addEventListener('keydown', (e) => {
+                keys[e.key.toLowerCase()] = true;
+            });
+            
+            document.addEventListener('keyup', (e) => {
+                keys[e.key.toLowerCase()] = false;
+            });
+            
+            canvas.addEventListener('click', (e) => {
+                firePlayerWeapon();
+            });
+        }
+        
+        function firePlayerWeapon() {
+            const playerComp = player.getComponent('player');
+            const now = performance.now() / 1000;
+            
+            if (now - playerComp.lastFireTime < playerComp.currentWeapon.fireRate) {
+                return;
+            }
+            
+            playerComp.lastFireTime = now;
+            shotsFired++;
+            
+            // Create projectile
+            const pos = player.getComponent('position');
+            const projectile = world.createEntity('projectile');
+            
+            const angle = Math.random() * Math.PI * 2; // Random direction for demo
+            const speed = 400;
+            
+            projectile.addComponent('position', Components.Position(pos.x, pos.y));
+            projectile.addComponent('velocity', Components.Velocity(
+                Math.cos(angle) * speed,
+                Math.sin(angle) * speed
+            ));
+            projectile.addComponent('collision', Components.Collision(5));
+            projectile.addComponent('renderable', {
+                color: '#ffff00',
+                size: 5,
+                shape: 'circle'
+            });
+            projectile.addComponent('projectile', {
+                damage: playerComp.currentWeapon.damage,
+                lifetime: 3,
+                owner: player.id,
+                damageType: playerComp.currentWeapon.damageType
+            });
+        }
+        
+        // Update stats display
+        function updateStats() {
+            const defense = player.getComponent('defense');
+            if (defense) {
+                document.getElementById('shieldHP').textContent = 
+                    `${Math.ceil(defense.shield.current)}/${defense.shield.max}`;
+                document.getElementById('armorHP').textContent = 
+                    `${Math.ceil(defense.armor.current)}/${defense.armor.max}`;
+                document.getElementById('structureHP').textContent = 
+                    `${Math.ceil(defense.structure.current)}/${defense.structure.max}`;
+                
+                const totalCurrent = defense.shield.current + defense.armor.current + defense.structure.current;
+                const totalMax = defense.shield.max + defense.armor.max + defense.structure.max;
+                document.getElementById('totalHP').textContent = 
+                    `${Math.ceil(totalCurrent)}/${totalMax}`;
+            }
+            
+            const enemies = world.getEntitiesByType('enemy');
+            document.getElementById('enemyCount').textContent = enemies.length;
+        }
+        
+        // Track damage taken
+        function trackDamage(amount) {
+            damageTaken += amount;
+        }
+        
+        // Main game loop
+        function gameLoop(timestamp) {
+            if (!running) return;
+            
+            const deltaTime = lastTime ? (timestamp - lastTime) / 1000 : 0;
+            lastTime = timestamp;
+            
+            // Clamp deltaTime to prevent large jumps
+            const dt = Math.min(deltaTime, 0.1);
+            
+            // Handle player movement
+            const vel = player.getComponent('velocity');
+            const playerComp = player.getComponent('player');
+            if (vel && playerComp) {
+                vel.vx = 0;
+                vel.vy = 0;
+                
+                if (keys['w'] || keys['arrowup']) vel.vy = -playerComp.speed;
+                if (keys['s'] || keys['arrowdown']) vel.vy = playerComp.speed;
+                if (keys['a'] || keys['arrowleft']) vel.vx = -playerComp.speed;
+                if (keys['d'] || keys['arrowright']) vel.vx = playerComp.speed;
+            }
+            
+            // Update systems (correct order)
+            systems.movement.update(dt);
+            systems.ai.update(dt);
+            systems.combat.update(dt);
+            systems.defense.update(dt);
+            systems.collision.update(dt);
+            
+            // Process pending entity removals
+            world.processPendingRemovals();
+            
+            // Update projectile lifetimes
+            const projectiles = world.getEntitiesByType('projectile');
+            projectiles.forEach(proj => {
+                const projComp = proj.getComponent('projectile');
+                if (projComp) {
+                    projComp.lifetime -= dt;
+                    if (projComp.lifetime <= 0) {
+                        world.removeEntity(proj.id);
+                    }
+                }
+            });
+            
+            // Render
+            render();
+            
+            // Update stats every second
+            if (timestamp - lastStatsUpdate > 1000) {
+                shotsPerSecond = shotsFired;
+                damagePerSecond = Math.ceil(damageTaken);
+                shotsFired = 0;
+                damageTaken = 0;
+                lastStatsUpdate = timestamp;
+                
+                document.getElementById('shotsPerSec').textContent = shotsPerSecond;
+                document.getElementById('damagePerSec').textContent = damagePerSecond;
+                
+                updateStats();
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Render function
+        function render() {
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Render all entities
+            const allEntities = [...world.entities.values()];
+            
+            allEntities.forEach(entity => {
+                const pos = entity.getComponent('position');
+                const renderable = entity.getComponent('renderable');
+                
+                if (!pos || !renderable) return;
+                
+                ctx.save();
+                ctx.fillStyle = renderable.color;
+                ctx.strokeStyle = renderable.color;
+                ctx.lineWidth = 2;
+                
+                if (renderable.shape === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, renderable.size, 0, Math.PI * 2);
+                    ctx.fill();
+                } else if (renderable.shape === 'triangle') {
+                    ctx.beginPath();
+                    ctx.moveTo(pos.x, pos.y - renderable.size);
+                    ctx.lineTo(pos.x - renderable.size, pos.y + renderable.size);
+                    ctx.lineTo(pos.x + renderable.size, pos.y + renderable.size);
+                    ctx.closePath();
+                    ctx.fill();
+                }
+                
+                // Draw collision radius in debug mode
+                if (collisionDebug) {
+                    const collision = entity.getComponent('collision');
+                    if (collision) {
+                        ctx.strokeStyle = '#ff00ff';
+                        ctx.beginPath();
+                        ctx.arc(pos.x, pos.y, collision.radius, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+                
+                ctx.restore();
+            });
+            
+            // Debug info
+            if (defenseDebug) {
+                ctx.fillStyle = '#00ff00';
+                ctx.font = '12px monospace';
+                ctx.fillText(`Defense System Active`, 10, 20);
+            }
+            
+            if (combatDebug) {
+                ctx.fillStyle = '#ff0000';
+                ctx.font = '12px monospace';
+                ctx.fillText(`Combat Debug Active`, 10, 40);
+            }
+        }
+        
+        // Start on load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

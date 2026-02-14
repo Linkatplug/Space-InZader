@@ -3,6 +3,9 @@
  * @description Handles collision detection between entities
  */
 
+// Debug flag to control collision debug logging
+const COLLISION_DEBUG = false;
+
 // Hit cooldown constant (200ms to prevent instant melt from tick collisions)
 const HIT_COOLDOWN_MS = 200;
 
@@ -238,7 +241,9 @@ class CollisionSystem {
         const projectiles = this.world.getEntitiesByType('projectile');
 
         // 🔍 DEBUG: Log player and projectile counts
-        console.log(`[DEBUG COLLISION] Players found: ${players.length}, Projectiles found: ${projectiles.length}`);
+        if (COLLISION_DEBUG) {
+            console.log(`[DEBUG COLLISION] Players found: ${players.length}, Projectiles found: ${projectiles.length}`);
+        }
 
         for (const player of players) {
             const playerPos = player.getComponent('position');
@@ -246,27 +251,35 @@ class CollisionSystem {
             const playerHealth = player.getComponent('health');
             const playerDefense = player.getComponent('defense');
             
-            console.log(`[DEBUG COLLISION] Player entity:`, {
-                id: player.id,
-                type: player.type,
-                hasPos: !!playerPos,
-                hasCol: !!playerCol,
-                hasHealth: !!playerHealth,
-                hasDefense: !!playerDefense
-            });
+            if (COLLISION_DEBUG) {
+                console.log(`[DEBUG COLLISION] Player entity:`, {
+                    id: player.id,
+                    type: player.type,
+                    hasPos: !!playerPos,
+                    hasCol: !!playerCol,
+                    hasHealth: !!playerHealth,
+                    hasDefense: !!playerDefense
+                });
+            }
             
             if (!playerPos || !playerCol || (!playerHealth && !playerDefense)) {
-                console.log(`[DEBUG COLLISION] ❌ Player missing required components, skipping`);
+                if (COLLISION_DEBUG) {
+                    console.log(`[DEBUG COLLISION] ❌ Player missing required components, skipping`);
+                }
                 continue;
             }
             
             // BUG FIX: Check invulnerability on defense component (player uses defense, not health)
             if (playerDefense && (playerDefense.invulnerable || playerDefense.godMode)) {
-                console.log(`[DEBUG COLLISION] ❌ Player invulnerable (defense), skipping all projectiles`);
+                if (COLLISION_DEBUG) {
+                    console.log(`[DEBUG COLLISION] ❌ Player invulnerable (defense), skipping all projectiles`);
+                }
                 continue;
             }
             if (playerHealth && (playerHealth.invulnerable || playerHealth.godMode)) {
-                console.log(`[DEBUG COLLISION] ❌ Player invulnerable (health), skipping all projectiles`);
+                if (COLLISION_DEBUG) {
+                    console.log(`[DEBUG COLLISION] ❌ Player invulnerable (health), skipping all projectiles`);
+                }
                 continue;
             }
 
@@ -276,41 +289,51 @@ class CollisionSystem {
                 const projComp = projectile.getComponent('projectile');
                 
                 if (!projPos || !projCol || !projComp) {
-                    console.log(`[DEBUG COLLISION] ⚠️ Projectile ${projectile.id} missing components`);
+                    if (COLLISION_DEBUG) {
+                        console.log(`[DEBUG COLLISION] ⚠️ Projectile ${projectile.id} missing components`);
+                    }
                     continue;
                 }
                 
                 // 🔍 REQUESTED DEBUG: Log collision check details BEFORE ANY filtering
-                console.log(
-                    "[DEBUG COLLISION CHECK]",
-                    {
-                        projectileId: projectile.id,
-                        projectileOwner: projComp.owner,
-                        projectileTag: projectile.type,
-                        playerId: player.id,
-                        playerTags: player.type,
-                        projectilePos: { x: projPos.x, y: projPos.y },
-                        playerPos: { x: playerPos.x, y: playerPos.y }
-                    }
-                );
+                if (COLLISION_DEBUG) {
+                    console.log(
+                        "[DEBUG COLLISION CHECK]",
+                        {
+                            projectileId: projectile.id,
+                            projectileOwner: projComp.owner,
+                            projectileTag: projectile.type,
+                            playerId: player.id,
+                            playerTags: player.type,
+                            projectilePos: { x: projPos.x, y: projPos.y },
+                            playerPos: { x: playerPos.x, y: playerPos.y }
+                        }
+                    );
+                }
                 
                 // 🔍 DEBUG: Log projectile details BEFORE owner check
-                console.log(`[DEBUG COLLISION] Checking projectile ${projectile.id}:`, {
-                    owner: projComp.owner,
-                    damage: projComp.damage,
-                    damageType: projComp.damageType,
-                    pos: { x: projPos.x.toFixed(1), y: projPos.y.toFixed(1) }
-                });
+                if (COLLISION_DEBUG) {
+                    console.log(`[DEBUG COLLISION] Checking projectile ${projectile.id}:`, {
+                        owner: projComp.owner,
+                        damage: projComp.damage,
+                        damageType: projComp.damageType,
+                        pos: { x: projPos.x.toFixed(1), y: projPos.y.toFixed(1) }
+                    });
+                }
                 
                 // Check if projectile is from enemy (owner is an enemy entity or 'enemy' string)
                 const ownerEntity = this.world.getEntity(projComp.owner);
-                console.log(`[DEBUG COLLISION] Owner entity lookup for ${projComp.owner}:`, {
-                    found: !!ownerEntity,
-                    type: ownerEntity?.type
-                });
+                if (COLLISION_DEBUG) {
+                    console.log(`[DEBUG COLLISION] Owner entity lookup for ${projComp.owner}:`, {
+                        found: !!ownerEntity,
+                        type: ownerEntity?.type
+                    });
+                }
                 
                 if (!ownerEntity || ownerEntity.type !== 'enemy') {
-                    console.log(`[DEBUG COLLISION] ❌ Projectile ${projectile.id} not from enemy, skipping`);
+                    if (COLLISION_DEBUG) {
+                        console.log(`[DEBUG COLLISION] ❌ Projectile ${projectile.id} not from enemy, skipping`);
+                    }
                     continue;
                 }
                 
@@ -321,26 +344,32 @@ class CollisionSystem {
                 const collisionThreshold = playerCol.radius + projCol.radius;
                 
                 // 🔍 REQUESTED DEBUG: Log distance and radius details
-                console.log(
-                    "[DEBUG DISTANCE]",
-                    {
-                        distance: distance,
-                        projectileRadius: projCol.radius,
-                        playerRadius: playerCol.radius,
-                        sum: projCol.radius + playerCol.radius
-                    }
-                );
+                if (COLLISION_DEBUG) {
+                    console.log(
+                        "[DEBUG DISTANCE]",
+                        {
+                            distance: distance,
+                            projectileRadius: projCol.radius,
+                            playerRadius: playerCol.radius,
+                            sum: projCol.radius + playerCol.radius
+                        }
+                    );
+                }
                 
-                console.log(`[DEBUG COLLISION] Distance check:`, {
-                    distance: distance.toFixed(1),
-                    threshold: collisionThreshold.toFixed(1),
-                    willCollide: distance <= collisionThreshold
-                });
+                if (COLLISION_DEBUG) {
+                    console.log(`[DEBUG COLLISION] Distance check:`, {
+                        distance: distance.toFixed(1),
+                        threshold: collisionThreshold.toFixed(1),
+                        willCollide: distance <= collisionThreshold
+                    });
+                }
                 
                 // FIX: Check hit cooldown for this projectile
                 const sourceId = `projectile_${projectile.id}`;
                 if (this.hitCooldowns.has(sourceId)) {
-                    console.log(`[DEBUG COLLISION] ❌ Projectile ${projectile.id} on cooldown, skipping`);
+                    if (COLLISION_DEBUG) {
+                        console.log(`[DEBUG COLLISION] ❌ Projectile ${projectile.id} on cooldown, skipping`);
+                    }
                     continue; // Still on cooldown
                 }
 
@@ -348,8 +377,10 @@ class CollisionSystem {
                     playerPos.x, playerPos.y, playerCol.radius,
                     projPos.x, projPos.y, projCol.radius
                 )) {
-                    console.log(`[DEBUG COLLISION] ✅ COLLISION DETECTED! Projectile ${projectile.id} hit player ${player.id}`);
-                    console.log(`[DEBUG COLLISION] ✅ COLLISION DETECTED! Projectile ${projectile.id} hit player ${player.id}`);
+                    if (COLLISION_DEBUG) {
+                        console.log(`[DEBUG COLLISION] ✅ COLLISION DETECTED! Projectile ${projectile.id} hit player ${player.id}`);
+                        console.log(`[DEBUG COLLISION] ✅ COLLISION DETECTED! Projectile ${projectile.id} hit player ${player.id}`);
+                    }
                     
                     // Check hit cooldown to prevent instant melt from tick collisions
                     const now = performance.now();
@@ -360,20 +391,26 @@ class CollisionSystem {
                     const lastHitTime = this.hitCooldowns.get(cooldownKey) || 0;
                     const timeSinceLastHit = now - lastHitTime;
                     
-                    console.log(`[DEBUG COLLISION] Hit cooldown check:`, {
-                        cooldownKey,
-                        timeSinceLastHit: timeSinceLastHit.toFixed(0),
-                        cooldownThreshold: HIT_COOLDOWN_MS,
-                        willDamage: timeSinceLastHit >= HIT_COOLDOWN_MS
-                    });
+                    if (COLLISION_DEBUG) {
+                        console.log(`[DEBUG COLLISION] Hit cooldown check:`, {
+                            cooldownKey,
+                            timeSinceLastHit: timeSinceLastHit.toFixed(0),
+                            cooldownThreshold: HIT_COOLDOWN_MS,
+                            willDamage: timeSinceLastHit >= HIT_COOLDOWN_MS
+                        });
+                    }
                     
                     if (timeSinceLastHit < HIT_COOLDOWN_MS) {
                         // Still in cooldown, ignore this hit
-                        console.log(`[DEBUG COLLISION] ❌ Hit cooldown active, ignoring damage`);
+                        if (COLLISION_DEBUG) {
+                            console.log(`[DEBUG COLLISION] ❌ Hit cooldown active, ignoring damage`);
+                        }
                         logger.debug('Collision', `Hit cooldown active (${timeSinceLastHit.toFixed(0)}ms < ${HIT_COOLDOWN_MS}ms) - ignoring damage`);
                     } else {
                         // Cooldown expired or first hit, deal damage
-                        console.log(`[DEBUG COLLISION] ✅ Calling damagePlayer() with damage: ${projComp.damage}, type: ${damageType}`);
+                        if (COLLISION_DEBUG) {
+                            console.log(`[DEBUG COLLISION] ✅ Calling damagePlayer() with damage: ${projComp.damage}, type: ${damageType}`);
+                        }
                         this.damagePlayer(player, projComp.damage, damageType);
                         
                         // Update cooldown timestamp
@@ -470,22 +507,26 @@ class CollisionSystem {
     }
 
     damagePlayer(player, damage, damageType = 'kinetic') {
-        console.log(`[DEBUG DAMAGE] damagePlayer() called:`, {
-            playerId: player?.id,
-            damage,
-            damageType
-        });
+        if (COLLISION_DEBUG) {
+            console.log(`[DEBUG DAMAGE] damagePlayer() called:`, {
+                playerId: player?.id,
+                damage,
+                damageType
+            });
+        }
         
         const playerComp = player.getComponent('player');
         const defense = player.getComponent('defense');
         const health = player.getComponent('health');
         
-        console.log(`[DEBUG DAMAGE] Player components:`, {
-            hasPlayerComp: !!playerComp,
-            hasDefense: !!defense,
-            hasHealth: !!health,
-            defenseSystemExists: !!(this.world && this.world.defenseSystem)
-        });
+        if (COLLISION_DEBUG) {
+            console.log(`[DEBUG DAMAGE] Player components:`, {
+                hasPlayerComp: !!playerComp,
+                hasDefense: !!defense,
+                hasHealth: !!health,
+                defenseSystemExists: !!(this.world && this.world.defenseSystem)
+            });
+        }
         
         if (!playerComp) {
             console.error('[CollisionSystem] damagePlayer: Missing player component');
@@ -503,11 +544,15 @@ class CollisionSystem {
         // Apply damage through DefenseSystem (the only authority for defense modifications)
         // Use DamagePacket for proper structure
         if (defense && this.world && this.world.defenseSystem) {
-            console.log(`[DEBUG DAMAGE] Calling DefenseSystem.applyDamage()...`);
+            if (COLLISION_DEBUG) {
+                console.log(`[DEBUG DAMAGE] Calling DefenseSystem.applyDamage()...`);
+            }
             const damagePacket = DamagePacket.simple(damage, damageType);
             const result = this.world.defenseSystem.applyDamage(player, damagePacket);
             
-            console.log(`[DEBUG DAMAGE] DefenseSystem.applyDamage() result:`, result);
+            if (COLLISION_DEBUG) {
+                console.log(`[DEBUG DAMAGE] DefenseSystem.applyDamage() result:`, result);
+            }
             
             // Validate result
             if (!result || typeof result.dealt !== 'number') {

@@ -318,20 +318,29 @@ class RenderSystem {
         let layerCount = 0;
 
         if (defense.shield.current > 0) {
-            const base = defense.shield.baseResistances[damageType] || 0;
-            const bonus = defense.shield.bonusResistances && defense.shield.bonusResistances[damageType] || 0;
+            const layerData = defense.shield;
+            const baseRes = layerData.baseResistances || layerData.resistances || {};
+            const bonusRes = layerData.bonusResistances || {};
+            const base = baseRes[damageType] || 0;
+            const bonus = bonusRes[damageType] || 0;
             totalResist += base + bonus;
             layerCount++;
         }
         if (defense.armor.current > 0) {
-            const base = defense.armor.baseResistances[damageType] || 0;
-            const bonus = defense.armor.bonusResistances && defense.armor.bonusResistances[damageType] || 0;
+            const layerData = defense.armor;
+            const baseRes = layerData.baseResistances || layerData.resistances || {};
+            const bonusRes = layerData.bonusResistances || {};
+            const base = baseRes[damageType] || 0;
+            const bonus = bonusRes[damageType] || 0;
             totalResist += base + bonus;
             layerCount++;
         }
         if (defense.structure.current > 0) {
-            const base = defense.structure.baseResistances[damageType] || 0;
-            const bonus = defense.structure.bonusResistances && defense.structure.bonusResistances[damageType] || 0;
+            const layerData = defense.structure;
+            const baseRes = layerData.baseResistances || layerData.resistances || {};
+            const bonusRes = layerData.bonusResistances || {};
+            const base = baseRes[damageType] || 0;
+            const bonus = bonusRes[damageType] || 0;
             totalResist += base + bonus;
             layerCount++;
         }
