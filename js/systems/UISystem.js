@@ -297,7 +297,8 @@ class UISystem {
         this.weaponSlots = document.getElementById('weaponSlots');
         this.controlsHelp = document.getElementById('controlsHelp');
         
-        // Defense layer elements
+        // Defense layer elements - 3-layer system (Shield → Armor → Structure)
+        // This is the authoritative defense display for the player
         this.defenseLayers = document.getElementById('defenseLayers');
         this.shieldBar = document.getElementById('shieldBar');
         this.shieldFill = document.getElementById('shieldFill');
@@ -308,11 +309,6 @@ class UISystem {
         this.structureBar = document.getElementById('structureBar');
         this.structureFill = document.getElementById('structureFill');
         this.structureValue = document.getElementById('structureValue');
-        
-        // Legacy health elements (fallback)
-        this.legacyHealth = document.getElementById('legacyHealth');
-        this.hpDisplay = document.getElementById('hpDisplay');
-        this.healthFill = document.getElementById('healthFill');
         
         // Heat/Overheat elements
         this.heatBar = document.getElementById('heatBar');
@@ -548,53 +544,46 @@ class UISystem {
         const heat = player.getComponent('heat');
         
         if (defense) {
-            // Show defense system (Shield/Armor/Structure)
-            if (this.defenseLayers) this.defenseLayers.style.display = 'block';
-            if (this.legacyHealth) this.legacyHealth.style.display = 'none';
+            // === 3-LAYER DEFENSE SYSTEM ===
+            // Player uses a unified 3-layer defense model:
+            // 1. Shield (front line, regenerates)
+            // 2. Armor (middle layer, damage reduction)
+            // 3. Structure (final layer, if depleted = death)
+            // 
+            // All damage flows: Shield → Armor → Structure
+            // Each layer has its own resistances by damage type
             
-            // Update shield
+            // Show defense system display
+            if (this.defenseLayers) this.defenseLayers.style.display = 'block';
+            
+            // Update Shield layer (regenerates after delay)
             if (this.shieldFill && this.shieldValue) {
                 const shieldPercent = (defense.shield.current / defense.shield.max) * 100;
                 this.shieldFill.style.width = `${Math.max(0, shieldPercent)}%`;
                 this.shieldValue.textContent = `${Math.ceil(defense.shield.current)}/${defense.shield.max}`;
             }
             
-            // Update armor
+            // Update Armor layer (provides damage reduction)
             if (this.armorFill && this.armorValue) {
                 const armorPercent = (defense.armor.current / defense.armor.max) * 100;
                 this.armorFill.style.width = `${Math.max(0, armorPercent)}%`;
                 this.armorValue.textContent = `${Math.ceil(defense.armor.current)}/${defense.armor.max}`;
             }
             
-            // Update structure
+            // Update Structure layer (final defense, if depleted = game over)
             if (this.structureFill && this.structureValue) {
                 const structurePercent = (defense.structure.current / defense.structure.max) * 100;
                 this.structureFill.style.width = `${Math.max(0, structurePercent)}%`;
                 this.structureValue.textContent = `${Math.ceil(defense.structure.current)}/${defense.structure.max}`;
             }
         } else {
-            // No defense component - hide UI
+            // No defense component - hide defense UI
             if (this.defenseLayers) this.defenseLayers.style.display = 'none';
-            if (this.legacyHealth) this.legacyHealth.style.display = 'none';
         }
         
-        // Remove old shield code that's now integrated
-        /*
-        // Update shield
-        const shield = player.getComponent('shield');
-        if (shield && shield.max > 0) {
-            this.shieldBar.style.display = 'block';
-            this.shieldDisplay.style.display = 'block';
-            this.shieldValue.textContent = `${Math.ceil(shield.current)}/${shield.max}`;
-            const shieldPercent = (shield.current / shield.max) * 100;
-            this.shieldFill.style.width = `${Math.max(0, shieldPercent)}%`;
-        } else {
-            this.shieldBar.style.display = 'none';
-            this.shieldDisplay.style.display = 'none';
-        }
-        */
-        
-        // Update heat/overheat gauge
+        // === HEAT SYSTEM ===
+        // Heat bar displays current heat from HeatSystem component
+        // Connected to actual heat.current value from entity's heat component
         if (this.heatBar && this.heatFill && this.heatDisplay) {
             if (heat && heat.max > 0) {
                 this.heatBar.style.display = 'block';
