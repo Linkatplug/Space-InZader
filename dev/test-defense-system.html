@@ -553,6 +553,7 @@
     <!-- Load Required Scripts -->
     <script src="../js/utils/Logger.js"></script>
     <script src="../js/core/ECS.js"></script>
+    <script src="../js/core/stats/ShipStats.js"></script>
     <script src="../js/data/DefenseData.js"></script>
     <script src="../js/data/ShipData.js"></script>
     <script src="../js/data/EnemyProfiles.js"></script>
@@ -560,8 +561,8 @@
 
     <!-- Main Test Script -->
     <script>
-        // Disable console spam - create a minimal logger
-        const logger = {
+        // Disable console spam - override the logger
+        window.logger = {
             debug: () => {},
             info: () => {},
             warn: () => {},
@@ -642,7 +643,7 @@
             enemy.statsDirty = false;
 
             // Create defense component using EnemyProfiles
-            const profileId = 'FIGHTER';
+            const profileId = 'SCOUT_DRONE';
             if (window.EnemyProfiles && window.EnemyProfiles.PROFILES[profileId]) {
                 const profile = window.EnemyProfiles.PROFILES[profileId];
                 const defense = window.EnemyProfiles.createEnemyDefense(profile);
