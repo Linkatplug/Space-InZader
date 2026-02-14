@@ -119,7 +119,7 @@ class PickupSystem {
     collectPickup(pickup, player) {
         const pickupComp = pickup.getComponent('pickup');
         const playerComp = player.getComponent('player');
-        const playerHealth = player.getComponent('health');
+        const playerDefense = player.getComponent('defense');
         const pickupPos = pickup.getComponent('position');
         
         if (!pickupComp || !playerComp) return;
@@ -129,7 +129,8 @@ class PickupSystem {
                 this.collectXP(player, pickupComp.value);
                 break;
             case 'health':
-                this.collectHealth(playerHealth, pickupComp.value);
+                // Convert health pickups to structure healing for player
+                this.collectStructure(player, playerDefense, pickupComp.value);
                 break;
             case 'noyaux':
                 this.collectNoyaux(pickupComp.value);
@@ -196,14 +197,24 @@ class PickupSystem {
     }
 
     /**
-     * Collect health pickup
-     * @param {Object} health - Health component
+     * Collect structure healing (replaces old health pickup for player)
+     * @param {Entity} player - Player entity
+     * @param {Object} defense - Defense component
      * @param {number} healAmount - Amount to heal
      */
-    collectHealth(health, healAmount) {
-        if (!health) return;
+    collectStructure(player, defense, healAmount) {
+        if (!defense) return;
         
-        health.current = Math.min(health.current + healAmount, health.max);
+        // Heal structure layer using DefenseSystem
+        if (this.world.defenseSystem) {
+            this.world.defenseSystem.healLayer(player, 'structure', healAmount);
+        } else {
+            // Fallback if defenseSystem not available
+            defense.structure.current = Math.min(
+                defense.structure.current + healAmount,
+                defense.structure.max
+            );
+        }
     }
 
     /**
@@ -284,12 +295,6 @@ class PickupSystem {
             this.world.defenseSystem.healLayer(player, 'armor', healAmount.armor);
             this.world.defenseSystem.healLayer(player, 'structure', healAmount.structure);
             logger.debug('PickupSystem', 'Healed 20% of all defense layers on level up');
-        }
-        
-        // Legacy health support
-        const health = player.getComponent('health');
-        if (health) {
-            health.current = Math.min(health.current + health.max * 0.2, health.max);
         }
         
         // Emit LEVEL_UP event to pause game and show UI

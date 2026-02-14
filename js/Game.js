@@ -1297,13 +1297,13 @@ class Game {
         this.systems.particle.update(deltaTime);
         this.screenEffects.update(deltaTime);
         
-        // Update invulnerability
+        // Update invulnerability (now tracked in defense component)
         if (this.player) {
-            const health = this.player.getComponent('health');
-            if (health && health.invulnerable) {
-                health.invulnerableTime -= deltaTime;
-                if (health.invulnerableTime <= 0) {
-                    health.invulnerable = false;
+            const defense = this.player.getComponent('defense');
+            if (defense && defense.invulnerable) {
+                defense.invulnerableTime -= deltaTime;
+                if (defense.invulnerableTime <= 0) {
+                    defense.invulnerable = false;
                 }
             }
             
@@ -1321,14 +1321,8 @@ class Game {
                     }
                 }
             }
-
-            // Check for game over
-            if (health && health.current <= 0) {
-                this.gameOver();
-            }
             
             // Check for game over with defense system
-            const defense = this.player.getComponent('defense');
             if (defense && defense.structure.current <= 0) {
                 this.gameOver();
             }

@@ -530,7 +530,7 @@ class UISystem {
                 const speed = stats.speed ?? 1;
                 const armor = stats.armor ?? 0;
                 const lifesteal = stats.lifesteal ?? 0;
-                const healthRegen = stats.healthRegen ?? 0;
+                const shieldRegen = stats.shieldRegen ?? 0;
                 const critChance = stats.critChance ?? 0;
                 
                 this.statDamage.textContent = `${Math.round(damageMultiplier * 100)}%`;
@@ -538,18 +538,17 @@ class UISystem {
                 this.statSpeed.textContent = `${Math.round(speed)}`;
                 this.statArmor.textContent = `${Math.round(armor)}`;
                 this.statLifesteal.textContent = `${Math.round(lifesteal * 100)}%`;
-                this.statRegen.textContent = `${healthRegen.toFixed(1)}/s`;
+                this.statRegen.textContent = `${shieldRegen.toFixed(1)}/s`;
                 this.statCrit.textContent = `${Math.round(critChance * 100)}%`;
             }
         }
 
-        // Update defense layers or fallback to legacy health
+        // Update defense layers (player uses 3-layer defense system)
         const defense = player.getComponent('defense');
-        const health = player.getComponent('health');
         const heat = player.getComponent('heat');
         
         if (defense) {
-            // Show new defense system (Shield/Armor/Structure)
+            // Show defense system (Shield/Armor/Structure)
             if (this.defenseLayers) this.defenseLayers.style.display = 'block';
             if (this.legacyHealth) this.legacyHealth.style.display = 'none';
             
@@ -573,14 +572,10 @@ class UISystem {
                 this.structureFill.style.width = `${Math.max(0, structurePercent)}%`;
                 this.structureValue.textContent = `${Math.ceil(defense.structure.current)}/${defense.structure.max}`;
             }
-        } else if (health) {
-            // Fallback to legacy health system
+        } else {
+            // No defense component - hide UI
             if (this.defenseLayers) this.defenseLayers.style.display = 'none';
-            if (this.legacyHealth) this.legacyHealth.style.display = 'block';
-            
-            this.hpDisplay.textContent = `${Math.ceil(health.current)}/${health.max}`;
-            const healthPercent = (health.current / health.max) * 100;
-            this.healthFill.style.width = `${Math.max(0, healthPercent)}%`;
+            if (this.legacyHealth) this.legacyHealth.style.display = 'none';
         }
         
         // Remove old shield code that's now integrated
@@ -643,7 +638,7 @@ class UISystem {
         this.updateMagneticStormStatus();
         
         // Update stats overlay (deltas)
-        this.updateStatsOverlay(playerComp, health);
+        this.updateStatsOverlay(playerComp);
     }
     
     /**
@@ -2021,9 +2016,8 @@ class UISystem {
     /**
      * Update stats overlay with delta calculations
      * @param {Object} playerComp - Player component with stats and baseStats
-     * @param {Object} health - Health component
      */
-    updateStatsOverlay(playerComp, health) {
+    updateStatsOverlay(playerComp) {
         if (!this.statsOverlayPanel || !this.statsOverlayVisible || !playerComp) return;
         
         const stats = playerComp.stats || {};
@@ -2071,13 +2065,6 @@ class UISystem {
                 multiplier: 1
             },
             {
-                label: 'Max HP',
-                current: health ? health.max : 100,
-                base: getBaseStat('maxHealth', 100),
-                format: 'number',
-                multiplier: 1
-            },
-            {
                 label: 'Armor',
                 current: getStat('armor', 0),
                 base: getBaseStat('armor', 0),
@@ -2106,9 +2093,9 @@ class UISystem {
                 multiplier: 100
             },
             {
-                label: 'Health Regen',
-                current: getStat('healthRegen', 0),
-                base: getBaseStat('healthRegen', 0),
+                label: 'Shield Regen',
+                current: getStat('shieldRegen', 0),
+                base: getBaseStat('shieldRegen', 0),
                 format: 'decimal',
                 suffix: '/s',
                 multiplier: 1
