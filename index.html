@@ -163,7 +163,7 @@
             position: absolute;
             color: #00ffff;
             text-shadow: 0 0 5px #000;
-            font-size: 16px;
+            font-size: 32px;
             pointer-events: none;
             display: none;
         }
@@ -199,42 +199,42 @@
         
         .weapon-status {
             background: rgba(10, 10, 26, 0.8);
-            border: 1px solid #00ffff;
-            padding: 8px;
-            margin-bottom: 8px;
-            border-radius: 3px;
-            font-size: 13px;
+            border: 2px solid #00ffff;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-radius: 6px;
+            font-size: 26px;
         }
         
         .weapon-status-title {
             color: #ffaa00;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
         }
         
         .weapon-item {
-            margin: 2px 0;
+            margin: 4px 0;
             color: #00ffff;
         }
         
         .passive-status {
             background: rgba(10, 10, 26, 0.8);
-            border: 1px solid #aa44ff;
-            padding: 8px;
-            border-radius: 3px;
-            font-size: 12px;
-            max-height: 200px;
+            border: 2px solid #aa44ff;
+            padding: 16px;
+            border-radius: 6px;
+            font-size: 24px;
+            max-height: 400px;
             overflow-y: auto;
         }
         
         .passive-status-title {
             color: #aa44ff;
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
         }
         
         .passive-item {
-            margin: 2px 0;
+            margin: 4px 0;
             color: #ccccff;
         }
         
@@ -244,15 +244,15 @@
 
         /* Defense Layer Bars */
         .defense-bar {
-            width: 200px;
-            height: 15px;
+            width: 400px;
+            height: 30px;
             position: relative;
-            margin-top: 3px;
+            margin-top: 6px;
         }
         
         .shield-bar {
             background: rgba(0, 255, 255, 0.2);
-            border: 2px solid #00ffff;
+            border: 4px solid #00ffff;
         }
         
         .shield-fill {
@@ -264,7 +264,7 @@
         
         .armor-bar {
             background: rgba(139, 69, 19, 0.3);
-            border: 2px solid #8B4513;
+            border: 4px solid #8B4513;
         }
         
         .armor-fill {
@@ -276,7 +276,7 @@
         
         .structure-bar {
             background: rgba(255, 0, 0, 0.3);
-            border: 2px solid #ff0000;
+            border: 4px solid #ff0000;
         }
         
         .structure-fill {
@@ -287,8 +287,8 @@
         }
         
         .xp-bar {
-            width: 300px;
-            height: 15px;
+            width: 600px;
+            height: 30px;
             background: rgba(0, 255, 0, 0.3);
             border: 2px solid #00ff00;
             position: relative;
@@ -1369,17 +1369,17 @@
                     <div class="defense-bar shield-bar" id="shieldBar">
                         <div class="shield-fill" id="shieldFill"></div>
                     </div>
-                    <div style="margin-top: 2px; font-size: 11px;">🛡️ BOUCLIER: <span id="shieldValue">0/0</span></div>
+                    <div style="margin-top: 4px; font-size: 22px;">🛡️ BOUCLIER: <span id="shieldValue">0/0</span></div>
                     
                     <div class="defense-bar armor-bar" id="armorBar">
                         <div class="armor-fill" id="armorFill"></div>
                     </div>
-                    <div style="margin-top: 2px; font-size: 11px;">🛡️ ARMURE: <span id="armorValue">0/0</span></div>
+                    <div style="margin-top: 4px; font-size: 22px;">🛡️ ARMURE: <span id="armorValue">0/0</span></div>
                     
                     <div class="defense-bar structure-bar" id="structureBar">
                         <div class="structure-fill" id="structureFill"></div>
                     </div>
-                    <div style="margin-top: 2px; font-size: 11px;">⚙️ STRUCTURE: <span id="structureValue">0/0</span></div>
+                    <div style="margin-top: 4px; font-size: 22px;">⚙️ STRUCTURE: <span id="structureValue">0/0</span></div>
                 </div>
             </div>
             <div class="hud hud-bottom-center" id="hudBottomCenter">
