@@ -599,4 +599,135 @@ class DefenseSystem {
             }
         }
     }
+
+    /**
+     * Add a resistance modifier to a specific layer
+     * PUBLIC API: Use this to add temporary or permanent resistance bonuses
+     * @param {Entity} entity - Entity to modify
+     * @param {string} layerName - Layer name (shield, armor, structure)
+     * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
+     * @param {number} value - Resistance value to add (can be negative for debuffs)
+     * @returns {boolean} True if modifier was added, false if validation failed
+     */
+    addResistanceModifier(entity, layerName, damageType, value) {
+        // Validate entity has defense component
+        const defense = entity.getComponent('defense');
+        if (!defense) {
+            console.warn('[DefenseSystem] addResistanceModifier: Entity has no defense component');
+            return false;
+        }
+
+        // Validate layer exists
+        const validLayers = ['shield', 'armor', 'structure'];
+        if (!validLayers.includes(layerName)) {
+            console.warn(`[DefenseSystem] addResistanceModifier: Invalid layer name "${layerName}". Must be one of: ${validLayers.join(', ')}`);
+            return false;
+        }
+
+        const layer = defense[layerName];
+        if (!layer) {
+            console.warn(`[DefenseSystem] addResistanceModifier: Layer "${layerName}" not found on entity`);
+            return false;
+        }
+
+        // Initialize bonusResistances if it doesn't exist
+        if (!layer.bonusResistances) {
+            layer.bonusResistances = {};
+        }
+
+        // Get current bonus (default to 0)
+        const currentBonus = layer.bonusResistances[damageType] || 0;
+
+        // Add the new value to existing bonus
+        layer.bonusResistances[damageType] = currentBonus + value;
+
+        return true;
+    }
+
+    /**
+     * Remove a resistance modifier from a specific layer
+     * PUBLIC API: Use this to remove temporary resistance bonuses/debuffs
+     * Automatically cleans up the key if the value reaches exactly 0
+     * @param {Entity} entity - Entity to modify
+     * @param {string} layerName - Layer name (shield, armor, structure)
+     * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
+     * @param {number} value - Resistance value to remove (subtracts from current)
+     * @returns {boolean} True if modifier was removed, false if validation failed
+     */
+    removeResistanceModifier(entity, layerName, damageType, value) {
+        // Validate entity has defense component
+        const defense = entity.getComponent('defense');
+        if (!defense) {
+            console.warn('[DefenseSystem] removeResistanceModifier: Entity has no defense component');
+            return false;
+        }
+
+        // Validate layer exists
+        const validLayers = ['shield', 'armor', 'structure'];
+        if (!validLayers.includes(layerName)) {
+            console.warn(`[DefenseSystem] removeResistanceModifier: Invalid layer name "${layerName}". Must be one of: ${validLayers.join(', ')}`);
+            return false;
+        }
+
+        const layer = defense[layerName];
+        if (!layer) {
+            console.warn(`[DefenseSystem] removeResistanceModifier: Layer "${layerName}" not found on entity`);
+            return false;
+        }
+
+        // Initialize bonusResistances if it doesn't exist
+        if (!layer.bonusResistances) {
+            layer.bonusResistances = {};
+        }
+
+        // Get current bonus (default to 0)
+        const currentBonus = layer.bonusResistances[damageType] || 0;
+
+        // Subtract the value
+        const newBonus = currentBonus - value;
+
+        // If the new bonus is very close to 0 (within floating point precision), remove the key
+        // Using epsilon of 1e-10 to handle floating point precision issues
+        if (Math.abs(newBonus) < 1e-10) {
+            delete layer.bonusResistances[damageType];
+        } else {
+            layer.bonusResistances[damageType] = newBonus;
+        }
+
+        return true;
+    }
+
+    /**
+     * Clear all resistance modifiers from a specific layer
+     * PUBLIC API: Use this to reset all temporary resistance bonuses/debuffs on a layer
+     * @param {Entity} entity - Entity to modify
+     * @param {string} layerName - Layer name (shield, armor, structure)
+     * @returns {boolean} True if modifiers were cleared, false if validation failed
+     */
+    clearResistanceModifiers(entity, layerName) {
+        // Validate entity has defense component
+        const defense = entity.getComponent('defense');
+        if (!defense) {
+            console.warn('[DefenseSystem] clearResistanceModifiers: Entity has no defense component');
+            return false;
+        }
+
+        // Validate layer exists
+        const validLayers = ['shield', 'armor', 'structure'];
+        if (!validLayers.includes(layerName)) {
+            console.warn(`[DefenseSystem] clearResistanceModifiers: Invalid layer name "${layerName}". Must be one of: ${validLayers.join(', ')}`);
+            return false;
+        }
+
+        const layer = defense[layerName];
+        if (!layer) {
+            console.warn(`[DefenseSystem] clearResistanceModifiers: Layer "${layerName}" not found on entity`);
+            return false;
+        }
+
+        // Clear all bonus resistances by resetting to empty object
+        layer.bonusResistances = {};
+
+        return true;
+    }
 }
