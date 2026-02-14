@@ -489,16 +489,13 @@
             };
             
             // Disable audio initialization
-            const originalAudioManager = game.audioManager;
             game.audioManager = {
+                init: () => {},
                 playSound: () => {},
                 playMusic: () => {},
                 stopMusic: () => {},
-                setMusicVolume: () => {},
-                setSFXVolume: () => {},
-                playWaveStart: () => {},
-                playLevelUp: () => {},
-                playGameOver: () => {},
+                stopAll: () => {},
+                setVolume: () => {},
                 startBackgroundMusic: () => {},
                 stopBackgroundMusic: () => {}
             };
@@ -581,43 +578,7 @@
                 console.log('[DevSandbox] Game started in dev mode');
                 console.log('[DevSandbox] Player:', game.player);
                 console.log('[DevSandbox] Systems:', game.systems);
-                
-                // Setup damage tracking
-                setupDamageTracking();
             }, 100);
-        }
-
-        // Setup damage tracking wrapper
-        function setupDamageTracking() {
-            if (!game || !game.systems.defense) return;
-            
-            const originalApplyDamage = game.systems.defense.applyDamage.bind(game.systems.defense);
-            
-            game.systems.defense.applyDamage = function(entity, damagePacket) {
-                // Track player damage
-                if (entity === game.player) {
-                    const amount = damagePacket.amount || damagePacket.damage || 0;
-                    statsTracking.damageTaken += amount * modifiers.enemyDamage;
-                }
-                
-                // Apply enemy damage modifier
-                if (entity.type === 'enemy') {
-                    const modifiedPacket = {...damagePacket};
-                    if (modifiedPacket.amount) modifiedPacket.amount *= modifiers.playerDamage;
-                    if (modifiedPacket.damage) modifiedPacket.damage *= modifiers.playerDamage;
-                    return originalApplyDamage(entity, modifiedPacket);
-                }
-                
-                // Apply player damage modifier
-                if (entity === game.player) {
-                    const modifiedPacket = {...damagePacket};
-                    if (modifiedPacket.amount) modifiedPacket.amount *= modifiers.enemyDamage;
-                    if (modifiedPacket.damage) modifiedPacket.damage *= modifiers.enemyDamage;
-                    return originalApplyDamage(entity, modifiedPacket);
-                }
-                
-                return originalApplyDamage(entity, damagePacket);
-            };
         }
 
         // Toggle system on/off
