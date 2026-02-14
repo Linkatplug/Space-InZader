@@ -172,53 +172,6 @@
             top: 10px;
             left: 10px;
         }
-        
-        .hud-top-right {
-            top: 10px;
-            right: 10px;
-            max-width: 250px;
-        }
-        
-        .stats-display {
-            background: rgba(10, 10, 26, 0.85);
-            border: 2px solid #00ffff;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            line-height: 1.6;
-        }
-        
-        .stats-display-title {
-            color: #ffaa00;
-            font-weight: bold;
-            margin-bottom: 8px;
-            font-size: 14px;
-            text-align: center;
-        }
-        
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 3px 0;
-            color: #00ffff;
-        }
-        
-        .stat-label {
-            color: #aaa;
-        }
-        
-        .stat-value {
-            color: #00ffff;
-            font-weight: bold;
-        }
-        
-        .stat-value.negative {
-            color: #ff4444;
-        }
-        
-        .stat-value.positive {
-            color: #44ff44;
-        }
 
         .hud-top-center {
             top: 10px;
@@ -1397,39 +1350,6 @@
             <!-- In-Game HUD -->
             <div class="hud hud-top-left" id="hudTopLeft">
                 <div>Temps: <span id="timeDisplay">0:00</span></div>
-            </div>
-            <div class="hud hud-top-right" id="hudTopRight">
-                <div class="stats-display" id="statsDisplay">
-                    <div class="stats-display-title">📊 STATS</div>
-                    <div class="stat-row">
-                        <span class="stat-label">Dégâts:</span>
-                        <span class="stat-value" id="statDamage">100%</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Cadence:</span>
-                        <span class="stat-value" id="statFireRate">100%</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Vitesse:</span>
-                        <span class="stat-value" id="statSpeed">220</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Armure:</span>
-                        <span class="stat-value" id="statArmor">0</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Vol de vie:</span>
-                        <span class="stat-value" id="statLifesteal">0%</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Régén:</span>
-                        <span class="stat-value" id="statRegen">0.0/s</span>
-                    </div>
-                    <div class="stat-row">
-                        <span class="stat-label">Crit:</span>
-                        <span class="stat-value" id="statCrit">5%</span>
-                    </div>
-                </div>
             </div>
             <div class="hud hud-top-center" id="hudTopCenter">
                 <div>
