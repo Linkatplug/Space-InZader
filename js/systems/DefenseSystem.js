@@ -2,6 +2,11 @@
  * @file DefenseSystem.js
  * @description Centralized damage application system for all entities
  * This is the ONLY system allowed to apply damage to entities
+ * 
+ * Dependencies:
+ * - BOSS_SIZE_THRESHOLD constant (from constants.js)
+ * - MathUtils (from utils/Math.js)
+ * - Logger (from utils/Logger.js)
  */
 
 class DefenseSystem {
