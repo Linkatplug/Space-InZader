@@ -287,6 +287,51 @@
             console.log('[Combat Sandbox] World:', game.world);
             console.log('[Combat Sandbox] Systems:', game.systems);
 
+            // Add position validation guard to prevent NaN calculations
+            if (game.systems.combat) {
+                console.log('[Combat Sandbox] Adding position validation guard to CombatSystem');
+                
+                // Helper function to validate entity position
+                function hasValidPosition(entity) {
+                    if (!entity) return false;
+                    const pos = entity.getComponent('position');
+                    if (!pos) return false;
+                    if (typeof pos.x !== 'number' || typeof pos.y !== 'number') return false;
+                    if (isNaN(pos.x) || isNaN(pos.y)) return false;
+                    return true;
+                }
+                
+                // Save original update method
+                const originalCombatUpdate = game.systems.combat.update.bind(game.systems.combat);
+                
+                // Override with validation wrapper
+                game.systems.combat.update = function(deltaTime) {
+                    // Validate player position
+                    const players = game.world.getEntitiesByType('player');
+                    if (players.length > 0) {
+                        const player = players[0];
+                        if (!hasValidPosition(player)) {
+                            console.warn('[Sandbox] Invalid position detected on player entity', player.id);
+                            return; // Skip combat update this frame
+                        }
+                    }
+                    
+                    // Validate all enemy positions
+                    const enemies = game.world.getEntitiesByType('enemy');
+                    for (const enemy of enemies) {
+                        if (!hasValidPosition(enemy)) {
+                            console.warn('[Sandbox] Invalid position detected on enemy entity', enemy.id);
+                            // Remove this enemy to prevent future errors
+                            game.world.removeEntity(enemy.id);
+                            continue;
+                        }
+                    }
+                    
+                    // All positions valid, call original update
+                    originalCombatUpdate(deltaTime);
+                };
+            }
+
             // Start stats update loop
             setInterval(updateStats, 100);
         }
