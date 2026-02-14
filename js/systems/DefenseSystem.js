@@ -151,9 +151,10 @@ class DefenseSystem {
         // Compute total resistance (base + bonus)
         const totalResistance = baseResistance + bonusResistance;
         
-        // Clamp total resistance between -1 and RESISTANCE_CAP
+        // Clamp total resistance between RESISTANCE_MIN and RESISTANCE_CAP
         const resistCap = typeof RESISTANCE_CAP !== 'undefined' ? RESISTANCE_CAP : 0.75;
-        const clampedResistance = Math.max(-1, Math.min(resistCap, totalResistance));
+        const resistMin = typeof RESISTANCE_MIN !== 'undefined' ? RESISTANCE_MIN : -1.0;
+        const clampedResistance = Math.max(resistMin, Math.min(resistCap, totalResistance));
         
         // Apply penetration to the total resistance
         const effectiveResistance = Math.max(0, clampedResistance * (1 - layer.penetration));

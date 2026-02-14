@@ -319,19 +319,19 @@ class RenderSystem {
 
         if (defense.shield.current > 0) {
             const base = defense.shield.baseResistances[damageType] || 0;
-            const bonus = (defense.shield.bonusResistances && defense.shield.bonusResistances[damageType]) || 0;
+            const bonus = defense.shield.bonusResistances && defense.shield.bonusResistances[damageType] || 0;
             totalResist += base + bonus;
             layerCount++;
         }
         if (defense.armor.current > 0) {
             const base = defense.armor.baseResistances[damageType] || 0;
-            const bonus = (defense.armor.bonusResistances && defense.armor.bonusResistances[damageType]) || 0;
+            const bonus = defense.armor.bonusResistances && defense.armor.bonusResistances[damageType] || 0;
             totalResist += base + bonus;
             layerCount++;
         }
         if (defense.structure.current > 0) {
             const base = defense.structure.baseResistances[damageType] || 0;
-            const bonus = (defense.structure.bonusResistances && defense.structure.bonusResistances[damageType]) || 0;
+            const bonus = defense.structure.bonusResistances && defense.structure.bonusResistances[damageType] || 0;
             totalResist += base + bonus;
             layerCount++;
         }
