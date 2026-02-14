@@ -237,6 +237,7 @@
             systems.ai = new AISystem(world, canvas);
             systems.combat = new CombatSystem(world, null, null);
             systems.defense = new DefenseSystem(world);
+            world.defenseSystem = systems.defense; // Wire DefenseSystem to world for CollisionSystem
             systems.collision = new CollisionSystem(world, null, null, null);
             systems.spawner = new SpawnerSystem(world, null);
             console.log('[Sandbox] Systems created');
