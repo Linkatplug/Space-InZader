@@ -1109,10 +1109,66 @@ class UISystem {
     renderShipSelection() {
         this.shipSelection.innerHTML = '';
 
-        // Get ships from ShipData
-        const ships = ShipData && ShipData.getAllShips ? ShipData.getAllShips() : this.getDefaultShips();
-        const saveData = window.game?.saveData || {};
-        const progress = saveData.meta || { maxWave: 0, bloodCritCount: 0 };
+        // Get ships from ShipUpgradeData (4 new ships)
+        let ships = [];
+        if (window.ShipUpgradeData && window.ShipUpgradeData.SHIPS) {
+            // Build ships array from ShipUpgradeData.SHIPS
+            const shipKeys = ['ION_FRIGATE', 'BALLISTIC_DESTROYER', 'CATACLYSM_CRUISER', 'TECH_NEXUS'];
+            ships = shipKeys.map(key => {
+                const shipData = window.ShipUpgradeData.SHIPS[key];
+                return {
+                    id: key,
+                    name: shipData.name,
+                    description: shipData.description,
+                    baseStats: shipData.baseStats,
+                    color: shipData.color,
+                    difficulty: shipData.difficulty,
+                    unlocked: shipData.unlocked !== false
+                };
+            });
+            console.log('[Menu] Ships available: ' + shipKeys.join(', '));
+        } else {
+            // Fallback: hardcoded 4 ships if ShipUpgradeData is not available
+            ships = [
+                {
+                    id: 'ION_FRIGATE',
+                    name: 'Aegis Ion Frigate',
+                    description: 'EM damage and shield specialist',
+                    baseStats: { maxHealth: 100, damageMultiplier: 1.0, speed: 220 },
+                    color: '#4488FF',
+                    difficulty: 'easy',
+                    unlocked: true
+                },
+                {
+                    id: 'BALLISTIC_DESTROYER',
+                    name: 'Bulwark Ballistic Destroyer',
+                    description: 'Kinetic damage and armor specialist',
+                    baseStats: { maxHealth: 120, damageMultiplier: 1.1, speed: 200 },
+                    color: '#FFA500',
+                    difficulty: 'easy',
+                    unlocked: true
+                },
+                {
+                    id: 'CATACLYSM_CRUISER',
+                    name: 'Cataclysm Explosive Cruiser',
+                    description: 'Explosive damage and AoE specialist',
+                    baseStats: { maxHealth: 90, damageMultiplier: 1.2, speed: 210 },
+                    color: '#FF4444',
+                    difficulty: 'medium',
+                    unlocked: true
+                },
+                {
+                    id: 'TECH_NEXUS',
+                    name: 'Inferno Tech Nexus',
+                    description: 'Thermal damage and tech specialist',
+                    baseStats: { maxHealth: 95, damageMultiplier: 1.05, speed: 230 },
+                    color: '#FF6600',
+                    difficulty: 'medium',
+                    unlocked: true
+                }
+            ];
+            console.warn('[Menu] ShipUpgradeData not available, using fallback ships');
+        }
 
         ships.forEach(ship => {
             const card = document.createElement('div');
@@ -1120,7 +1176,7 @@ class UISystem {
             card.dataset.shipId = ship.id;
             
             // Check if ship is locked
-            const isLocked = !ship.unlocked && ship.unlockCondition;
+            const isLocked = !ship.unlocked;
             if (isLocked) {
                 card.classList.add('locked');
             }
@@ -1133,18 +1189,9 @@ class UISystem {
                 window.dispatchEvent(new CustomEvent('shipSelected', { 
                     detail: { ship: ship.id } 
                 }));
+                console.log('[Menu] Selected ship: ' + ship.id);
             } else if (this.selectedShipId === ship.id && !isLocked) {
                 card.classList.add('selected');
-            }
-
-            let unlockText = '';
-            if (isLocked) {
-                const cond = ship.unlockCondition;
-                if (cond.type === 'wave') {
-                    unlockText = `<div style="color:#ff4444;font-size:11px;margin-top:8px;">🔒 Reach Wave ${cond.value}</div>`;
-                } else if (cond.type === 'blood_crit_count') {
-                    unlockText = `<div style="color:#ff4444;font-size:11px;margin-top:8px;">🔒 Get ${cond.value} Blood Crits</div>`;
-                }
             }
 
             card.innerHTML = `
@@ -1158,7 +1205,6 @@ class UISystem {
                     <div>SPD: ${ship.baseStats.speed}</div>
                     <div>Difficulty: ${ship.difficulty.toUpperCase()}</div>
                 </div>
-                ${unlockText}
             `;
 
             card.addEventListener('click', () => {
@@ -1167,6 +1213,8 @@ class UISystem {
                 document.querySelectorAll('.ship-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 this.selectedShipId = ship.id;
+                
+                console.log('[Menu] Selected ship: ' + ship.id);
                 
                 // Dispatch ship selected event
                 window.dispatchEvent(new CustomEvent('shipSelected', { 

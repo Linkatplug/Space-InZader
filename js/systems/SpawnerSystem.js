@@ -12,7 +12,9 @@ class SpawnerSystem {
         // Spawning state
         this.spawnBudget = 0;
         this.spawnTimer = 0;
-        this.maxEnemiesOnScreen = 250;
+        
+        // FIX: Set maximum enemies to 40 (was 250)
+        this.maxEnemiesOnScreen = 40;
         
         // Wave tracking
         this.waveNumber = 1;
@@ -203,9 +205,14 @@ class SpawnerSystem {
      * @param {number} gameTime - Current game time
      */
     spawnEnemies(wave, gameTime) {
-        // Check enemy count limit (soft cap)
+        // FIX: Check enemy count limit (hard cap of 40)
         const currentEnemies = this.world.getEntitiesByType('enemy').length;
         if (currentEnemies >= this.maxEnemiesOnScreen) {
+            // Soft log every 5 seconds to avoid spam
+            if (!this.lastCapWarn || gameTime - this.lastCapWarn > 5) {
+                console.log(`[SpawnerSystem] Enemy cap reached: ${currentEnemies}/${this.maxEnemiesOnScreen}`);
+                this.lastCapWarn = gameTime;
+            }
             return;
         }
         

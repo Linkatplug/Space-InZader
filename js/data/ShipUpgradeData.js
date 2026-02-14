@@ -18,9 +18,27 @@
 const SHIP_UPGRADES = {
     // ========== ION FRIGATE (EM/Shield specialist) ==========
     ION_FRIGATE: {
-        id: 'ion_frigate',
+        id: 'ION_FRIGATE',
         name: 'Aegis Ion Frigate',
         description: 'EM damage and shield specialist. Fast shield regeneration.',
+        color: '#4488FF',
+        difficulty: 'easy',
+        startingWeapon: 'impulsion_em',
+        baseStats: {
+            maxHealth: 100,
+            healthRegen: 0.5,
+            damageMultiplier: 1.0,
+            fireRateMultiplier: 1.0,
+            speed: 220,
+            armor: 5,
+            lifesteal: 0.0,
+            critChance: 0.05,
+            critMultiplier: 1.5,
+            magnetRange: 100,
+            dashCooldown: 2.5,
+            luck: 0.0
+        },
+        unlocked: true,
         upgrades: [
             {
                 id: 'EM_OVERCHARGE',
@@ -149,9 +167,27 @@ const SHIP_UPGRADES = {
 
     // ========== BALLISTIC DESTROYER (Kinetic/Armor specialist) ==========
     BALLISTIC_DESTROYER: {
-        id: 'ballistic_destroyer',
+        id: 'BALLISTIC_DESTROYER',
         name: 'Bulwark Ballistic Destroyer',
         description: 'Kinetic damage and armor specialist. Heavy sustained fire.',
+        color: '#FFA500',
+        difficulty: 'easy',
+        startingWeapon: 'mitrailleuse',
+        baseStats: {
+            maxHealth: 120,
+            healthRegen: 0.3,
+            damageMultiplier: 1.1,
+            fireRateMultiplier: 0.9,
+            speed: 200,
+            armor: 10,
+            lifesteal: 0.0,
+            critChance: 0.03,
+            critMultiplier: 1.5,
+            magnetRange: 100,
+            dashCooldown: 3.0,
+            luck: 0.0
+        },
+        unlocked: true,
         upgrades: [
             {
                 id: 'KINETIC_PIERCING',
@@ -293,9 +329,27 @@ const SHIP_UPGRADES = {
 
     // ========== CATACLYSM CRUISER (Explosive/AoE specialist) ==========
     CATACLYSM_CRUISER: {
-        id: 'cataclysm_cruiser',
+        id: 'CATACLYSM_CRUISER',
         name: 'Cataclysm Explosive Cruiser',
         description: 'Explosive damage and AoE specialist. Zone control.',
+        color: '#FF4444',
+        difficulty: 'medium',
+        startingWeapon: 'lance_roquettes',
+        baseStats: {
+            maxHealth: 90,
+            healthRegen: 0.2,
+            damageMultiplier: 1.2,
+            fireRateMultiplier: 0.8,
+            speed: 210,
+            armor: 3,
+            lifesteal: 0.0,
+            critChance: 0.08,
+            critMultiplier: 1.8,
+            magnetRange: 100,
+            dashCooldown: 2.5,
+            luck: 0.0
+        },
+        unlocked: true,
         upgrades: [
             {
                 id: 'WARHEAD_EXPANSION',
@@ -434,9 +488,27 @@ const SHIP_UPGRADES = {
 
     // ========== TECH NEXUS (Thermal/Tech specialist) ==========
     TECH_NEXUS: {
-        id: 'tech_nexus',
+        id: 'TECH_NEXUS',
         name: 'Inferno Tech Nexus',
         description: 'Thermal damage and tech specialist. Heat management and DOT.',
+        color: '#FF6600',
+        difficulty: 'medium',
+        startingWeapon: 'lance_flammes',
+        baseStats: {
+            maxHealth: 95,
+            healthRegen: 0.4,
+            damageMultiplier: 1.05,
+            fireRateMultiplier: 1.1,
+            speed: 230,
+            armor: 2,
+            lifesteal: 0.0,
+            critChance: 0.06,
+            critMultiplier: 1.6,
+            magnetRange: 120,
+            dashCooldown: 2.0,
+            luck: 0.05
+        },
+        unlocked: true,
         upgrades: [
             {
                 id: 'THERMAL_AMPLIFIER',
