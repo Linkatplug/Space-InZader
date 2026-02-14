@@ -196,11 +196,20 @@ class UISystem {
             explosive: '#FF0000'
         };
         
-        // Use canvas screen coordinates directly (data.x, data.y are already screen positions)
+        const canvas = this.gameCanvas;
+        let left = data.x || 0;
+        let top = data.y || 0;
+
+        if (canvas) {
+            const rect = canvas.getBoundingClientRect();
+            left = rect.left + left;
+            top = rect.top + top;
+        }
+
         text.style.cssText = `
             position: fixed;
-            left: ${data.x || 400}px;
-            top: ${data.y || 300}px;
+            left: ${left}px;
+            top: ${top}px;
             color: ${typeColors[data.damageType] || '#FFF'};
             font-size: 20px;
             font-weight: bold;
@@ -283,18 +292,27 @@ class UISystem {
         this.waveDisplay = document.getElementById('waveDisplay');
         this.killsDisplay = document.getElementById('killsDisplay');
         this.scoreDisplay = document.getElementById('scoreDisplay');
-        this.hpDisplay = document.getElementById('hpDisplay');
-        this.healthFill = document.getElementById('healthFill');
         this.levelDisplay = document.getElementById('levelDisplay');
         this.xpFill = document.getElementById('xpFill');
         this.weaponSlots = document.getElementById('weaponSlots');
         this.controlsHelp = document.getElementById('controlsHelp');
         
-        // Shield elements
+        // Defense layer elements
+        this.defenseLayers = document.getElementById('defenseLayers');
         this.shieldBar = document.getElementById('shieldBar');
         this.shieldFill = document.getElementById('shieldFill');
-        this.shieldDisplay = document.getElementById('shieldDisplay');
         this.shieldValue = document.getElementById('shieldValue');
+        this.armorBar = document.getElementById('armorBar');
+        this.armorFill = document.getElementById('armorFill');
+        this.armorValue = document.getElementById('armorValue');
+        this.structureBar = document.getElementById('structureBar');
+        this.structureFill = document.getElementById('structureFill');
+        this.structureValue = document.getElementById('structureValue');
+        
+        // Legacy health elements (fallback)
+        this.legacyHealth = document.getElementById('legacyHealth');
+        this.hpDisplay = document.getElementById('hpDisplay');
+        this.healthFill = document.getElementById('healthFill');
         
         // Heat/Overheat elements
         this.heatBar = document.getElementById('heatBar');
@@ -309,6 +327,9 @@ class UISystem {
         this.statArmor = document.getElementById('statArmor');
         this.statLifesteal = document.getElementById('statLifesteal');
         this.statRegen = document.getElementById('statRegen');
+        
+        // Game canvas (for coordinate conversion)
+        this.gameCanvas = document.getElementById('gameCanvas') || document.querySelector('canvas');
         this.statCrit = document.getElementById('statCrit');
         
         // Weapon and passive status elements
@@ -480,7 +501,6 @@ class UISystem {
         if (!player) return;
 
         const playerComp = player.getComponent('player');
-        const health = player.getComponent('health');
 
         if (playerComp) {
             // Update time
@@ -523,13 +543,48 @@ class UISystem {
             }
         }
 
-        if (health) {
-            // Update health
+        // Update defense layers or fallback to legacy health
+        const defense = player.getComponent('defense');
+        const health = player.getComponent('health');
+        const heat = player.getComponent('heat');
+        
+        if (defense) {
+            // Show new defense system (Shield/Armor/Structure)
+            if (this.defenseLayers) this.defenseLayers.style.display = 'block';
+            if (this.legacyHealth) this.legacyHealth.style.display = 'none';
+            
+            // Update shield
+            if (this.shieldFill && this.shieldValue) {
+                const shieldPercent = (defense.shield.current / defense.shield.max) * 100;
+                this.shieldFill.style.width = `${Math.max(0, shieldPercent)}%`;
+                this.shieldValue.textContent = `${Math.ceil(defense.shield.current)}/${defense.shield.max}`;
+            }
+            
+            // Update armor
+            if (this.armorFill && this.armorValue) {
+                const armorPercent = (defense.armor.current / defense.armor.max) * 100;
+                this.armorFill.style.width = `${Math.max(0, armorPercent)}%`;
+                this.armorValue.textContent = `${Math.ceil(defense.armor.current)}/${defense.armor.max}`;
+            }
+            
+            // Update structure
+            if (this.structureFill && this.structureValue) {
+                const structurePercent = (defense.structure.current / defense.structure.max) * 100;
+                this.structureFill.style.width = `${Math.max(0, structurePercent)}%`;
+                this.structureValue.textContent = `${Math.ceil(defense.structure.current)}/${defense.structure.max}`;
+            }
+        } else if (health) {
+            // Fallback to legacy health system
+            if (this.defenseLayers) this.defenseLayers.style.display = 'none';
+            if (this.legacyHealth) this.legacyHealth.style.display = 'block';
+            
             this.hpDisplay.textContent = `${Math.ceil(health.current)}/${health.max}`;
             const healthPercent = (health.current / health.max) * 100;
             this.healthFill.style.width = `${Math.max(0, healthPercent)}%`;
         }
         
+        // Remove old shield code that's now integrated
+        /*
         // Update shield
         const shield = player.getComponent('shield');
         if (shield && shield.max > 0) {
@@ -542,21 +597,24 @@ class UISystem {
             this.shieldBar.style.display = 'none';
             this.shieldDisplay.style.display = 'none';
         }
+        */
         
         // Update heat/overheat gauge
         if (this.heatBar && this.heatFill && this.heatDisplay) {
-            const heat = playerComp?.heat ?? 0;
-            const heatMax = playerComp?.heatMax ?? 100;
-            
-            if (heatMax > 0 && heat > 0) {
+            if (heat && heat.max > 0) {
                 this.heatBar.style.display = 'block';
                 this.heatDisplay.style.display = 'block';
-                this.heatValue.textContent = `${Math.ceil(heat)}/${heatMax}`;
-                const heatPercent = (heat / heatMax) * 100;
+                this.heatValue.textContent = `${Math.ceil(heat.current)}/${heat.max}`;
+                const heatPercent = (heat.current / heat.max) * 100;
                 this.heatFill.style.width = `${Math.max(0, Math.min(100, heatPercent))}%`;
                 
-                // Change color based on heat level
-                if (heatPercent >= 80) {
+                // Change color based on heat level and overheat status
+                if (heat.overheated) {
+                    this.heatFill.style.background = 'linear-gradient(to right, #ff0000, #cc0000)';
+                    if (this.heatValue) {
+                        this.heatValue.textContent = `⚠️ OVERHEATED`;
+                    }
+                } else if (heatPercent >= 80) {
                     this.heatFill.style.background = 'linear-gradient(to right, #ff4444, #ff0000)';
                 } else if (heatPercent >= 50) {
                     this.heatFill.style.background = 'linear-gradient(to right, #ffaa00, #ff6600)';
@@ -1185,7 +1243,6 @@ class UISystem {
             if (!this.selectedShipId && !isLocked) {
                 this.selectedShipId = ship.id;
                 card.classList.add('selected');
-                // Dispatch ship selected event for default selection
                 window.dispatchEvent(new CustomEvent('shipSelected', { 
                     detail: { ship: ship.id } 
                 }));
@@ -1195,21 +1252,16 @@ class UISystem {
             }
 
             card.innerHTML = `
-                <h3 style="color: ${ship.color}; margin-bottom: 10px; text-align: center;">${ship.name}</h3>
-                <div style="margin-bottom: 10px; font-size: 12px; line-height: 1.4;">
-                    ${ship.description}
+                <h3 style="margin-bottom: 8px; text-align: center;">${ship.icon} ${ship.name}</h3>
+                <div style="text-align:center; margin-bottom:8px;">
+                    <span style="background:${damageColor}; color:#000; padding:2px 6px; border-radius:3px; font-size:10px; font-weight:bold;">${ship.dominantDamageType.toUpperCase()}</span>
                 </div>
-                <div style="font-size: 11px; opacity: 0.8;">
-                    <div>HP: ${ship.baseStats.maxHealth}</div>
-                    <div>DMG: x${ship.baseStats.damageMultiplier.toFixed(2)}</div>
-                    <div>SPD: ${ship.baseStats.speed}</div>
-                    <div>Difficulty: ${ship.difficulty.toUpperCase()}</div>
+                <div style="margin-bottom: 8px; font-size: 11px; opacity: 0.9;">
+                    ${ship.role}
                 </div>
             `;
 
             card.addEventListener('click', () => {
-                if (isLocked) return; // Can't select locked ships
-                
                 document.querySelectorAll('.ship-card').forEach(c => c.classList.remove('selected'));
                 card.classList.add('selected');
                 this.selectedShipId = ship.id;

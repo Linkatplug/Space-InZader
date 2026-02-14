@@ -3,12 +3,18 @@
  * @description Handles collision detection between entities
  */
 
+// Hit cooldown constant (200ms to prevent instant melt from tick collisions)
+const HIT_COOLDOWN_MS = 200;
+
 class CollisionSystem {
     constructor(world, gameState, audioManager, particleSystem = null) {
         this.world = world;
         this.gameState = gameState;
         this.audioManager = audioManager;
         this.particleSystem = particleSystem;
+        
+        // Hit cooldown tracking: Map<targetId_sourceId_damageType, timestamp>
+        this.hitCooldowns = new Map();
         
         // Black hole instant kill zone constants
         this.BLACK_HOLE_CENTER_KILL_RADIUS = 30; // pixels - instant death zone
@@ -83,8 +89,9 @@ class CollisionSystem {
                 const enemyPos = enemy.getComponent('position');
                 const enemyCol = enemy.getComponent('collision');
                 const enemyHealth = enemy.getComponent('health');
+                const enemyDefense = enemy.getComponent('defense');
                 
-                if (!enemyPos || !enemyCol || !enemyHealth) continue;
+                if (!enemyPos || !enemyCol || (!enemyHealth && !enemyDefense)) continue;
 
                 // Skip if orbital projectile is on cooldown for this enemy
                 if (projComp.orbital && projComp.hitCooldown && projComp.hitCooldown[enemy.id] > 0) {
@@ -95,8 +102,15 @@ class CollisionSystem {
                     projPos.x, projPos.y, projCol.radius,
                     enemyPos.x, enemyPos.y, enemyCol.radius
                 )) {
+                    // Log collision
+                    logger.debug('Collision', `Projectile hit ${enemy.type} at (${Math.round(enemyPos.x)},${Math.round(enemyPos.y)})`, {
+                        damage: projComp.damage,
+                        damageType: projComp.damageType || 'kinetic',
+                        orbital: projComp.orbital || false
+                    });
+                    
                     // Deal damage to enemy (pass owner entity for lifesteal)
-                    this.damageEnemy(enemy, projComp.damage, ownerEntity);
+                    this.damageEnemy(enemy, projComp.damage, ownerEntity, projComp.damageType || 'kinetic');
                     
                     // Don't remove orbital projectiles - they persist and keep damaging
                     if (projComp.orbital) {
@@ -220,9 +234,10 @@ class CollisionSystem {
             const playerPos = player.getComponent('position');
             const playerCol = player.getComponent('collision');
             const playerHealth = player.getComponent('health');
+            const playerDefense = player.getComponent('defense');
             
-            if (!playerPos || !playerCol || !playerHealth) continue;
-            if (playerHealth.invulnerable || playerHealth.godMode) continue;
+            if (!playerPos || !playerCol || (!playerHealth && !playerDefense)) continue;
+            if (playerHealth && (playerHealth.invulnerable || playerHealth.godMode)) continue;
 
             for (const projectile of projectiles) {
                 const projPos = projectile.getComponent('position');
@@ -231,7 +246,7 @@ class CollisionSystem {
                 
                 if (!projPos || !projCol || !projComp) continue;
                 
-                // Check if projectile is from enemy (owner is an enemy entity)
+                // Check if projectile is from enemy (owner is an enemy entity or 'enemy' string)
                 const ownerEntity = this.world.getEntity(projComp.owner);
                 if (!ownerEntity || ownerEntity.type !== 'enemy') continue;
                 
@@ -245,8 +260,34 @@ class CollisionSystem {
                     playerPos.x, playerPos.y, playerCol.radius,
                     projPos.x, projPos.y, projCol.radius
                 )) {
-                    // Deal damage to player
-                    this.damagePlayer(player, projComp.damage);
+                    // Check hit cooldown to prevent instant melt from tick collisions
+                    const now = performance.now();
+                    const sourceId = projComp.owner || 'unknown';
+                    const damageType = projComp.damageType || 'kinetic';
+                    const cooldownKey = `${player.id}_${sourceId}_${damageType}`;
+                    
+                    const lastHitTime = this.hitCooldowns.get(cooldownKey) || 0;
+                    const timeSinceLastHit = now - lastHitTime;
+                    
+                    if (timeSinceLastHit < HIT_COOLDOWN_MS) {
+                        // Still in cooldown, ignore this hit
+                        logger.debug('Collision', `Hit cooldown active (${timeSinceLastHit.toFixed(0)}ms < ${HIT_COOLDOWN_MS}ms) - ignoring damage`);
+                    } else {
+                        // Cooldown expired or first hit, deal damage
+                        this.damagePlayer(player, projComp.damage, damageType);
+                        
+                        // Update cooldown timestamp
+                        this.hitCooldowns.set(cooldownKey, now);
+                        
+                        // Clean up old cooldown entries (older than 1 second)
+                        if (this.hitCooldowns.size > 100) {
+                            for (const [key, timestamp] of this.hitCooldowns.entries()) {
+                                if (now - timestamp > 1000) {
+                                    this.hitCooldowns.delete(key);
+                                }
+                            }
+                        }
+                    }
                     
                     // Remove projectile
                     this.world.removeEntity(projectile.id);
@@ -328,10 +369,8 @@ class CollisionSystem {
     }
 
     damagePlayer(player, damage, damageType = 'kinetic') {
-        const health = player.getComponent('health');
-        const defense = player.getComponent('defense');
-        const shield = player.getComponent('shield');
         const playerComp = player.getComponent('player');
+        const defense = player.getComponent('defense');
         
         if (!health || !playerComp) {
             console.error('[CollisionSystem] damagePlayer: Missing health or player component');
@@ -369,15 +408,77 @@ class CollisionSystem {
             if (this.audioManager && this.audioManager.initialized) {
                 this.audioManager.playSFX('hit', 1.2);
             }
-            
-            // Check for death
-            if (result.destroyed) {
-                health.current = 0;
+
+            // Try to access DefenseSystem through multiple paths
+            const defenseSystem = (this.world && this.world.defenseSystem) || 
+                                 (this.game && this.game.systems && this.game.systems.defense) ||
+                                 this.defenseSystem;
+
+            if (defenseSystem && typeof defenseSystem.applyDamage === 'function') {
+                const result = defenseSystem.applyDamage(player, damage, damageType);
+                this.gameState.stats.damageTaken += result.dealt;
+                
+                // Log with actual dealt damage and layers hit
+                const layersInfo = Object.entries(result.layers || {})
+                    .map(([layer, dmg]) => `${layer}:${dmg.toFixed(1)}`)
+                    .join('+');
+                logger.info('Collision', `Player defense result: ${result.dealt.toFixed(1)} damage dealt (${result.incoming.toFixed(1)} incoming) to ${layersInfo || result.layer}${result.destroyed ? ' - PLAYER DESTROYED' : ''}`);
+                
+                // Visual feedback based on which layers were hit
+                if (this.screenEffects) {
+                    if (result.layersDamaged.includes('shield')) {
+                        this.screenEffects.flash('#00FFFF', 0.2, 0.1);
+                    } else if (result.layersDamaged.includes('armor')) {
+                        this.screenEffects.flash('#8B4513', 0.25, 0.12);
+                    } else if (result.layersDamaged.includes('structure')) {
+                        this.screenEffects.shake(5, 0.2);
+                        this.screenEffects.flash('#FF0000', 0.3, 0.15);
+                    }
+                }
+                
+                // Play hit sound
+                if (this.audioManager && this.audioManager.initialized) {
+                    this.audioManager.playSFX('hit', 1.2);
+                }
+                
+                // Check for death
+                if (result.destroyed) {
+                    // Set health to 0 if it exists for backward compatibility
+                    const health = player.getComponent('health');
+                    if (health) {
+                        health.current = 0;
+                    }
+                    logger.warn('Collision', 'Player health set to 0 - GAME OVER');
+                }
+                return;
+            } else if (this.world && this.world.events && this.world.events.emit) {
+                // Fallback: emit event so another system can handle
+                logger.debug('Collision', 'DefenseSystem not accessible, emitting requestPlayerDamage event');
+                this.world.events.emit('requestPlayerDamage', { 
+                    playerId: player.id, 
+                    damage, 
+                    damageType 
+                });
+                return;
             }
+        }
+
+        // Legacy health system fallback (only if defense doesn't exist)
+        const health = player.getComponent('health');
+        if (!health) {
+            logger.warn('Collision', 'Player has no defense or health component - cannot apply damage');
             return;
         }
 
-        // Fallback to old system
+        // God mode check for legacy health system
+        if (health.godMode) {
+            logger.debug('Collision', 'Player in god mode - damage ignored');
+            return;
+        }
+
+        logger.debug('Collision', 'Using legacy health system for player damage');
+        
+        const shield = player.getComponent('shield');
         let remainingDamage = damage;
         
         // Shield absorbs damage first
@@ -724,12 +825,15 @@ class CollisionSystem {
                 
             case 'health':
                 if (health) {
+                    const oldHealth = health.current;
                     health.current = Math.min(health.max, health.current + pickupComp.value);
+                    logger.info('Collision', `Health pickup: +${pickupComp.value} (${oldHealth.toFixed(0)} → ${health.current.toFixed(0)}/${health.max})`);
                 }
                 break;
                 
             case 'noyaux':
                 this.gameState.stats.noyauxEarned += pickupComp.value;
+                logger.info('Collision', `Noyaux collected: +${pickupComp.value} (total: ${this.gameState.stats.noyauxEarned})`);
                 break;
                 
             case 'module':
@@ -747,8 +851,6 @@ class CollisionSystem {
      */
     collectModule(player, moduleId) {
         const playerComp = player.getComponent('player');
-        const defense = player.getComponent('defense');
-        const heat = player.getComponent('heat');
         
         if (!playerComp) return;
 
@@ -775,40 +877,20 @@ class CollisionSystem {
             return;
         }
 
-        // Add module to player's inventory
-        playerComp.modules.push({ id: moduleId });
-        
-        // Log acquisition
-        console.log(`[Loot] module acquired: ${moduleData.name} (${moduleId})`);
-
-        // Apply module effects immediately using ModuleSystem
-        if (typeof applyModulesToStats !== 'undefined') {
-            // Get base stats (snapshot before module application)
-            const baseStats = playerComp.baseStats ? { ...playerComp.baseStats } : { ...playerComp.stats };
-            
-            // Apply modules to stats
-            playerComp.stats = applyModulesToStats(playerComp, baseStats);
-            
-            // Apply to defense component if it exists
-            if (defense && playerComp.stats.moduleEffects) {
-                if (typeof applyModuleDefenseBonuses !== 'undefined') {
-                    applyModuleDefenseBonuses(defense, playerComp.stats.moduleEffects);
-                }
-                if (typeof applyModuleResistances !== 'undefined') {
-                    applyModuleResistances(defense, playerComp.stats.moduleEffects);
+        // Apply module using ModuleSystem
+        if (typeof applyModule !== 'undefined') {
+            const success = applyModule(player, moduleId);
+            if (success) {
+                console.log(`[Loot] module acquired: ${moduleData.name} (${moduleId})`);
+                
+                // Log defense stats for debugging
+                const defense = player.getComponent('defense');
+                if (defense) {
+                    console.log(`[Loot] Module effects applied. Shield: ${defense?.shield?.max || 'N/A'}, Armor: ${defense?.armor?.max || 'N/A'}, Structure: ${defense?.structure?.max || 'N/A'}`);
                 }
             }
-            
-            // Apply to heat component if it exists
-            if (heat && playerComp.stats.moduleEffects) {
-                if (typeof applyModuleHeatEffects !== 'undefined') {
-                    applyModuleHeatEffects(heat, playerComp.stats.moduleEffects);
-                }
-            }
-            
-            console.log(`[Loot] Module effects applied. Shield: ${defense?.shield?.max || 'N/A'}, Armor: ${defense?.armor?.max || 'N/A'}, Structure: ${defense?.structure?.max || 'N/A'}`);
         } else {
-            console.warn('[Loot] ModuleSystem functions not available');
+            console.error('[Loot] ModuleSystem applyModule function not available');
         }
     }
 
@@ -1027,8 +1109,15 @@ class CollisionSystem {
                 if (distance < this.BLACK_HOLE_CENTER_KILL_RADIUS) {
                     // INSTANT KILL - Enemy is in the center of the black hole
                     const enemyHealth = enemy.getComponent('health');
+                    const enemyDefense = enemy.getComponent('defense');
                     if (enemyHealth) {
                         enemyHealth.current = 0; // Instant death
+                        console.log('%c[Black Hole] Enemy sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
+                    } else if (enemyDefense) {
+                        // Kill all defense layers
+                        enemyDefense.shield.current = 0;
+                        enemyDefense.armor.current = 0;
+                        enemyDefense.structure.current = 0;
                         console.log('%c[Black Hole] Enemy sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
                     }
                 } else if (distance < blackHoleComp.damageRadius) {

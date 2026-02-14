@@ -169,11 +169,18 @@ class PickupSystem {
             playerComp.xpRequired = 100;
         }
 
+        // P0 FIX: Debug log XP collection
+        logger.debug('XP', `Collected ${xpValue} XP (x${playerComp.stats.xpBonus.toFixed(2)} = ${finalXP.toFixed(1)}) → ${playerComp.xp.toFixed(0)}/${playerComp.xpRequired}`);
+
         // Check for level up
         while (playerComp.xp >= playerComp.xpRequired) {
             playerComp.xp -= playerComp.xpRequired;
             playerComp.level++;
+            const oldRequired = playerComp.xpRequired;
             playerComp.xpRequired = Math.floor(playerComp.xpRequired * 1.2);
+            
+            // P0 FIX: Debug log level up
+            logger.info('XP', `LEVEL UP! ${playerComp.level - 1} → ${playerComp.level} (XP required: ${oldRequired} → ${playerComp.xpRequired})`);
             
             // Update stats
             this.gameState.stats.highestLevel = Math.max(
@@ -236,57 +243,17 @@ class PickupSystem {
 
         if (playerComp.modules.length >= MAX_MODULE_SLOTS) {
             console.log('[Loot] Module slots full! Cannot pick up:', moduleData.name);
-            // Could implement "replace oldest" here if desired
             return;
         }
 
-        // Add module to player's inventory
-        playerComp.modules.push({ id: moduleId });
-        
-        // Log acquisition
-        console.log(`[Loot] module acquired: ${moduleData.name} (${moduleId})`);
-
-        // Apply module effects immediately
-        this.applyModuleEffects(player);
-    }
-
-    /**
-     * Apply all module effects to player stats and components
-     * @param {Entity} player - Player entity
-     */
-    applyModuleEffects(player) {
-        const playerComp = player.getComponent('player');
-        const defense = player.getComponent('defense');
-        const heat = player.getComponent('heat');
-        
-        if (!playerComp) return;
-
-        // Use ModuleSystem if available
-        if (typeof applyModulesToStats !== 'undefined') {
-            // Get base stats (snapshot before module application)
-            const baseStats = playerComp.baseStats ? { ...playerComp.baseStats } : { ...playerComp.stats };
-            
-            // Apply modules to stats
-            playerComp.stats = applyModulesToStats(playerComp, baseStats);
-            
-            // Apply to defense component if it exists
-            if (defense && playerComp.stats.moduleEffects) {
-                if (typeof applyModuleDefenseBonuses !== 'undefined') {
-                    applyModuleDefenseBonuses(defense, playerComp.stats.moduleEffects);
-                }
-                if (typeof applyModuleResistances !== 'undefined') {
-                    applyModuleResistances(defense, playerComp.stats.moduleEffects);
-                }
-            }
-            
-            // Apply to heat component if it exists
-            if (heat && playerComp.stats.moduleEffects) {
-                if (typeof applyModuleHeatEffects !== 'undefined') {
-                    applyModuleHeatEffects(heat, playerComp.stats.moduleEffects);
-                }
+        // Apply module using ModuleSystem
+        if (typeof applyModule !== 'undefined') {
+            const success = applyModule(player, moduleId);
+            if (success) {
+                console.log(`[Loot] module acquired: ${moduleData.name} (${moduleId})`);
             }
         } else {
-            console.warn('[Loot] ModuleSystem functions not available');
+            console.error('[Loot] ModuleSystem applyModule function not available');
         }
     }
 
@@ -304,7 +271,16 @@ class PickupSystem {
         // Create level up particle effect
         this.createLevelUpEffect(playerPos.x, playerPos.y);
         
-        // Heal player slightly on level up
+        // Heal player defense layers on level up (20% of each layer)
+        const defense = player.getComponent('defense');
+        if (defense) {
+            defense.shield.current = Math.min(defense.shield.current + defense.shield.max * 0.2, defense.shield.max);
+            defense.armor.current = Math.min(defense.armor.current + defense.armor.max * 0.2, defense.armor.max);
+            defense.structure.current = Math.min(defense.structure.current + defense.structure.max * 0.2, defense.structure.max);
+            logger.debug('PickupSystem', 'Healed 20% of all defense layers on level up');
+        }
+        
+        // Legacy health support
         const health = player.getComponent('health');
         if (health) {
             health.current = Math.min(health.current + health.max * 0.2, health.max);

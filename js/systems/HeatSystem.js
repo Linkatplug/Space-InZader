@@ -56,7 +56,8 @@ class HeatSystem {
                     this.gameState.weaponDisabled = false;
                 }
             }
-            // Don't process cooling or passive heat while overheated
+            
+            // Don't add passive heat while overheated
             return;
         }
 

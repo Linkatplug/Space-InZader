@@ -39,6 +39,12 @@ class SpawnerSystem {
     update(deltaTime, canSpawn = true) {
         const gameTime = this.gameState.stats.time;
         
+        // Dynamically scale max enemies with game progression
+        this.maxEnemiesOnScreen = Math.min(
+            this.maxEnemiesCap,
+            this.baseMaxEnemies + Math.floor(gameTime / 120) * 10  // +10 every 2 minutes
+        );
+        
         // Get current wave configuration
         const wave = this.getCurrentWave(gameTime);
         
@@ -267,42 +273,89 @@ class SpawnerSystem {
             // Log spawn with defense values
             console.log(`[Spawn] ${enemyData.profileId} S/A/St=${profile.defense.shield}/${profile.defense.armor}/${profile.defense.structure} dmgType=${profile.attackDamageType}`);
         } else {
-            // Fallback to old health system
-            enemy.addComponent('health', Components.Health(enemyData.health, enemyData.health));
+            // Fallback to old health system - create health component directly
+            const health = {
+                current: enemyData.health,
+                max: enemyData.health,
+                invulnerable: false,
+                invulnerableTime: 0,
+                godMode: false
+            };
+            enemy.addComponent('health', health);
         }
         
-        enemy.addComponent('collision', Components.Collision(enemyData.size));
-        enemy.addComponent('renderable', Components.Renderable(
-            enemyData.color,
-            enemyData.size,
-            'circle'
-        ));
-        enemy.addComponent('enemy', Components.Enemy(
-            enemyData.aiType,
-            enemyData.health,
-            enemyData.damage,
-            enemyData.speed,
-            enemyData.xpValue
-        ));
+        // Create collision component directly
+        const collision = {
+            radius: enemyData.size,
+            type: 'enemy'
+        };
+        enemy.addComponent('collision', collision);
         
-        // Set enemy data properties
-        const enemyComp = enemy.getComponent('enemy');
-        enemyComp.attackPattern = enemyData.attackPattern;
-        enemyComp.armor = enemyData.armor || 0;
-        enemyComp.splitCount = enemyData.splitCount || 0;
-        enemyComp.splitType = enemyData.splitType || null;
+        // Create renderable component directly
+        const renderable = {
+            color: enemyData.color,
+            size: enemyData.size,
+            shape: 'circle',
+            visible: true,
+            layer: 1,
+            alpha: 1.0,
+            blendMode: 'normal'
+        };
+        enemy.addComponent('renderable', renderable);
+        
+        // Create enemy component directly
+        const enemyComponent = {
+            type: enemyData.aiType,
+            maxHealth: enemyData.health,
+            health: enemyData.health,
+            damage: enemyData.damage,
+            speed: enemyData.speed,
+            xpValue: enemyData.xpValue,
+            baseSpeed: enemyData.speed,
+            attackPattern: enemyData.attackPattern,
+            armor: enemyData.armor || 0,
+            splitCount: enemyData.splitCount || 0,
+            splitType: enemyData.splitType || null
+        };
         
         // Add attack damage type if available
         if (enemyData.attackDamageType) {
-            enemyComp.attackDamageType = enemyData.attackDamageType;
+            enemyComponent.attackDamageType = enemyData.attackDamageType;
         }
         
-        // Add boss component if boss
+        enemy.addComponent('enemy', enemyComponent);
+        
+        // Add enemy weapon for shooting
+        const damageType = (enemyData.profileId && window.EnemyProfiles && window.EnemyProfiles.PROFILES[enemyData.profileId]) 
+            ? window.EnemyProfiles.PROFILES[enemyData.profileId].attackDamageType 
+            : 'kinetic';
+        
+        const colorMap = {
+            'em': '#00FFFF',
+            'thermal': '#FF8C00',
+            'kinetic': '#888888',
+            'explosive': '#FF0000'
+        };
+        
+        enemyComponent.enemyWeapon = {
+            damageType: damageType,
+            baseDamage: 6,
+            fireRate: 0.8,
+            projectileSpeed: 220,
+            projectileSize: 4,
+            color: colorMap[damageType] || '#888888',
+            cooldown: 0
+        };
+        
+        // Add boss component if boss - create directly
         if (isBoss) {
-            enemy.addComponent('boss', Components.Boss(
-                1,
-                ['chase', 'spiral', 'enrage']
-            ));
+            const bossComponent = {
+                phase: 1,
+                patterns: ['chase', 'spiral', 'enrage'],
+                phaseTimer: 0,
+                nextPhaseThreshold: 0.5
+            };
+            enemy.addComponent('boss', bossComponent);
         }
         
         return enemy;
@@ -315,32 +368,32 @@ class SpawnerSystem {
      */
     getCurrentWave(gameTime) {
         if (gameTime < 300) {
-            // 0-5 minutes - Early
+            // 0-5 minutes - Early (REDUCED for better early game experience)
             return {
-                budgetPerSecond: 2 + (gameTime / 60) * 0.5,
+                budgetPerSecond: 1.0 + (gameTime / 120) * 0.3,  // Much slower ramp
                 enemyPool: ['drone_basique', 'chasseur_rapide'],
-                spawnInterval: 2.0
+                spawnInterval: 3.5  // Increased from 2.0
             };
         } else if (gameTime < 600) {
             // 5-10 minutes - Mid
             return {
-                budgetPerSecond: 4 + ((gameTime - 300) / 60) * 0.8,
-                enemyPool: ['drone_basique', 'chasseur_rapide', 'tireur', 'tank'],
-                spawnInterval: 1.5
+                budgetPerSecond: 2.5 + ((gameTime - 300) / 90) * 0.6,
+                enemyPool: ['drone_basique', 'chasseur_rapide', 'tireur'],
+                spawnInterval: 2.5  // Increased from 1.5
             };
         } else if (gameTime < 1200) {
             // 10-20 minutes - Late
             return {
-                budgetPerSecond: 8 + ((gameTime - 600) / 60) * 1.2,
+                budgetPerSecond: 5 + ((gameTime - 600) / 90) * 0.8,
                 enemyPool: ['chasseur_rapide', 'tireur', 'tank', 'elite'],
-                spawnInterval: 1.0
+                spawnInterval: 1.5  // Increased from 1.0
             };
         } else {
             // 20+ minutes - Endgame
             return {
-                budgetPerSecond: 15 + ((gameTime - 1200) / 60) * 2.0,
+                budgetPerSecond: 10 + ((gameTime - 1200) / 120) * 1.5,
                 enemyPool: ['tank', 'elite'],
-                spawnInterval: 0.8
+                spawnInterval: 1.0  // Increased from 0.8
             };
         }
     }

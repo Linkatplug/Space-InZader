@@ -53,16 +53,36 @@ class DefenseSystem {
      * Update a single defense layer
      * @param {Object} layer - Defense layer component
      * @param {number} deltaTime - Time elapsed
+     * @param {string} layerName - Name of the layer (shield, armor, structure)
      */
-    updateLayer(layer, deltaTime) {
+    updateLayer(layer, deltaTime, layerName) {
+        // Defensive guards to prevent crashes
+        if (!layer || typeof layer !== 'object') {
+            console.warn('[DefenseSystem] Invalid layer object received');
+            return;
+        }
+        if (!layerName || typeof layerName !== 'string') {
+            console.warn('[DefenseSystem] Invalid layerName received');
+            return;
+        }
+
+        // Debug log for testing stability (temporary)
+        console.debug('[DefenseSystem] Updating layer:', layerName);
+
         // Update regen delay
         if (layer.regenDelay > 0) {
             layer.regenDelay -= deltaTime;
         }
 
         // Apply regeneration if delay is over
+        // IMPORTANT: Don't regenerate structure if it's at 0 (player is destroyed)
         if (layer.regenDelay <= 0 && layer.regen > 0) {
-            layer.current = Math.min(layer.max, layer.current + layer.regen * deltaTime);
+            // For structure layer, don't regenerate if completely destroyed
+            if (layerName === 'structure' && layer.current <= 0) {
+                // Player is destroyed, no regeneration
+            } else {
+                layer.current = Math.min(layer.max, layer.current + layer.regen * deltaTime);
+            }
         }
 
         // Ensure current doesn't go below 0 or above max
@@ -74,26 +94,64 @@ class DefenseSystem {
      * @param {Entity} entity - Target entity
      * @param {number} rawDamage - Raw damage before resistance
      * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
-     * @returns {Object} Damage result { totalDamage, layersDamaged, destroyed }
+     * @returns {Object} Damage result { incoming, dealt, layers, layer, destroyed }
      */
     applyDamage(entity, rawDamage, damageType = 'kinetic') {
+        // P0 FIX: Don't process damage if game is not running
+        if (this.game && this.game.state.currentState !== 'RUNNING') {
+            return {
+                incoming: rawDamage,
+                dealt: 0,
+                layers: {},
+                layer: '',
+                destroyed: false,
+                totalDamage: 0,
+                layersDamaged: []
+            };
+        }
+
         const defense = entity.getComponent('defense');
         if (!defense) {
             // Fallback to old health system if no defense component
             const health = entity.getComponent('health');
             if (health) {
                 health.current -= rawDamage;
+                logger.debug('DefenseSystem', `Applied ${rawDamage} damage to ${entity.type} health (${health.current}/${health.max})`);
                 return {
+                    incoming: rawDamage,
+                    dealt: rawDamage,
+                    layers: { health: rawDamage },
+                    layer: 'health',
+                    destroyed: health.current <= 0,
+                    // Legacy compatibility
                     totalDamage: rawDamage,
-                    layersDamaged: ['health'],
-                    destroyed: health.current <= 0
+                    layersDamaged: ['health']
                 };
             }
-            return { totalDamage: 0, layersDamaged: [], destroyed: false };
+            return { 
+                incoming: rawDamage,
+                dealt: 0,
+                layers: {},
+                layer: '',
+                destroyed: false,
+                // Legacy compatibility
+                totalDamage: 0,
+                layersDamaged: []
+            };
         }
+
+        // Log damage calculation start
+        logger.debug('DefenseSystem', `Applying ${rawDamage} ${damageType} damage to ${entity.type}`, {
+            shield: `${defense.shield.current}/${defense.shield.max}`,
+            armor: `${defense.armor.current}/${defense.armor.max}`,
+            structure: `${defense.structure.current}/${defense.structure.max}`
+        });
 
         let remainingDamage = rawDamage;
         const layersDamaged = [];
+        const damageLog = [];
+        const layersDamageDealt = {}; // Track damage dealt per layer
+        let lastLayerHit = '';
 
         // Layer order: shield -> armor -> structure
         const layers = [
@@ -106,14 +164,30 @@ class DefenseSystem {
             if (remainingDamage <= 0) break;
             if (layer.data.current <= 0) continue;
 
-            // Apply resistance
-            const resistance = layer.data.resistances[damageType] || 0;
+            // Apply resistance from top-level resistances object
+            const resistance = (defense.resistances && defense.resistances[layer.name] && defense.resistances[layer.name][damageType]) || 0;
             const damageAfterResist = this.applyResistance(remainingDamage, resistance);
 
             // Apply damage to layer
             const damageDealt = Math.min(layer.data.current, damageAfterResist);
+            const beforeCurrent = layer.data.current;
             layer.data.current -= damageDealt;
             layersDamaged.push(layer.name);
+            
+            // Track damage dealt to this layer
+            layersDamageDealt[layer.name] = damageDealt;
+            lastLayerHit = layer.name;
+
+            // Log damage to this layer
+            damageLog.push({
+                layer: layer.name,
+                rawDamage: remainingDamage.toFixed(1),
+                resistance: (resistance * 100).toFixed(0) + '%',
+                damageAfterResist: damageAfterResist.toFixed(1),
+                damageDealt: damageDealt.toFixed(1),
+                before: beforeCurrent.toFixed(1),
+                after: layer.data.current.toFixed(1)
+            });
 
             // Emit damage event for UI
             if (this.world.events) {
@@ -147,11 +221,28 @@ class DefenseSystem {
 
         // Check if entity is destroyed (structure depleted)
         const destroyed = defense.structure.current <= 0;
+        
+        // Calculate total damage dealt
+        const totalDealt = rawDamage - remainingDamage;
+
+        // Log damage summary
+        if (damageLog.length > 0) {
+            const summary = damageLog.map(d => 
+                `${d.layer}[${d.before}→${d.after}]: ${d.rawDamage}dmg * (1-${d.resistance}) = ${d.damageAfterResist} → dealt ${d.damageDealt}`
+            ).join(' | ');
+            logger.info('DefenseSystem', `${entity.type} took ${damageType} damage: ${summary}${destroyed ? ' → DESTROYED' : ''}`);
+        }
 
         return {
-            totalDamage: rawDamage - remainingDamage,
-            layersDamaged,
+            // New format
+            incoming: rawDamage,
+            dealt: totalDealt,
+            layers: layersDamageDealt,
+            layer: lastLayerHit,
             destroyed,
+            // Legacy compatibility (keep for backward compat)
+            totalDamage: totalDealt,
+            layersDamaged,
             damageType
         };
     }

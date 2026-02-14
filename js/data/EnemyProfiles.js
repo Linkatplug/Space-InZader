@@ -18,9 +18,9 @@ const ENEMY_PROFILES = {
         id: 'scout_drone',
         name: 'Scout Drone',
         defense: {
-            shield: 150,
-            armor: 50,
-            structure: 60
+            shield: 100,     // Reduced from 150 for early game
+            armor: 35,       // Reduced from 50
+            structure: 45    // Reduced from 60
         },
         weakness: 'kinetic', // Weak armor
         attackDamageType: 'em',

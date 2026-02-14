@@ -243,24 +243,74 @@ class DebugOverlay {
         if (playerSection && this.game.player) {
             const player = this.game.player;
             const playerComp = player.getComponent('player');
+            const defense = player.getComponent('defense');
             const health = player.getComponent('health');
+            const heat = player.getComponent('heat');
             const pos = player.getComponent('position');
 
-            if (playerComp && health && pos) {
+            if (playerComp && pos) {
                 let playerHtml = '<div style="margin-bottom: 5px;"><strong style="color: #ffff00;">PLAYER</strong><br>';
-                playerHtml += `HP: ${Math.ceil(health.current)}/${health.max}<br>`;
+                
+                // Defense layers (priority) or legacy health
+                if (defense) {
+                    const shield = defense.shield;
+                    const armor = defense.armor;
+                    const structure = defense.structure;
+                    
+                    playerHtml += '<span style="color: #00ffff;">DEFENSE LAYERS:</span><br>';
+                    playerHtml += `  🛡️ Shield: ${Math.ceil(shield.current)}/${shield.max}<br>`;
+                    playerHtml += `  🛡️ Armor: ${Math.ceil(armor.current)}/${armor.max}<br>`;
+                    playerHtml += `  ⚙️ Structure: ${Math.ceil(structure.current)}/${structure.max}<br>`;
+                } else if (health) {
+                    playerHtml += `HP: ${Math.ceil(health.current)}/${health.max}<br>`;
+                }
+                
+                // Heat
+                if (heat) {
+                    const heatPercent = Math.round((heat.current / heat.max) * 100);
+                    const heatColor = heat.overheated ? '#ff0000' : heatPercent > 80 ? '#ff8800' : '#00ff00';
+                    playerHtml += `<span style="color: ${heatColor};">🔥 Heat: ${Math.ceil(heat.current)}/${heat.max} (${heatPercent}%)</span><br>`;
+                    if (heat.overheated) {
+                        playerHtml += `<span style="color: #ff0000;">⚠️ OVERHEATED!</span><br>`;
+                    }
+                }
+                
+                playerHtml += `Ship: ${playerComp.shipId || 'Unknown'}<br>`;
                 playerHtml += `Level: ${playerComp.level}<br>`;
                 playerHtml += `XP: ${playerComp.xp}/${playerComp.xpRequired}<br>`;
                 playerHtml += `Position: (${Math.round(pos.x)}, ${Math.round(pos.y)})<br>`;
-                playerHtml += `Weapons: ${playerComp.weapons.length}<br>`;
-                playerHtml += `Passives: ${playerComp.passives.length}<br>`;
                 
-                // Show weapon list
+                // Current weapon damage type
+                if (playerComp.currentWeapon && playerComp.currentWeapon.damageType) {
+                    const dtColors = { em: '#00ffff', kinetic: '#888888', thermal: '#ff8800', explosive: '#ff0000' };
+                    const dtColor = dtColors[playerComp.currentWeapon.damageType] || '#ffffff';
+                    playerHtml += `<span style="color: ${dtColor};">Damage Type: ${playerComp.currentWeapon.damageType.toUpperCase()}</span><br>`;
+                }
+                
+                // Weapons
+                playerHtml += `Weapons: ${playerComp.weapons.length}<br>`;
                 if (playerComp.weapons.length > 0) {
-                    playerHtml += '<span style="color: #00aaff;">Weapons:</span><br>';
+                    playerHtml += '<span style="color: #00aaff;">Equipped:</span><br>';
                     playerComp.weapons.forEach(w => {
-                        playerHtml += `  ${w.type} Lv${w.level}<br>`;
+                        const dmgType = w.data && w.data.damageType ? ` (${w.data.damageType})` : '';
+                        playerHtml += `  ${w.type} Lv${w.level}${dmgType}<br>`;
                     });
+                }
+                
+                // Modules
+                if (playerComp.modules && playerComp.modules.length > 0) {
+                    playerHtml += `<span style="color: #ff00ff;">Modules: ${playerComp.modules.length}</span><br>`;
+                    playerComp.modules.forEach(m => {
+                        playerHtml += `  ${m}<br>`;
+                    });
+                }
+                
+                // Upgrades
+                if (playerComp.upgrades && playerComp.upgrades.size > 0) {
+                    playerHtml += `<span style="color: #ffaa00;">Upgrades: ${playerComp.upgrades.size}</span><br>`;
+                    for (const [upgradeId, level] of playerComp.upgrades) {
+                        playerHtml += `  ${upgradeId}: Lv${level}<br>`;
+                    }
                 }
                 
                 playerHtml += '</div>';
