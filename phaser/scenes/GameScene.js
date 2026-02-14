@@ -174,17 +174,43 @@ export default class GameScene extends Phaser.Scene {
     }
     
     initializeSystems() {
-        // Initialize weapon system with starting weapons
+        // Initialize weapon system with ALL available weapons
         this.weaponSystem = new PhaserWeaponSystem(this);
         this.weaponSystem.initializePlayerWeapons([
-            'ion_blaster',      // EM - Rapid fire
-            'solar_flare'       // Thermal - Burst damage
+            // EM Weapons (6)
+            'ion_blaster',
+            'emp_pulse',
+            'arc_disruptor',
+            'disruptor_beam',
+            'em_drone_wing',
+            'overload_missile',
+            // Thermal Weapons (6)
+            'solar_flare',
+            'plasma_stream',
+            'thermal_lance',
+            'incinerator_mine',
+            'fusion_rocket',
+            'starfire_array',
+            // Kinetic Weapons (7)
+            'railgun_mk2',
+            'auto_cannon',
+            'gauss_repeater',
+            'mass_driver',
+            'shrapnel_burst',
+            'siege_slug',
+            // Explosive Weapons (6)
+            'cluster_missile',
+            'gravity_bomb',
+            'drone_swarm',
+            'orbital_strike',
+            'shockwave_emitter',
+            'minefield_layer'
         ]);
 
         // Initialize enemy system
         this.enemySystem = new PhaserEnemySystem(this);
 
-        console.log('Systems initialized: Weapons, Enemies');
+        console.log('Systems initialized: All 25 Weapons, 6 Enemy Types');
     }
     
     update(time, delta) {
