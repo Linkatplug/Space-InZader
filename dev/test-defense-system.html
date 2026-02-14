@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Defense System Sandbox</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        h1 {
+            text-align: center;
+            color: #00ff00;
+            text-shadow: 0 0 10px #00ff00;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: #1a1a1a;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .panel h2 {
+            color: #00ffff;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        .stats-grid {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .stat-row {
+            background: #0f0f0f;
+            padding: 10px;
+            border-left: 3px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-label {
+            color: #888;
+            font-weight: bold;
+        }
+
+        .stat-value {
+            color: #00ff00;
+            font-weight: bold;
+        }
+
+        .layer-section {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #111;
+            border-radius: 4px;
+        }
+
+        .layer-title {
+            color: #ffaa00;
+            font-weight: bold;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+
+        .resistance-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 5px;
+            font-size: 0.9em;
+        }
+
+        .resistance-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px;
+            background: #0a0a0a;
+        }
+
+        .buttons {
+            display: grid;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .button-group {
+            margin-bottom: 10px;
+        }
+
+        .button-group-label {
+            color: #ffaa00;
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #003300;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #00ff00;
+            color: #000;
+            box-shadow: 0 0 10px #00ff00;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .damage-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .modifier-buttons {
+            display: grid;
+            gap: 8px;
+        }
+
+        .reset-button {
+            background: #330000;
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+
+        .reset-button:hover {
+            background: #ff0000;
+            color: #fff;
+            box-shadow: 0 0 10px #ff0000;
+        }
+
+        .debug-panel {
+            grid-column: 1 / -1;
+            background: #1a1a1a;
+            border: 2px solid #ffaa00;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .debug-panel h2 {
+            color: #ffaa00;
+            margin-bottom: 15px;
+        }
+
+        .debug-item {
+            padding: 8px;
+            background: #0f0f0f;
+            margin-bottom: 5px;
+            border-left: 3px solid #ffaa00;
+        }
+
+        .debug-highlight {
+            color: #ff00ff;
+            font-weight: bold;
+        }
+
+        .hp-bar {
+            height: 20px;
+            background: #222;
+            border: 1px solid #444;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+            margin-top: 5px;
+        }
+
+        .hp-bar-fill {
+            height: 100%;
+            transition: width 0.3s;
+        }
+
+        .hp-bar-shield {
+            background: linear-gradient(90deg, #0066ff, #00aaff);
+        }
+
+        .hp-bar-armor {
+            background: linear-gradient(90deg, #666, #999);
+        }
+
+        .hp-bar-structure {
+            background: linear-gradient(90deg, #ff6600, #ff9900);
+        }
+
+        .hp-bar-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 0.8em;
+            text-shadow: 1px 1px 2px #000;
+            font-weight: bold;
+        }
+
+        .log-output {
+            background: #000;
+            padding: 10px;
+            border-radius: 4px;
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.85em;
+            color: #0f0;
+        }
+
+        .log-entry {
+            margin-bottom: 3px;
+        }
+
+        .damage-type-em { color: #00aaff; }
+        .damage-type-thermal { color: #ff6600; }
+        .damage-type-kinetic { color: #999; }
+        .damage-type-explosive { color: #ff0000; }
+    </style>
+</head>
+<body>
+    <h1>🛡️ DEFENSE SYSTEM SANDBOX 🛡️</h1>
+
+    <div class="container">
+        <!-- PLAYER PANEL -->
+        <div class="panel">
+            <h2>👤 PLAYER</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-row">
+                    <span class="stat-label">TOTAL HP:</span>
+                    <span class="stat-value" id="player-total-hp">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">DIRTY FLAG:</span>
+                    <span class="stat-value" id="player-dirty">false</span>
+                </div>
+            </div>
+
+            <!-- Shield Layer -->
+            <div class="layer-section">
+                <div class="layer-title">⚡ SHIELD</div>
+                <div class="stat-row">
+                    <span class="stat-label">HP:</span>
+                    <span class="stat-value" id="player-shield-hp">0/0</span>
+                </div>
+                <div class="hp-bar">
+                    <div class="hp-bar-fill hp-bar-shield" id="player-shield-bar" style="width: 100%"></div>
+                    <div class="hp-bar-text" id="player-shield-text">100%</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.9em;">
+                    <div class="resistance-grid">
+                        <div class="resistance-item">
+                            <span class="damage-type-em">EM:</span>
+                            <span id="player-shield-em">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-thermal">THERMAL:</span>
+                            <span id="player-shield-thermal">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-kinetic">KINETIC:</span>
+                            <span id="player-shield-kinetic">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-explosive">EXPLOSIVE:</span>
+                            <span id="player-shield-explosive">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Armor Layer -->
+            <div class="layer-section">
+                <div class="layer-title">🛡️ ARMOR</div>
+                <div class="stat-row">
+                    <span class="stat-label">HP:</span>
+                    <span class="stat-value" id="player-armor-hp">0/0</span>
+                </div>
+                <div class="hp-bar">
+                    <div class="hp-bar-fill hp-bar-armor" id="player-armor-bar" style="width: 100%"></div>
+                    <div class="hp-bar-text" id="player-armor-text">100%</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.9em;">
+                    <div class="resistance-grid">
+                        <div class="resistance-item">
+                            <span class="damage-type-em">EM:</span>
+                            <span id="player-armor-em">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-thermal">THERMAL:</span>
+                            <span id="player-armor-thermal">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-kinetic">KINETIC:</span>
+                            <span id="player-armor-kinetic">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-explosive">EXPLOSIVE:</span>
+                            <span id="player-armor-explosive">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Structure Layer -->
+            <div class="layer-section">
+                <div class="layer-title">🏗️ STRUCTURE</div>
+                <div class="stat-row">
+                    <span class="stat-label">HP:</span>
+                    <span class="stat-value" id="player-structure-hp">0/0</span>
+                </div>
+                <div class="hp-bar">
+                    <div class="hp-bar-fill hp-bar-structure" id="player-structure-bar" style="width: 100%"></div>
+                    <div class="hp-bar-text" id="player-structure-text">100%</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.9em;">
+                    <div class="resistance-grid">
+                        <div class="resistance-item">
+                            <span class="damage-type-em">EM:</span>
+                            <span id="player-structure-em">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-thermal">THERMAL:</span>
+                            <span id="player-structure-thermal">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-kinetic">KINETIC:</span>
+                            <span id="player-structure-kinetic">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-explosive">EXPLOSIVE:</span>
+                            <span id="player-structure-explosive">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="buttons">
+                <div class="button-group">
+                    <div class="button-group-label">DAMAGE TESTS (10 DMG):</div>
+                    <div class="damage-buttons">
+                        <button onclick="dealDamage('player', 'em')">⚡ EM</button>
+                        <button onclick="dealDamage('player', 'thermal')">🔥 THERMAL</button>
+                        <button onclick="dealDamage('player', 'kinetic')">💥 KINETIC</button>
+                        <button onclick="dealDamage('player', 'explosive')">💣 EXPLOSIVE</button>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <div class="button-group-label">RESISTANCE MODIFIERS:</div>
+                    <div class="modifier-buttons">
+                        <button onclick="addResistance('player')">+ Add 50% EM Shield</button>
+                        <button onclick="removeResistance('player')">- Remove EM Shield</button>
+                        <button onclick="clearModifiers('player')">🗑️ Clear All Modifiers</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ENEMY PANEL -->
+        <div class="panel">
+            <h2>👾 ENEMY</h2>
+            
+            <div class="stats-grid">
+                <div class="stat-row">
+                    <span class="stat-label">TOTAL HP:</span>
+                    <span class="stat-value" id="enemy-total-hp">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">DIRTY FLAG:</span>
+                    <span class="stat-value" id="enemy-dirty">false</span>
+                </div>
+            </div>
+
+            <!-- Shield Layer -->
+            <div class="layer-section">
+                <div class="layer-title">⚡ SHIELD</div>
+                <div class="stat-row">
+                    <span class="stat-label">HP:</span>
+                    <span class="stat-value" id="enemy-shield-hp">0/0</span>
+                </div>
+                <div class="hp-bar">
+                    <div class="hp-bar-fill hp-bar-shield" id="enemy-shield-bar" style="width: 100%"></div>
+                    <div class="hp-bar-text" id="enemy-shield-text">100%</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.9em;">
+                    <div class="resistance-grid">
+                        <div class="resistance-item">
+                            <span class="damage-type-em">EM:</span>
+                            <span id="enemy-shield-em">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-thermal">THERMAL:</span>
+                            <span id="enemy-shield-thermal">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-kinetic">KINETIC:</span>
+                            <span id="enemy-shield-kinetic">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-explosive">EXPLOSIVE:</span>
+                            <span id="enemy-shield-explosive">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Armor Layer -->
+            <div class="layer-section">
+                <div class="layer-title">🛡️ ARMOR</div>
+                <div class="stat-row">
+                    <span class="stat-label">HP:</span>
+                    <span class="stat-value" id="enemy-armor-hp">0/0</span>
+                </div>
+                <div class="hp-bar">
+                    <div class="hp-bar-fill hp-bar-armor" id="enemy-armor-bar" style="width: 100%"></div>
+                    <div class="hp-bar-text" id="enemy-armor-text">100%</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.9em;">
+                    <div class="resistance-grid">
+                        <div class="resistance-item">
+                            <span class="damage-type-em">EM:</span>
+                            <span id="enemy-armor-em">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-thermal">THERMAL:</span>
+                            <span id="enemy-armor-thermal">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-kinetic">KINETIC:</span>
+                            <span id="enemy-armor-kinetic">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-explosive">EXPLOSIVE:</span>
+                            <span id="enemy-armor-explosive">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Structure Layer -->
+            <div class="layer-section">
+                <div class="layer-title">🏗️ STRUCTURE</div>
+                <div class="stat-row">
+                    <span class="stat-label">HP:</span>
+                    <span class="stat-value" id="enemy-structure-hp">0/0</span>
+                </div>
+                <div class="hp-bar">
+                    <div class="hp-bar-fill hp-bar-structure" id="enemy-structure-bar" style="width: 100%"></div>
+                    <div class="hp-bar-text" id="enemy-structure-text">100%</div>
+                </div>
+                <div style="margin-top: 10px; font-size: 0.9em;">
+                    <div class="resistance-grid">
+                        <div class="resistance-item">
+                            <span class="damage-type-em">EM:</span>
+                            <span id="enemy-structure-em">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-thermal">THERMAL:</span>
+                            <span id="enemy-structure-thermal">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-kinetic">KINETIC:</span>
+                            <span id="enemy-structure-kinetic">0%</span>
+                        </div>
+                        <div class="resistance-item">
+                            <span class="damage-type-explosive">EXPLOSIVE:</span>
+                            <span id="enemy-structure-explosive">0%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buttons -->
+            <div class="buttons">
+                <div class="button-group">
+                    <div class="button-group-label">DAMAGE TESTS (10 DMG):</div>
+                    <div class="damage-buttons">
+                        <button onclick="dealDamage('enemy', 'em')">⚡ EM</button>
+                        <button onclick="dealDamage('enemy', 'thermal')">🔥 THERMAL</button>
+                        <button onclick="dealDamage('enemy', 'kinetic')">💥 KINETIC</button>
+                        <button onclick="dealDamage('enemy', 'explosive')">💣 EXPLOSIVE</button>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <div class="button-group-label">RESISTANCE MODIFIERS:</div>
+                    <div class="modifier-buttons">
+                        <button onclick="addResistance('enemy')">+ Add 50% EM Shield</button>
+                        <button onclick="removeResistance('enemy')">- Remove EM Shield</button>
+                        <button onclick="clearModifiers('enemy')">🗑️ Clear All Modifiers</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEBUG PANEL -->
+        <div class="debug-panel">
+            <h2>🐛 DEBUG INFO</h2>
+            <div class="debug-item">
+                <strong>Last Action:</strong> <span id="debug-action" class="debug-highlight">None</span>
+            </div>
+            <div class="debug-item">
+                <strong>Dirty Flags Triggered:</strong> <span id="debug-dirty" class="debug-highlight">0</span>
+            </div>
+            <div class="debug-item">
+                <strong>Recalculations:</strong> <span id="debug-recalc" class="debug-highlight">0 (Not implemented)</span>
+            </div>
+            <div style="margin-top: 15px;">
+                <button class="reset-button" onclick="resetEntities()">🔄 RESET ENTITIES</button>
+            </div>
+            <div style="margin-top: 15px;">
+                <strong>Action Log:</strong>
+                <div class="log-output" id="action-log"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Required Scripts -->
+    <script src="../js/utils/Logger.js"></script>
+    <script src="../js/core/ECS.js"></script>
+    <script src="../js/data/DefenseData.js"></script>
+    <script src="../js/data/ShipData.js"></script>
+    <script src="../js/data/EnemyProfiles.js"></script>
+    <script src="../js/systems/DefenseSystem.js"></script>
+
+    <!-- Main Test Script -->
+    <script>
+        // Disable console spam - create a minimal logger
+        const logger = {
+            debug: () => {},
+            info: () => {},
+            warn: () => {},
+            error: () => {},
+            log: () => {}
+        };
+
+        // Initialize World and DefenseSystem
+        let world;
+        let defenseSystem;
+        let playerEntity;
+        let enemyEntity;
+        let dirtyFlagCount = 0;
+        let actionLogEntries = [];
+
+        function logAction(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            actionLogEntries.unshift(`[${timestamp}] ${message}`);
+            if (actionLogEntries.length > 10) {
+                actionLogEntries.pop();
+            }
+            document.getElementById('action-log').innerHTML = actionLogEntries.join('<br>');
+            document.getElementById('debug-action').textContent = message;
+        }
+
+        function createPlayerEntity() {
+            const player = world.createEntity('player');
+            player.statsDirty = false;
+
+            // Create defense component using ShipData
+            const shipId = 'ION_FRIGATE';
+            const shipInfo = window.ShipData?.SHIPS?.[shipId];
+            
+            if (shipInfo && shipInfo.baseStats) {
+                const layerResistances = window.DefenseData?.LAYER_RESISTANCES || window.LAYER_RESISTANCES || {
+                    shield: { em: 0, thermal: 0.2, kinetic: 0.4, explosive: 0.5 },
+                    armor: { em: 0.5, thermal: 0.35, kinetic: 0.25, explosive: 0.1 },
+                    structure: { em: 0.3, thermal: 0, kinetic: 0.15, explosive: 0.2 }
+                };
+                
+                const defense = {
+                    shield: {
+                        current: shipInfo.baseStats.maxShield,
+                        max: shipInfo.baseStats.maxShield,
+                        regen: shipInfo.baseStats.shieldRegen,
+                        regenDelay: 0,
+                        regenDelayMax: 3,
+                        baseResistances: { ...layerResistances.shield },
+                        bonusResistances: {}
+                    },
+                    armor: {
+                        current: shipInfo.baseStats.maxArmor,
+                        max: shipInfo.baseStats.maxArmor,
+                        regen: 0,
+                        regenDelay: 0,
+                        regenDelayMax: 0,
+                        baseResistances: { ...layerResistances.armor },
+                        bonusResistances: {}
+                    },
+                    structure: {
+                        current: shipInfo.baseStats.maxStructure,
+                        max: shipInfo.baseStats.maxStructure,
+                        regen: 0.5,
+                        regenDelay: 0,
+                        regenDelayMax: 0,
+                        baseResistances: { ...layerResistances.structure },
+                        bonusResistances: {}
+                    }
+                };
+                player.addComponent('defense', defense);
+            }
+
+            return player;
+        }
+
+        function createEnemyEntity() {
+            const enemy = world.createEntity('enemy');
+            enemy.statsDirty = false;
+
+            // Create defense component using EnemyProfiles
+            const profileId = 'FIGHTER';
+            if (window.EnemyProfiles && window.EnemyProfiles.PROFILES[profileId]) {
+                const profile = window.EnemyProfiles.PROFILES[profileId];
+                const defense = window.EnemyProfiles.createEnemyDefense(profile);
+                enemy.addComponent('defense', defense);
+            }
+
+            return enemy;
+        }
+
+        function updateEntityDisplay(entityType) {
+            const entity = entityType === 'player' ? playerEntity : enemyEntity;
+            const defense = entity.getComponent('defense');
+            
+            if (!defense) return;
+
+            const prefix = entityType;
+
+            // Update dirty flag
+            document.getElementById(`${prefix}-dirty`).textContent = entity.statsDirty ? 'TRUE' : 'false';
+            document.getElementById(`${prefix}-dirty`).style.color = entity.statsDirty ? '#ff00ff' : '#00ff00';
+
+            // Calculate total HP
+            const totalHP = Math.round(defense.shield.current + defense.armor.current + defense.structure.current);
+            const maxHP = defense.shield.max + defense.armor.max + defense.structure.max;
+            document.getElementById(`${prefix}-total-hp`).textContent = `${totalHP}/${Math.round(maxHP)}`;
+
+            // Update each layer
+            updateLayerDisplay(prefix, 'shield', defense.shield);
+            updateLayerDisplay(prefix, 'armor', defense.armor);
+            updateLayerDisplay(prefix, 'structure', defense.structure);
+        }
+
+        function updateLayerDisplay(prefix, layerName, layer) {
+            // Update HP values
+            const current = Math.round(layer.current);
+            const max = Math.round(layer.max);
+            const percent = max > 0 ? (layer.current / layer.max * 100) : 0;
+            
+            document.getElementById(`${prefix}-${layerName}-hp`).textContent = `${current}/${max}`;
+            document.getElementById(`${prefix}-${layerName}-bar`).style.width = `${percent}%`;
+            document.getElementById(`${prefix}-${layerName}-text`).textContent = `${Math.round(percent)}%`;
+
+            // Update resistances (base + bonus)
+            const damageTypes = ['em', 'thermal', 'kinetic', 'explosive'];
+            damageTypes.forEach(type => {
+                const baseRes = (layer.baseResistances && layer.baseResistances[type]) || 0;
+                const bonusRes = (layer.bonusResistances && layer.bonusResistances[type]) || 0;
+                const totalRes = baseRes + bonusRes;
+                const displayValue = (totalRes * 100).toFixed(0);
+                
+                const element = document.getElementById(`${prefix}-${layerName}-${type}`);
+                if (bonusRes !== 0) {
+                    element.textContent = `${displayValue}% (${(baseRes * 100).toFixed(0)}+${(bonusRes * 100).toFixed(0)})`;
+                    element.style.color = '#ff00ff';
+                } else {
+                    element.textContent = `${displayValue}%`;
+                    element.style.color = '#00ff00';
+                }
+            });
+        }
+
+        function dealDamage(entityType, damageType) {
+            const entity = entityType === 'player' ? playerEntity : enemyEntity;
+            const damageAmount = 10;
+
+            // Create DamagePacket
+            const packet = new DamagePacket(damageAmount, damageType);
+            
+            // Apply damage
+            const result = defenseSystem.applyDamage(entity, packet);
+            
+            // Log action
+            const typeUpper = damageType.toUpperCase();
+            logAction(`${entityType.toUpperCase()} took ${damageAmount} ${typeUpper} damage → ${result.dealt.toFixed(1)} dealt`);
+            
+            // Update display
+            updateEntityDisplay(entityType);
+        }
+
+        function addResistance(entityType) {
+            const entity = entityType === 'player' ? playerEntity : enemyEntity;
+            
+            // Check dirty flag before
+            const wasDirty = entity.statsDirty;
+            
+            // Add 50% EM resistance to shield
+            defenseSystem.addResistanceModifier(entity, 'shield', 'em', 0.5);
+            
+            // Check if dirty flag was triggered
+            if (!wasDirty && entity.statsDirty) {
+                dirtyFlagCount++;
+                document.getElementById('debug-dirty').textContent = dirtyFlagCount;
+            }
+            
+            logAction(`${entityType.toUpperCase()} gained +50% EM Shield resistance (Dirty: ${entity.statsDirty})`);
+            updateEntityDisplay(entityType);
+        }
+
+        function removeResistance(entityType) {
+            const entity = entityType === 'player' ? playerEntity : enemyEntity;
+            
+            // Check dirty flag before
+            const wasDirty = entity.statsDirty;
+            
+            // Remove 50% EM resistance from shield
+            defenseSystem.removeResistanceModifier(entity, 'shield', 'em', 0.5);
+            
+            // Check if dirty flag was triggered
+            if (!wasDirty && entity.statsDirty) {
+                dirtyFlagCount++;
+                document.getElementById('debug-dirty').textContent = dirtyFlagCount;
+            }
+            
+            logAction(`${entityType.toUpperCase()} lost -50% EM Shield resistance (Dirty: ${entity.statsDirty})`);
+            updateEntityDisplay(entityType);
+        }
+
+        function clearModifiers(entityType) {
+            const entity = entityType === 'player' ? playerEntity : enemyEntity;
+            
+            // Check dirty flag before
+            const wasDirty = entity.statsDirty;
+            
+            // Clear all modifiers on all layers
+            defenseSystem.clearResistanceModifiers(entity, 'shield');
+            defenseSystem.clearResistanceModifiers(entity, 'armor');
+            defenseSystem.clearResistanceModifiers(entity, 'structure');
+            
+            // Check if dirty flag was triggered
+            if (!wasDirty && entity.statsDirty) {
+                dirtyFlagCount++;
+                document.getElementById('debug-dirty').textContent = dirtyFlagCount;
+            }
+            
+            logAction(`${entityType.toUpperCase()} cleared all resistance modifiers (Dirty: ${entity.statsDirty})`);
+            updateEntityDisplay(entityType);
+        }
+
+        function resetEntities() {
+            // Reset counters
+            dirtyFlagCount = 0;
+            actionLogEntries = [];
+            
+            // Clear world and recreate
+            world.clear();
+            
+            // Create fresh entities
+            playerEntity = createPlayerEntity();
+            enemyEntity = createEnemyEntity();
+            
+            // Update displays
+            updateEntityDisplay('player');
+            updateEntityDisplay('enemy');
+            
+            // Clear debug info
+            document.getElementById('debug-action').textContent = 'Entities Reset';
+            document.getElementById('debug-dirty').textContent = '0';
+            document.getElementById('action-log').innerHTML = '';
+            
+            logAction('All entities reset to initial state');
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Initialize ECS
+            world = new World();
+            defenseSystem = new DefenseSystem(world);
+            
+            // Create entities
+            playerEntity = createPlayerEntity();
+            enemyEntity = createEnemyEntity();
+            
+            // Initial display update
+            updateEntityDisplay('player');
+            updateEntityDisplay('enemy');
+            
+            logAction('Defense System Sandbox initialized');
+        });
+    </script>
+</body>
+</html>
