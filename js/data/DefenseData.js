@@ -199,3 +199,55 @@ function calculateOverflow(overflow, nextLayerResistance) {
     // It needs to be adjusted for the next layer's resistance
     return overflow / (1 - nextLayerResistance);
 }
+
+/**
+ * DamagePacket class
+ * Encapsulates all damage-related information for applying damage to entities
+ * This is the ONLY way damage should flow through the DefenseSystem
+ */
+class DamagePacket {
+    /**
+     * Create a damage packet
+     * @param {number} damage - Base damage amount
+     * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
+     * @param {number} critMultiplier - Critical hit multiplier (default: 1.0)
+     * @param {number} shieldPenetration - Shield penetration percentage (0-1, default: 0)
+     * @param {number} armorPenetration - Armor penetration percentage (0-1, default: 0)
+     */
+    constructor(damage, damageType = 'kinetic', critMultiplier = 1.0, shieldPenetration = 0, armorPenetration = 0) {
+        this.damage = damage;
+        this.damageType = damageType;
+        this.critMultiplier = critMultiplier;
+        this.shieldPenetration = Math.max(0, Math.min(1, shieldPenetration)); // Clamp 0-1
+        this.armorPenetration = Math.max(0, Math.min(1, armorPenetration)); // Clamp 0-1
+    }
+
+    /**
+     * Get the final damage after applying crit multiplier
+     * @returns {number} Final damage
+     */
+    getFinalDamage() {
+        return this.damage * this.critMultiplier;
+    }
+
+    /**
+     * Static factory method for simple damage (most common case)
+     * @param {number} damage - Damage amount
+     * @param {string} damageType - Damage type
+     * @returns {DamagePacket} New damage packet
+     */
+    static simple(damage, damageType = 'kinetic') {
+        return new DamagePacket(damage, damageType);
+    }
+
+    /**
+     * Static factory method for critical hit damage
+     * @param {number} damage - Base damage amount
+     * @param {string} damageType - Damage type
+     * @param {number} critMultiplier - Critical multiplier
+     * @returns {DamagePacket} New damage packet with crit
+     */
+    static crit(damage, damageType, critMultiplier) {
+        return new DamagePacket(damage, damageType, critMultiplier);
+    }
+}

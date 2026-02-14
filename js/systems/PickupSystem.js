@@ -273,10 +273,16 @@ class PickupSystem {
         
         // Heal player defense layers on level up (20% of each layer)
         const defense = player.getComponent('defense');
-        if (defense) {
-            defense.shield.current = Math.min(defense.shield.current + defense.shield.max * 0.2, defense.shield.max);
-            defense.armor.current = Math.min(defense.armor.current + defense.armor.max * 0.2, defense.armor.max);
-            defense.structure.current = Math.min(defense.structure.current + defense.structure.max * 0.2, defense.structure.max);
+        if (defense && this.world.defenseSystem) {
+            // Use DefenseSystem to heal layers (the only authority for defense modifications)
+            const healAmount = {
+                shield: defense.shield.max * 0.2,
+                armor: defense.armor.max * 0.2,
+                structure: defense.structure.max * 0.2
+            };
+            this.world.defenseSystem.healLayer(player, 'shield', healAmount.shield);
+            this.world.defenseSystem.healLayer(player, 'armor', healAmount.armor);
+            this.world.defenseSystem.healLayer(player, 'structure', healAmount.structure);
             logger.debug('PickupSystem', 'Healed 20% of all defense layers on level up');
         }
         

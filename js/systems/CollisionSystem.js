@@ -371,26 +371,31 @@ class CollisionSystem {
     damagePlayer(player, damage, damageType = 'kinetic') {
         const playerComp = player.getComponent('player');
         const defense = player.getComponent('defense');
+        const health = player.getComponent('health');
         
-        if (!health || !playerComp) {
-            console.error('[CollisionSystem] damagePlayer: Missing health or player component');
+        if (!playerComp) {
+            console.error('[CollisionSystem] damagePlayer: Missing player component');
             return;
         }
         
         // God mode check - no damage taken
-        if (health.godMode) {
+        if (health && health.godMode) {
             console.warn('[CollisionSystem] damagePlayer: God mode is active! No damage taken.');
             return;
         }
 
         console.log(`[CollisionSystem] damagePlayer: Applying ${damage} ${damageType} damage`);
 
-        // Try new defense system first
+        // Apply damage through DefenseSystem (the only authority for defense modifications)
         if (defense && this.world && this.world.defenseSystem) {
             const result = this.world.defenseSystem.applyDamage(player, damage, damageType);
-            this.gameState.stats.damageTaken += result.totalDamage;
+            this.gameState.stats.damageTaken += result.dealt;
             
-            console.log(`[CollisionSystem] Damage applied via DefenseSystem. Total damage: ${result.totalDamage}, Layers: ${result.layersDamaged.join(', ')}`);
+            // Log with actual dealt damage and layers hit
+            const layersInfo = Object.entries(result.layers || {})
+                .map(([layer, dmg]) => `${layer}:${dmg.toFixed(1)}`)
+                .join('+');
+            logger.info('Collision', `Player defense result: ${result.dealt.toFixed(1)} damage dealt (${result.incoming.toFixed(1)} incoming) to ${layersInfo || result.layer}${result.destroyed ? ' - PLAYER DESTROYED' : ''}`);
             
             // Visual feedback based on which layers were hit
             if (this.screenEffects) {
@@ -408,115 +413,17 @@ class CollisionSystem {
             if (this.audioManager && this.audioManager.initialized) {
                 this.audioManager.playSFX('hit', 1.2);
             }
-
-            // Try to access DefenseSystem through multiple paths
-            const defenseSystem = (this.world && this.world.defenseSystem) || 
-                                 (this.game && this.game.systems && this.game.systems.defense) ||
-                                 this.defenseSystem;
-
-            if (defenseSystem && typeof defenseSystem.applyDamage === 'function') {
-                const result = defenseSystem.applyDamage(player, damage, damageType);
-                this.gameState.stats.damageTaken += result.dealt;
-                
-                // Log with actual dealt damage and layers hit
-                const layersInfo = Object.entries(result.layers || {})
-                    .map(([layer, dmg]) => `${layer}:${dmg.toFixed(1)}`)
-                    .join('+');
-                logger.info('Collision', `Player defense result: ${result.dealt.toFixed(1)} damage dealt (${result.incoming.toFixed(1)} incoming) to ${layersInfo || result.layer}${result.destroyed ? ' - PLAYER DESTROYED' : ''}`);
-                
-                // Visual feedback based on which layers were hit
-                if (this.screenEffects) {
-                    if (result.layersDamaged.includes('shield')) {
-                        this.screenEffects.flash('#00FFFF', 0.2, 0.1);
-                    } else if (result.layersDamaged.includes('armor')) {
-                        this.screenEffects.flash('#8B4513', 0.25, 0.12);
-                    } else if (result.layersDamaged.includes('structure')) {
-                        this.screenEffects.shake(5, 0.2);
-                        this.screenEffects.flash('#FF0000', 0.3, 0.15);
-                    }
+            
+            // Check for death
+            if (result.destroyed) {
+                // Set health to 0 if it exists for backward compatibility
+                if (health) {
+                    health.current = 0;
                 }
-                
-                // Play hit sound
-                if (this.audioManager && this.audioManager.initialized) {
-                    this.audioManager.playSFX('hit', 1.2);
-                }
-                
-                // Check for death
-                if (result.destroyed) {
-                    // Set health to 0 if it exists for backward compatibility
-                    const health = player.getComponent('health');
-                    if (health) {
-                        health.current = 0;
-                    }
-                    logger.warn('Collision', 'Player health set to 0 - GAME OVER');
-                }
-                return;
-            } else if (this.world && this.world.events && this.world.events.emit) {
-                // Fallback: emit event so another system can handle
-                logger.debug('Collision', 'DefenseSystem not accessible, emitting requestPlayerDamage event');
-                this.world.events.emit('requestPlayerDamage', { 
-                    playerId: player.id, 
-                    damage, 
-                    damageType 
-                });
-                return;
+                logger.warn('Collision', 'Player structure depleted - GAME OVER');
             }
-        }
-
-        // Legacy health system fallback (only if defense doesn't exist)
-        const health = player.getComponent('health');
-        if (!health) {
-            logger.warn('Collision', 'Player has no defense or health component - cannot apply damage');
-            return;
-        }
-
-        // God mode check for legacy health system
-        if (health.godMode) {
-            logger.debug('Collision', 'Player in god mode - damage ignored');
-            return;
-        }
-
-        logger.debug('Collision', 'Using legacy health system for player damage');
-        
-        const shield = player.getComponent('shield');
-        let remainingDamage = damage;
-        
-        // Shield absorbs damage first
-        if (shield && shield.current > 0) {
-            const shieldDamage = Math.min(shield.current, remainingDamage);
-            shield.current -= shieldDamage;
-            remainingDamage -= shieldDamage;
-            
-            // Reset shield regen delay when damaged
-            shield.regenDelay = shield.regenDelayMax;
-            
-            // Visual feedback for shield hit
-            if (this.screenEffects && shieldDamage > 0) {
-                this.screenEffects.flash('#00FFFF', 0.2, 0.1);
-            }
-        }
-        
-        // Remaining damage goes to health (with armor reduction)
-        if (remainingDamage > 0) {
-            const actualDamage = Math.max(1, remainingDamage - playerComp.stats.armor);
-            health.current -= actualDamage;
-            this.gameState.stats.damageTaken += actualDamage;
-            
-            // Play hit sound
-            if (this.audioManager && this.audioManager.initialized) {
-                this.audioManager.playSFX('hit', 1.2);
-            }
-            
-            // Screen shake and flash on health hit
-            if (this.screenEffects) {
-                this.screenEffects.shake(5, 0.2);
-                this.screenEffects.flash('#FF0000', 0.3, 0.15);
-            }
-        }
-
-        if (health.current <= 0) {
-            health.current = 0;
-            // Game over handled by game loop
+        } else {
+            logger.error('Collision', 'DefenseSystem not available - cannot apply player damage');
         }
     }
 
@@ -1108,16 +1015,10 @@ class CollisionSystem {
                 
                 if (distance < this.BLACK_HOLE_CENTER_KILL_RADIUS) {
                     // INSTANT KILL - Enemy is in the center of the black hole
-                    const enemyHealth = enemy.getComponent('health');
-                    const enemyDefense = enemy.getComponent('defense');
-                    if (enemyHealth) {
-                        enemyHealth.current = 0; // Instant death
-                        console.log('%c[Black Hole] Enemy sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
-                    } else if (enemyDefense) {
-                        // Kill all defense layers
-                        enemyDefense.shield.current = 0;
-                        enemyDefense.armor.current = 0;
-                        enemyDefense.structure.current = 0;
+                    // Apply massive damage through DefenseSystem (the only authority)
+                    if (this.world && this.world.defenseSystem) {
+                        // Apply 999999 damage to ensure instant kill through DefenseSystem
+                        this.world.defenseSystem.applyDamage(enemy, 999999, 'kinetic');
                         console.log('%c[Black Hole] Enemy sucked into center - INSTANT DEATH!', 'color: #9400D3; font-weight: bold');
                     }
                 } else if (distance < blackHoleComp.damageRadius) {

@@ -90,17 +90,19 @@ class DefenseSystem {
     }
 
     /**
-     * Apply damage to an entity's defense layers
+     * Apply damage to an entity's defense layers using DamagePacket
+     * This is the ONLY method that should modify shield, armor, and structure
      * @param {Entity} entity - Target entity
-     * @param {number} rawDamage - Raw damage before resistance
-     * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
+     * @param {DamagePacket|number} damagePacketOrAmount - DamagePacket or raw damage (for backward compatibility)
+     * @param {string} damageType - Damage type (for backward compatibility when using raw number)
      * @returns {Object} Damage result { incoming, dealt, layers, layer, destroyed }
      */
-    applyDamage(entity, rawDamage, damageType = 'kinetic') {
+    applyDamage(entity, damagePacketOrAmount, damageType = 'kinetic') {
         // P0 FIX: Don't process damage if game is not running
         if (this.game && this.game.state.currentState !== 'RUNNING') {
+            const incomingDamage = typeof damagePacketOrAmount === 'number' ? damagePacketOrAmount : damagePacketOrAmount.getFinalDamage();
             return {
-                incoming: rawDamage,
+                incoming: incomingDamage,
                 dealt: 0,
                 layers: {},
                 layer: '',
@@ -108,43 +110,43 @@ class DefenseSystem {
                 totalDamage: 0,
                 layersDamaged: []
             };
+        }
+
+        // Support both DamagePacket and legacy (number, damageType) signatures
+        let damagePacket;
+        if (typeof damagePacketOrAmount === 'number') {
+            // Legacy call: applyDamage(entity, damage, damageType)
+            damagePacket = new DamagePacket(damagePacketOrAmount, damageType);
+        } else {
+            // New call: applyDamage(entity, damagePacket)
+            damagePacket = damagePacketOrAmount;
         }
 
         const defense = entity.getComponent('defense');
         if (!defense) {
-            // Fallback to old health system if no defense component
-            const health = entity.getComponent('health');
-            if (health) {
-                health.current -= rawDamage;
-                logger.debug('DefenseSystem', `Applied ${rawDamage} damage to ${entity.type} health (${health.current}/${health.max})`);
-                return {
-                    incoming: rawDamage,
-                    dealt: rawDamage,
-                    layers: { health: rawDamage },
-                    layer: 'health',
-                    destroyed: health.current <= 0,
-                    // Legacy compatibility
-                    totalDamage: rawDamage,
-                    layersDamaged: ['health']
-                };
-            }
+            // No defense component found - entity cannot take damage
+            logger.warn('DefenseSystem', `Entity ${entity.type} has no defense component - cannot apply damage`);
             return { 
-                incoming: rawDamage,
+                incoming: damagePacket.getFinalDamage(),
                 dealt: 0,
                 layers: {},
                 layer: '',
                 destroyed: false,
-                // Legacy compatibility
                 totalDamage: 0,
                 layersDamaged: []
             };
         }
 
+        // Apply crit multiplier to get final damage
+        const rawDamage = damagePacket.getFinalDamage();
+
         // Log damage calculation start
-        logger.debug('DefenseSystem', `Applying ${rawDamage} ${damageType} damage to ${entity.type}`, {
-            shield: `${defense.shield.current}/${defense.shield.max}`,
-            armor: `${defense.armor.current}/${defense.armor.max}`,
-            structure: `${defense.structure.current}/${defense.structure.max}`
+        logger.debug('DefenseSystem', `Applying ${rawDamage.toFixed(1)} ${damagePacket.damageType} damage to ${entity.type}${damagePacket.critMultiplier > 1 ? ' (CRIT x' + damagePacket.critMultiplier + ')' : ''}`, {
+            shield: `${defense.shield.current.toFixed(1)}/${defense.shield.max}`,
+            armor: `${defense.armor.current.toFixed(1)}/${defense.armor.max}`,
+            structure: `${defense.structure.current.toFixed(1)}/${defense.structure.max}`,
+            shieldPen: damagePacket.shieldPenetration > 0 ? `${(damagePacket.shieldPenetration * 100).toFixed(0)}%` : 'none',
+            armorPen: damagePacket.armorPenetration > 0 ? `${(damagePacket.armorPenetration * 100).toFixed(0)}%` : 'none'
         });
 
         let remainingDamage = rawDamage;
@@ -155,18 +157,24 @@ class DefenseSystem {
 
         // Layer order: shield -> armor -> structure
         const layers = [
-            { name: 'shield', data: defense.shield },
-            { name: 'armor', data: defense.armor },
-            { name: 'structure', data: defense.structure }
+            { name: 'shield', data: defense.shield, penetration: damagePacket.shieldPenetration },
+            { name: 'armor', data: defense.armor, penetration: damagePacket.armorPenetration },
+            { name: 'structure', data: defense.structure, penetration: 0 } // Structure cannot be penetrated
         ];
 
         for (const layer of layers) {
             if (remainingDamage <= 0) break;
             if (layer.data.current <= 0) continue;
 
-            // Apply resistance from top-level resistances object
-            const resistance = (defense.resistances && defense.resistances[layer.name] && defense.resistances[layer.name][damageType]) || 0;
-            const damageAfterResist = this.applyResistance(remainingDamage, resistance);
+            // Get base resistance from layer
+            const baseResistance = (layer.data.resistances && layer.data.resistances[damagePacket.damageType]) || 0;
+            
+            // Apply penetration: reduces effective resistance
+            // Penetration directly reduces resistance (e.g., 50% penetration = half resistance)
+            const effectiveResistance = Math.max(0, baseResistance * (1 - layer.penetration));
+            
+            // Apply resistance to calculate damage after resist
+            const damageAfterResist = this.applyResistance(remainingDamage, effectiveResistance);
 
             // Apply damage to layer
             const damageDealt = Math.min(layer.data.current, damageAfterResist);
@@ -182,7 +190,9 @@ class DefenseSystem {
             damageLog.push({
                 layer: layer.name,
                 rawDamage: remainingDamage.toFixed(1),
-                resistance: (resistance * 100).toFixed(0) + '%',
+                baseResistance: (baseResistance * 100).toFixed(0) + '%',
+                penetration: layer.penetration > 0 ? (layer.penetration * 100).toFixed(0) + '%' : 'none',
+                effectiveResistance: (effectiveResistance * 100).toFixed(0) + '%',
                 damageAfterResist: damageAfterResist.toFixed(1),
                 damageDealt: damageDealt.toFixed(1),
                 before: beforeCurrent.toFixed(1),
@@ -196,8 +206,9 @@ class DefenseSystem {
                     targetId: entity.id,
                     layerHit: layer.name,
                     finalDamage: damageDealt,
-                    damageType: damageType,
-                    resistUsed: resistance,
+                    damageType: damagePacket.damageType,
+                    resistUsed: effectiveResistance,
+                    isCrit: damagePacket.critMultiplier > 1,
                     x: pos ? pos.x : 0,
                     y: pos ? pos.y : 0
                 });
@@ -213,7 +224,7 @@ class DefenseSystem {
             if (overflow > 0) {
                 // Overflow needs to be recalculated for next layer's resistance
                 // We need to find the raw damage that would cause this overflow
-                remainingDamage = this.calculateOverflow(overflow, resistance);
+                remainingDamage = this.calculateOverflow(overflow, effectiveResistance);
             } else {
                 remainingDamage = 0;
             }
@@ -222,15 +233,26 @@ class DefenseSystem {
         // Check if entity is destroyed (structure depleted)
         const destroyed = defense.structure.current <= 0;
         
+        // Emit entityDestroyed event if structure <= 0
+        if (destroyed && this.world.events) {
+            logger.warn('DefenseSystem', `Entity ${entity.type} destroyed by ${damagePacket.damageType} damage`);
+            this.world.events.emit('entityDestroyed', {
+                entityId: entity.id,
+                entityType: entity.type,
+                killedBy: damagePacket.damageType
+            });
+        }
+        
         // Calculate total damage dealt
         const totalDealt = rawDamage - remainingDamage;
 
         // Log damage summary
         if (damageLog.length > 0) {
-            const summary = damageLog.map(d => 
-                `${d.layer}[${d.before}→${d.after}]: ${d.rawDamage}dmg * (1-${d.resistance}) = ${d.damageAfterResist} → dealt ${d.damageDealt}`
-            ).join(' | ');
-            logger.info('DefenseSystem', `${entity.type} took ${damageType} damage: ${summary}${destroyed ? ' → DESTROYED' : ''}`);
+            const summary = damageLog.map(d => {
+                const penetrationInfo = d.penetration !== 'none' ? ` pen:${d.penetration}` : '';
+                return `${d.layer}[${d.before}→${d.after}]: ${d.rawDamage}dmg * (1-${d.effectiveResistance}${penetrationInfo}) = ${d.damageAfterResist} → dealt ${d.damageDealt}`;
+            }).join(' | ');
+            logger.info('DefenseSystem', `${entity.type} took ${damagePacket.damageType} damage: ${summary}${destroyed ? ' → DESTROYED' : ''}`);
         }
 
         return {
@@ -243,7 +265,7 @@ class DefenseSystem {
             // Legacy compatibility (keep for backward compat)
             totalDamage: totalDealt,
             layersDamaged,
-            damageType
+            damageType: damagePacket.damageType
         };
     }
 
