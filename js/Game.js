@@ -487,11 +487,7 @@ class Game {
         // Add shield component (starts at 0, will be replaced by defense system)
         this.player.addComponent('shield', Components.Shield(0, 0, 0));
         
-        const playerComp = Components.Player();
-        playerComp.speed = shipData.baseStats.speed;
-        
-        // Use the ship ID directly (no more legacy mapping)
-        playerComp.shipId = shipId;
+        // Ship ID will be set in player component below
         console.log(`[Game] Player ship: ${shipId}`);
         
         this.player.addComponent('defense', defense);
