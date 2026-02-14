@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>UI Showcase - Space InZader Enhanced UI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2a 100%);
+            color: #0ff;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border: 2px solid #0ff;
+            border-radius: 10px;
+        }
+        h1 {
+            color: #0ff;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px #0ff;
+            font-size: 36px;
+        }
+        h2 {
+            color: #f0f;
+            margin: 30px 0 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f0f;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .ui-panel {
+            background: rgba(0, 20, 40, 0.6);
+            border: 2px solid #0af;
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .ui-panel h3 {
+            color: #0af;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        /* Defense Layers Styles */
+        .defense-layers {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .defense-layer {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .layer-label {
+            min-width: 120px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .layer-bar {
+            flex: 1;
+            height: 25px;
+            background: #111;
+            border: 2px solid #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .layer-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        .shield-fill {
+            background: linear-gradient(90deg, #00BFFF, #0080FF);
+        }
+        .armor-fill {
+            background: linear-gradient(90deg, #8B4513, #654321);
+        }
+        .structure-fill {
+            background: linear-gradient(90deg, #DC143C, #8B0000);
+        }
+        .layer-value {
+            min-width: 80px;
+            text-align: right;
+            font-size: 14px;
+        }
+        
+        /* Heat Gauge Styles */
+        .heat-gauge {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .heat-label {
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .heat-bar {
+            height: 30px;
+            background: #111;
+            border: 2px solid #333;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .heat-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        .heat-value {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .heat-warning {
+            text-align: center;
+            font-weight: bold;
+            color: #ff0;
+            animation: blink 0.5s infinite;
+        }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+        @keyframes overheat-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Weapon Damage Type Styles */
+        .weapon-damage-type {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .damage-type-label {
+            font-size: 12px;
+            color: #aaa;
+        }
+        .damage-type-indicator {
+            padding: 15px 30px;
+            border: 3px solid #fff;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        /* Damage Type Colors */
+        .damage-types-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .damage-type-card {
+            padding: 15px;
+            border: 2px solid;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .damage-type-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px currentColor;
+        }
+        .damage-type-card.em {
+            border-color: #00FFFF;
+            color: #00FFFF;
+        }
+        .damage-type-card.thermal {
+            border-color: #FF8C00;
+            color: #FF8C00;
+        }
+        .damage-type-card.kinetic {
+            border-color: #FFFFFF;
+            color: #FFFFFF;
+        }
+        .damage-type-card.explosive {
+            border-color: #FF0000;
+            color: #FF0000;
+        }
+        .damage-type-card .symbol {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        .damage-type-card .name {
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        /* Resistance Indicators */
+        .resistance-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        .resistance-card {
+            padding: 20px;
+            border: 2px solid;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .resistance-card.weak {
+            border-color: #00FF00;
+            color: #00FF00;
+        }
+        .resistance-card.normal {
+            border-color: #FFFF00;
+            color: #FFFF00;
+        }
+        .resistance-card.resistant {
+            border-color: #FF0000;
+            color: #FF0000;
+        }
+        .resistance-card .symbol {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .resistance-card .text {
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #0a2040;
+            color: #0ff;
+            border: 2px solid #0ff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #0ff;
+            color: #000;
+            box-shadow: 0 0 15px #0ff;
+        }
+        
+        /* Canvas Demo */
+        .canvas-demo {
+            background: #000;
+            border: 2px solid #0af;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Space InZader - Enhanced UI Showcase</h1>
+        
+        <h2>1. 3-Layer Defense System</h2>
+        <div class="grid">
+            <div class="ui-panel">
+                <h3>Défense à 3 Couches</h3>
+                <div id="defense-ui-container"></div>
+                <div class="controls">
+                    <button onclick="damageLayer('shield', 30)">Dégâts Shield</button>
+                    <button onclick="damageLayer('armor', 40)">Dégâts Armor</button>
+                    <button onclick="damageLayer('structure', 25)">Dégâts Structure</button>
+                    <button onclick="resetDefense()">Réinitialiser</button>
+                </div>
+            </div>
+            
+            <div class="ui-panel">
+                <h3>Jauge de Chaleur</h3>
+                <div id="heat-ui-container"></div>
+                <div class="controls">
+                    <button onclick="addHeat(20)">+20% Heat</button>
+                    <button onclick="addHeat(50)">+50% Heat</button>
+                    <button onclick="triggerOverheat()">Surchauffe</button>
+                    <button onclick="resetHeat()">Réinitialiser</button>
+                </div>
+            </div>
+        </div>
+        
+        <h2>2. Types de Dégâts</h2>
+        <div class="grid">
+            <div class="ui-panel">
+                <h3>Type d'Arme Actuel</h3>
+                <div id="weapon-type-container"></div>
+                <div class="damage-types-grid" style="margin-top: 20px;">
+                    <div class="damage-type-card em" onclick="switchDamageType('em')">
+                        <div class="symbol">✧</div>
+                        <div class="name">EM</div>
+                        <div style="font-size: 12px; margin-top: 5px;">Anti-Bouclier</div>
+                    </div>
+                    <div class="damage-type-card thermal" onclick="switchDamageType('thermal')">
+                        <div class="symbol">✹</div>
+                        <div class="name">THERMAL</div>
+                        <div style="font-size: 12px; margin-top: 5px;">Anti-Structure</div>
+                    </div>
+                    <div class="damage-type-card kinetic" onclick="switchDamageType('kinetic')">
+                        <div class="symbol">⦿</div>
+                        <div class="name">KINETIC</div>
+                        <div style="font-size: 12px; margin-top: 5px;">Anti-Armure</div>
+                    </div>
+                    <div class="damage-type-card explosive" onclick="switchDamageType('explosive')">
+                        <div class="symbol">💥</div>
+                        <div class="name">EXPLOSIVE</div>
+                        <div style="font-size: 12px; margin-top: 5px;">Polyvalent</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="ui-panel">
+                <h3>Indicateurs de Résistance Ennemie</h3>
+                <p style="font-size: 14px; margin-bottom: 15px; color: #aaa;">
+                    Indique la faiblesse/résistance de l'ennemi au type de dégât actuel
+                </p>
+                <div class="resistance-grid">
+                    <div class="resistance-card weak">
+                        <div class="symbol">▼</div>
+                        <div class="text">FAIBLE</div>
+                        <div style="font-size: 12px; margin-top: 5px;">≤15% resist</div>
+                    </div>
+                    <div class="resistance-card normal">
+                        <div class="symbol">■</div>
+                        <div class="text">NORMAL</div>
+                        <div style="font-size: 12px; margin-top: 5px;">15-40% resist</div>
+                    </div>
+                    <div class="resistance-card resistant">
+                        <div class="symbol">▲</div>
+                        <div class="text">RÉSISTANT</div>
+                        <div style="font-size: 12px; margin-top: 5px;">≥40% resist</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <h2>3. Floating Damage Text & Layer Notifications (Canvas Demo)</h2>
+        <div class="ui-panel">
+            <h3>Démonstration Visuelle</h3>
+            <canvas id="demoCanvas" class="canvas-demo" width="800" height="400"></canvas>
+            <div class="controls">
+                <button onclick="spawnDamageText('em', 50)">EM Damage</button>
+                <button onclick="spawnDamageText('thermal', 75)">Thermal Damage</button>
+                <button onclick="spawnDamageText('kinetic', 100)">Kinetic Damage</button>
+                <button onclick="spawnDamageText('explosive', 120)">Explosive Damage</button>
+                <button onclick="spawnDamageText('kinetic', 250, true)">CRIT!</button>
+            </div>
+        </div>
+        
+        <h2>4. Résumé des Couleurs</h2>
+        <div class="ui-panel">
+            <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: rgba(0, 255, 255, 0.1); border-bottom: 2px solid #0ff;">
+                        <th style="padding: 10px; text-align: left;">Élément</th>
+                        <th style="padding: 10px; text-align: left;">Couleur</th>
+                        <th style="padding: 10px; text-align: left;">Code Hex</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td style="padding: 10px;">EM (Dégâts)</td>
+                        <td style="padding: 10px; color: #00FFFF;">✧ Cyan</td>
+                        <td style="padding: 10px;">#00FFFF</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td style="padding: 10px;">Thermal (Dégâts)</td>
+                        <td style="padding: 10px; color: #FF8C00;">✹ Orange</td>
+                        <td style="padding: 10px;">#FF8C00</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td style="padding: 10px;">Kinetic (Dégâts)</td>
+                        <td style="padding: 10px; color: #FFFFFF;">⦿ White</td>
+                        <td style="padding: 10px;">#FFFFFF</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td style="padding: 10px;">Explosive (Dégâts)</td>
+                        <td style="padding: 10px; color: #FF0000;">💥 Red</td>
+                        <td style="padding: 10px;">#FF0000</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td style="padding: 10px;">Shield (Couche)</td>
+                        <td style="padding: 10px; color: #00BFFF;">🟦 Deep Sky Blue</td>
+                        <td style="padding: 10px;">#00BFFF</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td style="padding: 10px;">Armor (Couche)</td>
+                        <td style="padding: 10px; color: #8B4513;">🟫 Saddle Brown</td>
+                        <td style="padding: 10px;">#8B4513</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td style="padding: 10px;">Structure (Couche)</td>
+                        <td style="padding: 10px; color: #DC143C;">🔧 Crimson</td>
+                        <td style="padding: 10px;">#DC143C</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td style="padding: 10px;">Résist Faible</td>
+                        <td style="padding: 10px; color: #00FF00;">▼ Green</td>
+                        <td style="padding: 10px;">#00FF00</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid #333;">
+                        <td style="padding: 10px;">Résist Normal</td>
+                        <td style="padding: 10px; color: #FFFF00;">■ Yellow</td>
+                        <td style="padding: 10px;">#FFFF00</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 10px;">Résist Fort</td>
+                        <td style="padding: 10px; color: #FF0000;">▲ Red</td>
+                        <td style="padding: 10px;">#FF0000</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <script src="js/ui/EnhancedUIComponents.js"></script>
+    <script>
+        // Initialize components
+        let defenseUI, heatUI, weaponTypeUI;
+        let floatingText, layerNotif;
+        let mockDefense, mockHeat;
+        let currentDamageType = 'kinetic';
+        
+        // Canvas setup
+        const canvas = document.getElementById('demoCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Initialize UIs
+        function init() {
+            // Defense UI
+            const defenseContainer = document.getElementById('defense-ui-container');
+            defenseUI = new ThreeLayerDefenseUI(defenseContainer);
+            
+            // Heat UI
+            const heatContainer = document.getElementById('heat-ui-container');
+            heatUI = new HeatGaugeUI(heatContainer);
+            
+            // Weapon Type UI
+            const weaponContainer = document.getElementById('weapon-type-container');
+            weaponTypeUI = new WeaponDamageTypeDisplay(weaponContainer);
+            
+            // Canvas components
+            floatingText = new DamageFloatingText(null);
+            layerNotif = new LayerDamageNotification();
+            
+            // Mock data
+            resetDefense();
+            resetHeat();
+            
+            // Start animation loop
+            requestAnimationFrame(animate);
+        }
+        
+        // Mock defense
+        function resetDefense() {
+            mockDefense = {
+                shield: { current: 120, max: 120 },
+                armor: { current: 150, max: 150 },
+                structure: { current: 130, max: 130 }
+            };
+            defenseUI.update(mockDefense);
+        }
+        
+        function damageLayer(layer, amount) {
+            if (mockDefense[layer]) {
+                mockDefense[layer].current = Math.max(0, mockDefense[layer].current - amount);
+                defenseUI.update(mockDefense);
+                layerNotif.show(layer, amount);
+            }
+        }
+        
+        // Mock heat
+        function resetHeat() {
+            mockHeat = { current: 0, max: 100, overheated: false };
+            heatUI.update(mockHeat);
+        }
+        
+        function addHeat(amount) {
+            mockHeat.current = Math.min(mockHeat.max, mockHeat.current + amount);
+            mockHeat.overheated = mockHeat.current >= mockHeat.max;
+            heatUI.update(mockHeat);
+        }
+        
+        function triggerOverheat() {
+            mockHeat.current = mockHeat.max;
+            mockHeat.overheated = true;
+            heatUI.update(mockHeat);
+            setTimeout(() => {
+                mockHeat.current = 50;
+                mockHeat.overheated = false;
+                heatUI.update(mockHeat);
+            }, 2000);
+        }
+        
+        // Weapon type
+        function switchDamageType(type) {
+            currentDamageType = type;
+            weaponTypeUI.update(type);
+        }
+        
+        // Spawn damage text
+        function spawnDamageText(type, damage, isCrit = false) {
+            const x = Math.random() * (canvas.width - 100) + 50;
+            const y = canvas.height / 2;
+            floatingText.create(x, y, damage, type, isCrit);
+        }
+        
+        // Animation loop
+        let lastTime = Date.now();
+        function animate() {
+            const now = Date.now();
+            const deltaTime = (now - lastTime) / 1000;
+            lastTime = now;
+            
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw center line
+            ctx.strokeStyle = '#333';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Update and draw components
+            floatingText.update(deltaTime, ctx);
+            layerNotif.update(deltaTime, ctx, 20, 30);
+            
+            // Draw instructions
+            ctx.fillStyle = '#0ff';
+            ctx.font = '14px monospace';
+            ctx.fillText('Les dégâts flottants apparaissent ici en couleurs', canvas.width / 2 - 200, canvas.height - 20);
+            
+            requestAnimationFrame(animate);
+        }
+        
+        // Start
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

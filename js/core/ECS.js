@@ -259,6 +259,13 @@ const Components = {
         xpRequired: 100,
         weapons: [],
         passives: [],
+        modules: [],            // Equipped modules from loot (max 6 slots)
+        shipId: 'ION_FRIGATE',  // Current ship identifier
+        upgrades: new Map(),    // Map<upgradeId, level> for ship upgrades
+        // Required for tactical UI:
+        defenseLayers: null,    // Set by DefenseSystem - { shield: {}, armor: {}, structure: {} }
+        heat: null,             // Set by HeatSystem - { current, max, overheated }
+        currentWeapon: null,    // Reference to current weapon with damageType
         stats: {
             damage: 1,
             fireRate: 1,
@@ -321,5 +328,29 @@ const Components = {
         patterns,
         phaseTime: 0,
         nextPhaseHealth: 0.5
+    }),
+    // New defense component for 3-layer defense system
+    Defense: () => {
+        // Import from DefenseData if available, otherwise use inline definition
+        if (typeof createDefenseComponent !== 'undefined') {
+            return createDefenseComponent();
+        }
+        // Fallback inline definition
+        const baseShield = { current: 120, max: 120, regen: 8, regenDelay: 0, regenDelayMax: 3, 
+            resistances: { em: 0, thermal: 0.2, kinetic: 0.4, explosive: 0.5 } };
+        const baseArmor = { current: 150, max: 150, regen: 0, regenDelay: 0, regenDelayMax: 0, 
+            resistances: { em: 0.5, thermal: 0.35, kinetic: 0.25, explosive: 0.1 } };
+        const baseStructure = { current: 130, max: 130, regen: 0.5, regenDelay: 0, regenDelayMax: 0, 
+            resistances: { em: 0.3, thermal: 0, kinetic: 0.15, explosive: 0.2 } };
+        return { shield: baseShield, armor: baseArmor, structure: baseStructure };
+    },
+    // Heat component for heat management system
+    Heat: (maxHeat = 100, cooling = 10, passiveHeat = 0) => ({
+        current: 0,
+        max: maxHeat,
+        cooling: cooling,
+        passiveHeat: passiveHeat,
+        overheated: false,
+        overheatTimer: 0
     })
 };

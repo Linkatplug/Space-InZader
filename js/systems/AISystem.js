@@ -4,9 +4,12 @@
  */
 
 class AISystem {
-    constructor(world, gameState) {
+    constructor(world, canvas) {
         this.world = world;
-        this.gameState = gameState;
+        this.canvas = canvas;
+        
+        // P1 FIX: Enemy Bounds - Combat space margins
+        this.COMBAT_MARGIN = 200;
     }
 
     /**
@@ -19,7 +22,24 @@ class AISystem {
         
         if (!player) return;
 
+        // Get canvas bounds for despawn check
+        const canvas = document.getElementById('gameCanvas');
+        const canvasWidth = canvas ? canvas.width : 1920;
+        const canvasHeight = canvas ? canvas.height : 1080;
+        const DESPAWN_MARGIN = 200; // Despawn if >200px outside screen
+
         for (const enemy of enemies) {
+            // Check for off-screen despawn
+            const pos = enemy.getComponent('position');
+            if (pos) {
+                if (pos.x < -DESPAWN_MARGIN || pos.x > canvasWidth + DESPAWN_MARGIN ||
+                    pos.y < -DESPAWN_MARGIN || pos.y > canvasHeight + DESPAWN_MARGIN) {
+                    console.log(`[AISystem] Despawning off-screen enemy at (${pos.x.toFixed(0)}, ${pos.y.toFixed(0)})`);
+                    this.world.removeEntity(enemy.id);
+                    continue;
+                }
+            }
+            
             this.updateEnemyAI(enemy, player, deltaTime);
         }
     }
@@ -70,10 +90,13 @@ class AISystem {
 
         // Handle attacks
         this.handleEnemyAttack(enemy, player, deltaTime);
+        
+        // P1 FIX: Enemy Bounds - Keep enemies in combat space
+        this.enforceEnemyBounds(enemy, deltaTime);
     }
 
     /**
-     * Chase AI - Direct pursuit of player
+     * Chase AI - Direct pursuit of player (for melee/kamikaze enemies)
      * @param {Entity} enemy - Enemy entity
      * @param {Entity} player - Player entity
      * @param {number} deltaTime - Time elapsed
@@ -84,6 +107,11 @@ class AISystem {
         const enemyComp = enemy.getComponent('enemy');
         
         if (!enemyPos || !playerPos || !enemyComp) return;
+
+        // If enemy has a ranged weapon, use tactical positioning instead
+        if (enemyComp.enemyWeapon) {
+            return this.tacticalRangedAI(enemy, player, deltaTime);
+        }
 
         // Calculate direction to player
         const dx = playerPos.x - enemyPos.x;
@@ -100,6 +128,101 @@ class AISystem {
             renderable.rotation = Math.atan2(dy, dx);
         }
     }
+    
+    /**
+     * Tactical Ranged AI - Maintain optimal distance with strafing
+     * @param {Entity} enemy - Enemy entity
+     * @param {Entity} player - Player entity
+     * @param {number} deltaTime - Time elapsed
+     */
+    tacticalRangedAI(enemy, player, deltaTime) {
+        const enemyPos = enemy.getComponent('position');
+        const playerPos = player.getComponent('position');
+        const enemyComp = enemy.getComponent('enemy');
+        
+        if (!enemyPos || !playerPos || !enemyComp) return;
+
+        // Optimal combat distances
+        const optimalDistance = 250;  // Preferred fighting range
+        const minDistance = 180;      // Don't get too close
+        const maxDistance = 400;      // Don't get too far
+        
+        const dx = playerPos.x - enemyPos.x;
+        const dy = playerPos.y - enemyPos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+
+        // Initialize strafe variables
+        if (enemyComp.strafeTime === undefined) {
+            enemyComp.strafeTime = 0;
+            enemyComp.strafeDirection = Math.random() < 0.5 ? -1 : 1;
+            enemyComp.repositionTimer = Math.random() * 2;
+        }
+        
+        enemyComp.strafeTime += deltaTime;
+        enemyComp.repositionTimer -= deltaTime;
+        
+        // Change strafe direction periodically
+        if (enemyComp.strafeTime > 2.5) {
+            enemyComp.strafeTime = 0;
+            enemyComp.strafeDirection *= -1;
+        }
+        
+        // Periodic repositioning
+        if (enemyComp.repositionTimer <= 0) {
+            enemyComp.repositionTimer = 3 + Math.random() * 2;
+            enemyComp.repositionAngle = angle + (Math.random() - 0.5) * Math.PI * 0.5;
+        }
+
+        let moveX = 0;
+        let moveY = 0;
+
+        // Distance-based behavior
+        if (distance < minDistance) {
+            // Too close - retreat while strafing
+            const retreatAngle = angle + Math.PI; // Opposite direction
+            moveX = Math.cos(retreatAngle) * enemyComp.speed * deltaTime * 1.2;
+            moveY = Math.sin(retreatAngle) * enemyComp.speed * deltaTime * 1.2;
+            
+            // Add strafe component
+            const perpAngle = angle + Math.PI / 2;
+            moveX += Math.cos(perpAngle) * enemyComp.strafeDirection * enemyComp.speed * deltaTime * 0.5;
+            moveY += Math.sin(perpAngle) * enemyComp.strafeDirection * enemyComp.speed * deltaTime * 0.5;
+            
+        } else if (distance > maxDistance) {
+            // Too far - close distance
+            const normalized = MathUtils.normalize(dx, dy);
+            moveX = normalized.x * enemyComp.speed * deltaTime * 0.8;
+            moveY = normalized.y * enemyComp.speed * deltaTime * 0.8;
+            
+        } else {
+            // In optimal range - strafe and maintain position
+            const distanceDeviation = distance - optimalDistance;
+            
+            // Adjust distance slowly
+            if (Math.abs(distanceDeviation) > 30) {
+                const normalized = MathUtils.normalize(dx, dy);
+                const adjustSpeed = distanceDeviation > 0 ? -0.3 : 0.3;
+                moveX = normalized.x * enemyComp.speed * deltaTime * adjustSpeed;
+                moveY = normalized.y * enemyComp.speed * deltaTime * adjustSpeed;
+            }
+            
+            // Primary strafing motion
+            const perpAngle = angle + Math.PI / 2;
+            moveX += Math.cos(perpAngle) * enemyComp.strafeDirection * enemyComp.speed * deltaTime * 0.7;
+            moveY += Math.sin(perpAngle) * enemyComp.strafeDirection * enemyComp.speed * deltaTime * 0.7;
+        }
+
+        // Apply movement
+        enemyPos.x += moveX;
+        enemyPos.y += moveY;
+
+        // Always face the player
+        const renderable = enemy.getComponent('renderable');
+        if (renderable) {
+            renderable.rotation = angle;
+        }
+    }
 
     /**
      * Weave AI - Zigzag movement towards player
@@ -113,6 +236,11 @@ class AISystem {
         const enemyComp = enemy.getComponent('enemy');
         
         if (!enemyPos || !playerPos || !enemyComp) return;
+
+        // If enemy has a ranged weapon, use tactical positioning instead
+        if (enemyComp.enemyWeapon) {
+            return this.tacticalRangedAI(enemy, player, deltaTime);
+        }
 
         // Initialize weave time if not exists
         if (enemyComp.weaveTime === undefined) {
@@ -215,12 +343,23 @@ class AISystem {
      * @param {Entity} player - Player entity
      * @param {number} deltaTime - Time elapsed
      */
+    /**
+     * Aggressive AI - Fast pursuit with prediction and ranged tactics
+     * @param {Entity} enemy - Enemy entity
+     * @param {Entity} player - Player entity
+     * @param {number} deltaTime - Time elapsed
+     */
     aggressiveAI(enemy, player, deltaTime) {
         const enemyPos = enemy.getComponent('position');
         const playerPos = player.getComponent('position');
         const enemyComp = enemy.getComponent('enemy');
         
         if (!enemyPos || !playerPos || !enemyComp) return;
+
+        // If enemy has a ranged weapon, use enhanced tactical AI
+        if (enemyComp.enemyWeapon) {
+            return this.tacticalRangedAI(enemy, player, deltaTime);
+        }
 
         // Get player velocity for prediction
         const playerVel = player.getComponent('velocity') || { vx: 0, vy: 0 };
@@ -292,7 +431,81 @@ class AISystem {
             }
         }
 
-        // Phase-based cooldowns
+        // Phase-based cooldowns and movement behavior
+        const dx = playerPos.x - enemyPos.x;
+        const dy = playerPos.y - enemyPos.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx);
+        
+        // Boss maintains optimal combat range with aggressive repositioning
+        const optimalDistance = 300;
+        const minDistance = 200;
+        const maxDistance = 500;
+        
+        // Initialize boss movement state
+        if (!boss.circleDirection) {
+            boss.circleDirection = Math.random() < 0.5 ? 1 : -1;
+            boss.circleTime = 0;
+        }
+        boss.circleTime += deltaTime;
+        
+        // Change circle direction every 4 seconds
+        if (boss.circleTime > 4) {
+            boss.circleTime = 0;
+            boss.circleDirection *= -1;
+        }
+        
+        let moveX = 0;
+        let moveY = 0;
+        
+        if (boss.isEnraged) {
+            // Enraged: More aggressive, faster movement, tighter circles
+            if (distance < minDistance) {
+                // Retreat while strafing
+                const retreatAngle = angle + Math.PI;
+                moveX = Math.cos(retreatAngle) * enemyComp.speed * 1.5 * deltaTime;
+                moveY = Math.sin(retreatAngle) * enemyComp.speed * 1.5 * deltaTime;
+            } else if (distance > maxDistance) {
+                // Close in fast
+                const normalized = MathUtils.normalize(dx, dy);
+                moveX = normalized.x * enemyComp.speed * 1.3 * deltaTime;
+                moveY = normalized.y * enemyComp.speed * 1.3 * deltaTime;
+            } else {
+                // Aggressive circular strafing
+                const circleAngle = angle + Math.PI / 2 * boss.circleDirection;
+                moveX = Math.cos(circleAngle) * enemyComp.speed * 1.2 * deltaTime;
+                moveY = Math.sin(circleAngle) * enemyComp.speed * 1.2 * deltaTime;
+                
+                // Slight pull toward optimal distance
+                if (distance > optimalDistance + 50) {
+                    const normalized = MathUtils.normalize(dx, dy);
+                    moveX += normalized.x * enemyComp.speed * 0.3 * deltaTime;
+                    moveY += normalized.y * enemyComp.speed * 0.3 * deltaTime;
+                }
+            }
+        } else {
+            // Normal phase: Methodical, maintains range
+            if (distance < optimalDistance - 50) {
+                // Maintain distance
+                const normalized = MathUtils.normalize(-dx, -dy);
+                moveX = normalized.x * enemyComp.speed * 0.8 * deltaTime;
+                moveY = normalized.y * enemyComp.speed * 0.8 * deltaTime;
+            } else if (distance > optimalDistance + 50) {
+                // Close in slowly
+                const normalized = MathUtils.normalize(dx, dy);
+                moveX = normalized.x * enemyComp.speed * 0.6 * deltaTime;
+                moveY = normalized.y * enemyComp.speed * 0.6 * deltaTime;
+            }
+            
+            // Smooth circular movement
+            const circleAngle = angle + Math.PI / 2 * boss.circleDirection;
+            moveX += Math.cos(circleAngle) * enemyComp.speed * 0.7 * deltaTime;
+            moveY += Math.sin(circleAngle) * enemyComp.speed * 0.7 * deltaTime;
+        }
+        
+        // Apply movement
+        enemyPos.x += moveX;
+        enemyPos.y += moveY;
         const burstInterval = boss.isEnraged ? 1.5 : 2.5;
         const laserInterval = boss.isEnraged ? 2.5 : 4.0;
         const minionInterval = 5.0;
@@ -532,7 +745,10 @@ class AISystem {
         if (enemyComp.attackCooldown > 0) return;
 
         const distance = MathUtils.distance(enemyPos.x, enemyPos.y, playerPos.x, playerPos.y);
-        const range = attackPattern.range || 300;
+        
+        // FIX: Add maximum firing range (420px)
+        const MAX_ENEMY_FIRE_RANGE = 420;
+        const range = Math.min(attackPattern.range || 300, MAX_ENEMY_FIRE_RANGE);
 
         if (distance <= range) {
             if (attackPattern.type === 'shoot') {
@@ -724,5 +940,68 @@ class AISystem {
         ));
         
         return projectile;
+    }
+    
+    /**
+     * P1 FIX: Enforce enemy bounds - keep enemies in combat space
+     * @param {Entity} enemy - Enemy entity
+     * @param {number} deltaTime - Time elapsed
+     */
+    enforceEnemyBounds(enemy, deltaTime) {
+        if (!this.canvas) return;
+        
+        const enemyPos = enemy.getComponent('position');
+        const enemyComp = enemy.getComponent('enemy');
+        if (!enemyPos || !enemyComp) return;
+        
+        const margin = this.COMBAT_MARGIN;
+        const bounds = {
+            left: -margin,
+            right: this.canvas.width + margin,
+            top: -margin,
+            bottom: this.canvas.height + margin
+        };
+        
+        // Check if enemy is out of bounds
+        let outOfBounds = false;
+        let pullX = 0, pullY = 0;
+        
+        if (enemyPos.x < bounds.left) {
+            outOfBounds = true;
+            pullX = 1;
+        } else if (enemyPos.x > bounds.right) {
+            outOfBounds = true;
+            pullX = -1;
+        }
+        
+        if (enemyPos.y < bounds.top) {
+            outOfBounds = true;
+            pullY = 1;
+        } else if (enemyPos.y > bounds.bottom) {
+            outOfBounds = true;
+            pullY = -1;
+        }
+        
+        if (outOfBounds) {
+            // Track time out of bounds
+            enemy.timeOutOfBounds = (enemy.timeOutOfBounds || 0) + deltaTime;
+            
+            // After 5 seconds out of bounds, despawn
+            if (enemy.timeOutOfBounds > 5.0) {
+                logger.debug('AI', `Despawning enemy ${enemy.id} - out of bounds too long (${enemy.timeOutOfBounds.toFixed(1)}s)`);
+                this.world.removeEntity(enemy);
+                return;
+            }
+            
+            // Apply gentle steering back to combat space
+            const pullStrength = enemyComp.speed * 0.5;
+            enemyPos.x += pullX * pullStrength * deltaTime;
+            enemyPos.y += pullY * pullStrength * deltaTime;
+            
+            logger.debug('AI', `Enemy ${enemy.id} out of bounds - steering back (${enemy.timeOutOfBounds.toFixed(1)}s)`);
+        } else {
+            // Reset timer when back in bounds
+            enemy.timeOutOfBounds = 0;
+        }
     }
 }

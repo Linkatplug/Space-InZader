@@ -278,7 +278,79 @@ class RenderSystem {
             if (health && (isBoss || enemyComp?.baseHealth > 50)) {
                 this.drawHealthBar(pos.x, pos.y - render.size - 10, health.current, health.max, isBoss);
             }
+            
+            // Draw resistance indicator if tactical UI enabled
+            if (!this.gameState || this.gameState.tacticalUIEnabled !== false) {
+                this.drawEnemyResistanceIndicator(enemy);
+            }
         });
+    }
+
+    /**
+     * Draw enemy resistance indicator
+     */
+    drawEnemyResistanceIndicator(enemy) {
+        const defense = enemy.getComponent('defense');
+        const pos = enemy.getComponent('position');
+        const render = enemy.getComponent('renderable');
+        
+        if (!defense || !pos || !render) return;
+
+        // Get player's current weapon type
+        const players = this.world.getEntitiesByType('player');
+        if (players.length === 0) return;
+        
+        const player = players[0];
+        const playerComp = player.getComponent('player');
+        let damageType = 'kinetic';
+        
+        if (playerComp && playerComp.currentWeapon && playerComp.currentWeapon.damageType) {
+            damageType = playerComp.currentWeapon.damageType;
+        }
+
+        // Calculate average resistance across active layers
+        let totalResist = 0;
+        let layerCount = 0;
+
+        if (defense.shield.current > 0) {
+            totalResist += defense.shield.resistances[damageType] || 0;
+            layerCount++;
+        }
+        if (defense.armor.current > 0) {
+            totalResist += defense.armor.resistances[damageType] || 0;
+            layerCount++;
+        }
+        if (defense.structure.current > 0) {
+            totalResist += defense.structure.resistances[damageType] || 0;
+            layerCount++;
+        }
+
+        if (layerCount === 0) return;
+
+        const avgResist = totalResist / layerCount;
+
+        // Determine symbol and color
+        let symbol, color;
+        if (avgResist <= 0.15) {
+            symbol = '▼';  // Weak
+            color = '#00FF00';
+        } else if (avgResist <= 0.40) {
+            symbol = '■';  // Normal
+            color = '#FFFF00';
+        } else {
+            symbol = '▲';  // Resistant
+            color = '#FF0000';
+        }
+
+        // Draw above enemy
+        this.ctx.save();
+        this.ctx.font = '16px Arial';
+        this.ctx.fillStyle = color;
+        this.ctx.textAlign = 'center';
+        this.ctx.shadowBlur = 5;
+        this.ctx.shadowColor = color;
+        this.ctx.fillText(symbol, pos.x, pos.y - render.size - 25);
+        this.ctx.restore();
     }
 
     /**

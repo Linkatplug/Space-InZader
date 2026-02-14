@@ -32,6 +32,76 @@ class CombatSystem {
             // Update blade halo if active
             this.updateBladeHalo(player, playerComp, deltaTime);
         }
+        
+        // Update enemy firing
+        this.updateEnemyFiring(deltaTime);
+    }
+    
+    /**
+     * Update enemy firing at player
+     * @param {number} deltaTime - Time elapsed since last frame
+     */
+    updateEnemyFiring(deltaTime) {
+        const enemies = this.world.getEntitiesByType('enemy');
+        const player = this.world.getEntitiesByType('player')[0];
+        
+        if (!player) return;
+        
+        const playerPos = player.getComponent('position');
+        if (!playerPos) return;
+        
+        // P1 FIX: Fire Distance Limit
+        const MAX_FIRE_DISTANCE = 700;
+        
+        for (const enemy of enemies) {
+            const enemyComp = enemy.getComponent('enemy');
+            const enemyPos = enemy.getComponent('position');
+            
+            if (!enemyComp || !enemyPos || !enemyComp.enemyWeapon) continue;
+            
+            const weapon = enemyComp.enemyWeapon;
+            
+            // Update cooldown
+            weapon.cooldown -= deltaTime;
+            
+            // Fire when ready
+            if (weapon.cooldown <= 0) {
+                weapon.cooldown = 1 / weapon.fireRate;
+                
+                // Calculate angle toward player
+                const dx = playerPos.x - enemyPos.x;
+                const dy = playerPos.y - enemyPos.y;
+                const angle = Math.atan2(dy, dx);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // P1 FIX: Don't fire if too far away
+                if (distance > MAX_FIRE_DISTANCE) {
+                    logger.debug('Combat', `${enemy.type} too far to fire (${Math.round(distance)}px > ${MAX_FIRE_DISTANCE}px)`);
+                    continue;
+                }
+                
+                logger.debug('Combat', `${enemy.type} firing at player`, {
+                    distance: Math.round(distance),
+                    damage: weapon.baseDamage,
+                    damageType: weapon.damageType
+                });
+                
+                // Create projectile
+                this.createProjectile(
+                    enemyPos.x,
+                    enemyPos.y,
+                    angle,
+                    weapon.baseDamage,
+                    weapon.projectileSpeed,
+                    5, // lifetime
+                    'enemy', // owner
+                    'direct', // weaponType
+                    0, // piercing
+                    weapon.color,
+                    weapon.damageType
+                );
+            }
+        }
     }
 
     /**
@@ -53,12 +123,16 @@ class CombatSystem {
 
         // Fire when cooldown is ready
         if (weapon.cooldown <= 0) {
-            const playerStats = player.getComponent('player').stats;
+            const playerComp = player.getComponent('player');
+            const playerStats = playerComp.stats;
             const baseFireRate = weapon.data.fireRate || 1;
             const fireRate = baseFireRate * playerStats.fireRate;
             weapon.cooldown = fireRate > 0 ? 1 / fireRate : 999;
             
-            this.fireWeapon(player, weapon);
+            // Set currentWeapon for UI
+            playerComp.currentWeapon = weapon.data;
+            
+            this.fireWeaponWithHeat(player, weapon);
         }
     }
 
@@ -204,7 +278,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
         }
     }
@@ -242,7 +317,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
         }
     }
@@ -277,7 +353,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
             
             // Make it homing
@@ -363,7 +440,8 @@ class CombatSystem {
             player.id,
             weapon.type,
             piercing,
-            weapon.data.color
+            weapon.data.color,
+            (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
         );
     }
 
@@ -393,7 +471,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
             
             const mineComp = mine.getComponent('projectile');
@@ -428,7 +507,8 @@ class CombatSystem {
             player.id,
             weapon.type,
             piercing,
-            weapon.data.color
+            weapon.data.color,
+            (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
         );
         
         const projComp = projectile.getComponent('projectile');
@@ -473,7 +553,8 @@ class CombatSystem {
             player.id,
             weapon.type,
             stats.piercing,
-            weapon.data.color
+            weapon.data.color,
+            (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
         );
     }
 
@@ -503,7 +584,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
             
             const projComp = projectile.getComponent('projectile');
@@ -587,7 +669,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
             
             const projComp = projectile.getComponent('projectile');
@@ -631,7 +714,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 levelData.piercing || 999,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
             
             // Make it look like a beam - elongated projectile
@@ -679,7 +763,8 @@ class CombatSystem {
                 player.id,
                 weapon.type,
                 piercing,
-                weapon.data.color
+                weapon.data.color,
+                (weapon && weapon.data && weapon.data.damageType) ? weapon.data.damageType : 'kinetic'
             );
         }
     }
@@ -698,7 +783,7 @@ class CombatSystem {
      * @param {string} color - Projectile color
      * @returns {Entity} Created projectile
      */
-    createProjectile(x, y, angle, damage, speed, lifetime, owner, weaponType, piercing, color) {
+    createProjectile(x, y, angle, damage, speed, lifetime, owner, weaponType, piercing, color, damageType = 'kinetic') {
         const projectile = this.world.createEntity('projectile');
         
         // Get player stats for size modifier
@@ -728,6 +813,7 @@ class CombatSystem {
         
         const projComp = projectile.getComponent('projectile');
         projComp.piercing = piercing;
+        projComp.damageType = damageType || 'kinetic';
         
         return projectile;
     }
@@ -849,5 +935,161 @@ class CombatSystem {
                 }
             }
         }
+    }
+    
+    /**
+     * Fire weapon with new heat system integration
+     * @param {Entity} player - Player entity
+     * @param {Object} weapon - Weapon data
+     */
+    fireWeaponWithHeat(player, weapon) {
+        // Ensure UI can read the currently firing weapon
+        const playerComp = player.getComponent('player');
+        if (playerComp) {
+            // Handle both weapon formats: objects with .data property or direct weapon objects
+            playerComp.currentWeapon = (weapon && weapon.data) ? weapon.data : weapon;
+        }
+
+        // Check heat first
+        const heat = player.getComponent('heat');
+        if (heat && heat.overheated) {
+            logger.debug('Combat', `Weapon ${weapon.type} cannot fire - OVERHEATED (${heat.current.toFixed(0)}/${heat.max})`);
+            return; // Cannot fire when overheated
+        }
+        
+        // Log weapon fire
+        const weaponData = weapon.data || weapon;
+        logger.debug('Combat', `Firing ${weapon.type} Lv${weapon.level}`, {
+            damageType: weaponData.damageType || 'kinetic',
+            baseDamage: weaponData.baseDamage,
+            heat: weaponData.heat || 0
+        });
+        
+        // Fire the weapon normally
+        this.fireWeapon(player, weapon);
+        
+        // Add heat if system is active
+        if (heat && weapon.data && weapon.data.heat) {
+            let heatAmount = weapon.data.heat;
+            
+            // Apply heat generation multiplier from modules
+            const playerComp = player.getComponent('player');
+            if (playerComp && playerComp.stats && playerComp.stats.moduleEffects) {
+                const heatMult = playerComp.stats.moduleEffects.heatGenerationMult || 1.0;
+                heatAmount *= heatMult;
+            }
+            
+            // Use HeatSystem.addHeat() instead of direct manipulation
+            if (this.world && this.world.heatSystem) {
+                this.world.heatSystem.addHeat(player, heatAmount);
+            } else {
+                // Fallback if HeatSystem not available
+                heat.current += heatAmount;
+                if (heat.current >= heat.max) {
+                    heat.overheated = true;
+                    heat.overheatTimer = typeof HEAT_SYSTEM !== 'undefined'
+                        ? HEAT_SYSTEM.OVERHEAT_DISABLE_DURATION
+                        : 2.0;
+                }
+            }
+        }
+    }
+    
+    /**
+     * Calculate damage with new defense system
+     * @param {Entity} attacker - Attacking entity
+     * @param {Entity} target - Target entity
+     * @param {number} baseDamage - Base damage
+     * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
+     * @returns {Object} Damage result
+     */
+    calculateDamageWithDefense(attacker, target, baseDamage, damageType = 'kinetic') {
+        // Apply attacker's damage multipliers
+        const attackerPlayer = attacker.getComponent('player');
+        let damage = baseDamage;
+        
+        if (attackerPlayer && attackerPlayer.stats) {
+            damage *= attackerPlayer.stats.damageMultiplier || 1;
+            
+            // Apply damage type multiplier from modules
+            if (attackerPlayer.stats.moduleEffects) {
+                const typeMult = getModuleDamageMultiplier 
+                    ? getModuleDamageMultiplier(attackerPlayer.stats.moduleEffects, damageType)
+                    : 1.0;
+                damage *= typeMult;
+            }
+            
+            // Apply tag synergies if available
+            if (this.world.synergySystem) {
+                const weapon = { damageType, tags: [damageType] };
+                const tagMultiplier = this.world.synergySystem.getWeaponTagMultiplier(weapon);
+                damage *= tagMultiplier;
+            }
+            
+            // Apply crit if available
+            if (typeof rollCrit !== 'undefined' && typeof CRIT_CAPS !== 'undefined') {
+                const critChance = Math.min(attackerPlayer.stats.critChance || 0, CRIT_CAPS.MAX_CRIT_CHANCE);
+                const critDamage = Math.min(attackerPlayer.stats.critDamage || 1.5, CRIT_CAPS.MAX_CRIT_DAMAGE);
+                
+                if (rollCrit(critChance)) {
+                    damage *= critDamage;
+                }
+            }
+        }
+        
+        // Apply damage through defense system
+        if (this.world.defenseSystem) {
+            return this.world.defenseSystem.applyDamage(target, damage, damageType);
+        }
+        
+        // Fallback to old health system
+        const health = target.getComponent('health');
+        if (health) {
+            health.current -= damage;
+            return {
+                totalDamage: damage,
+                layersDamaged: ['health'],
+                destroyed: health.current <= 0,
+                damageType
+            };
+        }
+        
+        return {
+            totalDamage: 0,
+            layersDamaged: [],
+            destroyed: false,
+            damageType
+        };
+    }
+    
+    /**
+     * Get damage type for a weapon
+     * @param {Object} weaponData - Weapon data
+     * @returns {string} Damage type
+     */
+    getWeaponDamageType(weaponData) {
+        if (!weaponData) return 'kinetic';
+        
+        // Check if weapon has explicit damage type (new system)
+        if (weaponData.damageType) {
+            return weaponData.damageType;
+        }
+        
+        // Infer from weapon ID or tags (legacy compatibility)
+        if (weaponData.id) {
+            const id = weaponData.id.toLowerCase();
+            if (id.includes('ion') || id.includes('emp') || id.includes('arc') || id.includes('disruptor')) {
+                return 'em';
+            }
+            if (id.includes('plasma') || id.includes('thermal') || id.includes('flame') || id.includes('solar')) {
+                return 'thermal';
+            }
+            if (id.includes('missile') || id.includes('bomb') || id.includes('explosive') || id.includes('cluster')) {
+                return 'explosive';
+            }
+        }
+        
+        // Default to kinetic
+        return 'kinetic';
     }
 }

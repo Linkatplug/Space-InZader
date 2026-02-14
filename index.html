@@ -350,32 +350,61 @@
             border-top: 1px solid #333;
         }
 
-        .health-bar {
+        /* Defense Layer Bars */
+        .defense-bar {
             width: 200px;
-            height: 20px;
-            background: rgba(255, 0, 0, 0.3);
-            border: 2px solid #ff0000;
+            height: 15px;
             position: relative;
-        }
-
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff0000, #ff6600);
-            transition: width 0.3s;
+            margin-top: 3px;
         }
         
         .shield-bar {
-            width: 200px;
-            height: 15px;
             background: rgba(0, 255, 255, 0.2);
             border: 2px solid #00ffff;
-            position: relative;
-            margin-top: 3px;
         }
         
         .shield-fill {
             height: 100%;
             background: linear-gradient(90deg, #00ddff, #00ffff);
+            transition: width 0.3s;
+        }
+        
+        .armor-bar {
+            background: rgba(139, 69, 19, 0.3);
+            border: 2px solid #8B4513;
+        }
+        
+        .armor-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #8B4513, #CD853F);
+            transition: width 0.3s;
+        }
+        
+        .structure-bar {
+            background: rgba(255, 0, 0, 0.3);
+            border: 2px solid #ff0000;
+        }
+        
+        .structure-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6600);
+            transition: width 0.3s;
+        }
+        
+        /* Legacy health bar (hidden by default, fallback for old system) */
+        .health-bar {
+            width: 200px;
+            height: 15px;
+            background: rgba(255, 0, 0, 0.3);
+            border: 2px solid #ff0000;
+            position: relative;
+            margin-top: 3px;
+            display: none;
+        }
+
+        .health-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff0000, #ff6600);
             transition: width 0.3s;
         }
 
@@ -1111,6 +1140,176 @@
             margin: 5px 0;
             font-size: 14px;
         }
+
+        /* Tactical UI Styles */
+        #tactical-ui-container {
+            font-family: 'Courier New', monospace;
+            color: white;
+            text-shadow: 0 0 5px rgba(0,0,0,0.8);
+        }
+
+        .defense-layers {
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .defense-layer {
+            margin-bottom: 5px;
+        }
+
+        .layer-label {
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        .layer-bar {
+            width: 200px;
+            height: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .layer-fill {
+            height: 100%;
+            transition: width 0.2s;
+        }
+
+        .shield-fill {
+            background: linear-gradient(90deg, #00BFFF, #1E90FF);
+        }
+
+        .armor-fill {
+            background: linear-gradient(90deg, #8B4513, #A0522D);
+        }
+
+        .structure-fill {
+            background: linear-gradient(90deg, #DC143C, #FF1493);
+        }
+
+        .layer-value {
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 11px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .heat-container {
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .heat-bar {
+            width: 200px;
+            height: 20px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .heat-fill {
+            height: 100%;
+            transition: width 0.2s, background 0.3s;
+        }
+
+        .heat-fill.safe {
+            background: linear-gradient(90deg, #00FF00, #7FFF00);
+        }
+
+        .heat-fill.warning {
+            background: linear-gradient(90deg, #FFFF00, #FFD700);
+        }
+
+        .heat-fill.danger {
+            background: linear-gradient(90deg, #FF8C00, #FF4500);
+        }
+
+        .heat-fill.critical {
+            background: linear-gradient(90deg, #FF0000, #8B0000);
+            animation: pulseRed 0.5s infinite;
+        }
+
+        @keyframes pulseRed {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .heat-label {
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        .heat-value {
+            position: absolute;
+            top: 2px;
+            right: 5px;
+            font-size: 11px;
+            color: white;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .weapon-type-container {
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .weapon-type-icon {
+            display: inline-block;
+            padding: 5px 10px;
+            border: 2px solid;
+            border-radius: 3px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .weapon-type-icon.em {
+            color: #00FFFF;
+            border-color: #00FFFF;
+            background: rgba(0,255,255,0.1);
+        }
+
+        .weapon-type-icon.thermal {
+            color: #FF8C00;
+            border-color: #FF8C00;
+            background: rgba(255,140,0,0.1);
+        }
+
+        .weapon-type-icon.kinetic {
+            color: #FFFFFF;
+            border-color: #FFFFFF;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .weapon-type-icon.explosive {
+            color: #FF0000;
+            border-color: #FF0000;
+            background: rgba(255,0,0,0.1);
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+        }
+
+        .floating-damage {
+            animation: floatUp 1s ease-out forwards;
+            text-shadow: 2px 2px 4px black;
+        }
     </style>
 </head>
 <body>
@@ -1137,7 +1336,7 @@
 
             <!-- Ship Selection -->
             <div class="menu-screen" id="menuScreen">
-                <h1 class="title">SÉLECTIONNEZ VOTRE CLASSE</h1>
+                <h1 class="title">SÉLECTIONNEZ VOTRE VAISSEAU</h1>
                 <div class="ship-selection" id="shipSelection"></div>
                 <button class="button" id="startButton">COMMENCER</button>
                 <button class="button" id="backToMainBtn">RETOUR</button>
@@ -1320,14 +1519,31 @@
                 </div>
             </div>
             <div class="hud hud-bottom-left" id="hudBottomLeft">
-                <div class="health-bar">
-                    <div class="health-fill" id="healthFill"></div>
+                <!-- Defense Layers (Shield/Armor/Structure) -->
+                <div id="defenseLayers" style="display: block;">
+                    <div class="defense-bar shield-bar" id="shieldBar">
+                        <div class="shield-fill" id="shieldFill"></div>
+                    </div>
+                    <div style="margin-top: 2px; font-size: 11px;">🛡️ BOUCLIER: <span id="shieldValue">0/0</span></div>
+                    
+                    <div class="defense-bar armor-bar" id="armorBar">
+                        <div class="armor-fill" id="armorFill"></div>
+                    </div>
+                    <div style="margin-top: 2px; font-size: 11px;">🛡️ ARMURE: <span id="armorValue">0/0</span></div>
+                    
+                    <div class="defense-bar structure-bar" id="structureBar">
+                        <div class="structure-fill" id="structureFill"></div>
+                    </div>
+                    <div style="margin-top: 2px; font-size: 11px;">⚙️ STRUCTURE: <span id="structureValue">0/0</span></div>
                 </div>
-                <div style="margin-top: 5px;">PV: <span id="hpDisplay">100/100</span></div>
-                <div class="shield-bar" id="shieldBar" style="display: none;">
-                    <div class="shield-fill" id="shieldFill"></div>
+                
+                <!-- Legacy health bar (fallback for old system) -->
+                <div id="legacyHealth" style="display: none;">
+                    <div class="health-bar">
+                        <div class="health-fill" id="healthFill"></div>
+                    </div>
+                    <div style="margin-top: 5px;">PV: <span id="hpDisplay">100/100</span></div>
                 </div>
-                <div id="shieldDisplay" style="margin-top: 3px; display: none;">BOUCLIER: <span id="shieldValue">0/0</span></div>
             </div>
             <div class="hud hud-bottom-center" id="hudBottomCenter">
                 <div>Niveau: <span id="levelDisplay">1</span></div>
@@ -1369,12 +1585,27 @@
     <script src="js/utils/ScreenEffects.js"></script>
     <script src="js/core/ECS.js"></script>
     <script src="js/core/GameState.js"></script>
-    <script src="js/data/WeaponData.js"></script>
+    <!-- Data files -->
     <script src="js/data/PassiveData.js"></script>
     <script src="js/data/ShipData.js"></script>
     <script src="js/data/EnemyData.js"></script>
     <script src="js/data/SynergyData.js"></script>
     <script src="js/data/KeystoneData.js"></script>
+    <!-- New system data files -->
+    <script src="js/data/DefenseData.js"></script>
+    <script src="js/data/HeatData.js"></script>
+    <script src="js/data/NewWeaponData.js"></script>
+    <script src="js/data/ModuleData.js"></script>
+    <script src="js/data/EnemyProfiles.js"></script>
+    <script src="js/data/LootData.js"></script>
+    <script src="js/data/TagSynergyData.js"></script>
+    <script src="js/data/BalanceConstants.js"></script>
+    <script src="js/data/ShipUpgradeData.js"></script>
+    <!-- Weapon Data Bridge - MUST load after NewWeaponData.js -->
+    <script src="js/data/WeaponDataBridge.js"></script>
+    <!-- UI Components -->
+    <script src="js/ui/EnhancedUIComponents.js"></script>
+    <!-- Systems -->
     <script src="js/systems/MovementSystem.js"></script>
     <script src="js/systems/CombatSystem.js"></script>
     <script src="js/systems/CollisionSystem.js"></script>
@@ -1387,6 +1618,11 @@
     <script src="js/systems/WaveSystem.js"></script>
     <script src="js/systems/SynergySystem.js"></script>
     <script src="js/systems/WeatherSystem.js"></script>
+    <script src="js/systems/DefenseSystem.js"></script>
+    <script src="js/systems/HeatSystem.js"></script>
+    <script src="js/systems/ModuleSystem.js"></script>
+    <script src="js/systems/ShipUpgradeSystem.js"></script>
+    <!-- Managers -->
     <script src="js/managers/SaveManager.js"></script>
     <script src="js/managers/ScoreManager.js"></script>
     <script src="js/managers/AudioManager.js"></script>

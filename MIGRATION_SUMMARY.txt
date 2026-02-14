@@ -1,0 +1,40 @@
+MIGRATION COMPLÈTE: Classes Legacy → Système 4 Vaisseaux
+========================================================
+
+OBJECTIF: Supprimer le système legacy 6 classes et basculer sur les 4 vaisseaux de ShipUpgradeData.
+
+CHANGEMENTS EFFECTUÉS:
+
+1. ShipUpgradeData.js
+   - Ajout baseStats, color, difficulty, startingWeapon, unlocked à chaque vaisseau
+   - 4 vaisseaux: ION_FRIGATE, BALLISTIC_DESTROYER, CATACLYSM_CRUISER, TECH_NEXUS
+   
+2. UISystem.js (renderShipSelection)
+   - Remplace ShipData.getAllShips() par ShipUpgradeData.SHIPS
+   - Construit tableau de 4 vaisseaux
+   - Fallback hardcodé si ShipUpgradeData absent
+   - Logs: "[Menu] Ships available: ..." et "[Menu] Selected ship: ..."
+   
+3. index.html
+   - "SÉLECTIONNEZ VOTRE CLASSE" → "SÉLECTIONNEZ VOTRE VAISSEAU"
+   
+4. Game.js
+   - createPlayer(): Suppression du shipIdMap legacy, utilise selectedShip directement
+   - Guard: défaut ION_FRIGATE si vide
+   - recalculatePlayerStats(): Même logique
+   - generateLevelUpOptions(): Corrigé pour utiliser getShipUpgrades()
+
+CODE LEGACY SUPPRIMÉ:
+- shipIdMap (mapping "equilibre" → "ION_FRIGATE")
+- Dépendance ShipData pour sélection
+- getDefaultShips()
+- Texte "CLASSE"
+
+TESTS MANUELS:
+- Menu affiche 4 vaisseaux ✓
+- Sélection enregistre shipId correct ✓
+- Jeu démarre avec vaisseau choisi ✓
+- Level-up utilise upgrades du bon vaisseau ✓
+- Console logs confirmation ✓
+
+PRODUCTION READY: Changements minimaux, complets, testés

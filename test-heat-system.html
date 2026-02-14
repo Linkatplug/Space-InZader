@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HEAT_SYSTEM Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            background: #16213e;
+            border: 1px solid #0f3460;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #2d4a2b;
+            border-left: 4px solid #4caf50;
+        }
+        .error {
+            background: #4a2b2b;
+            border-left: 4px solid #f44336;
+        }
+        h1 {
+            color: #4caf50;
+            text-align: center;
+        }
+        h2 {
+            color: #00d4ff;
+            border-bottom: 2px solid #0f3460;
+            padding-bottom: 10px;
+        }
+        pre {
+            background: #0f0f1e;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        .status.pass {
+            background: #4caf50;
+            color: white;
+        }
+        .status.fail {
+            background: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔥 HEAT_SYSTEM Validation Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Status</h2>
+        <div id="status"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>1. HEAT_SYSTEM Accessibility</h2>
+        <div id="test1"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. HEAT_SYSTEM Constants</h2>
+        <div id="test2"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. CRIT_CAPS Accessibility</h2>
+        <div id="test3"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. HeatData Functions</h2>
+        <div id="test4"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>5. Full HEAT_SYSTEM Object</h2>
+        <pre id="heat-object"></pre>
+    </div>
+
+    <!-- Load HeatData.js -->
+    <script src="js/data/HeatData.js"></script>
+
+    <!-- Run Tests -->
+    <script>
+        const results = {
+            passed: 0,
+            failed: 0,
+            tests: []
+        };
+
+        function runTest(name, testFn) {
+            try {
+                const result = testFn();
+                if (result) {
+                    results.passed++;
+                    results.tests.push({ name, status: 'PASS', message: result });
+                    return true;
+                } else {
+                    results.failed++;
+                    results.tests.push({ name, status: 'FAIL', message: 'Test returned false' });
+                    return false;
+                }
+            } catch (error) {
+                results.failed++;
+                results.tests.push({ name, status: 'FAIL', message: error.message });
+                return false;
+            }
+        }
+
+        // Test 1: HEAT_SYSTEM is defined
+        const test1Pass = runTest('HEAT_SYSTEM is defined', () => {
+            if (typeof HEAT_SYSTEM === 'undefined') {
+                throw new Error('HEAT_SYSTEM is not defined');
+            }
+            return 'HEAT_SYSTEM is accessible globally';
+        });
+
+        document.getElementById('test1').innerHTML = `
+            <div class="test-result ${test1Pass ? 'success' : 'error'}">
+                ${test1Pass ? '✓' : '✗'} HEAT_SYSTEM is ${typeof HEAT_SYSTEM !== 'undefined' ? 'DEFINED' : 'UNDEFINED'}
+            </div>
+        `;
+
+        // Test 2: HEAT_SYSTEM has expected constants
+        const test2Pass = runTest('HEAT_SYSTEM constants exist', () => {
+            const required = [
+                'MAX_HEAT',
+                'BASE_COOLING',
+                'MAX_COOLING_BONUS',
+                'OVERHEAT_DISABLE_DURATION',
+                'OVERHEAT_RECOVERY_VALUE',
+                'WARNING_THRESHOLD'
+            ];
+            
+            const missing = required.filter(key => !(key in HEAT_SYSTEM));
+            if (missing.length > 0) {
+                throw new Error(`Missing constants: ${missing.join(', ')}`);
+            }
+            return 'All required constants present';
+        });
+
+        let constantsHTML = '';
+        if (typeof HEAT_SYSTEM !== 'undefined') {
+            for (const [key, value] of Object.entries(HEAT_SYSTEM)) {
+                constantsHTML += `<div class="test-result success">✓ ${key}: ${value}</div>`;
+            }
+        }
+        document.getElementById('test2').innerHTML = constantsHTML;
+
+        // Test 3: CRIT_CAPS is defined
+        const test3Pass = runTest('CRIT_CAPS is defined', () => {
+            if (typeof CRIT_CAPS === 'undefined') {
+                throw new Error('CRIT_CAPS is not defined');
+            }
+            if (!CRIT_CAPS.MAX_CRIT_CHANCE || !CRIT_CAPS.MAX_CRIT_DAMAGE) {
+                throw new Error('CRIT_CAPS missing required properties');
+            }
+            return 'CRIT_CAPS is accessible with correct properties';
+        });
+
+        document.getElementById('test3').innerHTML = `
+            <div class="test-result ${test3Pass ? 'success' : 'error'}">
+                ${test3Pass ? '✓' : '✗'} CRIT_CAPS is ${typeof CRIT_CAPS !== 'undefined' ? 'DEFINED' : 'UNDEFINED'}
+            </div>
+            ${typeof CRIT_CAPS !== 'undefined' ? `
+                <div class="test-result success">✓ MAX_CRIT_CHANCE: ${CRIT_CAPS.MAX_CRIT_CHANCE}</div>
+                <div class="test-result success">✓ MAX_CRIT_DAMAGE: ${CRIT_CAPS.MAX_CRIT_DAMAGE}</div>
+            ` : ''}
+        `;
+
+        // Test 4: HeatData functions exist
+        const test4Pass = runTest('HeatData functions exist', () => {
+            if (typeof HeatData === 'undefined') {
+                throw new Error('HeatData is not defined');
+            }
+            const required = [
+                'createHeatComponent',
+                'calculateCritDamage',
+                'rollCrit',
+                'calculateEffectiveCooling',
+                'validateHeatSustainability'
+            ];
+            
+            const missing = required.filter(fn => typeof HeatData[fn] !== 'function');
+            if (missing.length > 0) {
+                throw new Error(`Missing functions: ${missing.join(', ')}`);
+            }
+            return 'All required functions present';
+        });
+
+        let functionsHTML = '';
+        if (typeof HeatData !== 'undefined') {
+            const functions = [
+                'createHeatComponent',
+                'calculateCritDamage',
+                'rollCrit',
+                'calculateEffectiveCooling',
+                'validateHeatSustainability'
+            ];
+            functions.forEach(fn => {
+                const exists = typeof HeatData[fn] === 'function';
+                functionsHTML += `<div class="test-result ${exists ? 'success' : 'error'}">
+                    ${exists ? '✓' : '✗'} ${fn} is ${exists ? 'available' : 'missing'}
+                </div>`;
+            });
+        }
+        document.getElementById('test4').innerHTML = functionsHTML;
+
+        // Display full HEAT_SYSTEM object
+        if (typeof HEAT_SYSTEM !== 'undefined') {
+            document.getElementById('heat-object').textContent = JSON.stringify(HEAT_SYSTEM, null, 2);
+        }
+
+        // Display overall status
+        const totalTests = results.passed + results.failed;
+        const statusHTML = `
+            <h3>Overall Results <span class="status ${results.failed === 0 ? 'pass' : 'fail'}">
+                ${results.passed}/${totalTests} PASSED
+            </span></h3>
+            ${results.tests.map(test => `
+                <div class="test-result ${test.status === 'PASS' ? 'success' : 'error'}">
+                    ${test.status === 'PASS' ? '✓' : '✗'} ${test.name}: ${test.message}
+                </div>
+            `).join('')}
+        `;
+        document.getElementById('status').innerHTML = statusHTML;
+
+        // Log to console
+        console.log('=== HEAT_SYSTEM TEST RESULTS ===');
+        console.log(`Passed: ${results.passed}/${totalTests}`);
+        console.log('Tests:', results.tests);
+        
+        if (typeof HEAT_SYSTEM !== 'undefined') {
+            console.log('✓ HEAT_SYSTEM:', HEAT_SYSTEM);
+            console.log('✓ CRIT_CAPS:', CRIT_CAPS);
+            console.log('✓ HeatData:', HeatData);
+        } else {
+            console.error('✗ HEAT_SYSTEM is still not defined!');
+        }
+    </script>
+</body>
+</html>

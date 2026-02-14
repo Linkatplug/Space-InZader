@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weapon Bridge Test</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a2e;
+            color: #eee;
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #00ffff;
+            text-align: center;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        .status {
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .status.success {
+            border-color: #00ff00;
+        }
+        .status.error {
+            border-color: #ff0000;
+        }
+        .check {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .check-icon {
+            width: 20px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .check-icon.pass { color: #00ff00; }
+        .check-icon.fail { color: #ff0000; }
+        .weapon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .weapon-card {
+            background: #16213e;
+            border: 2px solid #0f3460;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        .weapon-card h3 {
+            margin: 0 0 10px 0;
+            color: #00ffff;
+        }
+        .weapon-type {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .type-em { background: #00ffff; color: #000; }
+        .type-thermal { background: #ff8c00; color: #000; }
+        .type-kinetic { background: #ffffff; color: #000; }
+        .type-explosive { background: #ff0000; color: #fff; }
+        .stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .stat-label {
+            color: #888;
+        }
+        .stat-value {
+            color: #fff;
+            font-weight: bold;
+        }
+        button {
+            background: #0f3460;
+            color: #00ffff;
+            border: 2px solid #00ffff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #00ffff;
+            color: #000;
+        }
+        pre {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚔️ Weapon Bridge Test ⚔️</h1>
+        
+        <div id="status" class="status">
+            <h2>🔍 Bridge Status</h2>
+            <div id="checks"></div>
+        </div>
+
+        <div class="status">
+            <h2>📊 Statistics</h2>
+            <div id="stats"></div>
+            <button onclick="dumpToConsole()">💾 Dump WeaponData to Console</button>
+            <button onclick="testGetWeaponData()">🧪 Test getWeaponData()</button>
+        </div>
+
+        <div class="status">
+            <h2>⚔️ All Weapons (24)</h2>
+            <div id="weapons" class="weapon-grid"></div>
+        </div>
+
+        <div class="status">
+            <h2>🔬 Sample Weapon Details</h2>
+            <pre id="sampleWeapon"></pre>
+        </div>
+    </div>
+
+    <!-- Load dependencies in correct order -->
+    <script src="js/data/NewWeaponData.js"></script>
+    <script src="js/data/WeaponDataBridge.js"></script>
+
+    <script>
+        // Wait for page to fully load
+        window.addEventListener('load', function() {
+            runTests();
+        });
+
+        function runTests() {
+            const checksDiv = document.getElementById('checks');
+            const statsDiv = document.getElementById('stats');
+            const weaponsDiv = document.getElementById('weapons');
+            const sampleDiv = document.getElementById('sampleWeapon');
+            const statusDiv = document.getElementById('status');
+
+            let allPassed = true;
+
+            // Check 1: NEW_WEAPONS loaded
+            const check1 = typeof window.NEW_WEAPONS !== 'undefined';
+            addCheck(checksDiv, check1, 'NEW_WEAPONS loaded');
+            if (!check1) allPassed = false;
+
+            // Check 2: WeaponData exists
+            const check2 = typeof window.WeaponData !== 'undefined';
+            addCheck(checksDiv, check2, 'WeaponData exists');
+            if (!check2) allPassed = false;
+
+            // Check 3: WeaponData.WEAPONS exists
+            const check3 = window.WeaponData && typeof window.WeaponData.WEAPONS === 'object';
+            addCheck(checksDiv, check3, 'WeaponData.WEAPONS exists');
+            if (!check3) allPassed = false;
+
+            // Check 4: getWeaponData function exists
+            const check4 = window.WeaponData && typeof window.WeaponData.getWeaponData === 'function';
+            addCheck(checksDiv, check4, 'WeaponData.getWeaponData() exists');
+            if (!check4) allPassed = false;
+
+            // Check 5: Weapon count matches
+            const newCount = window.NEW_WEAPONS ? Object.keys(window.NEW_WEAPONS).length : 0;
+            const oldCount = window.WeaponData && window.WeaponData.WEAPONS ? Object.keys(window.WeaponData.WEAPONS).length : 0;
+            const check5 = newCount === oldCount && newCount === 24;
+            addCheck(checksDiv, check5, `Weapon count matches (${newCount} NEW_WEAPONS, ${oldCount} WeaponData.WEAPONS, expected 24)`);
+            if (!check5) allPassed = false;
+
+            // Check 6: Sample weapon has both old and new fields
+            if (window.WeaponData && window.WeaponData.WEAPONS) {
+                const sampleKey = Object.keys(window.WeaponData.WEAPONS)[0];
+                const sample = window.WeaponData.WEAPONS[sampleKey];
+                const hasOldField = sample && typeof sample.baseDamage !== 'undefined';
+                const hasNewField = sample && typeof sample.damageType !== 'undefined';
+                const check6 = hasOldField && hasNewField;
+                addCheck(checksDiv, check6, `Sample weapon has both baseDamage (old) and damageType (new)`);
+                if (!check6) allPassed = false;
+
+                // Show sample weapon
+                sampleDiv.textContent = JSON.stringify(sample, null, 2);
+            }
+
+            // Set status color
+            statusDiv.className = allPassed ? 'status success' : 'status error';
+
+            // Display statistics
+            displayStats(statsDiv);
+
+            // Display all weapons
+            displayWeapons(weaponsDiv);
+        }
+
+        function addCheck(container, passed, label) {
+            const div = document.createElement('div');
+            div.className = 'check';
+            div.innerHTML = `
+                <span class="check-icon ${passed ? 'pass' : 'fail'}">${passed ? '✓' : '✗'}</span>
+                <span>${label}</span>
+            `;
+            container.appendChild(div);
+        }
+
+        function displayStats(container) {
+            if (!window.WeaponData || !window.WeaponData.WEAPONS) return;
+
+            const weapons = window.WeaponData.WEAPONS;
+            const types = {};
+            const rarities = {};
+
+            for (const weapon of Object.values(weapons)) {
+                // Count by damage type
+                const type = weapon.damageType || 'unknown';
+                types[type] = (types[type] || 0) + 1;
+
+                // Count by rarity
+                const rarity = weapon.rarity || 'unknown';
+                rarities[rarity] = (rarities[rarity] || 0) + 1;
+            }
+
+            container.innerHTML = `
+                <div class="stat">
+                    <span class="stat-label">Total Weapons:</span>
+                    <span class="stat-value">${Object.keys(weapons).length}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">EM Weapons:</span>
+                    <span class="stat-value">${types.em || 0}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Thermal Weapons:</span>
+                    <span class="stat-value">${types.thermal || 0}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Kinetic Weapons:</span>
+                    <span class="stat-value">${types.kinetic || 0}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Explosive Weapons:</span>
+                    <span class="stat-value">${types.explosive || 0}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Common:</span>
+                    <span class="stat-value">${rarities.common || 0}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Uncommon:</span>
+                    <span class="stat-value">${rarities.uncommon || 0}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Rare:</span>
+                    <span class="stat-value">${rarities.rare || 0}</span>
+                </div>
+                <div class="stat">
+                    <span class="stat-label">Epic:</span>
+                    <span class="stat-value">${rarities.epic || 0}</span>
+                </div>
+            `;
+        }
+
+        function displayWeapons(container) {
+            if (!window.WeaponData || !window.WeaponData.WEAPONS) return;
+
+            container.innerHTML = '';
+            
+            for (const [key, weapon] of Object.entries(window.WeaponData.WEAPONS)) {
+                const card = document.createElement('div');
+                card.className = 'weapon-card';
+                
+                const typeClass = `type-${weapon.damageType || 'unknown'}`;
+                
+                card.innerHTML = `
+                    <h3>${weapon.name}</h3>
+                    <span class="weapon-type ${typeClass}">${weapon.damageType ? weapon.damageType.toUpperCase() : 'UNKNOWN'}</span>
+                    <div class="stat">
+                        <span class="stat-label">Base Damage:</span>
+                        <span class="stat-value">${weapon.baseDamage}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Fire Rate:</span>
+                        <span class="stat-value">${weapon.fireRate}/s</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Heat:</span>
+                        <span class="stat-value">${weapon.heat || 0}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Rarity:</span>
+                        <span class="stat-value">${weapon.rarity}</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Tags:</span>
+                        <span class="stat-value">${weapon.tags ? weapon.tags.join(', ') : 'none'}</span>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            }
+        }
+
+        function dumpToConsole() {
+            console.log('=== WeaponData ===');
+            console.table(window.WeaponData.WEAPONS);
+            console.log('=== Full WeaponData object ===');
+            console.log(window.WeaponData);
+        }
+
+        function testGetWeaponData() {
+            console.log('=== Testing getWeaponData() ===');
+            
+            // Test with uppercase
+            const test1 = window.WeaponData.getWeaponData('ION_BLASTER');
+            console.log('getWeaponData("ION_BLASTER"):', test1);
+            
+            // Test with lowercase
+            const test2 = window.WeaponData.getWeaponData('ion_blaster');
+            console.log('getWeaponData("ion_blaster"):', test2);
+            
+            // Test non-existent
+            const test3 = window.WeaponData.getWeaponData('FAKE_WEAPON');
+            console.log('getWeaponData("FAKE_WEAPON"):', test3);
+            
+            alert('Check console for getWeaponData() test results');
+        }
+    </script>
+</body>
+</html>

@@ -34,6 +34,9 @@ class GameState {
         
         // Pending level up boosts
         this.pendingBoosts = [];
+        
+        // Tactical UI state
+        this.tacticalUIEnabled = true;
     }
 
     setState(newState) {
