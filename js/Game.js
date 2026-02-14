@@ -91,7 +91,7 @@ class Game {
             particle: new ParticleSystem(this.world),
             defense: new DefenseSystem(this.world, this.gameState, this.audioManager, this.screenEffects),
             collision: new CollisionSystem(this.world, this.gameState, this.audioManager, null, null), // defenseSystem set below
-            combat: new CombatSystem(this.world, this.gameState, this.audioManager),
+            combat: new CombatSystem(this.world, this.gameState, this.audioManager, null), // defenseSystem set below
             ai: new AISystem(this.world, this.canvas),
             spawner: new SpawnerSystem(this.world, this.gameState, this.canvas),
             pickup: new PickupSystem(this.world, this.gameState),
@@ -101,8 +101,9 @@ class Game {
             weather: new WeatherSystem(this.world, this.canvas, this.audioManager, this.gameState)
         };
         
-        // Set defenseSystem reference after initialization
+        // Set defenseSystem references after initialization
         this.systems.collision.defenseSystem = this.systems.defense;
+        this.systems.combat.defenseSystem = this.systems.defense;
         
         // Synergy system (initialized when game starts)
         this.synergySystem = null;

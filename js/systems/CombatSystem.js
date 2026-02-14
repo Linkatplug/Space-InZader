@@ -1,16 +1,24 @@
 /**
  * @file CombatSystem.js
  * @description Handles weapon firing, combat mechanics, and projectile creation
+ * 
+ * RESPONSIBILITY SEPARATION:
+ * - CombatSystem: Weapon firing, projectile creation, hit detection
+ * - DefenseSystem: ALL damage application, health/shield/armor modification, entity destruction
+ * 
+ * CombatSystem NEVER modifies health, shield, armor, or structure directly.
+ * Instead, it creates DamagePacket instances and calls DefenseSystem.applyDamage()
  */
 
 // Sound probability constants for weapons
 const BEAM_SOUND_PROBABILITY = 0.15; // Beam weapons fire rapidly, reduce sound frequency
 
 class CombatSystem {
-    constructor(world, gameState, audioManager) {
+    constructor(world, gameState, audioManager, defenseSystem = null) {
         this.world = world;
         this.gameState = gameState;
         this.audioManager = audioManager;
+        this.defenseSystem = defenseSystem;
     }
 
     /**
@@ -826,7 +834,7 @@ class CombatSystem {
         if (halo.lastTickTime >= halo.tickRate) {
             halo.lastTickTime = 0;
             
-            // Apply damage to nearby enemies
+            // HIT DETECTION: Find enemies in range of blade halo
             const playerPos = player.getComponent('position');
             if (!playerPos) return;
             
@@ -837,14 +845,23 @@ class CombatSystem {
                 const enemyPos = enemy.getComponent('position');
                 if (!enemyPos) continue;
                 
+                // Check if enemy is within blade halo radius
                 const dist = MathUtils.distance(playerPos.x, playerPos.y, enemyPos.x, enemyPos.y);
                 if (dist <= orbitRadius) {
-                    const enemyHealth = enemy.getComponent('health');
-                    if (enemyHealth) {
-                        enemyHealth.current -= damagePerTick;
-                        if (enemyHealth.current <= 0) {
-                            this.world.removeEntity(enemy.id);
-                        }
+                    // Hit detected! Create DamagePacket and apply via DefenseSystem
+                    if (this.defenseSystem) {
+                        // Create damage packet for blade halo damage
+                        const damagePacket = new DamagePacket({
+                            baseDamage: damagePerTick,
+                            damageType: 'kinetic', // Blade halo is physical damage
+                            armorPenetration: 0,
+                            shieldPenetration: 0,
+                            critChance: 0,
+                            critMultiplier: 1.0
+                        });
+                        
+                        // DefenseSystem handles all damage application and entity destruction
+                        this.defenseSystem.applyDamage(enemy, damagePacket, player);
                     }
                 }
             }
