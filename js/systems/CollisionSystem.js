@@ -91,10 +91,10 @@ class CollisionSystem {
             for (const enemy of enemies) {
                 const enemyPos = enemy.getComponent('position');
                 const enemyCol = enemy.getComponent('collision');
-                const enemyHealth = enemy.getComponent('health');
                 const enemyDefense = enemy.getComponent('defense');
                 
-                if (!enemyPos || !enemyCol || (!enemyHealth && !enemyDefense)) continue;
+                // Enemies must have defense component (no health fallback)
+                if (!enemyPos || !enemyCol || !enemyDefense) continue;
 
                 // Skip if orbital projectile is on cooldown for this enemy
                 if (projComp.orbital && projComp.hitCooldown && projComp.hitCooldown[enemy.id] > 0) {
@@ -409,27 +409,20 @@ class CollisionSystem {
     }
 
     damageEnemy(enemy, damage, attacker = null, damageType = 'kinetic') {
-        // Try new defense system first
+        // Enemies must use defense system (no health fallback)
         const defense = enemy.getComponent('defense');
-        const health = enemy.getComponent('health');
         const renderable = enemy.getComponent('renderable');
         
-        let actualDamage = damage;
-        let destroyed = false;
-        
-        if (defense && this.world && this.world.defenseSystem) {
-            // Use new defense system with DamagePacket
-            const damagePacket = DamagePacket.simple(damage, damageType);
-            const result = this.world.defenseSystem.applyDamage(enemy, damagePacket);
-            actualDamage = result.totalDamage;
-            destroyed = result.destroyed;
-        } else if (health) {
-            // Fallback to old health system
-            health.current -= damage;
-            destroyed = health.current <= 0;
-        } else {
-            return; // No health or defense
+        if (!defense || !this.world || !this.world.defenseSystem) {
+            console.error('[CollisionSystem] Enemy missing defense component or DefenseSystem not available');
+            return;
         }
+        
+        // Use defense system with DamagePacket
+        const damagePacket = DamagePacket.simple(damage, damageType);
+        const result = this.world.defenseSystem.applyDamage(enemy, damagePacket);
+        const actualDamage = result.totalDamage;
+        const destroyed = result.destroyed;
         
         this.gameState.stats.damageDealt += actualDamage;
         
