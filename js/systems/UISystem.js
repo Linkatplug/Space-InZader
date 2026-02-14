@@ -1174,6 +1174,8 @@ class UISystem {
             const shipKeys = ['ION_FRIGATE', 'BALLISTIC_DESTROYER', 'CATACLYSM_CRUISER', 'TECH_NEXUS'];
             ships = shipKeys.map(key => {
                 const shipData = window.ShipUpgradeData.SHIPS[key];
+                // Get icon, role, and dominantDamageType from ShipData
+                const shipInfo = window.ShipData?.SHIPS?.[key] || {};
                 return {
                     id: key,
                     name: shipData.name,
@@ -1181,7 +1183,10 @@ class UISystem {
                     baseStats: shipData.baseStats,
                     color: shipData.color,
                     difficulty: shipData.difficulty,
-                    unlocked: shipData.unlocked !== false
+                    unlocked: shipData.unlocked !== false,
+                    icon: shipInfo.icon || '🚀',
+                    role: shipInfo.role || shipData.description,
+                    dominantDamageType: shipInfo.dominantDamageType || 'kinetic'
                 };
             });
             console.log('[Menu] Ships available: ' + shipKeys.join(', '));
@@ -1195,7 +1200,10 @@ class UISystem {
                     baseStats: { maxHealth: 100, damageMultiplier: 1.0, speed: 220 },
                     color: '#4488FF',
                     difficulty: 'easy',
-                    unlocked: true
+                    unlocked: true,
+                    icon: '⚡',
+                    role: 'Anti-shield / Disruption',
+                    dominantDamageType: 'em'
                 },
                 {
                     id: 'BALLISTIC_DESTROYER',
@@ -1204,7 +1212,10 @@ class UISystem {
                     baseStats: { maxHealth: 120, damageMultiplier: 1.1, speed: 200 },
                     color: '#FFA500',
                     difficulty: 'easy',
-                    unlocked: true
+                    unlocked: true,
+                    icon: '🔩',
+                    role: 'Anti-armor / Burst',
+                    dominantDamageType: 'kinetic'
                 },
                 {
                     id: 'CATACLYSM_CRUISER',
@@ -1213,7 +1224,10 @@ class UISystem {
                     baseStats: { maxHealth: 90, damageMultiplier: 1.2, speed: 210 },
                     color: '#FF4444',
                     difficulty: 'medium',
-                    unlocked: true
+                    unlocked: true,
+                    icon: '💣',
+                    role: 'AOE / Wave Clear',
+                    dominantDamageType: 'explosive'
                 },
                 {
                     id: 'TECH_NEXUS',
@@ -1222,7 +1236,10 @@ class UISystem {
                     baseStats: { maxHealth: 95, damageMultiplier: 1.05, speed: 230 },
                     color: '#FF6600',
                     difficulty: 'medium',
-                    unlocked: true
+                    unlocked: true,
+                    icon: '🔬',
+                    role: 'Finisher / Tech Sustain',
+                    dominantDamageType: 'thermal'
                 }
             ];
             console.warn('[Menu] ShipUpgradeData not available, using fallback ships');
@@ -1250,6 +1267,15 @@ class UISystem {
             } else if (this.selectedShipId === ship.id && !isLocked) {
                 card.classList.add('selected');
             }
+
+            // Compute damage type color dynamically
+            const DAMAGE_TYPE_COLORS = {
+                em: "#00FFFF",
+                thermal: "#FF6600",
+                kinetic: "#CCCCCC",
+                explosive: "#FF3300"
+            };
+            const damageColor = DAMAGE_TYPE_COLORS[ship.dominantDamageType] || "#FFFFFF";
 
             card.innerHTML = `
                 <h3 style="margin-bottom: 8px; text-align: center;">${ship.icon} ${ship.name}</h3>
