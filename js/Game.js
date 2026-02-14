@@ -473,6 +473,13 @@ class Game {
         
         // Initialize defense component with ship's baseStats (3-layer system: shield, armor, structure)
         if (shipInfo && shipInfo.baseStats) {
+            // Get resistances from DefenseData (single source of truth for resistances)
+            const layerResistances = window.DefenseData?.LAYER_RESISTANCES || {
+                shield: { em: 0, thermal: 0.2, kinetic: 0.4, explosive: 0.5 },
+                armor: { em: 0.5, thermal: 0.35, kinetic: 0.25, explosive: 0.1 },
+                structure: { em: 0.3, thermal: 0, kinetic: 0.15, explosive: 0.2 }
+            };
+            
             const defense = {
                 shield: {
                     current: shipInfo.baseStats.maxShield,
@@ -480,7 +487,7 @@ class Game {
                     regen: shipInfo.baseStats.shieldRegen,
                     regenDelay: 0,
                     regenDelayMax: 3,
-                    resistances: { em: 0, thermal: 0.2, kinetic: 0.4, explosive: 0.5 }
+                    resistances: { ...layerResistances.shield }
                 },
                 armor: {
                     current: shipInfo.baseStats.maxArmor,
@@ -488,7 +495,7 @@ class Game {
                     regen: 0,
                     regenDelay: 0,
                     regenDelayMax: 0,
-                    resistances: { em: 0.5, thermal: 0.35, kinetic: 0.25, explosive: 0.1 }
+                    resistances: { ...layerResistances.armor }
                 },
                 structure: {
                     current: shipInfo.baseStats.maxStructure,
@@ -496,7 +503,7 @@ class Game {
                     regen: 0.5,
                     regenDelay: 0,
                     regenDelayMax: 0,
-                    resistances: { em: 0.3, thermal: 0, kinetic: 0.15, explosive: 0.2 }
+                    resistances: { ...layerResistances.structure }
                 }
             };
             this.player.addComponent('defense', defense);
