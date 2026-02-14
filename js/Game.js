@@ -59,7 +59,8 @@ const DEFAULT_STATS = {
 };
 
 class Game {
-    constructor() {
+    constructor(options = {}) {
+        this.sandboxMode = options.sandboxMode === true;
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
         
@@ -178,6 +179,32 @@ class Game {
         
         // Setup UI event listeners
         this.setupUIListeners();
+        
+        // Apply sandbox mode if enabled
+        if (this.sandboxMode) {
+            console.log("[Game] Sandbox mode enabled");
+            
+            // Disable wave spawning
+            if (this.systems.wave) {
+                this.systems.wave.update = () => {};
+            }
+            
+            // Disable weather
+            if (this.systems.weather) {
+                this.systems.weather.update = () => {};
+            }
+            
+            // Disable UI updates
+            if (this.systems.ui) {
+                this.systems.ui.update = () => {};
+            }
+            
+            // Disable audio
+            if (this.audioManager) {
+                this.audioManager.play = () => {};
+                this.audioManager.stopAll = () => {};
+            }
+        }
         
         // Start in menu
         this.gameState.setState(GameStates.MENU);
@@ -414,7 +441,9 @@ class Game {
         // Reset systems
         this.systems.spawner.reset();
         this.systems.render.reset();
-        this.systems.wave.reset();
+        if (!this.sandboxMode) {
+            this.systems.wave.reset();
+        }
         this.systems.weather.reset();
         this.screenEffects.reset();
         
@@ -1333,8 +1362,10 @@ class Game {
             }
             
             // Check for game over with defense system
-            if (defense && defense.structure.current <= 0) {
-                this.gameOver();
+            if (!this.sandboxMode) {
+                if (defense && defense.structure.current <= 0) {
+                    this.gameOver();
+                }
             }
         }
         
