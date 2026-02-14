@@ -52,6 +52,13 @@ const BASE_DEFENSE_VALUES = {
 const RESISTANCE_CAP = 0.75; // 75% maximum
 
 /**
+ * Resistance minimum
+ * Minimum resistance for any damage type on any layer
+ * -100% means damage is doubled (200% damage taken)
+ */
+const RESISTANCE_MIN = -1.0; // -100% minimum (double damage)
+
+/**
  * Resistance tables for each defense layer
  * Format: { [damageType]: resistancePercentage }
  * Resistance reduces incoming damage: actualDamage = rawDamage * (1 - resistance)
@@ -114,17 +121,18 @@ const DAMAGE_TYPE_SYMBOLS = {
  * @param {number} regen - HP regeneration per second
  * @param {number} regenDelay - Current regen delay timer
  * @param {number} regenDelayMax - Max delay before regen starts
- * @param {Object} resistances - Resistance table { em, thermal, kinetic, explosive }
+ * @param {Object} baseResistances - Base resistance table { em, thermal, kinetic, explosive }
  * @returns {Object} Defense layer component
  */
-function createDefenseLayer(currentHp, maxHp, regen, regenDelay, regenDelayMax, resistances) {
+function createDefenseLayer(currentHp, maxHp, regen, regenDelay, regenDelayMax, baseResistances) {
     return {
         current: currentHp,
         max: maxHp,
         regen: regen,
         regenDelay: regenDelay,
         regenDelayMax: regenDelayMax,
-        resistances: { ...resistances }
+        baseResistances: { ...baseResistances },
+        bonusResistances: {} // Dynamic resistance bonuses (em, thermal, kinetic, explosive)
     };
 }
 

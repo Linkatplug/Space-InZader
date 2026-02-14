@@ -126,15 +126,17 @@ function applyModuleResistances(defense, moduleEffects) {
     
     for (const layerName of layers) {
         const layer = defense[layerName];
-        if (!layer || !layer.resistances) continue;
+        if (!layer) continue;
+        
+        // Initialize bonusResistances if it doesn't exist (backward compatibility)
+        if (!layer.bonusResistances) {
+            layer.bonusResistances = {};
+        }
         
         for (const damageType of damageTypes) {
-            if (layer.resistances[damageType] !== undefined) {
-                // Use additive stacking with cap
-                const baseResist = layer.resistances[damageType];
-                const resistCap = typeof RESISTANCE_CAP !== 'undefined' ? RESISTANCE_CAP : 0.75;
-                layer.resistances[damageType] = Math.min(resistCap, baseResist + allResistBonus);
-            }
+            // Set bonus resistance (this replaces any previous bonus)
+            // Note: Total clamping happens in computeLayerResistance
+            layer.bonusResistances[damageType] = allResistBonus;
         }
     }
 }

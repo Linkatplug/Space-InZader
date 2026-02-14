@@ -9,6 +9,13 @@ window.DEBUG_DEFENSE = window.DEBUG_DEFENSE || false;
  */
 
 class DefenseSystem {
+    /**
+     * Valid defense layer names
+     * @static
+     * @constant {string[]}
+     */
+    static VALID_LAYERS = ['shield', 'armor', 'structure'];
+
     constructor(world) {
         this.world = world;
     }
@@ -110,6 +117,134 @@ class DefenseSystem {
     }
 
     /**
+     * Create damage context from packet and entity defense
+     * @private
+     * @param {DamagePacket} damagePacket - Damage packet
+     * @param {Object} defense - Entity defense component
+     * @returns {Object} Damage context
+     */
+    createDamageContext(damagePacket, defense) {
+        return {
+            damagePacket,
+            defense,
+            rawDamage: damagePacket.getFinalDamage(),
+            remainingDamage: damagePacket.getFinalDamage(),
+            layersDamaged: [],
+            damageLog: [],
+            layersDamageDealt: {},
+            lastLayerHit: '',
+            layers: [
+                { name: 'shield', data: defense.shield, penetration: damagePacket.shieldPenetration },
+                { name: 'armor', data: defense.armor, penetration: damagePacket.armorPenetration },
+                { name: 'structure', data: defense.structure, penetration: 0 }
+            ]
+        };
+    }
+
+    /**
+     * Compute effective resistance for a layer
+     * @private
+     * @param {Object} layer - Layer data
+     * @param {string} damageType - Damage type
+     * @returns {Object} Resistance calculation { baseResistance, bonusResistance, totalResistance, effectiveResistance }
+     */
+    computeLayerResistance(layer, damageType) {
+        // Get base resistance from layer
+        const baseResistance = (layer.data.baseResistances && layer.data.baseResistances[damageType]) || 0;
+        
+        // Get bonus resistance (defaults to 0 if not set)
+        const bonusResistance = (layer.data.bonusResistances && layer.data.bonusResistances[damageType]) || 0;
+        
+        // Compute total resistance (base + bonus)
+        const totalResistance = baseResistance + bonusResistance;
+        
+        // Clamp total resistance between RESISTANCE_MIN and RESISTANCE_CAP
+        const resistCap = typeof RESISTANCE_CAP !== 'undefined' ? RESISTANCE_CAP : 0.75;
+        const resistMin = typeof RESISTANCE_MIN !== 'undefined' ? RESISTANCE_MIN : -1.0;
+        const clampedResistance = Math.max(resistMin, Math.min(resistCap, totalResistance));
+        
+        // Apply penetration to the total resistance
+        const effectiveResistance = Math.max(0, clampedResistance * (1 - layer.penetration));
+        
+        return { 
+            baseResistance, 
+            bonusResistance,
+            totalResistance: clampedResistance,
+            effectiveResistance 
+        };
+    }
+
+    /**
+     * Apply damage to a single layer
+     * @private
+     * @param {Object} context - Damage context
+     * @param {Object} layer - Layer to damage
+     * @param {number} effectiveResistance - Effective resistance
+     * @returns {Object} Layer damage result
+     */
+    applyDamageToLayer(context, layer, effectiveResistance) {
+        const damageAfterResist = this.applyResistance(context.remainingDamage, effectiveResistance);
+        const damageDealt = Math.min(layer.data.current, damageAfterResist);
+        const beforeCurrent = layer.data.current;
+        
+        layer.data.current -= damageDealt;
+        
+        return {
+            damageAfterResist,
+            damageDealt,
+            beforeCurrent
+        };
+    }
+
+    /**
+     * Check if layer is broken and calculate overflow
+     * @private
+     * @param {number} damageAfterResist - Damage after resistance
+     * @param {number} damageDealt - Actual damage dealt
+     * @param {number} effectiveResistance - Effective resistance
+     * @returns {number} Overflow damage for next layer
+     */
+    checkLayerBreak(damageAfterResist, damageDealt, effectiveResistance) {
+        const overflow = damageAfterResist - damageDealt;
+        if (overflow > 0) {
+            return this.calculateOverflow(overflow, effectiveResistance);
+        }
+        return 0;
+    }
+
+    /**
+     * Check if entity is destroyed
+     * @private
+     * @param {Object} defense - Defense component
+     * @returns {boolean} True if entity is destroyed
+     */
+    checkEntityDestroyed(defense) {
+        return defense.structure.current <= 0;
+    }
+
+    /**
+     * Finalize damage result
+     * @private
+     * @param {Object} context - Damage context
+     * @param {boolean} destroyed - Whether entity is destroyed
+     * @returns {Object} Damage result
+     */
+    finalizeDamageResult(context, destroyed) {
+        const totalDealt = context.rawDamage - context.remainingDamage;
+        
+        return {
+            incoming: context.rawDamage,
+            dealt: totalDealt,
+            layers: context.layersDamageDealt,
+            layer: context.lastLayerHit,
+            destroyed,
+            totalDamage: totalDealt,
+            layersDamaged: context.layersDamaged,
+            damageType: context.damagePacket.damageType
+        };
+    }
+
+    /**
      * Apply damage to an entity's defense layers using DamagePacket
      * This is the ONLY method that should modify shield, armor, and structure
      * 
@@ -195,11 +330,11 @@ class DefenseSystem {
             };
         }
 
-        // Apply crit multiplier to get final damage
-        const rawDamage = damagePacket.getFinalDamage();
+        // Create damage context
+        const context = this.createDamageContext(damagePacket, defense);
 
         // Log damage calculation start
-        logger.debug('DefenseSystem', `Applying ${rawDamage.toFixed(1)} ${damagePacket.damageType} damage to ${entity.type}${damagePacket.critMultiplier > 1 ? ' (CRIT x' + damagePacket.critMultiplier + ')' : ''}`, {
+        logger.debug('DefenseSystem', `Applying ${context.rawDamage.toFixed(1)} ${damagePacket.damageType} damage to ${entity.type}${damagePacket.critMultiplier > 1 ? ' (CRIT x' + damagePacket.critMultiplier + ')' : ''}`, {
             shield: `${defense.shield.current.toFixed(1)}/${defense.shield.max}`,
             armor: `${defense.armor.current.toFixed(1)}/${defense.armor.max}`,
             structure: `${defense.structure.current.toFixed(1)}/${defense.structure.max}`,
@@ -207,54 +342,32 @@ class DefenseSystem {
             armorPen: damagePacket.armorPenetration > 0 ? `${(damagePacket.armorPenetration * 100).toFixed(0)}%` : 'none'
         });
 
-        let remainingDamage = rawDamage;
-        const layersDamaged = [];
-        const damageLog = [];
-        const layersDamageDealt = {}; // Track damage dealt per layer
-        let lastLayerHit = '';
-
-        // Layer order: shield -> armor -> structure
-        const layers = [
-            { name: 'shield', data: defense.shield, penetration: damagePacket.shieldPenetration },
-            { name: 'armor', data: defense.armor, penetration: damagePacket.armorPenetration },
-            { name: 'structure', data: defense.structure, penetration: 0 } // Structure cannot be penetrated
-        ];
-
-        for (const layer of layers) {
-            if (remainingDamage <= 0) break;
+        // Process damage through layers
+        for (const layer of context.layers) {
+            if (context.remainingDamage <= 0) break;
             if (layer.data.current <= 0) continue;
 
-            // Get base resistance from layer
-            const baseResistance = (layer.data.resistances && layer.data.resistances[damagePacket.damageType]) || 0;
+            // Compute effective resistance with penetration
+            const resistances = this.computeLayerResistance(layer, damagePacket.damageType);
             
-            // Apply penetration: reduces effective resistance
-            // Formula: effectiveResistance = baseResistance * (1 - penetration)
-            // Example: 50% penetration on 40% base resistance = 40% * (1 - 0.5) = 20% effective resistance
-            const effectiveResistance = Math.max(0, baseResistance * (1 - layer.penetration));
+            // Apply damage to this layer
+            const layerResult = this.applyDamageToLayer(context, layer, resistances.effectiveResistance);
             
-            // Apply resistance to calculate damage after resist
-            const damageAfterResist = this.applyResistance(remainingDamage, effectiveResistance);
-
-            // Apply damage to layer
-            const damageDealt = Math.min(layer.data.current, damageAfterResist);
-            const beforeCurrent = layer.data.current;
-            layer.data.current -= damageDealt;
-            layersDamaged.push(layer.name);
-            
-            // Track damage dealt to this layer
-            layersDamageDealt[layer.name] = damageDealt;
-            lastLayerHit = layer.name;
+            // Track damage to this layer
+            context.layersDamaged.push(layer.name);
+            context.layersDamageDealt[layer.name] = layerResult.damageDealt;
+            context.lastLayerHit = layer.name;
 
             // Log damage to this layer
-            damageLog.push({
+            context.damageLog.push({
                 layer: layer.name,
-                rawDamage: remainingDamage.toFixed(1),
-                baseResistance: (baseResistance * 100).toFixed(0) + '%',
+                rawDamage: context.remainingDamage.toFixed(1),
+                baseResistance: (resistances.baseResistance * 100).toFixed(0) + '%',
                 penetration: layer.penetration > 0 ? (layer.penetration * 100).toFixed(0) + '%' : 'none',
-                effectiveResistance: (effectiveResistance * 100).toFixed(0) + '%',
-                damageAfterResist: damageAfterResist.toFixed(1),
-                damageDealt: damageDealt.toFixed(1),
-                before: beforeCurrent.toFixed(1),
+                effectiveResistance: (resistances.effectiveResistance * 100).toFixed(0) + '%',
+                damageAfterResist: layerResult.damageAfterResist.toFixed(1),
+                damageDealt: layerResult.damageDealt.toFixed(1),
+                before: layerResult.beforeCurrent.toFixed(1),
                 after: layer.data.current.toFixed(1)
             });
 
@@ -264,9 +377,9 @@ class DefenseSystem {
                 this.world.events.emit('damageApplied', {
                     targetId: entity.id,
                     layerHit: layer.name,
-                    finalDamage: damageDealt,
+                    finalDamage: layerResult.damageDealt,
                     damageType: damagePacket.damageType,
-                    resistUsed: effectiveResistance,
+                    resistUsed: resistances.effectiveResistance,
                     isCrit: damagePacket.critMultiplier > 1,
                     x: pos ? pos.x : 0,
                     y: pos ? pos.y : 0
@@ -278,19 +391,16 @@ class DefenseSystem {
                 layer.data.regenDelay = layer.data.regenDelayMax;
             }
 
-            // Calculate overflow
-            const overflow = damageAfterResist - damageDealt;
-            if (overflow > 0) {
-                // Overflow needs to be recalculated for next layer's resistance
-                // We need to find the raw damage that would cause this overflow
-                remainingDamage = this.calculateOverflow(overflow, effectiveResistance);
-            } else {
-                remainingDamage = 0;
-            }
+            // Check for layer break and calculate overflow
+            context.remainingDamage = this.checkLayerBreak(
+                layerResult.damageAfterResist,
+                layerResult.damageDealt,
+                resistances.effectiveResistance
+            );
         }
 
-        // Check if entity is destroyed (structure depleted)
-        const destroyed = defense.structure.current <= 0;
+        // Check if entity is destroyed
+        const destroyed = this.checkEntityDestroyed(defense);
         
         // Emit entityDestroyed event if structure <= 0
         if (destroyed && this.world.events) {
@@ -301,13 +411,10 @@ class DefenseSystem {
                 killedBy: damagePacket.damageType
             });
         }
-        
-        // Calculate total damage dealt
-        const totalDealt = rawDamage - remainingDamage;
 
         // Log damage summary
-        if (damageLog.length > 0) {
-            const summary = damageLog.map(d => {
+        if (context.damageLog.length > 0) {
+            const summary = context.damageLog.map(d => {
                 const penetrationInfo = d.penetration !== 'none' ? ` pen:${d.penetration}` : '';
                 return `${d.layer}[${d.before}→${d.after}]: ${d.rawDamage}dmg * (1-${d.effectiveResistance}${penetrationInfo}) = ${d.damageAfterResist} → dealt ${d.damageDealt}`;
             }).join(' | ');
@@ -316,28 +423,19 @@ class DefenseSystem {
         
         // === DEBUG: Log damage results ===
         if (window.DEBUG_DEFENSE) {
+            const totalDealt = context.rawDamage - context.remainingDamage;
             console.log(`[DefenseSystem DEBUG] Entity ${entity.id} after damage:`);
             console.log(`  Shield: ${defense.shield.current.toFixed(1)}/${defense.shield.max}`);
             console.log(`  Armor: ${defense.armor.current.toFixed(1)}/${defense.armor.max}`);
             console.log(`  Structure: ${defense.structure.current.toFixed(1)}/${defense.structure.max}`);
-            console.log(`  Total dealt: ${totalDealt.toFixed(1)}, Overkill: ${overkill.toFixed(1)}`);
+            console.log(`  Total dealt: ${totalDealt.toFixed(1)}, Remaining: ${context.remainingDamage.toFixed(1)}`);
             if (destroyed) {
                 console.log(`  ⚠️ ENTITY DESTROYED`);
             }
         }
 
-        return {
-            // New format
-            incoming: rawDamage,
-            dealt: totalDealt,
-            layers: layersDamageDealt,
-            layer: lastLayerHit,
-            destroyed,
-            // Legacy compatibility (keep for backward compat)
-            totalDamage: totalDealt,
-            layersDamaged,
-            damageType: damagePacket.damageType
-        };
+        // Finalize and return damage result
+        return this.finalizeDamageResult(context, destroyed);
     }
 
     /**
@@ -460,18 +558,24 @@ class DefenseSystem {
      * @param {Entity} entity - Entity to modify
      * @param {string} layerName - Layer to modify (shield, armor, structure)
      * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
-     * @param {number} amount - Amount to ADD to resistance (can be negative)
+     * @param {number} amount - Amount to ADD to bonus resistance (can be negative)
      */
     modifyLayerResistance(entity, layerName, damageType, amount) {
         const defense = entity.getComponent('defense');
         if (!defense || !defense[layerName]) return;
 
         const layer = defense[layerName];
-        if (layer.resistances[damageType] !== undefined) {
-            // ADDITIVE stacking with 75% hard cap
-            const resistCap = typeof RESISTANCE_CAP !== 'undefined' ? RESISTANCE_CAP : 0.75;
-            layer.resistances[damageType] = Math.max(0, Math.min(resistCap, layer.resistances[damageType] + amount));
+        
+        // Initialize bonusResistances if it doesn't exist (backward compatibility)
+        if (!layer.bonusResistances) {
+            layer.bonusResistances = {};
         }
+        
+        // Get current bonus (default to 0)
+        const currentBonus = layer.bonusResistances[damageType] || 0;
+        
+        // Set new bonus value (no clamping here - clamping happens in computeLayerResistance)
+        layer.bonusResistances[damageType] = currentBonus + amount;
     }
     
     /**
@@ -501,5 +605,133 @@ class DefenseSystem {
                 this.modifyLayerResistance(entity, layer, damageType, bonusAmount);
             }
         }
+    }
+
+    /**
+     * Add a resistance modifier to a specific layer
+     * PUBLIC API: Use this to add temporary or permanent resistance bonuses
+     * @param {Entity} entity - Entity to modify
+     * @param {string} layerName - Layer name (shield, armor, structure)
+     * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
+     * @param {number} value - Resistance value to add (can be negative for debuffs)
+     * @returns {boolean} True if modifier was added, false if validation failed
+     */
+    addResistanceModifier(entity, layerName, damageType, value) {
+        // Validate entity has defense component
+        const defense = entity.getComponent('defense');
+        if (!defense) {
+            console.warn('[DefenseSystem] addResistanceModifier: Entity has no defense component');
+            return false;
+        }
+
+        // Validate layer exists
+        if (!DefenseSystem.VALID_LAYERS.includes(layerName)) {
+            console.warn(`[DefenseSystem] addResistanceModifier: Invalid layer name "${layerName}". Must be one of: ${DefenseSystem.VALID_LAYERS.join(', ')}`);
+            return false;
+        }
+
+        const layer = defense[layerName];
+        if (!layer) {
+            console.warn(`[DefenseSystem] addResistanceModifier: Layer "${layerName}" not found on entity`);
+            return false;
+        }
+
+        // Initialize bonusResistances if it doesn't exist
+        if (!layer.bonusResistances) {
+            layer.bonusResistances = {};
+        }
+
+        // Get current bonus (default to 0)
+        const currentBonus = layer.bonusResistances[damageType] || 0;
+
+        // Add the new value to existing bonus
+        layer.bonusResistances[damageType] = currentBonus + value;
+
+        return true;
+    }
+
+    /**
+     * Remove a resistance modifier from a specific layer
+     * PUBLIC API: Use this to remove temporary resistance bonuses/debuffs
+     * Automatically cleans up the key if the value reaches exactly 0
+     * @param {Entity} entity - Entity to modify
+     * @param {string} layerName - Layer name (shield, armor, structure)
+     * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
+     * @param {number} value - Resistance value to remove (subtracts from current)
+     * @returns {boolean} True if modifier was removed, false if validation failed
+     */
+    removeResistanceModifier(entity, layerName, damageType, value) {
+        // Validate entity has defense component
+        const defense = entity.getComponent('defense');
+        if (!defense) {
+            console.warn('[DefenseSystem] removeResistanceModifier: Entity has no defense component');
+            return false;
+        }
+
+        // Validate layer exists
+        if (!DefenseSystem.VALID_LAYERS.includes(layerName)) {
+            console.warn(`[DefenseSystem] removeResistanceModifier: Invalid layer name "${layerName}". Must be one of: ${DefenseSystem.VALID_LAYERS.join(', ')}`);
+            return false;
+        }
+
+        const layer = defense[layerName];
+        if (!layer) {
+            console.warn(`[DefenseSystem] removeResistanceModifier: Layer "${layerName}" not found on entity`);
+            return false;
+        }
+
+        // Initialize bonusResistances if it doesn't exist
+        if (!layer.bonusResistances) {
+            layer.bonusResistances = {};
+        }
+
+        // Get current bonus (default to 0)
+        const currentBonus = layer.bonusResistances[damageType] || 0;
+
+        // Subtract the value
+        const newBonus = currentBonus - value;
+
+        // If the new bonus is very close to 0 (within floating point precision), remove the key
+        // Using epsilon of 1e-10 to handle floating point precision issues
+        if (Math.abs(newBonus) < 1e-10) {
+            delete layer.bonusResistances[damageType];
+        } else {
+            layer.bonusResistances[damageType] = newBonus;
+        }
+
+        return true;
+    }
+
+    /**
+     * Clear all resistance modifiers from a specific layer
+     * PUBLIC API: Use this to reset all temporary resistance bonuses/debuffs on a layer
+     * @param {Entity} entity - Entity to modify
+     * @param {string} layerName - Layer name (shield, armor, structure)
+     * @returns {boolean} True if modifiers were cleared, false if validation failed
+     */
+    clearResistanceModifiers(entity, layerName) {
+        // Validate entity has defense component
+        const defense = entity.getComponent('defense');
+        if (!defense) {
+            console.warn('[DefenseSystem] clearResistanceModifiers: Entity has no defense component');
+            return false;
+        }
+
+        // Validate layer exists
+        if (!DefenseSystem.VALID_LAYERS.includes(layerName)) {
+            console.warn(`[DefenseSystem] clearResistanceModifiers: Invalid layer name "${layerName}". Must be one of: ${DefenseSystem.VALID_LAYERS.join(', ')}`);
+            return false;
+        }
+
+        const layer = defense[layerName];
+        if (!layer) {
+            console.warn(`[DefenseSystem] clearResistanceModifiers: Layer "${layerName}" not found on entity`);
+            return false;
+        }
+
+        // Clear all bonus resistances by resetting to empty object
+        layer.bonusResistances = {};
+
+        return true;
     }
 }
