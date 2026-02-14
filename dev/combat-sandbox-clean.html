@@ -232,14 +232,31 @@
             world = new World();
             console.log('[Sandbox] World created');
             
+            // Create GameState (required by systems)
+            const gameState = new GameState();
+            gameState.isPaused = false;
+            gameState.isGameOver = false;
+            // Ensure stats object exists with all required fields
+            gameState.stats = {
+                time: 0,
+                kills: 0,
+                score: 0,
+                highestLevel: 1,
+                noyauxEarned: 0,
+                damageDealt: 0,
+                damageTaken: 0,
+                shotsFired: 0
+            };
+            console.log('[Sandbox] GameState created');
+            
             // Create systems (NO Game class)
             systems.movement = new MovementSystem(world, canvas);
             systems.ai = new AISystem(world, canvas);
-            systems.combat = new CombatSystem(world, null, null);
+            systems.combat = new CombatSystem(world, gameState, null);
             systems.defense = new DefenseSystem(world);
             world.defenseSystem = systems.defense; // Wire DefenseSystem to world for CollisionSystem
-            systems.collision = new CollisionSystem(world, null, null, null);
-            systems.spawner = new SpawnerSystem(world, null);
+            systems.collision = new CollisionSystem(world, gameState, null, null);
+            systems.spawner = new SpawnerSystem(world, gameState, null);
             console.log('[Sandbox] Systems created');
             
             // Create player manually
