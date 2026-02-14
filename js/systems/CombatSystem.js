@@ -102,6 +102,7 @@ class CombatSystem {
                 });
                 
                 // Create projectile
+                console.log("[FIX VERIFY] Enemy projectile owner set to:", enemy.id);
                 this.createProjectile(
                     enemyPos.x,
                     enemyPos.y,
@@ -109,7 +110,7 @@ class CombatSystem {
                     weapon.baseDamage,
                     weapon.projectileSpeed,
                     5, // lifetime
-                    'enemy', // owner
+                    enemy.id, // owner - USE NUMERIC ENTITY ID
                     'direct', // weaponType
                     0, // piercing
                     weapon.color,
