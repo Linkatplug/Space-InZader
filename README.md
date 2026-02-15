@@ -1,84 +1,57 @@
-# Space InZader 🚀
+# 🚀 Space InZader : Technical Documentation
 
-A fully playable **roguelite space shooter** web game inspired by Space Invaders and Vampire Survivors. Built with vanilla JavaScript and HTML5 Canvas.
+**Space InZader** est un Roguelite Spatial Tactique haute performance construit avec React et l'API Canvas.
 
-![Menu Screenshot](https://github.com/user-attachments/assets/f5370b5d-ecba-4307-8fa3-eebbc7d24cf3)
+## 🛠 Stack Technique
+- **Framework** : React 19
+- **Langage** : TypeScript (TSX)
+- **Rendu** : HTML5 Canvas (2D Context)
+- **Style** : Tailwind CSS (Utility-first)
+- **Build Tool** : Vite (pour le développement local)
 
-## 🎮 Features
+## 🧠 Architecture du Moteur
+Le jeu utilise un pattern de **découplage Moteur/Rendu** pour garantir 60 FPS constants même avec des centaines d'objets :
 
-### Core Gameplay
-- **Top-down 2D shooter** rendered at 60 FPS on HTML5 Canvas
-- **Auto-firing weapons** that target the closest enemy
-- **WASD/ZQSD movement** with smooth, responsive controls
-- **Progressive enemy waves** with exponential difficulty scaling
-- **6 enemy types**: Drone, Chasseur, Tank, Tireur, Elite, Boss
+1.  **CoreEngine (Moteur de Logique)** : 
+    - L'état du jeu (`GameState`) est stocké dans un `useRef` (mutable).
+    - Cela évite les re-renders inutiles de React qui tueraient les performances.
+    - La logique de collision utilise un **QuadTree** pour passer d'une complexité O(n²) à O(n log n).
 
-### Progression System (Per-Run)
-- **XP collection** from defeated enemies
-- **Level-up system** with pause screen on each level gain
-- **Boost selection**: Choose 1 of 3 random upgrades with rarity weighting
-- **8 unique weapons** with independent leveling (max level 8)
-- **10 passive abilities** that modify gameplay stats
-- **Weapon evolution system**: Combine max-level weapons with specific passives
+2.  **CoreRenderer (Moteur de Rendu)** :
+    - Utilise `requestAnimationFrame` pour synchroniser le dessin avec le rafraîchissement de l'écran.
+    - Système de couches (Background > Particles > Entities > VFX > HUD).
 
-### Meta-Progression (Persistent)
-- **Noyaux currency** earned each run based on performance
-- **Permanent upgrade tree**: Increase health, damage, XP bonus
-- **4 playable ships** with unique stats and starting weapons
-- **Unlock system** for weapons, passives, and ships
-- **LocalStorage persistence** for save data
+3.  **StatsCalculator (Système de Synergies)** :
+    - Implémentation d'un **rendement dégressif** (Diminishing Returns).
+    - Formule : `BonusEffectif = Σ (0.8^i)` pour chaque stack. Cela permet d'empiler les passifs sans casser l'équilibrage.
 
-### Visual & Audio
-- **Neon sci-fi aesthetic** with glowing effects
-- **Animated starfield background** with parallax layers
-- **Particle effects** for explosions, impacts, level-ups
-- **Rarity color coding**: Common (gray), Rare (blue), Epic (purple), Legendary (gold)
-- **Web Audio API sound effects**
+## 🛠 Installation & Lancement Local
 
-## 🚀 How to Play
+### Prérequis
+- [Node.js](https://nodejs.org/) (Version 18 ou supérieure)
 
-1. **Open `index.html`** in a modern web browser
-2. **Select a ship** from the four available options
-3. **Click START GAME** to begin
-4. **Move** with WASD or ZQSD keys
-5. **Weapons auto-fire** at the nearest enemy
-6. **Collect green XP orbs** to level up
-7. **Choose upgrades** when you level up
-8. **Survive** as long as possible!
+### Procédure
+1.  Exporte tous les fichiers dans un dossier nommé `space-inzader`.
+2.  Ouvre un terminal dans ce dossier.
+3.  Installe les dépendances :
+    ```bash
+    npm install
+    ```
+4.  Lance le serveur de développement :
+    ```bash
+    npm start
+    ```
+5.  Ouvre ton navigateur sur `http://localhost:5173`.
 
-### Controls
-- **WASD** or **ZQSD** - Move player
-- **ESC** - Pause game
-- **Mouse** - Menu navigation
+## 🕹 Commandes de Développement
+- **F3** : Activer/Désactiver l'overlay de Debug (FPS, FrameTime, Entités).
+- **Mode Lab** : Accessible depuis le menu principal. Permet de modifier la physique (vitesse, dégâts, heat) en temps réel pendant que tu joues.
 
-## 🛠️ Technical Architecture
-
-Built entirely with vanilla JavaScript - no frameworks or build process required!
-
-### Technology Stack
-- Vanilla JavaScript (ES6+)
-- HTML5 Canvas 2D
-- Web Audio API
-- LocalStorage
-
-### ECS Architecture
-Entity Component System for clean, modular code with dedicated systems for movement, combat, AI, collision, spawning, particles, rendering, and UI.
-
-## 📊 Game Content
-
-### 8 Weapons
-Laser Frontal • Mitraille • Missiles Guidés • Orbes Orbitaux • Rayon Vampirique • Mines • Arc Électrique • Tourelle Drone
-
-### 10 Passive Abilities  
-Surchauffe • Radiateur • Sang Froid • Coeur Noir • Bobines Tesla • Focaliseur • Mag-Tractor • Plating • Réacteur • Chance
-
-### 4 Weapon Evolutions
-Combine max-level weapons with specific passives for powerful upgrades!
-
-## 🎨 Credits
-
-Inspired by Space Invaders (1978), Vampire Survivors (2021), and Geometry Wars.
-
----
-
-**Enjoy the game! 🚀**
+## 🎨 Feedback Visuel (Game Feel)
+- **Hit Flash** : Les entités clignotent en blanc pur lors d'un impact.
+- **Damage Numbers** : Textes flottants avec pop-animation.
+    - ⚪ *Cinétique*
+    - 🔵 *EM / Ions*
+    - 🟠 *Thermique*
+    - 🟡 *Explosif / Crit*
+    - 🔴 *Dégâts Joueur*
