@@ -360,6 +360,9 @@ class Game {
         this.systems.weather.reset();
         this.screenEffects.reset();
         
+        // Spawn asteroids across the map
+        this.systems.spawner.spawnAsteroids(50);
+        
         // Hide menu, show game
         this.systems.ui.showScreen('game');
         
@@ -389,8 +392,8 @@ class Game {
         const maxHealth = shipData.baseStats.maxHealth + metaHealth;
         
         this.player.addComponent('position', Components.Position(
-            this.canvas.width / 2,
-            this.canvas.height / 2
+            WORLD_WIDTH / 2,
+            WORLD_HEIGHT / 2
         ));
         
         this.player.addComponent('velocity', Components.Velocity(0, 0));

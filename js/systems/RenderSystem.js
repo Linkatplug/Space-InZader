@@ -11,6 +11,13 @@ class RenderSystem {
         this.world = world;
         this.gameState = gameState;
         
+        // Camera system for larger world
+        this.cameraX = 0;
+        this.cameraY = 0;
+        
+        // Zoom level (0.5 = 2x zoom out to see more)
+        this.zoomLevel = 0.5;
+        
         // Screen effects reference (set from Game.js)
         this.screenEffects = null;
         
@@ -41,8 +48,8 @@ class RenderSystem {
         layers.forEach(layer => {
             for (let i = 0; i < layer.count; i++) {
                 this.stars.push({
-                    x: Math.random() * this.canvas.width,
-                    y: Math.random() * this.canvas.height,
+                    x: Math.random() * WORLD_WIDTH,
+                    y: Math.random() * WORLD_HEIGHT,
                     speed: layer.speed,
                     size: layer.size,
                     alpha: layer.alpha,
@@ -54,12 +61,39 @@ class RenderSystem {
     }
 
     /**
+     * Update camera position to follow player
+     */
+    updateCamera() {
+        const players = this.world.getEntitiesByType('player');
+        if (players.length > 0) {
+            const player = players[0];
+            const pos = player.getComponent('position');
+            if (pos) {
+                // Calculate visible area based on zoom level
+                const visibleWidth = this.canvas.width / this.zoomLevel;
+                const visibleHeight = this.canvas.height / this.zoomLevel;
+                
+                // Center camera on player
+                this.cameraX = pos.x - visibleWidth / 2;
+                this.cameraY = pos.y - visibleHeight / 2;
+                
+                // Clamp camera to world bounds
+                this.cameraX = MathUtils.clamp(this.cameraX, 0, WORLD_WIDTH - visibleWidth);
+                this.cameraY = MathUtils.clamp(this.cameraY, 0, WORLD_HEIGHT - visibleHeight);
+            }
+        }
+    }
+
+    /**
      * Main render loop
      * @param {number} deltaTime - Time since last frame in seconds
      */
     render(deltaTime) {
         this.lastFrameTime = deltaTime;
         this.fps = deltaTime > 0 ? 1 / deltaTime : 60;
+
+        // Update camera position based on player
+        this.updateCamera();
 
         // Clear canvas
         this.ctx.fillStyle = '#000';
@@ -70,7 +104,7 @@ class RenderSystem {
             this.gameState.isState(GameStates.LEVEL_UP) ||
             this.gameState.isState(GameStates.PAUSED)) {
             
-            // Save context for screen shake
+            // Save context for camera, zoom, and screen shake
             this.ctx.save();
             
             // Apply screen shake if available
@@ -78,10 +112,17 @@ class RenderSystem {
                 this.screenEffects.applyShake(this.ctx);
             }
             
+            // Apply zoom scale (0.5 = 2x zoom out)
+            // IMPORTANT: Scale must be applied before translate to maintain correct camera positioning
+            this.ctx.scale(this.zoomLevel, this.zoomLevel);
+            
+            // Apply camera translation (adjusted for zoom)
+            this.ctx.translate(-this.cameraX, -this.cameraY);
+            
             this.renderStarfield(deltaTime);
             this.renderEntities();
             
-            // Restore context after shake
+            // Restore context after camera, zoom, and shake
             this.ctx.restore();
             
             this.renderBossHealthBar();
@@ -101,11 +142,11 @@ class RenderSystem {
         this.ctx.save();
         
         this.stars.forEach(star => {
-            // Parallax movement
+            // Parallax movement (vertical scrolling)
             star.y += star.speed * 60 * deltaTime;
-            if (star.y > this.canvas.height) {
+            if (star.y > WORLD_HEIGHT) {
                 star.y = 0;
-                star.x = Math.random() * this.canvas.width;
+                star.x = Math.random() * WORLD_WIDTH;
             }
 
             // Twinkling effect
@@ -124,8 +165,9 @@ class RenderSystem {
      * Render all entities in the game world
      */
     renderEntities() {
-        // Render order: particles -> pickups -> projectiles -> enemies -> weather -> player
+        // Render order: particles -> asteroids -> pickups -> projectiles -> enemies -> weather -> player
         this.renderParticles();
+        this.renderAsteroids();
         this.renderPickups();
         this.renderProjectiles();
         this.renderEnemies();
@@ -159,6 +201,64 @@ class RenderSystem {
             this.ctx.fill();
             
             this.ctx.restore();
+        });
+    }
+
+    /**
+     * Render asteroids
+     */
+    renderAsteroids() {
+        const asteroids = this.world.getEntitiesByType('asteroid');
+        
+        asteroids.forEach(asteroid => {
+            const pos = asteroid.getComponent('position');
+            const render = asteroid.getComponent('renderable');
+            const asteroidComp = asteroid.getComponent('asteroid');
+            const health = asteroid.getComponent('health');
+            
+            if (!pos || !render || !asteroidComp) return;
+
+            this.ctx.save();
+            this.ctx.translate(pos.x, pos.y);
+            this.ctx.rotate(asteroidComp.rotation);
+            
+            // Draw asteroid as rocky brown circle with darker patches
+            const gradient = this.ctx.createRadialGradient(0, 0, 0, 0, 0, render.size);
+            gradient.addColorStop(0, '#8B7355');
+            gradient.addColorStop(0.5, '#6B5345');
+            gradient.addColorStop(1, '#4B3325');
+            
+            this.ctx.fillStyle = gradient;
+            this.ctx.shadowBlur = 5;
+            this.ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, render.size, 0, Math.PI * 2);
+            this.ctx.fill();
+            
+            // Add some crater-like details
+            this.ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+            for (let i = 0; i < 3; i++) {
+                const angle = (i / 3) * Math.PI * 2;
+                const dist = render.size * 0.4;
+                const craterSize = render.size * 0.15;
+                this.ctx.beginPath();
+                this.ctx.arc(
+                    Math.cos(angle) * dist,
+                    Math.sin(angle) * dist,
+                    craterSize,
+                    0,
+                    Math.PI * 2
+                );
+                this.ctx.fill();
+            }
+            
+            this.ctx.restore();
+            
+            // Health bar for larger asteroids
+            if (health && render.size > 15) {
+                this.drawHealthBar(pos.x, pos.y - render.size - 8, health.current, health.max, false);
+            }
         });
     }
 

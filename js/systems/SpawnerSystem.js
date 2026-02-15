@@ -575,7 +575,7 @@ class SpawnerSystem {
     }
 
     /**
-     * Calculate spawn position on screen edge
+     * Calculate spawn position on screen edge relative to player
      * @param {number} playerX - Player X position
      * @param {number} playerY - Player Y position
      * @returns {{x: number, y: number}} Spawn position
@@ -587,46 +587,35 @@ class SpawnerSystem {
         const screenWidth = this.canvas.width;
         const screenHeight = this.canvas.height;
 
+        let spawnX, spawnY;
+
         switch (edge) {
-            case 0: // Top
-                return {
-                    x: MathUtils.clamp(
-                        playerX + (Math.random() - 0.5) * screenWidth,
-                        margin,
-                        screenWidth - margin
-                    ),
-                    y: -margin
-                };
-            case 1: // Right
-                return {
-                    x: screenWidth + margin,
-                    y: MathUtils.clamp(
-                        playerY + (Math.random() - 0.5) * screenHeight,
-                        margin,
-                        screenHeight - margin
-                    )
-                };
-            case 2: // Bottom
-                return {
-                    x: MathUtils.clamp(
-                        playerX + (Math.random() - 0.5) * screenWidth,
-                        margin,
-                        screenWidth - margin
-                    ),
-                    y: screenHeight + margin
-                };
-            case 3: // Left
-                return {
-                    x: -margin,
-                    y: MathUtils.clamp(
-                        playerY + (Math.random() - 0.5) * screenHeight,
-                        margin,
-                        screenHeight - margin
-                    )
-                };
+            case 0: // Top - spawn above player's view
+                spawnX = playerX + (Math.random() - 0.5) * screenWidth;
+                spawnY = playerY - screenHeight / 2 - margin;
+                break;
+            case 1: // Right - spawn to the right of player's view
+                spawnX = playerX + screenWidth / 2 + margin;
+                spawnY = playerY + (Math.random() - 0.5) * screenHeight;
+                break;
+            case 2: // Bottom - spawn below player's view
+                spawnX = playerX + (Math.random() - 0.5) * screenWidth;
+                spawnY = playerY + screenHeight / 2 + margin;
+                break;
+            case 3: // Left - spawn to the left of player's view
+                spawnX = playerX - screenWidth / 2 - margin;
+                spawnY = playerY + (Math.random() - 0.5) * screenHeight;
+                break;
             default:
-                return { x: playerX, y: playerY };
+                spawnX = playerX;
+                spawnY = playerY;
         }
+
+        // Clamp to world bounds
+        spawnX = MathUtils.clamp(spawnX, margin, WORLD_WIDTH - margin);
+        spawnY = MathUtils.clamp(spawnY, margin, WORLD_HEIGHT - margin);
+
+        return { x: spawnX, y: spawnY };
     }
 
     /**
@@ -643,5 +632,51 @@ class SpawnerSystem {
             20: false
         };
         this.difficultyMultiplier = 1.0;
+    }
+
+    /**
+     * Spawn asteroids across the map
+     * @param {number} count - Number of asteroids to spawn
+     */
+    spawnAsteroids(count = 50) {
+        logger.info('SpawnerSystem', `Spawning ${count} asteroids across the map`);
+        
+        for (let i = 0; i < count; i++) {
+            // Random position in world
+            const x = Math.random() * (WORLD_WIDTH - 200) + 100;
+            const y = Math.random() * (WORLD_HEIGHT - 200) + 100;
+            
+            // All small asteroids for now
+            const sizeTier = 'small';
+            const size = 12;
+            const health = 30;
+            
+            this.createAsteroid(x, y, size, health, sizeTier);
+        }
+    }
+
+    /**
+     * Create asteroid entity
+     * @param {number} x - X position
+     * @param {number} y - Y position
+     * @param {number} size - Size/radius
+     * @param {number} health - Health
+     * @param {string} sizeTier - Size tier ('small', 'medium', 'large')
+     * @returns {Entity} Created asteroid
+     */
+    createAsteroid(x, y, size, health, sizeTier) {
+        const asteroid = this.world.createEntity('asteroid');
+        
+        asteroid.addComponent('position', Components.Position(x, y));
+        asteroid.addComponent('health', Components.Health(health, health));
+        asteroid.addComponent('collision', Components.Collision(size));
+        asteroid.addComponent('renderable', Components.Renderable(
+            '#8B7355', // Brown/grey color
+            size,
+            'circle'
+        ));
+        asteroid.addComponent('asteroid', Components.Asteroid(sizeTier));
+        
+        return asteroid;
     }
 }

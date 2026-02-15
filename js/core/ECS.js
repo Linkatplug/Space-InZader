@@ -321,5 +321,10 @@ const Components = {
         patterns,
         phaseTime: 0,
         nextPhaseHealth: 0.5
+    }),
+    Asteroid: (sizeTier) => ({
+        sizeTier,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 2
     })
 };

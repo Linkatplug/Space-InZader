@@ -37,6 +37,9 @@ class CollisionSystem {
         // Check projectile-enemy collisions
         this.checkProjectileEnemyCollisions();
         
+        // Check projectile-asteroid collisions
+        this.checkProjectileAsteroidCollisions();
+        
         // Check player-enemy collisions
         this.checkPlayerEnemyCollisions();
         
@@ -90,6 +93,53 @@ class CollisionSystem {
                         if (!projComp.hitCooldown) projComp.hitCooldown = {};
                         projComp.hitCooldown[enemy.id] = 0.15; // 150ms cooldown per enemy
                         continue; // Check other enemies
+                    }
+                    
+                    // Remove projectile if not piercing
+                    if (projComp.piercing <= 0) {
+                        this.world.removeEntity(projectile.id);
+                    } else {
+                        projComp.piercing--;
+                    }
+                    
+                    break;
+                }
+            }
+        }
+    }
+
+    checkProjectileAsteroidCollisions() {
+        const projectiles = this.world.getEntitiesByType('projectile');
+        const asteroids = this.world.getEntitiesByType('asteroid');
+
+        for (const projectile of projectiles) {
+            const projPos = projectile.getComponent('position');
+            const projCol = projectile.getComponent('collision');
+            const projComp = projectile.getComponent('projectile');
+            
+            if (!projPos || !projCol || !projComp) continue;
+            
+            // Check if projectile is from player
+            const ownerEntity = this.world.getEntity(projComp.owner);
+            if (!ownerEntity || ownerEntity.type !== 'player') continue;
+
+            for (const asteroid of asteroids) {
+                const asteroidPos = asteroid.getComponent('position');
+                const asteroidCol = asteroid.getComponent('collision');
+                const asteroidHealth = asteroid.getComponent('health');
+                
+                if (!asteroidPos || !asteroidCol || !asteroidHealth) continue;
+
+                if (MathUtils.circleCollision(
+                    projPos.x, projPos.y, projCol.radius,
+                    asteroidPos.x, asteroidPos.y, asteroidCol.radius
+                )) {
+                    // Deal damage to asteroid
+                    this.damageAsteroid(asteroid, projComp.damage);
+                    
+                    // Don't remove orbital projectiles
+                    if (projComp.orbital) {
+                        continue;
                     }
                     
                     // Remove projectile if not piercing
@@ -321,6 +371,51 @@ class CollisionSystem {
             health.current = 0;
             // Game over handled by game loop
         }
+    }
+
+    damageAsteroid(asteroid, damage) {
+        const health = asteroid.getComponent('health');
+        const pos = asteroid.getComponent('position');
+        const renderable = asteroid.getComponent('renderable');
+        
+        if (!health) return;
+
+        health.current -= damage;
+        
+        // Play hit sound
+        if (this.audioManager && this.audioManager.initialized) {
+            this.audioManager.playSFX('hit', MathUtils.randomFloat(1.0, 1.3));
+        }
+
+        if (health.current <= 0) {
+            this.destroyAsteroid(asteroid);
+        }
+    }
+
+    destroyAsteroid(asteroid) {
+        const pos = asteroid.getComponent('position');
+        const renderable = asteroid.getComponent('renderable');
+        
+        if (pos) {
+            // Create particle explosion
+            if (this.particleSystem) {
+                const color = renderable ? renderable.color : '#8B7355';
+                this.particleSystem.createExplosion(pos.x, pos.y, renderable ? renderable.size : 12, color, 15);
+            }
+            
+            // Play destruction sound
+            if (this.audioManager && this.audioManager.initialized) {
+                this.audioManager.playSFX('explosion', MathUtils.randomFloat(0.9, 1.1));
+            }
+            
+            // Small chance to drop XP
+            if (Math.random() < 0.3) {
+                this.spawnPickup(pos.x, pos.y, 'xp', 2);
+            }
+        }
+        
+        // Remove asteroid (asteroids don't count as kills)
+        this.world.removeEntity(asteroid.id);
     }
 
     killEnemy(enemy) {
