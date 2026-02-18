@@ -249,7 +249,7 @@ class RenderSystem {
         enemies.forEach(enemy => {
             const pos = enemy.getComponent('position');
             const render = enemy.getComponent('renderable');
-            const health = enemy.getComponent('health');
+            const defense = enemy.getComponent('defense');
             const enemyComp = enemy.getComponent('enemy');
             
             if (!pos || !render) return;
@@ -257,8 +257,8 @@ class RenderSystem {
             this.ctx.save();
             this.ctx.translate(pos.x, pos.y);
 
-            // Flash effect when damaged
-            if (health && health.invulnerable && health.invulnerableTime > 0) {
+            // Flash effect when damaged - check structure invulnerability
+            if (defense && defense.structure.invulnerable && defense.structure.invulnerableTime > 0) {
                 const flashAlpha = Math.sin(Date.now() * 0.05) * 0.5 + 0.5;
                 this.ctx.globalAlpha = flashAlpha;
             }
@@ -274,9 +274,14 @@ class RenderSystem {
 
             this.ctx.restore();
 
-            // Health bar for enemies
-            if (health && (isBoss || enemyComp?.baseHealth > 50)) {
-                this.drawHealthBar(pos.x, pos.y - render.size - 10, health.current, health.max, isBoss);
+            // Health bar for enemies - use DefenseSystem
+            if (defense && (isBoss || (enemyComp && enemyComp.maxHealth > 50))) {
+                const defenseSystem = this.world?.defenseSystem;
+                if (defenseSystem) {
+                    const currentHP = defenseSystem.getTotalHP(enemy);
+                    const maxHP = defenseSystem.getMaxTotalHP(enemy);
+                    this.drawHealthBar(pos.x, pos.y - render.size - 10, currentHP, maxHP, isBoss);
+                }
             }
             
             // Draw resistance indicator if tactical UI enabled
@@ -313,15 +318,30 @@ class RenderSystem {
         let layerCount = 0;
 
         if (defense.shield.current > 0) {
-            totalResist += defense.shield.resistances[damageType] || 0;
+            const layerData = defense.shield;
+            const baseRes = layerData.baseResistances || layerData.resistances || {};
+            const bonusRes = layerData.bonusResistances || {};
+            const base = baseRes[damageType] || 0;
+            const bonus = bonusRes[damageType] || 0;
+            totalResist += base + bonus;
             layerCount++;
         }
         if (defense.armor.current > 0) {
-            totalResist += defense.armor.resistances[damageType] || 0;
+            const layerData = defense.armor;
+            const baseRes = layerData.baseResistances || layerData.resistances || {};
+            const bonusRes = layerData.bonusResistances || {};
+            const base = baseRes[damageType] || 0;
+            const bonus = bonusRes[damageType] || 0;
+            totalResist += base + bonus;
             layerCount++;
         }
         if (defense.structure.current > 0) {
-            totalResist += defense.structure.resistances[damageType] || 0;
+            const layerData = defense.structure;
+            const baseRes = layerData.baseResistances || layerData.resistances || {};
+            const bonusRes = layerData.bonusResistances || {};
+            const base = baseRes[damageType] || 0;
+            const bonus = bonusRes[damageType] || 0;
+            totalResist += base + bonus;
             layerCount++;
         }
 
@@ -572,11 +592,11 @@ class RenderSystem {
         
         if (bosses.length > 0) {
             const boss = bosses[0];
-            const health = boss.getComponent('health');
+            const defense = boss.getComponent('defense');
             const bossComp = boss.getComponent('boss');
             const enemyComp = boss.getComponent('enemy');
             
-            if (health) {
+            if (defense && this.world?.defenseSystem) {
                 this.bossHealthTarget = 1;
                 this.bossHealthAlpha = Math.min(1, this.bossHealthAlpha + 0.05);
 
@@ -584,7 +604,11 @@ class RenderSystem {
                 const barHeight = 30;
                 const x = (this.canvas.width - barWidth) / 2;
                 const y = 20;
-                const healthPercent = health.current / health.max;
+                
+                // Use DefenseSystem to get HP
+                const currentHP = this.world.defenseSystem.getTotalHP(boss);
+                const maxHP = this.world.defenseSystem.getMaxTotalHP(boss);
+                const healthPercent = maxHP > 0 ? currentHP / maxHP : 0;
 
                 this.ctx.save();
                 this.ctx.globalAlpha = this.bossHealthAlpha;

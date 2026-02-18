@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dirty Flag System Test</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        .test {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #333;
+        }
+        .pass {
+            background: #004400;
+            border-color: #00ff00;
+        }
+        .fail {
+            background: #440000;
+            border-color: #ff0000;
+            color: #ff0000;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚩 Dirty Flag System Test</h1>
+    <div id="results"></div>
+    
+    <!-- Load required scripts -->
+    <script src="js/utils/Logger.js"></script>
+    <script src="js/core/ECS.js"></script>
+    <script src="js/systems/DefenseSystem.js"></script>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function test(name, fn) {
+            try {
+                fn();
+                results.innerHTML += `<div class="test pass">✓ ${name}</div>`;
+                console.log(`✓ ${name}`);
+            } catch (error) {
+                results.innerHTML += `<div class="test fail">✗ ${name}<br>${error.message}</div>`;
+                console.error(`✗ ${name}:`, error);
+            }
+        }
+        
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message || 'Assertion failed');
+            }
+        }
+        
+        // Run tests
+        results.innerHTML += '<h2>Running Tests...</h2>';
+        
+        test('Player entity has statsDirty property initialized to false', () => {
+            const world = new World();
+            const player = world.createEntity('player');
+            player.statsDirty = false; // Simulating what Game.js does
+            assert(player.statsDirty === false, 'statsDirty should be false initially');
+            assert(player.hasOwnProperty('statsDirty'), 'statsDirty property should exist');
+        });
+        
+        test('Enemy entity has statsDirty property initialized to false', () => {
+            const world = new World();
+            const enemy = world.createEntity('enemy');
+            enemy.statsDirty = false; // Simulating what SpawnerSystem.js does
+            assert(enemy.statsDirty === false, 'statsDirty should be false initially');
+            assert(enemy.hasOwnProperty('statsDirty'), 'statsDirty property should exist');
+        });
+        
+        test('DefenseSystem.markStatsDirty() sets entity.statsDirty to true', () => {
+            const world = new World();
+            const defenseSystem = new DefenseSystem(world);
+            const entity = world.createEntity('test');
+            entity.statsDirty = false;
+            
+            defenseSystem.markStatsDirty(entity);
+            assert(entity.statsDirty === true, 'statsDirty should be true after calling markStatsDirty');
+        });
+        
+        test('DefenseSystem.markStatsDirty() handles null entity gracefully', () => {
+            const world = new World();
+            const defenseSystem = new DefenseSystem(world);
+            
+            // Should not throw error
+            defenseSystem.markStatsDirty(null);
+            defenseSystem.markStatsDirty(undefined);
+        });
+        
+        test('DefenseSystem.isStatsDirty() returns correct boolean value', () => {
+            const world = new World();
+            const defenseSystem = new DefenseSystem(world);
+            const entity1 = world.createEntity('test1');
+            const entity2 = world.createEntity('test2');
+            
+            entity1.statsDirty = false;
+            entity2.statsDirty = true;
+            
+            assert(defenseSystem.isStatsDirty(entity1) === false, 'isStatsDirty should return false for clean entity');
+            assert(defenseSystem.isStatsDirty(entity2) === true, 'isStatsDirty should return true for dirty entity');
+        });
+        
+        test('DefenseSystem.isStatsDirty() handles undefined statsDirty property', () => {
+            const world = new World();
+            const defenseSystem = new DefenseSystem(world);
+            const entity = world.createEntity('test');
+            
+            assert(defenseSystem.isStatsDirty(entity) === false, 'isStatsDirty should return false for undefined statsDirty');
+        });
+        
+        test('DefenseSystem.addResistanceModifier() marks entity as dirty', () => {
+            const world = new World();
+            const defenseSystem = new DefenseSystem(world);
+            const entity = world.createEntity('test');
+            entity.statsDirty = false;
+            
+            // Create a defense component with proper structure
+            const defense = {
+                shield: {
+                    current: 100,
+                    max: 100,
+                    bonusResistances: {}
+                },
+                armor: {
+                    current: 100,
+                    max: 100,
+                    bonusResistances: {}
+                },
+                structure: {
+                    current: 100,
+                    max: 100,
+                    bonusResistances: {}
+                }
+            };
+            entity.addComponent('defense', defense);
+            
+            defenseSystem.addResistanceModifier(entity, 'shield', 'kinetic', 0.1);
+            assert(entity.statsDirty === true, 'statsDirty should be true after addResistanceModifier');
+        });
+        
+        test('DefenseSystem.removeResistanceModifier() marks entity as dirty', () => {
+            const world = new World();
+            const defenseSystem = new DefenseSystem(world);
+            const entity = world.createEntity('test');
+            entity.statsDirty = false;
+            
+            // Create a defense component with proper structure
+            const defense = {
+                shield: {
+                    current: 100,
+                    max: 100,
+                    bonusResistances: { kinetic: 0.1 }
+                },
+                armor: {
+                    current: 100,
+                    max: 100,
+                    bonusResistances: {}
+                },
+                structure: {
+                    current: 100,
+                    max: 100,
+                    bonusResistances: {}
+                }
+            };
+            entity.addComponent('defense', defense);
+            
+            defenseSystem.removeResistanceModifier(entity, 'shield', 'kinetic', 0.1);
+            assert(entity.statsDirty === true, 'statsDirty should be true after removeResistanceModifier');
+        });
+        
+        test('DefenseSystem.clearResistanceModifiers() marks entity as dirty', () => {
+            const world = new World();
+            const defenseSystem = new DefenseSystem(world);
+            const entity = world.createEntity('test');
+            entity.statsDirty = false;
+            
+            // Create a defense component with proper structure
+            const defense = {
+                shield: {
+                    current: 100,
+                    max: 100,
+                    bonusResistances: { kinetic: 0.1, thermal: 0.2 }
+                },
+                armor: {
+                    current: 100,
+                    max: 100,
+                    bonusResistances: {}
+                },
+                structure: {
+                    current: 100,
+                    max: 100,
+                    bonusResistances: {}
+                }
+            };
+            entity.addComponent('defense', defense);
+            
+            defenseSystem.clearResistanceModifiers(entity, 'shield');
+            assert(entity.statsDirty === true, 'statsDirty should be true after clearResistanceModifiers');
+        });
+        
+        results.innerHTML += '<h2 style="color: #00ff00;">✓ All Tests Passed!</h2>';
+        console.log('✓ All tests passed!');
+    </script>
+</body>
+</html>

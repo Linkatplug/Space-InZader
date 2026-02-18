@@ -396,10 +396,9 @@ class AISystem {
         const enemyPos = enemy.getComponent('position');
         const playerPos = player.getComponent('position');
         const enemyComp = enemy.getComponent('enemy');
-        const health = enemy.getComponent('health');
         const boss = enemy.getComponent('boss');
         
-        if (!enemyPos || !playerPos || !enemyComp || !health || !boss) return;
+        if (!enemyPos || !playerPos || !enemyComp || !boss) return;
 
         // Initialize boss-specific timers if needed
         if (!boss.burstCooldown) boss.burstCooldown = 0;
@@ -415,7 +414,11 @@ class AISystem {
         boss.minionCooldown -= deltaTime;
 
         // Determine current phase based on health (60% threshold)
-        const healthPercent = health.current / health.max;
+        // Use DefenseSystem to get HP ratio
+        const defenseSystem = this.world.defenseSystem;
+        const currentHP = defenseSystem ? defenseSystem.getTotalHP(enemy) : 0;
+        const maxHP = defenseSystem ? defenseSystem.getMaxTotalHP(enemy) : 1;
+        const healthPercent = maxHP > 0 ? currentHP / maxHP : 0;
         const wasEnraged = boss.isEnraged;
         boss.isEnraged = healthPercent <= 0.6;
 

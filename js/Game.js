@@ -19,12 +19,6 @@ const DEFAULT_STATS = {
     speed: 1,
     speedMultiplier: 1,
     
-    // === HEALTH STATS ===
-    maxHealth: 1,
-    maxHealthMultiplier: 1,
-    maxHealthAdd: 0,
-    healthRegen: 0,
-    
     // === DEFENSE STATS ===
     armor: 0,
     shield: 0,
@@ -466,6 +460,9 @@ class Game {
 
         this.player = this.world.createEntity('player');
         
+        // Initialize dirty flag for stat recalculation
+        this.player.statsDirty = false;
+        
         this.player.addComponent('position', Components.Position(
             this.canvas.width / 2,
             this.canvas.height / 2
@@ -474,29 +471,53 @@ class Game {
         this.player.addComponent('velocity', Components.Velocity(0, 0));
         this.player.addComponent('collision', Components.Collision(15));
         
-        this.player.addComponent('health', Components.Health(maxHealth, maxHealth));
+        // Get ship data from ShipData to access baseStats
+        const shipInfo = window.ShipData?.SHIPS?.[shipId];
         
-        // Add defense component (3-layer system: shield, armor, structure)
-        this.player.addComponent('defense', Components.Defense());
-        console.log('[Game] Added defense component to player');
+        // Initialize defense component with ship's baseStats (3-layer system: shield, armor, structure)
+        if (shipInfo && shipInfo.baseStats) {
+            // Get resistances from DefenseData (single source of truth for resistances)
+            const layerResistances = window.DefenseData?.LAYER_RESISTANCES || {
+                shield: { em: 0, thermal: 0.2, kinetic: 0.4, explosive: 0.5 },
+                armor: { em: 0.5, thermal: 0.35, kinetic: 0.25, explosive: 0.1 },
+                structure: { em: 0.3, thermal: 0, kinetic: 0.15, explosive: 0.2 }
+            };
+            
+            const defense = {
+                shield: {
+                    current: shipInfo.baseStats.maxShield,
+                    max: shipInfo.baseStats.maxShield,
+                    regen: shipInfo.baseStats.shieldRegen,
+                    regenDelay: 0,
+                    regenDelayMax: 3,
+                    resistances: { ...layerResistances.shield }
+                },
+                armor: {
+                    current: shipInfo.baseStats.maxArmor,
+                    max: shipInfo.baseStats.maxArmor,
+                    regen: 0,
+                    regenDelay: 0,
+                    regenDelayMax: 0,
+                    resistances: { ...layerResistances.armor }
+                },
+                structure: {
+                    current: shipInfo.baseStats.maxStructure,
+                    max: shipInfo.baseStats.maxStructure,
+                    regen: 0.5,
+                    regenDelay: 0,
+                    regenDelayMax: 0,
+                    resistances: { ...layerResistances.structure }
+                }
+            };
+            this.player.addComponent('defense', defense);
+            console.log(`[Game] Added defense component to player (Shield: ${defense.shield.max}, Armor: ${defense.armor.max}, Structure: ${defense.structure.max})`);
+        } else {
+            // Fallback to default defense values if shipInfo not available
+            this.player.addComponent('defense', Components.Defense());
+            console.log('[Game] Added defense component to player (using defaults)');
+        }
         
         // Add heat component for weapon overheat management
-        this.player.addComponent('heat', Components.Heat(100, 10, 0));
-        console.log('[Game] Added heat component to player');
-        
-        // Add shield component (starts at 0, will be replaced by defense system)
-        this.player.addComponent('shield', Components.Shield(0, 0, 0));
-        
-        const playerComp = Components.Player();
-        playerComp.speed = shipData.baseStats.speed;
-        
-        // Use the ship ID directly (no more legacy mapping)
-        playerComp.shipId = shipId;
-        console.log(`[Game] Player ship: ${shipId}`);
-        
-        this.player.addComponent('defense', defense);
-        
-        // Heat component with exact schema for HeatSystem
         const heat = {
             current: 0,
             max: 100,
@@ -505,6 +526,7 @@ class Game {
             disabledTimer: 0
         };
         this.player.addComponent('heat', heat);
+        console.log('[Game] Added heat component to player');
         
         // Create player component directly (no Components wrapper)
         const stats = structuredClone(DEFAULT_STATS);
@@ -514,7 +536,6 @@ class Game {
         stats.fireRateMultiplier = 1.0;
         stats.speed = 1.0;
         stats.speedMultiplier = 1.0;
-        stats.maxHealth = 1;
         stats.xpBonus = metaXP;
         
         const playerComp = {
@@ -524,7 +545,7 @@ class Game {
             kills: 0,
             level: 1,
             xp: 0,
-            xpToNext: 100,
+            xpRequired: 100,
             weapons: [],
             modules: [],
             upgrades: new Map(),
@@ -537,7 +558,6 @@ class Game {
                 critChance: 0.05,
                 critDamage: 1.5,
                 lifesteal: 0,
-                healthRegen: 0,
                 rangeMultiplier: 1,
                 projectileSpeedMultiplier: 1
             },
@@ -565,9 +585,13 @@ class Game {
         };
         this.player.addComponent('renderable', renderable);
 
-        const startingWeaponId = ship.startingWeapon || 'ion_blaster';
+        const startingWeaponId = (shipInfo && shipInfo.startingWeapon) || shipData.startingWeapon || 'ion_blaster';
         logger.info('Game', `Player setup: ship=${playerComp.shipId} startingWeapon=${startingWeaponId}`);
-        logger.info('Game', `Defense layers: Shield=${defense.shield.max} Armor=${defense.armor.max} Structure=${defense.structure.max}`);
+        
+        const defenseComp = this.player.getComponent('defense');
+        if (defenseComp) {
+            logger.info('Game', `Defense layers: Shield=${defenseComp.shield.max} Armor=${defenseComp.armor.max} Structure=${defenseComp.structure.max}`);
+        }
         
         this.addWeaponToPlayer(startingWeaponId);
         
@@ -697,14 +721,7 @@ class Game {
         }
 
         // Recalculate stats
-        const health = this.player.getComponent('health');
-        console.log(`Before recalculate - HP: ${health ? health.current + '/' + health.max : 'N/A'}`);
         this.recalculatePlayerStats();
-        
-        // Log after recalculation to verify
-        if (health) {
-            console.log(`After recalculate - HP: ${health.current}/${health.max}`);
-        }
     }
 
     recalculatePlayerStats() {
@@ -713,11 +730,8 @@ class Game {
         const playerComp = this.player.getComponent('player');
         if (!playerComp) return;
 
-        // Store old health and shield values before recalculation
-        const health = this.player.getComponent('health');
+        // Store old shield values before recalculation
         const shield = this.player.getComponent('shield');
-        const oldMaxHP = health ? health.max : 100;
-        const oldCurrentHP = health ? health.current : 100;
         const oldMaxShield = shield ? shield.max : 0;
         const oldCurrentShield = shield ? shield.current : 0;
 
@@ -747,7 +761,6 @@ class Game {
         playerComp.stats.critChance = 0.05;
         playerComp.stats.critDamage = 1.5;
         playerComp.stats.lifesteal = 0;
-        playerComp.stats.healthRegen = 0;
         playerComp.stats.xpBonus = metaXP;
         playerComp.stats.armor = 0;
         playerComp.stats.projectileSpeed = 1;
@@ -789,36 +802,10 @@ class Game {
             }
         }
         
-        // Recalculate max HP using base stats vs derived stats formula
-        if (health) {
-            // Store old values
-            const oldMax = health.max;
-            const oldCurrent = health.current;
-            const ratio = oldMax > 0 ? oldCurrent / oldMax : 1;
-            
-            // Calculate base max HP (ship stats + meta upgrades)
-            const metaHealth = this.saveData.upgrades.maxHealth * 10;
-            const baseMaxHP = shipData.baseStats.maxHealth + metaHealth;
-            
-            // Get multiplier and flat additions from passives
-            const hpMultiplier = playerComp.stats.maxHealthMultiplier || 1;
-            const hpAdd = playerComp.stats.maxHealthAdd || 0;
-            
-            // Calculate new max: floor(baseMaxHP * hpMultiplier + hpAdd), minimum 1
-            const newMax = Math.max(1, Math.floor(baseMaxHP * hpMultiplier + hpAdd));
-            
-            console.log(`HP Calculation: base=${baseMaxHP}, multiplier=${hpMultiplier}, add=${hpAdd}, newMax=${newMax}`);
-            
-            // Apply new max
-            health.max = newMax;
-            
-            // Adjust current HP: clamp(ceil(newMax * ratio), 1, newMax)
-            health.current = Math.max(1, Math.min(Math.ceil(newMax * ratio), newMax));
-            
-            console.log(`Max HP recalculated: ${oldMax} -> ${health.max}, Current: ${oldCurrent} -> ${health.current}`);
-        }
+        // Defense layers are managed by DefenseSystem - no recalculation needed here
+        // The defense component is initialized during player creation with ship's baseStats
         
-        // Update shield component based on stats with ratio preservation
+        // Update shield component based on stats with ratio preservation (legacy support)
         if (shield && playerComp.stats.shield > 0) {
             const newMaxShield = playerComp.stats.shield;
             
@@ -860,12 +847,6 @@ class Game {
         if (stats.lifesteal > 0.5) {
             console.warn(`Lifesteal capped at 50% (was ${(stats.lifesteal * 100).toFixed(1)}%)`);
             stats.lifesteal = 0.5;
-        }
-        
-        // Health regen cap at 10/s to prevent trivializing damage
-        if (stats.healthRegen > 10) {
-            console.warn(`Health regen capped at 10/s (was ${stats.healthRegen.toFixed(1)}/s)`);
-            stats.healthRegen = 10;
         }
         
         // Fire rate minimum 0.1 (max 10x speed) to prevent freeze
@@ -934,10 +915,6 @@ class Game {
         
         if (stats.lifesteal > 0.3) {
             warnings.push(`High lifesteal: ${(stats.lifesteal * 100).toFixed(1)}%`);
-        }
-        
-        if (stats.healthRegen > 5) {
-            warnings.push(`High health regen: ${stats.healthRegen.toFixed(1)}/s`);
         }
         
         // Log all warnings grouped
@@ -1330,13 +1307,13 @@ class Game {
         this.systems.particle.update(deltaTime);
         this.screenEffects.update(deltaTime);
         
-        // Update invulnerability
+        // Update invulnerability (now tracked in defense component)
         if (this.player) {
-            const health = this.player.getComponent('health');
-            if (health && health.invulnerable) {
-                health.invulnerableTime -= deltaTime;
-                if (health.invulnerableTime <= 0) {
-                    health.invulnerable = false;
+            const defense = this.player.getComponent('defense');
+            if (defense && defense.invulnerable) {
+                defense.invulnerableTime -= deltaTime;
+                if (defense.invulnerableTime <= 0) {
+                    defense.invulnerable = false;
                 }
             }
             
@@ -1354,14 +1331,8 @@ class Game {
                     }
                 }
             }
-
-            // Check for game over
-            if (health && health.current <= 0) {
-                this.gameOver();
-            }
             
             // Check for game over with defense system
-            const defense = this.player.getComponent('defense');
             if (defense && defense.structure.current <= 0) {
                 this.gameOver();
             }

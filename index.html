@@ -286,68 +286,7 @@
         }
         
         /* Stats Overlay Panel (Left Side) */
-        .stats-overlay-panel {
-            position: fixed;
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(10, 10, 26, 0.9);
-            border: 2px solid #00ffff;
-            border-radius: 5px;
-            padding: 12px;
-            min-width: 280px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-            z-index: 900;
-            transition: opacity 0.3s;
-        }
-        
-        .stats-overlay-title {
-            color: #00ffff;
-            font-weight: bold;
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 10px;
-            text-shadow: 0 0 5px #00ffff;
-            border-bottom: 1px solid #00ffff;
-            padding-bottom: 5px;
-        }
-        
-        .stats-overlay-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: 4px 0;
-            padding: 2px 0;
-        }
-        
-        .stats-overlay-label {
-            color: #aaa;
-            min-width: 120px;
-        }
-        
-        .stats-overlay-value {
-            color: #fff;
-            font-weight: bold;
-            min-width: 60px;
-            text-align: right;
-        }
-        
-        .stats-overlay-delta {
-            font-size: 11px;
-            min-width: 70px;
-            text-align: right;
-            font-weight: bold;
-        }
-        
-        .stats-overlay-hint {
-            color: #666;
-            font-size: 10px;
-            text-align: center;
-            margin-top: 8px;
-            padding-top: 5px;
-            border-top: 1px solid #333;
+        /* Legacy stats overlay panel removed - using new HUD bars instead */
         }
 
         /* Defense Layer Bars */
@@ -391,23 +330,6 @@
             transition: width 0.3s;
         }
         
-        /* Legacy health bar (hidden by default, fallback for old system) */
-        .health-bar {
-            width: 200px;
-            height: 15px;
-            background: rgba(255, 0, 0, 0.3);
-            border: 2px solid #ff0000;
-            position: relative;
-            margin-top: 3px;
-            display: none;
-        }
-
-        .health-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ff0000, #ff6600);
-            transition: width 0.3s;
-        }
-
         .xp-bar {
             width: 300px;
             height: 15px;
@@ -1536,14 +1458,6 @@
                     </div>
                     <div style="margin-top: 2px; font-size: 11px;">⚙️ STRUCTURE: <span id="structureValue">0/0</span></div>
                 </div>
-                
-                <!-- Legacy health bar (fallback for old system) -->
-                <div id="legacyHealth" style="display: none;">
-                    <div class="health-bar">
-                        <div class="health-fill" id="healthFill"></div>
-                    </div>
-                    <div style="margin-top: 5px;">PV: <span id="hpDisplay">100/100</span></div>
-                </div>
             </div>
             <div class="hud hud-bottom-center" id="hudBottomCenter">
                 <div>Niveau: <span id="levelDisplay">1</span></div>
@@ -1562,8 +1476,7 @@
                 </div>
             </div>
             
-            <!-- Stats Overlay Panel (Left Side) -->
-            <div class="stats-overlay-panel" id="statsOverlayPanel"></div>
+            <!-- Legacy Stats Overlay Panel removed - using new HUD bars instead -->
             
             <!-- Controls Help -->
             <div class="controls-help" id="controlsHelp">
@@ -1585,10 +1498,13 @@
     <script src="js/utils/ScreenEffects.js"></script>
     <script src="js/core/ECS.js"></script>
     <script src="js/core/GameState.js"></script>
+    <!-- Core stats models -->
+    <script src="js/core/stats/ShipStats.js"></script>
+    <script src="js/core/stats/FinalStatsCalculator.js"></script>
     <!-- Data files -->
     <script src="js/data/PassiveData.js"></script>
     <script src="js/data/ShipData.js"></script>
-    <script src="js/data/EnemyData.js"></script>
+    <!-- EnemyData.js removed - migrated to EnemyProfiles.js -->
     <script src="js/data/SynergyData.js"></script>
     <script src="js/data/KeystoneData.js"></script>
     <!-- New system data files -->

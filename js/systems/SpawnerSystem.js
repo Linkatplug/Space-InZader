@@ -261,28 +261,23 @@ class SpawnerSystem {
     createEnemy(x, y, enemyData, isBoss) {
         const enemy = this.world.createEntity('enemy');
         
+        // Initialize dirty flag for stat recalculation
+        enemy.statsDirty = false;
+        
         enemy.addComponent('position', Components.Position(x, y));
         enemy.addComponent('velocity', Components.Velocity(0, 0));
         
-        // Add defense component if profile has defense layers
-        if (enemyData.defenseLayers && window.EnemyProfiles && window.EnemyProfiles.PROFILES[enemyData.profileId]) {
-            const profile = window.EnemyProfiles.PROFILES[enemyData.profileId];
-            const defense = window.EnemyProfiles.createEnemyDefense(profile);
-            enemy.addComponent('defense', defense);
-            
-            // Log spawn with defense values
-            console.log(`[Spawn] ${enemyData.profileId} S/A/St=${profile.defense.shield}/${profile.defense.armor}/${profile.defense.structure} dmgType=${profile.attackDamageType}`);
-        } else {
-            // Fallback to old health system - create health component directly
-            const health = {
-                current: enemyData.health,
-                max: enemyData.health,
-                invulnerable: false,
-                invulnerableTime: 0,
-                godMode: false
-            };
-            enemy.addComponent('health', health);
+        // Add defense component using EnemyProfiles
+        if (!enemyData.profileId || !window.EnemyProfiles || !window.EnemyProfiles.PROFILES[enemyData.profileId]) {
+            throw new Error(`[SpawnerSystem] Cannot create enemy: Invalid profile ${enemyData.profileId}. EnemyProfiles required.`);
         }
+        
+        const profile = window.EnemyProfiles.PROFILES[enemyData.profileId];
+        const defense = window.EnemyProfiles.createEnemyDefense(profile);
+        enemy.addComponent('defense', defense);
+        
+        // Log spawn with defense values
+        console.log(`[Spawn] ${enemyData.profileId} S/A/St=${profile.defense.shield}/${profile.defense.armor}/${profile.defense.structure} dmgType=${profile.attackDamageType}`);
         
         // Create collision component directly
         const collision = {
@@ -483,188 +478,35 @@ class SpawnerSystem {
             };
         }
         
-        // Fallback to old hardcoded data if profile not found
-        console.warn(`[SpawnerSystem] Enemy profile not found: ${profileId}, using fallback`);
-        const enemies = {
-            drone_basique: {
-                id: 'drone_basique',
-                name: 'Drone Basique',
-                health: 20,
-                damage: 10,
-                speed: 100,
-                xpValue: 5,
-                aiType: 'chase',
-                size: 12,
-                color: '#FF1493',
-                spawnCost: 1,
-                attackPattern: { type: 'none' },
-                armor: 0
-            },
-            chasseur_rapide: {
-                id: 'chasseur_rapide',
-                name: 'Chasseur Rapide',
-                health: 12,
-                damage: 15,
-                speed: 180,
-                xpValue: 8,
-                aiType: 'weave',
-                size: 10,
-                color: '#00FF00',
-                spawnCost: 2,
-                attackPattern: { type: 'none' },
-                armor: 0
-            },
-            tank: {
-                id: 'tank',
-                name: 'Tank',
-                health: 80,
-                damage: 20,
-                speed: 60,
-                xpValue: 15,
-                aiType: 'chase',
-                size: 20,
-                color: '#4169E1',
-                spawnCost: 5,
-                attackPattern: { type: 'none' },
-                armor: 5
-            },
-            tireur: {
-                id: 'tireur',
-                name: 'Tireur',
-                health: 25,
-                damage: 8,
-                speed: 80,
-                xpValue: 12,
-                aiType: 'kite',
-                size: 11,
-                color: '#FFD700',
-                spawnCost: 3,
-                attackPattern: {
-                    type: 'shoot',
-                    damage: 12,
-                    cooldown: 2.0,
-                    range: 300,
-                    projectileSpeed: 250,
-                    projectileColor: '#FFFF00'
-                },
-                armor: 0
-            },
-            elite: {
-                id: 'elite',
-                name: 'Élite',
-                health: 150,
-                damage: 25,
-                speed: 120,
-                xpValue: 40,
-                aiType: 'aggressive',
-                size: 18,
-                color: '#FF4500',
-                spawnCost: 12,
-                attackPattern: {
-                    type: 'shoot',
-                    damage: 20,
-                    cooldown: 1.5,
-                    range: 250,
-                    projectileSpeed: 300,
-                    projectileColor: '#FF0000'
-                },
-                armor: 3,
-                splitCount: 2,
-                splitType: 'drone_basique'
-            },
-            boss: {
-                id: 'boss',
-                name: 'Boss',
-                health: 1000,
-                damage: 40,
-                speed: 90,
-                xpValue: 200,
-                aiType: 'boss',
-                size: 40,
-                color: '#DC143C',
-                spawnCost: 100,
-                attackPattern: {
-                    type: 'special',
-                    damage: 30,
-                    cooldown: 0.8,
-                    range: 400,
-                    projectileSpeed: 350,
-                    projectileColor: '#FF00FF'
-                },
-                armor: 10,
-                splitCount: 5,
-                splitType: 'elite'
-            },
-            tank_boss: {
-                id: 'tank_boss',
-                name: 'Tank Boss',
-                health: 2500,
-                damage: 60,
-                speed: 50,
-                xpValue: 300,
-                aiType: 'chase',
-                size: 50,
-                color: '#4169E1',
-                spawnCost: 150,
-                attackPattern: {
-                    type: 'melee',
-                    damage: 80,
-                    cooldown: 2.0,
-                    range: 60
-                },
-                armor: 25,
-                splitCount: 8,
-                splitType: 'tank'
-            },
-            swarm_boss: {
-                id: 'swarm_boss',
-                name: 'Swarm Boss',
-                health: 800,
-                damage: 25,
-                speed: 120,
-                xpValue: 250,
-                aiType: 'weave',
-                size: 35,
-                color: '#00FF00',
-                spawnCost: 120,
-                attackPattern: {
-                    type: 'shoot',
-                    damage: 20,
-                    cooldown: 0.5,
-                    range: 350,
-                    projectileSpeed: 300,
-                    projectileColor: '#00FF00'
-                },
-                armor: 5,
-                splitCount: 15,
-                splitType: 'chasseur_rapide'
-            },
-            sniper_boss: {
-                id: 'sniper_boss',
-                name: 'Sniper Boss',
-                health: 1200,
-                damage: 30,
-                speed: 80,
-                xpValue: 280,
-                aiType: 'kite',
-                size: 38,
-                color: '#FFD700',
-                spawnCost: 130,
-                attackPattern: {
-                    type: 'shoot',
-                    damage: 50,
-                    cooldown: 1.5,
-                    range: 600,
-                    projectileSpeed: 500,
-                    projectileColor: '#FFFF00'
-                },
-                armor: 8,
-                splitCount: 6,
-                splitType: 'tireur'
-            }
+        // Profile not found - error and use default
+        console.error(`[SpawnerSystem] Enemy profile not found: ${profileId}. Check EnemyProfiles.js and enemyMapping.`);
+        
+        // Default to SCOUT_DRONE if profile missing
+        const defaultProfile = window.EnemyProfiles.PROFILES['SCOUT_DRONE'];
+        if (!defaultProfile) {
+            throw new Error('[SpawnerSystem] FATAL: EnemyProfiles.SCOUT_DRONE not found. Cannot spawn enemies.');
+        }
+        
+        return {
+            id: defaultProfile.id,
+            name: defaultProfile.name,
+            health: defaultProfile.defense.shield + defaultProfile.defense.armor + defaultProfile.defense.structure,
+            damage: 10,
+            speed: defaultProfile.speed,
+            xpValue: defaultProfile.xpValue,
+            aiType: defaultProfile.aiType,
+            size: defaultProfile.size,
+            color: defaultProfile.color,
+            secondaryColor: defaultProfile.secondaryColor || defaultProfile.color,
+            spawnCost: defaultProfile.spawnCost,
+            attackPattern: defaultProfile.attackPattern || { type: 'none' },
+            armor: 0,
+            profileId: 'SCOUT_DRONE',
+            attackDamageType: defaultProfile.attackDamageType,
+            defenseLayers: defaultProfile.defense,
+            weakness: defaultProfile.weakness,
+            isBoss: false
         };
-
-        return enemies[enemyId] || enemies.drone_basique;
     }
 
     /**

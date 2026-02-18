@@ -52,6 +52,13 @@ const BASE_DEFENSE_VALUES = {
 const RESISTANCE_CAP = 0.75; // 75% maximum
 
 /**
+ * Resistance minimum
+ * Minimum resistance for any damage type on any layer
+ * -100% means damage is doubled (200% damage taken)
+ */
+const RESISTANCE_MIN = -1.0; // -100% minimum (double damage)
+
+/**
  * Resistance tables for each defense layer
  * Format: { [damageType]: resistancePercentage }
  * Resistance reduces incoming damage: actualDamage = rawDamage * (1 - resistance)
@@ -114,17 +121,18 @@ const DAMAGE_TYPE_SYMBOLS = {
  * @param {number} regen - HP regeneration per second
  * @param {number} regenDelay - Current regen delay timer
  * @param {number} regenDelayMax - Max delay before regen starts
- * @param {Object} resistances - Resistance table { em, thermal, kinetic, explosive }
+ * @param {Object} baseResistances - Base resistance table { em, thermal, kinetic, explosive }
  * @returns {Object} Defense layer component
  */
-function createDefenseLayer(currentHp, maxHp, regen, regenDelay, regenDelayMax, resistances) {
+function createDefenseLayer(currentHp, maxHp, regen, regenDelay, regenDelayMax, baseResistances) {
     return {
         current: currentHp,
         max: maxHp,
         regen: regen,
         regenDelay: regenDelay,
         regenDelayMax: regenDelayMax,
-        resistances: { ...resistances }
+        baseResistances: { ...baseResistances },
+        bonusResistances: {} // Dynamic resistance bonuses (em, thermal, kinetic, explosive)
     };
 }
 
@@ -198,4 +206,56 @@ function calculateOverflow(overflow, nextLayerResistance) {
     // Overflow is the raw damage that passes through
     // It needs to be adjusted for the next layer's resistance
     return overflow / (1 - nextLayerResistance);
+}
+
+/**
+ * DamagePacket class
+ * Encapsulates all damage-related information for applying damage to entities
+ * This is the ONLY way damage should flow through the DefenseSystem
+ */
+class DamagePacket {
+    /**
+     * Create a damage packet
+     * @param {number} damage - Base damage amount
+     * @param {string} damageType - Damage type (em, thermal, kinetic, explosive)
+     * @param {number} critMultiplier - Critical hit multiplier (default: 1.0)
+     * @param {number} shieldPenetration - Shield penetration percentage (0-1, default: 0)
+     * @param {number} armorPenetration - Armor penetration percentage (0-1, default: 0)
+     */
+    constructor(damage, damageType = 'kinetic', critMultiplier = 1.0, shieldPenetration = 0, armorPenetration = 0) {
+        this.damage = damage;
+        this.damageType = damageType;
+        this.critMultiplier = critMultiplier;
+        this.shieldPenetration = Math.max(0, Math.min(1, shieldPenetration)); // Clamp 0-1
+        this.armorPenetration = Math.max(0, Math.min(1, armorPenetration)); // Clamp 0-1
+    }
+
+    /**
+     * Get the final damage after applying crit multiplier
+     * @returns {number} Final damage
+     */
+    getFinalDamage() {
+        return this.damage * this.critMultiplier;
+    }
+
+    /**
+     * Static factory method for simple damage (most common case)
+     * @param {number} damage - Damage amount
+     * @param {string} damageType - Damage type
+     * @returns {DamagePacket} New damage packet
+     */
+    static simple(damage, damageType = 'kinetic') {
+        return new DamagePacket(damage, damageType);
+    }
+
+    /**
+     * Static factory method for critical hit damage
+     * @param {number} damage - Base damage amount
+     * @param {string} damageType - Damage type
+     * @param {number} critMultiplier - Critical multiplier
+     * @returns {DamagePacket} New damage packet with crit
+     */
+    static crit(damage, damageType, critMultiplier) {
+        return new DamagePacket(damage, damageType, critMultiplier);
+    }
 }

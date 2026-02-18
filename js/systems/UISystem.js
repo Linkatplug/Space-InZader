@@ -40,7 +40,7 @@ class UISystem {
         this.controlsShownThisGame = false;
         
         // Stats overlay toggle state
-        this.statsOverlayVisible = true;
+        // Legacy stats overlay removed - using new HUD bars instead
         
         // Track missing stats warnings to avoid spam
         this.missingStatsWarned = new Set();
@@ -297,7 +297,8 @@ class UISystem {
         this.weaponSlots = document.getElementById('weaponSlots');
         this.controlsHelp = document.getElementById('controlsHelp');
         
-        // Defense layer elements
+        // Defense layer elements - 3-layer system (Shield → Armor → Structure)
+        // This is the authoritative defense display for the player
         this.defenseLayers = document.getElementById('defenseLayers');
         this.shieldBar = document.getElementById('shieldBar');
         this.shieldFill = document.getElementById('shieldFill');
@@ -308,11 +309,6 @@ class UISystem {
         this.structureBar = document.getElementById('structureBar');
         this.structureFill = document.getElementById('structureFill');
         this.structureValue = document.getElementById('structureValue');
-        
-        // Legacy health elements (fallback)
-        this.legacyHealth = document.getElementById('legacyHealth');
-        this.hpDisplay = document.getElementById('hpDisplay');
-        this.healthFill = document.getElementById('healthFill');
         
         // Heat/Overheat elements
         this.heatBar = document.getElementById('heatBar');
@@ -337,7 +333,7 @@ class UISystem {
         this.passiveList = document.getElementById('passiveList');
         
         // Stats overlay panel
-        this.statsOverlayPanel = document.getElementById('statsOverlayPanel');
+        // Legacy stats overlay removed - using new HUD bars instead
 
         // Menu elements (ship selection)
         this.shipSelection = document.getElementById('shipSelection');
@@ -461,15 +457,8 @@ class UISystem {
             this.creditsBackBtn.addEventListener('click', () => this.showMainMenu());
         }
         
-        // Stats overlay toggle with 'A' key
+        // Legacy stats overlay toggle removed - using new HUD bars instead
         window.addEventListener('keydown', (e) => {
-            if (e.key === 'a' || e.key === 'A') {
-                // Only toggle if game is running
-                if (this.gameState && (this.gameState.currentState === GameStates.RUNNING || this.gameState.currentState === GameStates.LEVEL_UP)) {
-                    this.toggleStatsOverlay();
-                }
-            }
-            
             // Tactical UI toggle with 'U' key
             if (e.key === 'u' || e.key === 'U') {
                 if (this.gameState && (this.gameState.currentState === GameStates.RUNNING || this.gameState.currentState === GameStates.LEVEL_UP)) {
@@ -519,6 +508,7 @@ class UISystem {
 
             // Update level and XP
             this.levelDisplay.textContent = playerComp.level;
+            console.log("[XP DEBUG]", playerComp.xp, playerComp.xpRequired);
             const xpPercent = (playerComp.xp / playerComp.xpRequired) * 100;
             this.xpFill.style.width = `${Math.min(100, xpPercent)}%`;
             
@@ -530,7 +520,7 @@ class UISystem {
                 const speed = stats.speed ?? 1;
                 const armor = stats.armor ?? 0;
                 const lifesteal = stats.lifesteal ?? 0;
-                const healthRegen = stats.healthRegen ?? 0;
+                const shieldRegen = stats.shieldRegen ?? 0;
                 const critChance = stats.critChance ?? 0;
                 
                 this.statDamage.textContent = `${Math.round(damageMultiplier * 100)}%`;
@@ -538,68 +528,56 @@ class UISystem {
                 this.statSpeed.textContent = `${Math.round(speed)}`;
                 this.statArmor.textContent = `${Math.round(armor)}`;
                 this.statLifesteal.textContent = `${Math.round(lifesteal * 100)}%`;
-                this.statRegen.textContent = `${healthRegen.toFixed(1)}/s`;
+                this.statRegen.textContent = `${shieldRegen.toFixed(1)}/s`;
                 this.statCrit.textContent = `${Math.round(critChance * 100)}%`;
             }
         }
 
-        // Update defense layers or fallback to legacy health
+        // Update defense layers (player uses 3-layer defense system)
         const defense = player.getComponent('defense');
-        const health = player.getComponent('health');
         const heat = player.getComponent('heat');
         
         if (defense) {
-            // Show new defense system (Shield/Armor/Structure)
-            if (this.defenseLayers) this.defenseLayers.style.display = 'block';
-            if (this.legacyHealth) this.legacyHealth.style.display = 'none';
+            // === 3-LAYER DEFENSE SYSTEM ===
+            // Player uses a unified 3-layer defense model:
+            // 1. Shield (front line, regenerates)
+            // 2. Armor (middle layer, damage reduction)
+            // 3. Structure (final layer, if depleted = death)
+            // 
+            // All damage flows: Shield → Armor → Structure
+            // Each layer has its own resistances by damage type
             
-            // Update shield
+            // Show defense system display
+            if (this.defenseLayers) this.defenseLayers.style.display = 'block';
+            
+            // Update Shield layer (regenerates after delay)
             if (this.shieldFill && this.shieldValue) {
                 const shieldPercent = (defense.shield.current / defense.shield.max) * 100;
                 this.shieldFill.style.width = `${Math.max(0, shieldPercent)}%`;
                 this.shieldValue.textContent = `${Math.ceil(defense.shield.current)}/${defense.shield.max}`;
             }
             
-            // Update armor
+            // Update Armor layer (provides damage reduction)
             if (this.armorFill && this.armorValue) {
                 const armorPercent = (defense.armor.current / defense.armor.max) * 100;
                 this.armorFill.style.width = `${Math.max(0, armorPercent)}%`;
                 this.armorValue.textContent = `${Math.ceil(defense.armor.current)}/${defense.armor.max}`;
             }
             
-            // Update structure
+            // Update Structure layer (final defense, if depleted = game over)
             if (this.structureFill && this.structureValue) {
                 const structurePercent = (defense.structure.current / defense.structure.max) * 100;
                 this.structureFill.style.width = `${Math.max(0, structurePercent)}%`;
                 this.structureValue.textContent = `${Math.ceil(defense.structure.current)}/${defense.structure.max}`;
             }
-        } else if (health) {
-            // Fallback to legacy health system
-            if (this.defenseLayers) this.defenseLayers.style.display = 'none';
-            if (this.legacyHealth) this.legacyHealth.style.display = 'block';
-            
-            this.hpDisplay.textContent = `${Math.ceil(health.current)}/${health.max}`;
-            const healthPercent = (health.current / health.max) * 100;
-            this.healthFill.style.width = `${Math.max(0, healthPercent)}%`;
-        }
-        
-        // Remove old shield code that's now integrated
-        /*
-        // Update shield
-        const shield = player.getComponent('shield');
-        if (shield && shield.max > 0) {
-            this.shieldBar.style.display = 'block';
-            this.shieldDisplay.style.display = 'block';
-            this.shieldValue.textContent = `${Math.ceil(shield.current)}/${shield.max}`;
-            const shieldPercent = (shield.current / shield.max) * 100;
-            this.shieldFill.style.width = `${Math.max(0, shieldPercent)}%`;
         } else {
-            this.shieldBar.style.display = 'none';
-            this.shieldDisplay.style.display = 'none';
+            // No defense component - hide defense UI
+            if (this.defenseLayers) this.defenseLayers.style.display = 'none';
         }
-        */
         
-        // Update heat/overheat gauge
+        // === HEAT SYSTEM ===
+        // Heat bar displays current heat from HeatSystem component
+        // Connected to actual heat.current value from entity's heat component
         if (this.heatBar && this.heatFill && this.heatDisplay) {
             if (heat && heat.max > 0) {
                 this.heatBar.style.display = 'block';
@@ -643,7 +621,7 @@ class UISystem {
         this.updateMagneticStormStatus();
         
         // Update stats overlay (deltas)
-        this.updateStatsOverlay(playerComp, health);
+        // Legacy stats overlay removed - using new HUD bars instead
     }
     
     /**
@@ -1174,6 +1152,8 @@ class UISystem {
             const shipKeys = ['ION_FRIGATE', 'BALLISTIC_DESTROYER', 'CATACLYSM_CRUISER', 'TECH_NEXUS'];
             ships = shipKeys.map(key => {
                 const shipData = window.ShipUpgradeData.SHIPS[key];
+                // Get icon, role, and dominantDamageType from ShipData
+                const shipInfo = window.ShipData?.SHIPS?.[key] || {};
                 return {
                     id: key,
                     name: shipData.name,
@@ -1181,7 +1161,10 @@ class UISystem {
                     baseStats: shipData.baseStats,
                     color: shipData.color,
                     difficulty: shipData.difficulty,
-                    unlocked: shipData.unlocked !== false
+                    unlocked: shipData.unlocked !== false,
+                    icon: shipInfo.icon || '🚀',
+                    role: shipInfo.role || shipData.description,
+                    dominantDamageType: shipInfo.dominantDamageType || 'kinetic'
                 };
             });
             console.log('[Menu] Ships available: ' + shipKeys.join(', '));
@@ -1195,7 +1178,10 @@ class UISystem {
                     baseStats: { maxHealth: 100, damageMultiplier: 1.0, speed: 220 },
                     color: '#4488FF',
                     difficulty: 'easy',
-                    unlocked: true
+                    unlocked: true,
+                    icon: '⚡',
+                    role: 'Anti-shield / Disruption',
+                    dominantDamageType: 'em'
                 },
                 {
                     id: 'BALLISTIC_DESTROYER',
@@ -1204,7 +1190,10 @@ class UISystem {
                     baseStats: { maxHealth: 120, damageMultiplier: 1.1, speed: 200 },
                     color: '#FFA500',
                     difficulty: 'easy',
-                    unlocked: true
+                    unlocked: true,
+                    icon: '🔩',
+                    role: 'Anti-armor / Burst',
+                    dominantDamageType: 'kinetic'
                 },
                 {
                     id: 'CATACLYSM_CRUISER',
@@ -1213,7 +1202,10 @@ class UISystem {
                     baseStats: { maxHealth: 90, damageMultiplier: 1.2, speed: 210 },
                     color: '#FF4444',
                     difficulty: 'medium',
-                    unlocked: true
+                    unlocked: true,
+                    icon: '💣',
+                    role: 'AOE / Wave Clear',
+                    dominantDamageType: 'explosive'
                 },
                 {
                     id: 'TECH_NEXUS',
@@ -1222,7 +1214,10 @@ class UISystem {
                     baseStats: { maxHealth: 95, damageMultiplier: 1.05, speed: 230 },
                     color: '#FF6600',
                     difficulty: 'medium',
-                    unlocked: true
+                    unlocked: true,
+                    icon: '🔬',
+                    role: 'Finisher / Tech Sustain',
+                    dominantDamageType: 'thermal'
                 }
             ];
             console.warn('[Menu] ShipUpgradeData not available, using fallback ships');
@@ -1250,6 +1245,15 @@ class UISystem {
             } else if (this.selectedShipId === ship.id && !isLocked) {
                 card.classList.add('selected');
             }
+
+            // Compute damage type color dynamically
+            const DAMAGE_TYPE_COLORS = {
+                em: "#00FFFF",
+                thermal: "#FF6600",
+                kinetic: "#CCCCCC",
+                explosive: "#FF3300"
+            };
+            const damageColor = DAMAGE_TYPE_COLORS[ship.dominantDamageType] || "#FFFFFF";
 
             card.innerHTML = `
                 <h3 style="margin-bottom: 8px; text-align: center;">${ship.icon} ${ship.name}</h3>
@@ -1982,171 +1986,5 @@ class UISystem {
         container.innerHTML = html;
     }
     
-    /**
-     * Toggle stats overlay visibility
-     */
-    toggleStatsOverlay() {
-        this.statsOverlayVisible = !this.statsOverlayVisible;
-        if (this.statsOverlayPanel) {
-            this.statsOverlayPanel.style.display = this.statsOverlayVisible ? 'block' : 'none';
-        }
-    }
-    
-    /**
-     * Update stats overlay with delta calculations
-     * @param {Object} playerComp - Player component with stats and baseStats
-     * @param {Object} health - Health component
-     */
-    updateStatsOverlay(playerComp, health) {
-        if (!this.statsOverlayPanel || !this.statsOverlayVisible || !playerComp) return;
-        
-        const stats = playerComp.stats || {};
-        const baseStats = playerComp.baseStats || {};
-        
-        // Helper function to get stat with fallback
-        const getStat = (statName, defaultValue = 0) => {
-            const value = stats[statName];
-            if (value === undefined || value === null) {
-                // Warn once per stat
-                if (!this.missingStatsWarned.has(statName)) {
-                    console.warn(`[UISystem] Missing stat: ${statName}, using default ${defaultValue}`);
-                    this.missingStatsWarned.add(statName);
-                }
-                return defaultValue;
-            }
-            return value;
-        };
-        
-        const getBaseStat = (statName, defaultValue = 0) => {
-            return baseStats[statName] !== undefined ? baseStats[statName] : defaultValue;
-        };
-        
-        // Calculate deltas and format display
-        const statsList = [
-            {
-                label: 'Damage',
-                current: getStat('damageMultiplier', 1),
-                base: getBaseStat('damageMultiplier', 1),
-                format: 'percent',
-                multiplier: 100
-            },
-            {
-                label: 'Fire Rate',
-                current: getStat('fireRateMultiplier', 1),
-                base: getBaseStat('fireRateMultiplier', 1),
-                format: 'percent',
-                multiplier: 100
-            },
-            {
-                label: 'Speed',
-                current: getStat('speed', 1),
-                base: getBaseStat('speed', 1),
-                format: 'number',
-                multiplier: 1
-            },
-            {
-                label: 'Max HP',
-                current: health ? health.max : 100,
-                base: getBaseStat('maxHealth', 100),
-                format: 'number',
-                multiplier: 1
-            },
-            {
-                label: 'Armor',
-                current: getStat('armor', 0),
-                base: getBaseStat('armor', 0),
-                format: 'number',
-                multiplier: 1
-            },
-            {
-                label: 'Crit Chance',
-                current: getStat('critChance', 0),
-                base: getBaseStat('critChance', 0),
-                format: 'percent',
-                multiplier: 100
-            },
-            {
-                label: 'Crit Damage',
-                current: getStat('critDamage', 1.5),
-                base: getBaseStat('critDamage', 1.5),
-                format: 'percent',
-                multiplier: 100
-            },
-            {
-                label: 'Lifesteal',
-                current: getStat('lifesteal', 0),
-                base: getBaseStat('lifesteal', 0),
-                format: 'percent',
-                multiplier: 100
-            },
-            {
-                label: 'Health Regen',
-                current: getStat('healthRegen', 0),
-                base: getBaseStat('healthRegen', 0),
-                format: 'decimal',
-                suffix: '/s',
-                multiplier: 1
-            },
-            {
-                label: 'Range',
-                current: getStat('rangeMultiplier', 1),
-                base: getBaseStat('rangeMultiplier', 1),
-                format: 'percent',
-                multiplier: 100
-            },
-            {
-                label: 'Projectile Speed',
-                current: getStat('projectileSpeedMultiplier', 1),
-                base: getBaseStat('projectileSpeedMultiplier', 1),
-                format: 'percent',
-                multiplier: 100
-            }
-        ];
-        
-        // Build HTML
-        let html = '<div class="stats-overlay-title">PLAYER STATS</div>';
-        
-        statsList.forEach(stat => {
-            const current = stat.current * stat.multiplier;
-            const base = stat.base * stat.multiplier;
-            const delta = current - base;
-            
-            // Format values
-            let currentStr;
-            let deltaStr;
-            
-            if (stat.format === 'percent') {
-                currentStr = `${Math.round(current)}%`;
-                deltaStr = delta === 0 ? '±0%' : `${delta > 0 ? '+' : ''}${Math.round(delta)}%`;
-            } else if (stat.format === 'decimal') {
-                currentStr = `${current.toFixed(1)}${stat.suffix || ''}`;
-                deltaStr = delta === 0 ? '±0' : `${delta > 0 ? '+' : ''}${delta.toFixed(1)}${stat.suffix || ''}`;
-            } else {
-                currentStr = `${Math.round(current)}`;
-                deltaStr = delta === 0 ? '±0' : `${delta > 0 ? '+' : ''}${Math.round(delta)}`;
-            }
-            
-            // Determine color
-            let deltaColor;
-            if (delta > 0) {
-                deltaColor = '#0f0'; // Green
-            } else if (delta < 0) {
-                deltaColor = '#f33'; // Red
-            } else {
-                deltaColor = '#888'; // Gray
-            }
-            
-            html += `
-                <div class="stats-overlay-row">
-                    <span class="stats-overlay-label">${stat.label}:</span>
-                    <span class="stats-overlay-value">${currentStr}</span>
-                    <span class="stats-overlay-delta" style="color: ${deltaColor}">${deltaStr}</span>
-                </div>
-            `;
-        });
-        
-        html += '<div class="stats-overlay-hint">Press [A] to toggle</div>';
-        
-        this.statsOverlayPanel.innerHTML = html;
-    }
+    // Legacy stats overlay methods removed - using new HUD bars instead
 }

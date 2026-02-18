@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Combat Dev Sandbox - Professional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a1a;
+            font-family: 'Courier New', monospace;
+            color: #00ffff;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        #gameContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 400px;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #000;
+            border: 2px solid #00ffff;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .menu-screen, .level-up-screen, .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 26, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: all;
+        }
+
+        .menu-screen.active, .level-up-screen.active, .game-over-screen.active {
+            display: flex;
+        }
+
+        #debugPanel {
+            position: fixed;
+            right: 0;
+            top: 0;
+            width: 400px;
+            height: 100vh;
+            background: #0a0a1a;
+            border-left: 2px solid #00ffff;
+            overflow-y: auto;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .debug-section {
+            margin-bottom: 25px;
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .debug-section h2 {
+            color: #00ffff;
+            font-size: 16px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.3);
+            padding-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .toggle-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+        }
+
+        .toggle-item:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-label {
+            color: #aaa;
+            font-size: 13px;
+        }
+
+        .toggle-button {
+            background: #00ffff;
+            color: #000;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .toggle-button.off {
+            background: #444;
+            color: #888;
+        }
+
+        .toggle-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .control-button {
+            background: linear-gradient(135deg, #00ffff 0%, #0088ff 100%);
+            color: #000;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: bold;
+            margin: 5px 5px 5px 0;
+            transition: all 0.2s;
+            display: inline-block;
+        }
+
+        .control-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+        }
+
+        .control-button:active {
+            transform: scale(0.98);
+        }
+
+        .slider-control {
+            margin: 12px 0;
+        }
+
+        .slider-label {
+            color: #00ffff;
+            font-size: 12px;
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .slider-value {
+            color: #0ff;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            background: rgba(0, 255, 255, 0.2);
+            outline: none;
+            border-radius: 3px;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00ffff;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            background: #00ffff;
+            cursor: pointer;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .stat-display {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.1);
+            font-size: 13px;
+        }
+
+        .stat-display:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            color: #888;
+        }
+
+        .stat-value {
+            color: #00ffff;
+            font-weight: bold;
+        }
+
+        .hp-layer {
+            margin: 5px 0;
+            font-size: 12px;
+        }
+
+        .hp-layer-name {
+            color: #aaa;
+            display: inline-block;
+            width: 80px;
+        }
+
+        .hp-layer-value {
+            color: #0f0;
+            font-weight: bold;
+        }
+
+        #title {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            color: #00ffff;
+            font-size: 20px;
+            text-shadow: 0 0 10px #00ffff;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 1px solid #00ffff;
+        }
+    </style>
+</head>
+<body>
+    <div id="title">Combat Dev Sandbox - Professional</div>
+
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="1280" height="720"></canvas>
+        <div id="ui">
+            <!-- Minimal UI elements to prevent Game init errors -->
+            <div class="menu-screen"></div>
+            <div class="level-up-screen"></div>
+            <div class="game-over-screen"></div>
+            <button id="startButton" style="display: none;"></button>
+            <button id="metaButton" style="display: none;"></button>
+            <button id="backToMenuButton" style="display: none;"></button>
+            <button id="returnMenuButton" style="display: none;"></button>
+            <button id="viewScoreboardButton" style="display: none;"></button>
+            <button id="scoreboardBackButton" style="display: none;"></button>
+            <button id="submitScoreButton" style="display: none;"></button>
+            <button id="skipScoreButton" style="display: none;"></button>
+            <input id="playerNameInput" style="display: none;">
+        </div>
+    </div>
+
+    <div id="debugPanel">
+        <div class="debug-section">
+            <h2>System Toggles</h2>
+            <div class="toggle-item">
+                <span class="toggle-label">AI System</span>
+                <button class="toggle-button" id="toggleAI" onclick="toggleSystem('ai')">ON</button>
+            </div>
+            <div class="toggle-item">
+                <span class="toggle-label">Enemy Fire</span>
+                <button class="toggle-button" id="toggleEnemyFire" onclick="toggleSystem('enemyFire')">ON</button>
+            </div>
+            <div class="toggle-item">
+                <span class="toggle-label">Player Fire</span>
+                <button class="toggle-button" id="togglePlayerFire" onclick="toggleSystem('playerFire')">ON</button>
+            </div>
+            <div class="toggle-item">
+                <span class="toggle-label">Collision</span>
+                <button class="toggle-button" id="toggleCollision" onclick="toggleSystem('collision')">ON</button>
+            </div>
+            <div class="toggle-item">
+                <span class="toggle-label">Defense Update</span>
+                <button class="toggle-button" id="toggleDefense" onclick="toggleSystem('defense')">ON</button>
+            </div>
+            <div class="toggle-item">
+                <span class="toggle-label">Movement</span>
+                <button class="toggle-button" id="toggleMovement" onclick="toggleSystem('movement')">ON</button>
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h2>Spawn Control</h2>
+            <button class="control-button" onclick="spawnScout(1)">Spawn 1 Scout</button>
+            <button class="control-button" onclick="spawnScout(5)">Spawn 5 Scouts</button>
+            <button class="control-button" onclick="spawnElite()">Spawn Elite</button>
+            <button class="control-button" onclick="clearAllEnemies()">Clear All Enemies</button>
+            <button class="control-button" onclick="resetPlayerHP()">Reset Player HP</button>
+        </div>
+
+        <div class="debug-section">
+            <h2>Runtime Modifiers</h2>
+            <div class="slider-control">
+                <div class="slider-label">
+                    <span>Player Damage</span>
+                    <span class="slider-value" id="playerDmgValue">1.0x</span>
+                </div>
+                <input type="range" id="playerDmgSlider" min="0.1" max="5" step="0.1" value="1" 
+                       oninput="updateModifier('playerDamage', this.value)">
+            </div>
+            <div class="slider-control">
+                <div class="slider-label">
+                    <span>Enemy Damage</span>
+                    <span class="slider-value" id="enemyDmgValue">1.0x</span>
+                </div>
+                <input type="range" id="enemyDmgSlider" min="0.1" max="5" step="0.1" value="1" 
+                       oninput="updateModifier('enemyDamage', this.value)">
+            </div>
+            <div class="slider-control">
+                <div class="slider-label">
+                    <span>Enemy Fire Cooldown</span>
+                    <span class="slider-value" id="enemyCooldownValue">1.0x</span>
+                </div>
+                <input type="range" id="enemyCooldownSlider" min="0.1" max="3" step="0.1" value="1" 
+                       oninput="updateModifier('enemyCooldown', this.value)">
+            </div>
+        </div>
+
+        <div class="debug-section">
+            <h2>Live Stats</h2>
+            <div class="stat-display">
+                <span class="stat-label">Total Enemies</span>
+                <span class="stat-value" id="statEnemies">0</span>
+            </div>
+            <div class="stat-display">
+                <span class="stat-label">Damage/sec</span>
+                <span class="stat-value" id="statDamageSec">0</span>
+            </div>
+            <div class="stat-display">
+                <span class="stat-label">Shots/sec</span>
+                <span class="stat-value" id="statShotsSec">0</span>
+            </div>
+            <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(0, 255, 255, 0.3);">
+                <div class="hp-layer">
+                    <span class="hp-layer-name">Shield:</span>
+                    <span class="hp-layer-value" id="hpShield">0/0</span>
+                </div>
+                <div class="hp-layer">
+                    <span class="hp-layer-name">Armor:</span>
+                    <span class="hp-layer-value" id="hpArmor">0/0</span>
+                </div>
+                <div class="hp-layer">
+                    <span class="hp-layer-name">Structure:</span>
+                    <span class="hp-layer-value" id="hpStructure">0/0</span>
+                </div>
+                <div class="stat-display" style="margin-top: 5px; padding-top: 5px;">
+                    <span class="stat-label">Total HP:</span>
+                    <span class="stat-value" id="hpTotal">0/0</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load all game scripts in correct order (same as index.html) -->
+    <script src="../js/constants.js"></script>
+    <script src="../js/utils/Math.js"></script>
+    <script src="../js/utils/Logger.js"></script>
+    <script src="../js/utils/DebugOverlay.js"></script>
+    <script src="../js/utils/ScreenEffects.js"></script>
+    <script src="../js/core/ECS.js"></script>
+    <script src="../js/core/GameState.js"></script>
+    <script src="../js/core/stats/ShipStats.js"></script>
+    <script src="../js/core/stats/FinalStatsCalculator.js"></script>
+    <script src="../js/data/PassiveData.js"></script>
+    <script src="../js/data/ShipData.js"></script>
+    <script src="../js/data/SynergyData.js"></script>
+    <script src="../js/data/KeystoneData.js"></script>
+    <script src="../js/data/DefenseData.js"></script>
+    <script src="../js/data/HeatData.js"></script>
+    <script src="../js/data/NewWeaponData.js"></script>
+    <script src="../js/data/ModuleData.js"></script>
+    <script src="../js/data/EnemyProfiles.js"></script>
+    <script src="../js/data/LootData.js"></script>
+    <script src="../js/data/TagSynergyData.js"></script>
+    <script src="../js/data/BalanceConstants.js"></script>
+    <script src="../js/data/ShipUpgradeData.js"></script>
+    <script src="../js/data/WeaponDataBridge.js"></script>
+    <script src="../js/ui/EnhancedUIComponents.js"></script>
+    <script src="../js/systems/MovementSystem.js"></script>
+    <script src="../js/systems/CombatSystem.js"></script>
+    <script src="../js/systems/CollisionSystem.js"></script>
+    <script src="../js/systems/AISystem.js"></script>
+    <script src="../js/systems/SpawnerSystem.js"></script>
+    <script src="../js/systems/PickupSystem.js"></script>
+    <script src="../js/systems/RenderSystem.js"></script>
+    <script src="../js/systems/UISystem.js"></script>
+    <script src="../js/systems/ParticleSystem.js"></script>
+    <script src="../js/systems/WaveSystem.js"></script>
+    <script src="../js/systems/SynergySystem.js"></script>
+    <script src="../js/systems/WeatherSystem.js"></script>
+    <script src="../js/systems/DefenseSystem.js"></script>
+    <script src="../js/systems/HeatSystem.js"></script>
+    <script src="../js/systems/ModuleSystem.js"></script>
+    <script src="../js/systems/ShipUpgradeSystem.js"></script>
+    <script src="../js/managers/SaveManager.js"></script>
+    <script src="../js/managers/AudioManager.js"></script>
+    <script src="../js/managers/ScoreManager.js"></script>
+    <script src="../js/Game.js"></script>
+
+    <script>
+        // Dev mode flags - control which systems run
+        const devFlags = {
+            aiEnabled: true,
+            enemyFireEnabled: true,
+            playerFireEnabled: true,
+            collisionEnabled: true,
+            defenseEnabled: true,
+            movementEnabled: true
+        };
+
+        // Runtime modifiers
+        const modifiers = {
+            playerDamage: 1.0,
+            enemyDamage: 1.0,
+            enemyCooldown: 1.0
+        };
+
+        // Stats tracking
+        let statsTracking = {
+            damageTaken: 0,
+            shotsFired: 0,
+            lastUpdate: performance.now()
+        };
+
+        let game = null;
+        let originalUpdate = null;
+
+        // Initialize game with dev mode
+        function initDevSandbox() {
+            console.log('[DevSandbox] Initializing professional combat sandbox...');
+
+            // Create game instance
+            game = new Game();
+            
+            // Disable UI and Audio initialization methods BEFORE startGame
+            console.log('[DevSandbox] Disabling UI and Audio systems...');
+            
+            // Override methods that touch DOM elements
+            game.setupUIListeners = function() {
+                console.log('[DevSandbox] UI listeners disabled');
+            };
+            
+            // Replace UI system with stub that does nothing
+            game.systems.ui = {
+                showScreen: () => {},
+                showWaveAnnouncement: () => {},
+                showLevelUp: () => {},
+                showGameOver: () => {},
+                showPauseMenu: () => {},
+                hidePauseMenu: () => {},
+                showScoreboard: () => {},
+                hideScoreboard: () => {},
+                showNameEntryDialog: () => {},
+                hideNameEntryDialog: () => {},
+                updateHUD: () => {},
+                update: () => {},
+                waveSystem: null
+            };
+            
+            // Disable audio initialization
+            game.audioManager = {
+                init: () => {},
+                playSound: () => {},
+                playMusic: () => {},
+                stopMusic: () => {},
+                stopAll: () => {},
+                setVolume: () => {},
+                startBackgroundMusic: () => {},
+                stopBackgroundMusic: () => {}
+            };
+            
+            // Store original update method
+            originalUpdate = game.update.bind(game);
+            
+            // Override update method to include dev flags
+            game.update = function(deltaTime) {
+                // Update game time
+                this.gameState.stats.time += deltaTime;
+                
+                // Update wave system (always)
+                this.systems.wave.update(deltaTime);
+                this.systems.spawner.setWaveNumber(this.systems.wave.getWaveNumber());
+                
+                // Update synergy system (always)
+                if (this.synergySystem) {
+                    this.synergySystem.update(deltaTime);
+                }
+                
+                // Conditional system updates based on dev flags
+                if (devFlags.movementEnabled) {
+                    this.systems.movement.update(deltaTime);
+                }
+                
+                if (devFlags.aiEnabled) {
+                    this.systems.ai.update(deltaTime);
+                }
+                
+                // Combat system - split into player and enemy fire
+                if (devFlags.playerFireEnabled || devFlags.enemyFireEnabled) {
+                    // We'll need to handle this at the CombatSystem level
+                    this.systems.combat.update(deltaTime);
+                }
+                
+                if (devFlags.defenseEnabled) {
+                    this.systems.defense.update(deltaTime);
+                }
+                
+                this.systems.heat.update(deltaTime);
+                this.systems.weather.update(deltaTime);
+                
+                if (devFlags.collisionEnabled) {
+                    this.systems.collision.update(deltaTime);
+                }
+                
+                // Always update spawner, pickup, particle, effects
+                this.systems.spawner.update(deltaTime, this.systems.wave.canSpawn());
+                this.systems.pickup.update(deltaTime);
+                this.systems.particle.update(deltaTime);
+                this.screenEffects.update(deltaTime);
+                
+                // Update invulnerability
+                if (this.player) {
+                    const defense = this.player.getComponent('defense');
+                    if (defense && defense.invulnerable) {
+                        defense.invulnerableTime -= deltaTime;
+                        if (defense.invulnerableTime <= 0) {
+                            defense.invulnerable = false;
+                        }
+                    }
+                }
+                
+                // Process entity removals
+                this.world.processPendingRemovals();
+                
+                // Update stats display
+                updateStatsDisplay();
+            };
+            
+            // Wait for game to be ready, then start in dev mode
+            setTimeout(() => {
+                // Set default ship
+                game.gameState.selectedShip = 'ION_FRIGATE';
+                
+                // Start game directly (bypass menu)
+                game.startGame();
+                
+                console.log('[DevSandbox] Game started in dev mode');
+                console.log('[DevSandbox] Player:', game.player);
+                console.log('[DevSandbox] Systems:', game.systems);
+            }, 100);
+        }
+
+        // Toggle system on/off
+        function toggleSystem(systemName) {
+            const flagMap = {
+                'ai': 'aiEnabled',
+                'enemyFire': 'enemyFireEnabled',
+                'playerFire': 'playerFireEnabled',
+                'collision': 'collisionEnabled',
+                'defense': 'defenseEnabled',
+                'movement': 'movementEnabled'
+            };
+            
+            const flag = flagMap[systemName];
+            if (!flag) return;
+            
+            devFlags[flag] = !devFlags[flag];
+            
+            // Update button
+            const buttonMap = {
+                'ai': 'toggleAI',
+                'enemyFire': 'toggleEnemyFire',
+                'playerFire': 'togglePlayerFire',
+                'collision': 'toggleCollision',
+                'defense': 'toggleDefense',
+                'movement': 'toggleMovement'
+            };
+            
+            const button = document.getElementById(buttonMap[systemName]);
+            if (button) {
+                button.textContent = devFlags[flag] ? 'ON' : 'OFF';
+                button.classList.toggle('off', !devFlags[flag]);
+            }
+            
+            console.log(`[DevSandbox] ${systemName} ${devFlags[flag] ? 'enabled' : 'disabled'}`);
+        }
+
+        // Update runtime modifier
+        function updateModifier(modifierName, value) {
+            value = parseFloat(value);
+            
+            if (modifierName === 'playerDamage') {
+                modifiers.playerDamage = value;
+                document.getElementById('playerDmgValue').textContent = value.toFixed(1) + 'x';
+            } else if (modifierName === 'enemyDamage') {
+                modifiers.enemyDamage = value;
+                document.getElementById('enemyDmgValue').textContent = value.toFixed(1) + 'x';
+            } else if (modifierName === 'enemyCooldown') {
+                modifiers.enemyCooldown = value;
+                document.getElementById('enemyCooldownValue').textContent = value.toFixed(1) + 'x';
+                
+                // Apply to AI system enemy fire rates
+                if (game && game.systems.ai) {
+                    // This would need implementation in AISystem to respect this multiplier
+                }
+            }
+        }
+
+        // Spawn scout enemy
+        function spawnScout(count) {
+            if (!game || !game.player) return;
+            
+            console.log(`[DevSandbox] Spawning ${count} scout(s)`);
+            
+            const playerPos = game.player.getComponent('position');
+            if (!playerPos) return;
+            
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 300 + Math.random() * 200;
+                const x = playerPos.x + Math.cos(angle) * distance;
+                const y = playerPos.y + Math.sin(angle) * distance;
+                
+                const profile = window.EnemyProfiles.PROFILES.SCOUT_DRONE;
+                const enemy = game.world.createEntity('enemy');
+                
+                enemy.addComponent('position', Components.Position(x, y));
+                enemy.addComponent('velocity', Components.Velocity(0, 0));
+                enemy.addComponent('collision', Components.Collision(profile.size));
+                
+                const defense = window.EnemyProfiles.createEnemyDefense(profile);
+                enemy.addComponent('defense', defense);
+                
+                enemy.addComponent('enemy', {
+                    type: profile.aiType,
+                    speed: profile.speed,
+                    damage: 10,
+                    attackCooldown: 0,
+                    attackPattern: {
+                        type: 'shoot',
+                        cooldown: 2.0,
+                        range: 300,
+                        damage: 8
+                    }
+                });
+                
+                enemy.addComponent('renderable', {
+                    color: profile.color,
+                    size: profile.size,
+                    shape: 'circle'
+                });
+            }
+        }
+
+        // Spawn elite enemy
+        function spawnElite() {
+            if (!game || !game.player) return;
+            
+            console.log('[DevSandbox] Spawning elite');
+            
+            const playerPos = game.player.getComponent('position');
+            if (!playerPos) return;
+            
+            const angle = Math.random() * Math.PI * 2;
+            const distance = 400;
+            const x = playerPos.x + Math.cos(angle) * distance;
+            const y = playerPos.y + Math.sin(angle) * distance;
+            
+            const profile = window.EnemyProfiles.PROFILES.SIEGE_HULK;
+            const enemy = game.world.createEntity('enemy');
+            
+            enemy.addComponent('position', Components.Position(x, y));
+            enemy.addComponent('velocity', Components.Velocity(0, 0));
+            enemy.addComponent('collision', Components.Collision(profile.size));
+            
+            const defense = window.EnemyProfiles.createEnemyDefense(profile);
+            enemy.addComponent('defense', defense);
+            
+            enemy.addComponent('enemy', {
+                type: profile.aiType,
+                speed: profile.speed,
+                damage: 15,
+                attackCooldown: 0,
+                attackPattern: {
+                    type: 'special',
+                    cooldown: 1.5,
+                    range: 350,
+                    damage: 12
+                }
+            });
+            
+            enemy.addComponent('renderable', {
+                color: profile.color,
+                size: profile.size,
+                shape: 'circle'
+            });
+        }
+
+        // Clear all enemies
+        function clearAllEnemies() {
+            if (!game) return;
+            
+            console.log('[DevSandbox] Clearing all enemies');
+            
+            const enemies = game.world.getEntitiesByType('enemy');
+            enemies.forEach(enemy => game.world.removeEntity(enemy.id));
+            game.world.processPendingRemovals();
+        }
+
+        // Reset player HP
+        function resetPlayerHP() {
+            if (!game || !game.player) return;
+            
+            console.log('[DevSandbox] Resetting player HP');
+            
+            const defense = game.player.getComponent('defense');
+            if (defense) {
+                defense.shield.current = defense.shield.max;
+                defense.armor.current = defense.armor.max;
+                defense.structure.current = defense.structure.max;
+                defense.shield.regenDelay = 0;
+                defense.armor.regenDelay = 0;
+                defense.structure.regenDelay = 0;
+            }
+        }
+
+        // Update stats display
+        function updateStatsDisplay() {
+            if (!game || !game.player) return;
+            
+            // Enemy count
+            const enemies = game.world.getEntitiesByType('enemy');
+            document.getElementById('statEnemies').textContent = enemies.length;
+            
+            // Player HP
+            const defense = game.player.getComponent('defense');
+            if (defense) {
+                const shield = defense.shield;
+                const armor = defense.armor;
+                const structure = defense.structure;
+                
+                document.getElementById('hpShield').textContent = 
+                    `${Math.ceil(shield.current)}/${shield.max}`;
+                document.getElementById('hpArmor').textContent = 
+                    `${Math.ceil(armor.current)}/${armor.max}`;
+                document.getElementById('hpStructure').textContent = 
+                    `${Math.ceil(structure.current)}/${structure.max}`;
+                
+                const totalCurrent = shield.current + armor.current + structure.current;
+                const totalMax = shield.max + armor.max + structure.max;
+                document.getElementById('hpTotal').textContent = 
+                    `${Math.ceil(totalCurrent)}/${totalMax}`;
+            }
+            
+            // Update damage/shots per second (every second)
+            const now = performance.now();
+            if (now - statsTracking.lastUpdate >= 1000) {
+                const damageSec = Math.ceil(statsTracking.damageTaken);
+                const shotsSec = statsTracking.shotsFired;
+                
+                document.getElementById('statDamageSec').textContent = damageSec;
+                document.getElementById('statShotsSec').textContent = shotsSec;
+                
+                statsTracking.damageTaken = 0;
+                statsTracking.shotsFired = 0;
+                statsTracking.lastUpdate = now;
+            }
+        }
+
+        // Initialize on load
+        window.addEventListener('load', initDevSandbox);
+    </script>
+</body>
+</html>
