@@ -4,7 +4,7 @@ import { clearScreen, drawHexGrid, drawWorldBounds } from './WorldRenderer';
 import { drawShip } from './ShipRenderer';
 import { drawParticles, drawXPDrops, drawVisualEffects } from './EffectRenderer';
 import { renderEnvironmentalEffects } from './EventRenderer';
-import { drawZones, drawBeams, drawProjectiles, drawDrones, drawPlayerGauges } from './CombatRenderer';
+import { drawZones, drawBeams, drawProjectiles, drawDrones, drawPlayerGauges, drawPickups } from './CombatRenderer';
 
 export interface RenderOptions {
   damageNumbers?: boolean; // false = masque les chiffres de dégâts
@@ -43,6 +43,7 @@ export const renderGame = (
   drawXPDrops(ctx, state.xpDrops);
   
   drawZones(ctx, state.zones, time);
+  drawPickups(ctx, state.pickups, time);
   drawProjectiles(ctx, state.projectiles, time);
 
   // Entities

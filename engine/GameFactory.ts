@@ -28,7 +28,7 @@ export const createInitialState = (shipId: string = DEFAULT_SHIP_ID): GameState 
     waveQuota: 15,
     totalKills: 0,
     startTime: Date.now(),
-    enemies: [], projectiles: [], xpDrops: [], effects: [], particles: [],
+    enemies: [], projectiles: [], xpDrops: [], pickups: [], effects: [], particles: [],
     activeWeapons: [{ ...startWeapon, level: 1 }],
     zones: [], beams: [], drones: [],
     time: 0, shake: 0, autoFire: false, spawnEnabled: true, autoAim: false, analogMove: { x: 0, y: 0 },

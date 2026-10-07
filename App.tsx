@@ -355,7 +355,7 @@ const App: React.FC = () => {
       <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} className="absolute inset-0" />
       
       {uiState.isDebugMode && <DebugOverlay state={uiState} fps={fps} frameTime={frameTime} />}
-      {uiState.status !== 'menu' && uiState.status !== 'dev' && uiState.status !== 'lab' && <HUD state={uiState} touch={isTouch} />}
+      {uiState.status !== 'menu' && uiState.status !== 'dev' && uiState.status !== 'lab' && <HUD state={uiState} touch={isTouch} size={save.settings.hudSize} />}
       
       {uiState.status === 'menu' && (
         <MainMenu

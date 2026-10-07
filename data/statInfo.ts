@@ -55,10 +55,13 @@ export const STAT_INFO: Partial<Record<keyof Stats, StatInfo>> = {
 
   speed:              { label: 'Vitesse', format: 'flat', better: 'up', group: 'Mobilité' },
   abilityCooldownMult:{ label: 'Recharge compétences', format: 'mult', better: 'down', group: 'Mobilité' },
+  abilityPowerMult:   { label: 'Puissance compétences', format: 'mult', better: 'up', group: 'Mobilité' },
+  dashDistanceMult:   { label: 'Distance du dash', format: 'mult', better: 'up', group: 'Mobilité' },
 
   magnetRange:        { label: 'Aimant à XP', format: 'flat', better: 'up', group: 'Utilitaire' },
   xpMult:             { label: 'Gain d\'XP', format: 'mult', better: 'up', group: 'Utilitaire' },
   luck:               { label: 'Chance', format: 'flat', better: 'up', group: 'Utilitaire' },
+  pickupChance:       { label: 'Chance de butin', format: 'mult', better: 'up', group: 'Utilitaire' },
 };
 
 /** Texte d'une valeur selon son format (ex. 0.12 pct → « 12 % », 1.15 mult → « +15 % »). */

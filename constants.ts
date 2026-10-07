@@ -74,6 +74,9 @@ export const INITIAL_STATS: Stats = {
   executeBonus: 0,
   healOnKill: 0,
   slowOnHit: 0,
+  abilityPowerMult: 1,
+  dashDistanceMult: 1,
+  pickupChance: 1,
 };
 
 export const DAMAGE_COLORS: Record<DamageType, string> = {

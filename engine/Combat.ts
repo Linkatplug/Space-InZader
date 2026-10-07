@@ -7,6 +7,7 @@ import { ENEMIES } from '../data/enemies';
 import { spawnEnemy } from './EnemyFactory';
 import { uid } from './ids';
 import { hasMechanic } from './Synergies';
+import { rollEnemyLoot } from './Pickups';
 
 /**
  * Point d'entrée unique pour tous les dégâts infligés aux ennemis
@@ -34,6 +35,7 @@ export interface HitOptions {
   burn?: number;         // fraction des dégâts par seconde
   slow?: number;
   direct?: boolean;      // impact direct : active les marques de résonance
+  raw?: boolean;         // explosion environnementale : rayon non modifié par les bonus du joueur
 }
 
 const BURN_DURATION = 3000;
@@ -185,6 +187,9 @@ export const killEnemy = (state: GameState, e: Entity) => {
     emitParticles(state, e.x, e.y, '#fb923c', 12, 6);
   }
 
+  // Butin : capsules, nanites, plaques, trou de ver
+  rollEnemyLoot(state, e);
+
   // Division à la mort (ex : l'élite libère un essaim)
   if (def.splitInto) {
     for (let i = 0; i < def.splitInto.count; i++) {
@@ -198,7 +203,7 @@ export const explode = (
   state: GameState, x: number, y: number, baseRadius: number, packet: DamagePacket, color: string,
   opts: HitOptions = {}
 ) => {
-  const radius = baseRadius * state.player.runtimeStats.explosionRadiusMult;
+  const radius = opts.raw ? baseRadius : baseRadius * state.player.runtimeStats.explosionRadiusMult;
   state.zones.push({
     id: uid('fx'), kind: 'explosion', x, y, radius,
     life: 0.35, maxLife: 0.35, color,

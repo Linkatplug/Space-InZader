@@ -56,6 +56,8 @@ const Toggle: React.FC<{ checked: boolean; label: string; onChange: (v: boolean)
   </button>
 );
 
+const HUD_SIZES: [GameSettings['hudSize'], string][] = [['compact', 'Compact'], ['normal', 'Normal'], ['large', 'Grand']];
+
 /** Écran d'options : audio, confort visuel, tir auto. Les changements sont appliqués et sauvegardés immédiatement. */
 export const OptionsMenu: React.FC<OptionsMenuProps> = ({ settings, onChange, onClose, autoFireLocked }) => {
   const set = (patch: Partial<GameSettings>) => onChange(normalizeSettingsPatch(patch));
@@ -95,6 +97,24 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({ settings, onChange, on
         </Row>
         <Row label="Chiffres de dégâts" hint="Valeurs flottantes au-dessus des ennemis touchés.">
           <Toggle label="Chiffres de dégâts" checked={settings.damageNumbers} onChange={v => set({ damageNumbers: v })} />
+        </Row>
+        <Row label="Taille du HUD" hint="Compact : plus de place pour le terrain.">
+          <div role="radiogroup" aria-label="Taille du HUD" className="flex border border-white/20">
+            {HUD_SIZES.map(([value, label]) => (
+              <button
+                key={value}
+                role="radio"
+                aria-checked={settings.hudSize === value}
+                onClick={() => set({ hudSize: value })}
+                className={cx(
+                  'px-4 py-2 font-hud font-bold text-[15px] uppercase tracking-wider transition-colors',
+                  settings.hudSize === value ? 'bg-cyan-500/30 text-cyan-100 shadow-[inset_0_-2px_0_#67e8f9]' : 'text-slate-400 hover:bg-white/5',
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </Row>
 
         <h3 className="font-hud font-bold text-[14px] uppercase tracking-[0.15em] text-cyan-300 mt-6">Commandes</h3>

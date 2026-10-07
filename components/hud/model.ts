@@ -10,14 +10,25 @@ import { HEAT, heatThrottle } from '../../engine/Heat';
 import { weaponCooldown } from '../../engine/WeaponSystem';
 import { MAX_WEAPON_SLOTS, TECH_MULTIPLIERS } from '../../constants';
 import { ENEMIES, BOSS_WAVE_INTERVAL } from '../../data/enemies';
+import { EVENTS } from '../../data/events';
 
 // --- Mise à l'échelle -------------------------------------------------------
 
-/** Résolution de référence du HUD bureau : tout est dessiné pour 1280×720 puis agrandi. */
-export const HUD_BASE = { width: 1280, height: 720 };
-/** En dessous de cette échelle, le HUD bureau deviendrait illisible → disposition compacte. */
-export const COMPACT_THRESHOLD = 0.9;
-/** Côté de référence de la disposition compacte (téléphone, petite fenêtre). */
+export type HudSize = 'compact' | 'normal' | 'large';
+
+/** Hauteur de référence du HUD bureau : l'échelle suit la hauteur de la fenêtre (970 px → ×1.15). */
+export const HUD_REF_HEIGHT = 840;
+/** Multiplicateur choisi dans les options (« Taille du HUD »). */
+export const HUD_SIZE_FACTOR: Record<HudSize, number> = { compact: 0.85, normal: 1, large: 1.2 };
+/** Plus petit libellé du HUD (px avant échelle) ; l'échelle ne descend pas sous 12 px réels. */
+export const HUD_MIN_LABEL_PX = 13;
+export const HUD_MIN_SCALE = 12 / HUD_MIN_LABEL_PX;
+export const HUD_MAX_SCALE = 1.6;
+/** Largeur virtuelle minimale de la disposition bureau (au-delà, l'échelle est réduite). */
+export const HUD_MIN_VIRTUAL_WIDTH = 1000;
+/** En dessous, disposition compacte (téléphone, petite fenêtre). */
+export const DESKTOP_MIN = { width: 900, height: 520 };
+/** Côté de référence de la disposition compacte. */
 export const COMPACT_BASE = 400;
 
 export interface HudLayout {
@@ -31,13 +42,15 @@ const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v
 
 /**
  * Échelle et disposition du HUD pour une fenêtre donnée.
- * Bureau : 1280×720 → ×1, 1920×1080 → ×1.5, 2560×1440 → ×2.
+ * Bureau (taille normale) : 1280×720 → ×0.92 (plancher de lisibilité), 1920×970 → ×1.15, 2560×1440 → ×1.6.
  * Compact : le plus petit côté vaut ~400 px virtuels (375×812 → ×0.94).
  */
-export const hudLayout = (w: number, h: number): HudLayout => {
-  const s = Math.min(w / HUD_BASE.width, h / HUD_BASE.height);
-  const compact = s < COMPACT_THRESHOLD;
-  const scale = compact ? clamp(Math.min(w, h) / COMPACT_BASE, 0.75, 1.15) : Math.min(s, 2.5);
+export const hudLayout = (w: number, h: number, size: HudSize = 'normal'): HudLayout => {
+  const compact = w < DESKTOP_MIN.width || h < DESKTOP_MIN.height;
+  const factor = HUD_SIZE_FACTOR[size];
+  const scale = compact
+    ? clamp((Math.min(w, h) / COMPACT_BASE) * factor, 0.8, 1.3)
+    : clamp(Math.min((h / HUD_REF_HEIGHT) * factor, w / HUD_MIN_VIRTUAL_WIDTH), HUD_MIN_SCALE, HUD_MAX_SCALE);
   return { scale, compact, width: w / scale, height: h / scale };
 };
 
@@ -295,3 +308,47 @@ export const activeBuffs = (s: GameState): BuffView[] =>
     .map(b => ({ id: b.id, name: b.name, color: b.color, remaining: (b.until - s.time) / 1000 }))
     .filter(b => b.remaining > 0)
     .sort((a, b) => a.remaining - b.remaining);
+
+// --- Événement ------------------------------------------------------------------
+
+/** Durée (s) pendant laquelle la description d'un événement reste affichée après son début. */
+export const EVENT_DETAIL_SECONDS = 4;
+
+export interface EventView {
+  name: string;
+  color: string;
+  description: string;
+  started: boolean;
+  seconds: number;          // compte à rebours : avant le début, puis avant la fin
+  showDetail: boolean;      // alerte + premières secondes : description visible ; ensuite rappel compact
+}
+
+export const eventView = (s: GameState): EventView | null => {
+  const ev = s.activeEvents[0];
+  if (!ev) return null;
+  const def = EVENTS[ev.type];
+  const elapsed = ev.maxDuration - ev.duration;
+  return {
+    name: def.name,
+    color: def.color,
+    description: def.description,
+    started: ev.started,
+    seconds: Math.max(0, Math.ceil(ev.started ? ev.duration : ev.warning)),
+    showDetail: !ev.started || elapsed < EVENT_DETAIL_SECONDS,
+  };
+};
+
+// --- Armes : pastille -------------------------------------------------------------
+
+const MINOR_WORDS = new Set(['à', 'a', 'de', 'du', 'des', 'la', 'le', 'les', 'en']);
+
+/** Abréviation d'une arme pour sa pastille : initiales (« Blaster à Ions » → « BI »), sinon 3 lettres. */
+export const weaponAbbrev = (name: string) => {
+  const words = name
+    .split(/[\s-]+/)
+    .map(w => w.replace(/^[dl]['’]/i, ''))
+    .filter(w => w && !MINOR_WORDS.has(w.toLowerCase()));
+  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+  const w = words[0] ?? name;
+  return w.charAt(0).toUpperCase() + w.slice(1, 3).toLowerCase();
+};

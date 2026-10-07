@@ -59,6 +59,9 @@ export const calculateRuntimeStats = (entity: Entity, gameState?: GameState): St
       if (ev.started) EVENTS[ev.type].playerModifiers?.forEach(mod => applyMod(result, mod, gameState));
     });
 
+    // Armes équipées (masse des armes lourdes…)
+    gameState.activeWeapons.forEach(w => w.modifiers?.forEach(mod => applyMod(result, mod, gameState)));
+
     // Bonus temporaires (compétences)
     gameState.buffs.forEach(b => b.modifiers.forEach(mod => applyMod(result, mod, gameState)));
 

@@ -13,7 +13,7 @@
 ## Répartition en cours (mise à jour par l'organisatrice)
 - Branches gardées : `main`, `gh-pages` (site), `old-vision-release-v1-avant-refonte` (archive V1), branche de travail courante. Les branches copilot/*, codex/* ont été supprimées le 2026-10-07.
 - Périmètres habituels : **session UI (« Space InZader HUD refactor »)** → `components/**`, `App.tsx`, `index.css`, tests UI (`tests/hud.test.ts`, `tests/options.test.ts`). **Organisatrice (« Space-InZader project review »)** → `engine/**`, `data/**`, `ai/**`, `render/**`, `types.ts`, autres tests.
-- Tâches en cours : aucune (dernière intégration commitée le 2026-10-07).
+- Tâches en cours : aucune (dernière intégration commitée et publiée le 2026-10-08).
 - API moteur fournie pour les options : `GameSettings` / `DEFAULT_SETTINGS` (engine/Meta.ts), `setMusicVolume`, `setSfxVolume`, `applyAudioSettings` (engine/SoundEngine.ts), `RenderOptions.damageNumbers` (dernier paramètre de `renderGame`), `VisualEffect.kind = 'damage'`.
 
 ## Contexte

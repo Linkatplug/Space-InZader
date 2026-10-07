@@ -1,4 +1,5 @@
-import { GameState, Projectile, Zone, Beam, Drone } from '../types';
+import { GameState, Projectile, Zone, Beam, Drone, Pickup } from '../types';
+import { PICKUPS } from '../data/pickups';
 
 /** Rendu des éléments de combat : projectiles, zones, rayons, drones. */
 
@@ -47,6 +48,19 @@ export const drawZones = (ctx: CanvasRenderingContext2D, zones: Zone[], time: nu
         g.addColorStop(1, 'transparent');
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(z.x, z.y, z.radius, 0, Math.PI * 2); ctx.fill();
+        break;
+      }
+      case 'wormhole': {
+        // Vortex violet qui se résorbe
+        const t2 = z.life / z.maxLife;
+        ctx.globalAlpha = t2;
+        for (let i = 0; i < 4; i++) {
+          ctx.strokeStyle = i % 2 ? '#c084fc' : z.color;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(z.x, z.y, z.radius * (0.3 + i * 0.2) * (1.2 - t2 * 0.4), time / 120 + i * 1.6, time / 120 + i * 1.6 + Math.PI * 1.1);
+          ctx.stroke();
+        }
         break;
       }
       case 'gravity': {
@@ -259,4 +273,43 @@ export const drawPlayerGauges = (ctx: CanvasRenderingContext2D, state: GameState
     arc(Math.PI / 2, heat, color, 0.85 * blink);
   }
   ctx.restore();
+};
+
+/** Butin au sol : pastille colorée pulsante avec son icône ; clignote avant de disparaître. */
+export const drawPickups = (ctx: CanvasRenderingContext2D, pickups: Pickup[], time: number) => {
+  for (const p of pickups) {
+    if (p.life < 5 && Math.floor(time / 150) % 2 === 0) continue;
+    const def = PICKUPS[p.kind];
+    const pulse = 1 + Math.sin(time / 180 + p.x) * 0.12;
+    const r = (p.kind === 'wormhole' ? 16 : 13) * pulse;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.shadowColor = def.color;
+    ctx.shadowBlur = 16;
+    ctx.fillStyle = '#0b0f1a';
+    ctx.strokeStyle = def.color;
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    if (p.kind === 'wormhole') {
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+    } else {
+      // Losange (capsule)
+      ctx.moveTo(0, -r); ctx.lineTo(r, 0); ctx.lineTo(0, r); ctx.lineTo(-r, 0); ctx.closePath();
+    }
+    ctx.fill();
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    if (p.kind === 'wormhole') {
+      ctx.strokeStyle = '#e9d5ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(0, 0, r * 0.55, time / 100, time / 100 + Math.PI * 1.3); ctx.stroke();
+    } else {
+      ctx.fillStyle = def.color;
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(def.icon, 0, 1);
+    }
+    ctx.restore();
+  }
 };

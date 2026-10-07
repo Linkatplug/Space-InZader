@@ -12,6 +12,7 @@ import { updatePhysics } from './PhysicsEngine';
 import { checkCollisions } from './CollisionSystem';
 import { updateEnemyAI } from '../ai/EnemyAI';
 import { updateLootMagnetism } from './LootSystem';
+import { updatePickups } from './Pickups';
 import { handlePlayerControls } from './PlayerController';
 import { updateEnvironmentalEvents } from './EventSystem';
 
@@ -78,6 +79,7 @@ export const updateGameState = (
   separateEnemies(state);
   updatePhysics(state, deltaTime);
   updateLootMagnetism(state, deltaTime);
+  updatePickups(state, deltaTime);
   updateZones(state, deltaTime);
   updateStatusEffects(state, deltaTime);
   checkCollisions(state);

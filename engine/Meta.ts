@@ -40,10 +40,11 @@ export interface GameSettings {
   sfxVolume: number;
   screenShake: number;      // multiplicateur du tremblement d'écran (0 = désactivé)
   damageNumbers: boolean;   // affiche les chiffres de dégâts flottants
+  hudSize: 'compact' | 'normal' | 'large'; // taille du HUD en jeu (écran d'options)
 }
 
 export const DEFAULT_SETTINGS: GameSettings = {
-  muted: false, autoFire: false, musicVolume: 0.35, sfxVolume: 1, screenShake: 1, damageNumbers: true,
+  muted: false, autoFire: false, musicVolume: 0.35, sfxVolume: 1, screenShake: 1, damageNumbers: true, hudSize: 'normal',
 };
 
 export const emptySave = (): MetaSave => ({

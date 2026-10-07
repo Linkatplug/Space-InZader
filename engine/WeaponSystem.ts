@@ -1,7 +1,7 @@
 import { GameState, Weapon, WeaponKind, WeaponBehavior, Projectile, Entity, DamageType } from '../types';
 import { TECH_MULTIPLIERS } from '../constants';
 import { playShotSound } from './SoundEngine';
-import { damageEnemy, explode, nearestEnemy, rollPacket } from './Combat';
+import { damageEnemy, damagePlayer, explode, nearestEnemy, rollPacket } from './Combat';
 import { emitParticles } from '../render/ParticleSystem';
 import { uid } from './ids';
 import { addHeat, heatThrottle, weaponHeatPerShot } from './Heat';
@@ -400,7 +400,12 @@ export const updateZones = (state: GameState, deltaTime: number) => {
   for (const z of state.zones) {
     z.life -= deltaTime;
     if (z.kind === 'strike' && z.life <= 0 && z.packet) {
-      explode(state, z.x, z.y, z.radius, z.packet, z.color, { knockback: z.knockback, burn: z.burn });
+      if (z.hazard) {
+        // Danger environnemental : le joueur est touché aussi (les ennemis via l'explosion)
+        const d = Math.hypot(state.player.x - z.x, state.player.y - z.y);
+        if (d < z.radius + state.player.radius) damagePlayer(state, z.packet, true, z.hazard);
+      }
+      explode(state, z.x, z.y, z.radius, z.packet, z.color, { knockback: z.knockback, burn: z.burn, raw: !!z.hazard });
       state.shake = Math.max(state.shake, 10);
     }
     if ((z.kind === 'fire' || z.kind === 'gravity') && z.packet) {

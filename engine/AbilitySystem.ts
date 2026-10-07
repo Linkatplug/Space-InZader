@@ -47,8 +47,9 @@ export const ABILITIES: Record<string, AbilityDef> = {
       const moving = Math.abs(player.vx) + Math.abs(player.vy) > 0.1;
       const dir = moving ? Math.atan2(player.vy, player.vx) : player.rotation;
       emitParticles(state, player.x, player.y, '#22d3ee', 20, 15);
-      player.x += Math.cos(dir) * 300;
-      player.y += Math.sin(dir) * 300;
+      const dist = 300 * player.runtimeStats.dashDistanceMult;
+      player.x += Math.cos(dir) * dist;
+      player.y += Math.sin(dir) * dist;
       emitParticles(state, player.x, player.y, '#f8fafc', 20, 10);
       // Synergie Bastion : le dash rend brièvement invulnérable
       if (hasMechanic(state, 'dashInvuln')) player.invulnUntil = state.time + 400;
@@ -60,14 +61,15 @@ export const ABILITIES: Record<string, AbilityDef> = {
     description: 'Onde de choc EM autour du vaisseau (150 dégâts, repousse).',
     execute: (state) => {
       const { player } = state;
-      const range = 400;
+      const pow = player.runtimeStats.abilityPowerMult;
+      const range = 400 * Math.sqrt(pow);
       emitParticles(state, player.x, player.y, '#22d3ee', 50, 20);
       state.zones.push({ id: uid('z'), kind: 'pulse', x: player.x, y: player.y, radius: range, life: 0.5, maxLife: 0.5, color: '#22d3ee' });
       state.shake = Math.max(state.shake, 12);
       [...state.enemies].forEach(e => {
         const dist = Math.hypot(e.x - player.x, e.y - player.y) || 1;
         if (dist < range + e.radius) {
-          damageEnemy(state, e, { amount: 150 * player.runtimeStats.damageMult, type: DamageType.EM, penetration: 0.5, isCrit: false },
+          damageEnemy(state, e, { amount: 150 * pow * player.runtimeStats.damageMult, type: DamageType.EM, penetration: 0.5, isCrit: false },
             { knockback: (1 - Math.min(1, dist / range)) * 25 + 5 });
         }
       });
@@ -78,7 +80,7 @@ export const ABILITIES: Record<string, AbilityDef> = {
     id: 'overdrive', name: 'Surcadençage', icon: '🔥', cooldown: 18,
     description: '5 s : cadence +60 %, aucune chaleur générée.',
     execute: (state) => {
-      addBuff(state, 'overdrive', 'Surcadençage', 5, [
+      addBuff(state, 'overdrive', 'Surcadençage', 5 * state.player.runtimeStats.abilityPowerMult, [
         { id: 'od-1', property: 'fireRate', value: 1.6, type: 'multiplicative' },
         { id: 'od-2', property: 'heatGenMult', value: 0, type: 'multiplicative' },
       ], '#facc15');
@@ -93,7 +95,7 @@ export const ABILITIES: Record<string, AbilityDef> = {
     execute: (state) => {
       const { player } = state;
       player.defense.shield = player.runtimeStats.maxShield;
-      player.invulnUntil = state.time + 1500;
+      player.invulnUntil = state.time + 1500 * player.runtimeStats.abilityPowerMult;
       state.zones.push({ id: uid('z'), kind: 'pulse', x: player.x, y: player.y, radius: 140, life: 0.4, maxLife: 0.4, color: '#60a5fa' });
       emitParticles(state, player.x, player.y, '#60a5fa', 30, 8);
     },
@@ -103,7 +105,7 @@ export const ABILITIES: Record<string, AbilityDef> = {
     id: 'repair_nanites', name: 'Nanites', icon: '🔧', cooldown: 30,
     description: 'Répare la coque : +6 coque/s pendant 5 s.',
     execute: (state) => {
-      addBuff(state, 'repair_nanites', 'Nanites', 5, [{ id: 'rn-1', property: 'hullRegen', value: 6, type: 'additive' }], '#4ade80');
+      addBuff(state, 'repair_nanites', 'Nanites', 5, [{ id: 'rn-1', property: 'hullRegen', value: 6 * state.player.runtimeStats.abilityPowerMult, type: 'additive' }], '#4ade80');
       emitParticles(state, state.player.x, state.player.y, '#4ade80', 25, 6);
     },
   },
@@ -114,8 +116,9 @@ export const ABILITIES: Record<string, AbilityDef> = {
     execute: (state) => {
       const { player } = state;
       const heatFrac = state.maxHeat > 0 ? state.heat / state.maxHeat : 0;
-      const dmg = (40 + 200 * heatFrac) * player.runtimeStats.damageMult;
-      const range = 320;
+      const pow = player.runtimeStats.abilityPowerMult;
+      const dmg = (40 + 200 * heatFrac) * pow * player.runtimeStats.damageMult;
+      const range = 320 * Math.sqrt(pow);
       state.heat = 0;
       state.isOverheated = false;
       state.zones.push({ id: uid('z'), kind: 'pulse', x: player.x, y: player.y, radius: range, life: 0.45, maxLife: 0.45, color: '#fb923c' });
@@ -141,7 +144,7 @@ export const ABILITIES: Record<string, AbilityDef> = {
         state.zones.push({
           id: uid('z'), kind: 'strike', x: player.x + Math.cos(a) * d, y: player.y + Math.sin(a) * d, radius: 110,
           life: delay, maxLife: delay, color: '#facc15',
-          packet: { amount: 70 * player.runtimeStats.damageMult, type: DamageType.EXPLOSIVE, penetration: 0, isCrit: false }, knockback: 8,
+          packet: { amount: 70 * player.runtimeStats.abilityPowerMult * player.runtimeStats.damageMult, type: DamageType.EXPLOSIVE, penetration: 0, isCrit: false }, knockback: 8,
         });
       }
     },
@@ -151,8 +154,9 @@ export const ABILITIES: Record<string, AbilityDef> = {
     id: 'time_dilation', name: 'Distorsion', icon: '⏳', cooldown: 20,
     description: '4 s : ennemis et projectiles ennemis ralentis de 60 %.',
     execute: (state) => {
-      state.enemySlowUntil = state.time + 4000;
-      state.enemies.forEach(e => { e.slow = { amount: 0.6, until: state.time + 4000 }; });
+      const ms = 4000 * state.player.runtimeStats.abilityPowerMult;
+      state.enemySlowUntil = state.time + ms;
+      state.enemies.forEach(e => { e.slow = { amount: 0.6, until: state.time + ms }; });
       state.zones.push({ id: uid('z'), kind: 'pulse', x: state.player.x, y: state.player.y, radius: 900, life: 0.6, maxLife: 0.6, color: '#c084fc' });
     },
   },
@@ -163,8 +167,8 @@ export const ABILITIES: Record<string, AbilityDef> = {
     execute: (state) => {
       const p = aimPoint(state, 350);
       state.zones.push({
-        id: uid('z'), kind: 'gravity', x: p.x, y: p.y, radius: 300, life: 3, maxLife: 3, color: '#a855f7',
-        packet: { amount: 40 * state.player.runtimeStats.damageMult, type: DamageType.EXPLOSIVE, penetration: 0, isCrit: false },
+        id: uid('z'), kind: 'gravity', x: p.x, y: p.y, radius: 300 * Math.sqrt(state.player.runtimeStats.abilityPowerMult), life: 3, maxLife: 3, color: '#a855f7',
+        packet: { amount: 40 * state.player.runtimeStats.abilityPowerMult * state.player.runtimeStats.damageMult, type: DamageType.EXPLOSIVE, penetration: 0, isCrit: false },
       });
     },
   },

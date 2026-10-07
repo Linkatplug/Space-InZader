@@ -1,41 +1,74 @@
 import { describe, it, expect } from 'vitest';
 import {
-  hudLayout, HUD_BASE, formatClock, heatInfo, weaponSlots, synergyRows, keystoneInfo,
+  hudLayout, HUD_MIN_SCALE, HUD_MIN_LABEL_PX, HUD_MIN_VIRTUAL_WIDTH, formatClock, eventView, weaponAbbrev, heatInfo, weaponSlots, synergyRows, keystoneInfo,
   bossIncoming, bossInfo, activeBuffs, synergyGains, upgradeKind, weaponStats, techNote, TAG_LABELS, DAMAGE_LABELS,
 } from '../components/hud/model';
 import { MAX_WEAPON_SLOTS } from '../constants';
 import { KEYSTONES } from '../data/keystones';
 import { PASSIVES } from '../data/passives';
 import { WEAPONS } from '../data/weapons';
-import { DamageType, Tag } from '../types';
+import { DamageType, Tag, EnvEventType } from '../types';
 import { makeState, addEnemy } from './helpers';
 
 const ks = (id: string) => KEYSTONES.find(k => k.id === id)!;
 const weapon = (id: string) => WEAPONS.find(w => w.id === id)!;
 
 describe('HUD : mise à l\'échelle', () => {
-  it('bureau : 1280×720 → ×1, 1920×1080 → ×1.5, 2560×1440 → ×2', () => {
-    expect(hudLayout(1280, 720)).toMatchObject({ scale: 1, compact: false });
-    expect(hudLayout(1920, 1080)).toMatchObject({ scale: 1.5, compact: false });
-    expect(hudLayout(2560, 1440)).toMatchObject({ scale: 2, compact: false });
+  it('bureau : l\'échelle suit la hauteur, modérée en 1080p (≈ ×1.15)', () => {
+    const l = hudLayout(1920, 970);
+    expect(l.compact).toBe(false);
+    expect(l.scale).toBeGreaterThan(1.05);
+    expect(l.scale).toBeLessThan(1.2);
+    expect(hudLayout(1600, 900).scale).toBeLessThan(l.scale);
   });
 
-  it('le viewport virtuel du bureau n\'est jamais plus petit que la référence', () => {
-    for (const [w, h] of [[1280, 720], [1366, 768], [1920, 1200], [3440, 1440], [1600, 900]]) {
-      const l = hudLayout(w, h);
-      expect(l.compact).toBe(false);
-      expect(l.width).toBeGreaterThanOrEqual(HUD_BASE.width - 0.01);
-      expect(l.height).toBeGreaterThanOrEqual(HUD_BASE.height - 0.01);
+  it('jamais sous 12 px réels pour les plus petits libellés, viewport virtuel assez large', () => {
+    for (const [w, h] of [[1280, 720], [1366, 768], [1024, 600], [1600, 900], [1920, 1080], [3440, 1440]]) {
+      for (const size of ['compact', 'normal', 'large'] as const) {
+        const l = hudLayout(w, h, size);
+        expect(l.compact).toBe(false);
+        expect(l.scale * HUD_MIN_LABEL_PX).toBeGreaterThanOrEqual(12 - 1e-9);
+        if (l.scale > HUD_MIN_SCALE + 1e-9) expect(l.width).toBeGreaterThanOrEqual(HUD_MIN_VIRTUAL_WIDTH - 0.01);
+      }
     }
   });
 
-  it('téléphone (portrait et paysage) : disposition compacte, texte pas réduit sous 75%', () => {
+  it('option « Taille du HUD » : compact < normal < grand (sur grand écran)', () => {
+    const [c, n, g] = (['compact', 'normal', 'large'] as const).map(z => hudLayout(1920, 1080, z).scale);
+    expect(c).toBeLessThan(n);
+    expect(n).toBeLessThan(g);
+  });
+
+  it('téléphone (portrait et paysage) : disposition compacte, texte pas réduit sous 80%', () => {
     for (const [w, h] of [[375, 812], [812, 375], [360, 640], [768, 1024]]) {
       const l = hudLayout(w, h);
       expect(l.compact).toBe(true);
-      expect(l.scale).toBeGreaterThanOrEqual(0.75);
+      expect(l.scale).toBeGreaterThanOrEqual(0.8);
       expect(l.width * l.scale).toBeCloseTo(w);
     }
+  });
+});
+
+describe('HUD : événement et armes', () => {
+  it('événement : description pendant l\'alerte et au début, puis simple rappel', () => {
+    const s = makeState();
+    expect(eventView(s)).toBeNull();
+    const ev = { id: 'e', type: EnvEventType.SOLAR_STORM, x: 0, y: 0, radius: 0, duration: 20, maxDuration: 20, intensity: 1, warning: 3, started: false };
+    s.activeEvents = [ev];
+    expect(eventView(s)).toMatchObject({ started: false, seconds: 3, showDetail: true });
+    ev.started = true;
+    ev.duration = 19;
+    expect(eventView(s)).toMatchObject({ started: true, seconds: 19, showDetail: true });
+    ev.duration = 10;
+    expect(eventView(s)).toMatchObject({ seconds: 10, showDetail: false });
+  });
+
+  it('abréviation des armes', () => {
+    expect(weaponAbbrev('Blaster à Ions')).toBe('BI');
+    expect(weaponAbbrev("Disrupteur d'Arc")).toBe('DA');
+    expect(weaponAbbrev('Auto-Canon')).toBe('AC');
+    expect(weaponAbbrev('Mitraille')).toBe('Mit');
+    WEAPONS.forEach(w => expect(weaponAbbrev(w.name).length).toBeGreaterThanOrEqual(2));
   });
 });
 

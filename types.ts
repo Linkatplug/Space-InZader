@@ -67,6 +67,9 @@ export interface Stats {
   executeBonus: number;        // dégâts en plus contre les ennemis sous 30% de coque
   healOnKill: number;          // coque rendue par élimination
   slowOnHit: number;           // chance de ralentir à l'impact (0..1)
+  abilityPowerMult: number;    // puissance des compétences (dégâts, rayon, durée)
+  dashDistanceMult: number;    // distance du dash
+  pickupChance: number;        // multiplicateur de chance de butin (capsules, nanites…)
 }
 
 /**
@@ -115,6 +118,7 @@ export enum EnvEventType {
   SOLAR_STORM = 'SOLAR_STORM',
   BLACK_HOLE = 'BLACK_HOLE',
   MAGNETIC_STORM = 'MAGNETIC_STORM',
+  ION_STORM = 'ION_STORM',
   ASTEROID_BELT = 'ASTEROID_BELT'
 }
 
@@ -196,6 +200,8 @@ export interface Weapon {
   tech?: { 2?: Partial<WeaponBehavior>; 3?: Partial<WeaponBehavior> };
   /** Texte des bonus de Tech II / Tech III (affiché dans le menu d'amélioration). */
   techNotes?: [string, string];
+  /** Modificateurs appliqués au vaisseau tant que l'arme est équipée (ex. masse : −vitesse, −blindage). */
+  modifiers?: Modifier[];
 }
 
 export interface Keystone {
@@ -272,6 +278,19 @@ export interface Particle {
   size: number;
 }
 
+/** Butin ramassable lâché par les ennemis (voir data/pickups.ts). */
+export type PickupKind = 'shield' | 'hull' | 'armor' | 'wormhole';
+
+export interface Pickup {
+  id: string;
+  kind: PickupKind;
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;       // secondes restantes avant disparition
+}
+
 export interface XPDrop {
   id: string;
   x: number;
@@ -280,6 +299,7 @@ export interface XPDrop {
   vx: number;
   vy: number;
   collected: boolean;
+  vortex?: boolean;   // aspiré vers le joueur par un trou de ver
 }
 
 export interface Entity {
@@ -346,7 +366,7 @@ export interface Projectile {
 /** Zone persistante : explosion visuelle, feu, puits gravitationnel, frappe en approche. */
 export interface Zone {
   id: string;
-  kind: 'explosion' | 'fire' | 'gravity' | 'strike' | 'pulse';
+  kind: 'explosion' | 'fire' | 'gravity' | 'strike' | 'pulse' | 'wormhole';
   x: number;
   y: number;
   radius: number;
@@ -357,6 +377,7 @@ export interface Zone {
   knockback?: number;
   slow?: number;
   burn?: number;
+  hazard?: string;   // zone environnementale : touche aussi le joueur (valeur = source, ex. 'ion_storm')
 }
 
 /** Trait visuel éphémère : rayon, arc électrique. */
@@ -396,6 +417,7 @@ export interface GameState {
   enemies: Entity[];
   projectiles: Projectile[];
   xpDrops: XPDrop[];
+  pickups: Pickup[];
   effects: VisualEffect[];
   particles: Particle[];
   activeWeapons: Weapon[];

@@ -34,6 +34,11 @@ export const EVENTS: Record<EnvEventType, EventDef> = {
     weight: 0.2, duration: [10, 14], warning: 2, minWave: 4,
     playerModifiers: [{ id: 'ev-solar', property: 'cooling', value: 0.5, type: 'multiplicative' }],
   },
+  [EnvEventType.ION_STORM]: {
+    type: EnvEventType.ION_STORM, name: 'Tempête ionique', color: '#818cf8',
+    description: 'Des éclairs frappent au hasard (zones marquées) : joueur ET ennemis.',
+    weight: 0.25, duration: [10, 14], warning: 2, minWave: 4,
+  },
   [EnvEventType.MAGNETIC_STORM]: {
     type: EnvEventType.MAGNETIC_STORM, name: 'Tempête magnétique', color: '#22d3ee',
     description: 'Boucliers hors ligne, cadence de tir -40%.',

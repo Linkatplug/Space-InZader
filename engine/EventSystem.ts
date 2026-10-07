@@ -1,7 +1,7 @@
 import { GameState, EnvEventType, EnvironmentalEvent, DamageType, Entity } from '../types';
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../constants';
 import { emitParticles } from '../render/ParticleSystem';
-import { damageEnemy, damagePlayer, createEffect } from './Combat';
+import { damageEnemy, damagePlayer } from './Combat';
 import { EVENTS, EVENT_INTERVAL } from '../data/events';
 import { uid } from './ids';
 
@@ -90,6 +90,21 @@ export const EVENT_HANDLERS: Record<EnvEventType, Handler> = {
     },
   },
 
+  [EnvEventType.ION_STORM]: {
+    update: (s, _ev, dt) => {
+      // ~2,5 éclairs / s autour du joueur, annoncés 0,9 s à l'avance
+      if (Math.random() > dt * 2.5) return;
+      const a = Math.random() * Math.PI * 2;
+      const d = Math.random() * 650;
+      s.zones.push({
+        id: uid('z'), kind: 'strike', hazard: 'ion_storm',
+        x: s.player.x + Math.cos(a) * d, y: s.player.y + Math.sin(a) * d, radius: 85,
+        life: 0.9, maxLife: 0.9, color: '#818cf8',
+        packet: { amount: 18, type: DamageType.EM, penetration: 0, isCrit: false },
+      });
+    },
+  },
+
   [EnvEventType.MAGNETIC_STORM]: {
     start: s => {
       s.player.defense.shield = 0;
@@ -119,7 +134,7 @@ export const triggerEvent = (state: GameState, type: EnvEventType) => {
     warning: def.warning, started: false,
   };
   state.activeEvents.push(ev);
-  createEffect(state, state.player.x, state.player.y - 140, `⚠ ${def.name.toUpperCase()}`, def.color);
+  // L'annonce est affichée par le HUD (bannière d'événement), pas au centre du terrain
   return ev;
 };
 
