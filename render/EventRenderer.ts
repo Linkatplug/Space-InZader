@@ -15,29 +15,6 @@ export const renderEnvironmentalEffects = (ctx: CanvasRenderingContext2D, state:
         ctx.restore();
         break;
 
-      case EnvEventType.BLACK_HOLE:
-        // Trou noir localisé
-        ctx.save();
-        const pulse = 1.0 + Math.sin(time / 200) * 0.1;
-        const grd = ctx.createRadialGradient(event.x, event.y, 0, event.x, event.y, event.radius * pulse);
-        grd.addColorStop(0, 'rgba(0, 0, 0, 1)');
-        grd.addColorStop(0.4, 'rgba(30, 27, 75, 0.8)');
-        grd.addColorStop(0.7, 'rgba(139, 92, 246, 0.3)');
-        grd.addColorStop(1, 'transparent');
-        ctx.fillStyle = grd;
-        ctx.beginPath();
-        ctx.arc(event.x, event.y, event.radius * 2, 0, Math.PI * 2);
-        ctx.fill();
-        
-        // Anneau d'accrétion
-        ctx.strokeStyle = 'rgba(236, 72, 153, 0.4)';
-        ctx.lineWidth = 4;
-        ctx.beginPath();
-        ctx.ellipse(event.x, event.y, event.radius * 1.5, event.radius * 0.5, time / 1000, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.restore();
-        break;
-
       case EnvEventType.MAGNETIC_STORM:
         // Glitch visuel aléatoire
         if (Math.random() < 0.1) {
@@ -49,5 +26,53 @@ export const renderEnvironmentalEffects = (ctx: CanvasRenderingContext2D, state:
         }
         break;
     }
+  });
+};
+
+/** Effets d'événement placés dans le monde (à dessiner APRÈS la transformation de caméra). */
+export const renderWorldEvents = (ctx: CanvasRenderingContext2D, state: GameState, time: number) => {
+  state.activeEvents.forEach(event => {
+    if (!event.started || event.type !== EnvEventType.BLACK_HOLE) return;
+    const { x, y } = event;
+    const r = event.radius;
+    const pulse = 1 + Math.sin(time / 200) * 0.06;
+    ctx.save();
+
+    // Rayon d'attraction (zone d'influence) : cercle pointillé discret
+    ctx.strokeStyle = 'rgba(168, 85, 247, 0.18)';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([14, 12]);
+    ctx.lineDashOffset = -time / 40;
+    ctx.beginPath(); ctx.arc(x, y, 1000, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Halo violet
+    const grd = ctx.createRadialGradient(x, y, 0, x, y, r * 1.6 * pulse);
+    grd.addColorStop(0, 'rgba(0, 0, 0, 1)');
+    grd.addColorStop(0.2, 'rgba(10, 5, 30, 0.98)');
+    grd.addColorStop(0.45, 'rgba(76, 29, 149, 0.55)');
+    grd.addColorStop(0.75, 'rgba(168, 85, 247, 0.18)');
+    grd.addColorStop(1, 'transparent');
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(x, y, r * 1.6 * pulse, 0, Math.PI * 2); ctx.fill();
+
+    // Disque d'accrétion qui tourne
+    for (let i = 0; i < 3; i++) {
+      ctx.strokeStyle = i === 1 ? 'rgba(236, 72, 153, 0.55)' : 'rgba(192, 132, 252, 0.45)';
+      ctx.lineWidth = 3 - i * 0.6;
+      ctx.beginPath();
+      ctx.ellipse(x, y, r * (0.75 + i * 0.25), r * (0.25 + i * 0.08), time / (900 + i * 300) + i, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    // Horizon : cœur noir net + anneau lumineux (zone mortelle)
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(x, y, 60, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#e879f9';
+    ctx.shadowColor = '#a855f7';
+    ctx.shadowBlur = 25;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(x, y, 62, 0, Math.PI * 2); ctx.stroke();
+    ctx.restore();
   });
 };

@@ -64,7 +64,7 @@ export const ABILITIES: Record<string, AbilityDef> = {
       const pow = player.runtimeStats.abilityPowerMult;
       const range = 400 * Math.sqrt(pow);
       emitParticles(state, player.x, player.y, '#22d3ee', 50, 20);
-      state.zones.push({ id: uid('z'), kind: 'pulse', x: player.x, y: player.y, radius: range, life: 0.5, maxLife: 0.5, color: '#22d3ee' });
+      state.zones.push({ id: uid('z'), kind: 'pulse', emphasis: true, x: player.x, y: player.y, radius: range, life: 0.5, maxLife: 0.5, color: '#22d3ee' });
       state.shake = Math.max(state.shake, 12);
       [...state.enemies].forEach(e => {
         const dist = Math.hypot(e.x - player.x, e.y - player.y) || 1;
@@ -96,7 +96,7 @@ export const ABILITIES: Record<string, AbilityDef> = {
       const { player } = state;
       player.defense.shield = player.runtimeStats.maxShield;
       player.invulnUntil = state.time + 1500 * player.runtimeStats.abilityPowerMult;
-      state.zones.push({ id: uid('z'), kind: 'pulse', x: player.x, y: player.y, radius: 140, life: 0.4, maxLife: 0.4, color: '#60a5fa' });
+      state.zones.push({ id: uid('z'), kind: 'pulse', emphasis: true, x: player.x, y: player.y, radius: 140, life: 0.4, maxLife: 0.4, color: '#60a5fa' });
       emitParticles(state, player.x, player.y, '#60a5fa', 30, 8);
     },
   },
@@ -121,7 +121,7 @@ export const ABILITIES: Record<string, AbilityDef> = {
       const range = 320 * Math.sqrt(pow);
       state.heat = 0;
       state.isOverheated = false;
-      state.zones.push({ id: uid('z'), kind: 'pulse', x: player.x, y: player.y, radius: range, life: 0.45, maxLife: 0.45, color: '#fb923c' });
+      state.zones.push({ id: uid('z'), kind: 'pulse', emphasis: true, x: player.x, y: player.y, radius: range, life: 0.45, maxLife: 0.45, color: '#fb923c' });
       emitParticles(state, player.x, player.y, '#fb923c', 40, 14);
       state.shake = Math.max(state.shake, 10);
       [...state.enemies].forEach(e => {
@@ -157,7 +157,7 @@ export const ABILITIES: Record<string, AbilityDef> = {
       const ms = 4000 * state.player.runtimeStats.abilityPowerMult;
       state.enemySlowUntil = state.time + ms;
       state.enemies.forEach(e => { e.slow = { amount: 0.6, until: state.time + ms }; });
-      state.zones.push({ id: uid('z'), kind: 'pulse', x: state.player.x, y: state.player.y, radius: 900, life: 0.6, maxLife: 0.6, color: '#c084fc' });
+      state.zones.push({ id: uid('z'), kind: 'pulse', emphasis: true, x: state.player.x, y: state.player.y, radius: 900, life: 0.6, maxLife: 0.6, color: '#c084fc' });
     },
   },
 

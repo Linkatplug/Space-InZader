@@ -3,7 +3,7 @@ import { GameState } from '../types';
 import { clearScreen, drawHexGrid, drawWorldBounds } from './WorldRenderer';
 import { drawShip } from './ShipRenderer';
 import { drawParticles, drawXPDrops, drawVisualEffects } from './EffectRenderer';
-import { renderEnvironmentalEffects } from './EventRenderer';
+import { renderEnvironmentalEffects, renderWorldEvents } from './EventRenderer';
 import { drawZones, drawBeams, drawProjectiles, drawDrones, drawPlayerGauges, drawPickups } from './CombatRenderer';
 
 export interface RenderOptions {
@@ -37,6 +37,7 @@ export const renderGame = (
   // Fond de carte
   drawHexGrid(ctx, camera, dimensions, viewScale);
   drawWorldBounds(ctx, time); // Ajout de la barrière ici
+  renderWorldEvents(ctx, state, time);
 
   // Layered rendering
   drawParticles(ctx, state.particles);

@@ -151,3 +151,38 @@ describe('modules de compétences', () => {
     });
   });
 });
+
+describe('météores destructibles', () => {
+  const meteor = (s: ReturnType<typeof makeState>, dx: number) => {
+    triggerEvent(s, EnvEventType.ASTEROID_BELT);
+    s.activeEvents = [];
+    s.projectiles.push({
+      x: s.player.x + dx, y: s.player.y, vx: 0, vy: 0,
+      packet: { amount: 30, type: 'KINETIC' as any, penetration: 0, isCrit: false },
+      color: '#a8a29e', ownerId: 'env', radius: 30, distanceTraveled: 0, maxRange: 1e9, heatGenerated: 0,
+      kind: 'meteor', source: 'meteor', uid: 'm1', hp: 60, maxHp: 60,
+    });
+    return s.projectiles[s.projectiles.length - 1];
+  };
+
+  it('les tirs du joueur détruisent un météore, qui lâche de l\'XP', () => {
+    const s = makeState({ noSpawn: true, weaponIds: ['ion_blaster'] });
+    s.autoFire = true;
+    const m = meteor(s, 350);
+    run(s, 3, { mouse: { x: m.x, y: m.y } });
+    expect(s.projectiles.includes(m)).toBe(false);
+    expect(m.dead).toBe(true);
+    expect(s.score).toBeGreaterThanOrEqual(25);
+  });
+
+  it('les explosions du joueur endommagent les météores', () => {
+    const s = makeState({ noSpawn: true });
+    const m = meteor(s, 300);
+    explodeAt(s, m.x, m.y);
+    expect(m.hp!).toBeLessThan(60);
+  });
+});
+
+import { explode } from '../engine/Combat';
+const explodeAt = (s: ReturnType<typeof makeState>, x: number, y: number) =>
+  explode(s, x, y, 80, { amount: 40, type: 'EXPLOSIVE' as any, penetration: 0, isCrit: false }, '#fff');

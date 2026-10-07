@@ -46,6 +46,7 @@ export const EVENT_HANDLERS: Record<EnvEventType, Handler> = {
         packet: { amount: 25 + size * 0.5, type: DamageType.KINETIC, penetration: 0, isCrit: false },
         color: '#a8a29e', ownerId: 'env', radius: size,
         distanceTraveled: 0, maxRange: 2600, heatGenerated: 0, kind: 'meteor', source: 'meteor',
+        uid: uid('met'), hp: size * 3, maxHp: size * 3,
       });
       void ev;
     },

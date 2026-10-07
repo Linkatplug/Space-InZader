@@ -1,4 +1,4 @@
-import { GameState, Entity, DamagePacket, DamageType } from '../types';
+import { GameState, Entity, DamagePacket, DamageType, Projectile } from '../types';
 import { applyDamage } from './DamageEngine';
 import { emitParticles } from '../render/ParticleSystem';
 import { DAMAGE_COLORS } from '../constants';
@@ -7,7 +7,7 @@ import { ENEMIES } from '../data/enemies';
 import { spawnEnemy } from './EnemyFactory';
 import { uid } from './ids';
 import { hasMechanic } from './Synergies';
-import { rollEnemyLoot } from './Pickups';
+import { rollEnemyLoot, spawnPickup } from './Pickups';
 
 /**
  * Point d'entrée unique pour tous les dégâts infligés aux ennemis
@@ -210,6 +210,14 @@ export const explode = (
   });
   emitParticles(state, x, y, color, Math.min(30, 8 + radius / 8), radius / 15);
   playExplosionSound(radius);
+  // Les explosions du joueur brisent aussi les météores
+  if (!opts.raw) {
+    for (const m of state.projectiles) {
+      if (m.kind !== 'meteor' || m.dead) continue;
+      const mr = radius + m.radius;
+      if ((m.x - x) ** 2 + (m.y - y) ** 2 < mr * mr) damageMeteor(state, m, packet.amount);
+    }
+  }
   const r2 = radius * radius;
   for (const e of state.enemies) {
     if (e.dead) continue;
@@ -219,6 +227,25 @@ export const explode = (
     }
   }
   state.shake = Math.max(state.shake, Math.min(12, radius / 15));
+};
+
+/** Un météore subit des dégâts du joueur ; détruit, il éclate en débris et lâche un peu d'XP (parfois un butin). */
+export const damageMeteor = (state: GameState, m: Projectile, amount: number) => {
+  if (m.dead || m.hp === undefined) return;
+  m.hp -= amount;
+  emitParticles(state, m.x, m.y, '#a8a29e', 3, 4);
+  if (m.hp > 0) return;
+  m.dead = true;
+  emitParticles(state, m.x, m.y, '#d6d3d1', 25, 9);
+  emitParticles(state, m.x, m.y, '#fb923c', 12, 6);
+  state.zones.push({ id: uid('fx'), kind: 'explosion', x: m.x, y: m.y, radius: m.radius * 1.6, life: 0.3, maxLife: 0.3, color: '#a8a29e' });
+  state.score += 25;
+  for (let i = 0; i < 2; i++) {
+    state.xpDrops.push({ id: uid('xp'), x: m.x, y: m.y, amount: 6 * state.player.runtimeStats.xpMult, vx: (Math.random() - 0.5) * 10, vy: (Math.random() - 0.5) * 10, collected: false });
+  }
+  if (Math.random() < 0.08 * state.player.runtimeStats.pickupChance) {
+    spawnPickup(state, (['shield', 'hull', 'armor'] as const)[Math.floor(Math.random() * 3)], m.x, m.y);
+  }
 };
 
 export const damagePlayer = (state: GameState, packet: DamagePacket, showText = true, source = 'inconnu') => {

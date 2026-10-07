@@ -20,6 +20,30 @@ export const drawZones = (ctx: CanvasRenderingContext2D, zones: Zone[], time: nu
         break;
       }
       case 'pulse': {
+        if (z.emphasis) {
+          // Compétence : flash plein au départ + anneau épais lumineux
+          const flash = Math.max(0, 1 - t * 2.5);
+          if (flash > 0) {
+            const g = ctx.createRadialGradient(z.x, z.y, 0, z.x, z.y, z.radius * Math.max(0.2, t));
+            g.addColorStop(0, '#ffffff');
+            g.addColorStop(0.4, z.color);
+            g.addColorStop(1, 'transparent');
+            ctx.globalAlpha = flash * 0.55;
+            ctx.fillStyle = g;
+            ctx.beginPath(); ctx.arc(z.x, z.y, z.radius * Math.max(0.2, t), 0, Math.PI * 2); ctx.fill();
+          }
+          ctx.globalAlpha = 1 - t;
+          ctx.strokeStyle = z.color;
+          ctx.shadowColor = z.color;
+          ctx.shadowBlur = 20;
+          ctx.lineWidth = 14 * (1 - t) + 3;
+          ctx.beginPath(); ctx.arc(z.x, z.y, z.radius * t, 0, Math.PI * 2); ctx.stroke();
+          ctx.shadowBlur = 0;
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(z.x, z.y, z.radius * t, 0, Math.PI * 2); ctx.stroke();
+          break;
+        }
         ctx.globalAlpha = (1 - t) * 0.8;
         ctx.strokeStyle = z.color;
         ctx.lineWidth = 6 * (1 - t) + 1;
@@ -192,6 +216,16 @@ export const drawProjectiles = (ctx: CanvasRenderingContext2D, projectiles: Proj
           if (i === 0) ctx.moveTo(Math.cos(ang) * rr, Math.sin(ang) * rr); else ctx.lineTo(Math.cos(ang) * rr, Math.sin(ang) * rr);
         }
         ctx.closePath(); ctx.fill(); ctx.stroke();
+        // Fissures lumineuses quand le météore est endommagé
+        if (p.hp !== undefined && p.maxHp && p.hp < p.maxHp) {
+          const dmg = 1 - p.hp / p.maxHp;
+          ctx.strokeStyle = `rgba(251, 146, 60, ${0.4 + dmg * 0.6})`;
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-p.radius * 0.5, -p.radius * 0.2); ctx.lineTo(0, 0); ctx.lineTo(p.radius * 0.4, -p.radius * 0.5);
+          if (dmg > 0.5) { ctx.moveTo(0, 0); ctx.lineTo(p.radius * 0.1, p.radius * 0.6); }
+          ctx.stroke();
+        }
         break;
       }
       case 'gravity': {

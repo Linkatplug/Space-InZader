@@ -3,7 +3,7 @@ import { emitParticles } from '../render/ParticleSystem';
 import { playCollectXPSound } from './SoundEngine';
 import { QuadTree } from './QuadTree';
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../constants';
-import { damageEnemy, damagePlayer, killEnemy } from './Combat';
+import { damageEnemy, damageMeteor, damagePlayer, killEnemy } from './Combat';
 import { detonate } from './WeaponSystem';
 import { ENEMIES } from '../data/enemies';
 
@@ -21,10 +21,26 @@ export const checkCollisions = (state: GameState) => {
     if (!e.dead) enemyTree.insert(e);
   });
 
+  const meteors = projectiles.filter(m => m.kind === 'meteor' && !m.dead);
+
   projectiles.forEach(p => {
     if (p.dead) return;
 
     if (p.ownerId === 'player') {
+      // Les tirs du joueur peuvent briser les météores
+      if (meteors.length && p.kind !== 'mine') {
+        for (const m of meteors) {
+          if (m.dead || (m.uid && p.hitIds?.includes(m.uid))) continue;
+          const r = p.radius + m.radius;
+          if ((p.x - m.x) ** 2 + (p.y - m.y) ** 2 >= r * r) continue;
+          damageMeteor(state, m, p.packet.amount);
+          if (m.uid) p.hitIds?.push(m.uid);
+          if (p.kind === 'flame') continue;
+          if ((p.pierce ?? 0) <= 0) { if (p.explodeRadius || p.gravity) detonate(state, p); p.dead = true; break; }
+          p.pierce = (p.pierce ?? 0) - 1;
+        }
+        if (p.dead) return;
+      }
       // Mines : inactives pendant l'armement
       if (p.kind === 'mine' && (p.armTime ?? 0) > 0) return;
 

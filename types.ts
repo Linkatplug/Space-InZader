@@ -360,6 +360,9 @@ export interface Projectile {
   fireZone?: boolean;
   life?: number;          // durée de vie en secondes (mines, flammes)
   source?: string;        // origine (id d'ennemi, événement) pour les statistiques
+  uid?: string;           // identifiant (météores destructibles)
+  hp?: number;            // points de structure (météores destructibles)
+  maxHp?: number;
   armTime?: number;       // délai avant activation (mines)
 }
 
@@ -378,6 +381,7 @@ export interface Zone {
   slow?: number;
   burn?: number;
   hazard?: string;   // zone environnementale : touche aussi le joueur (valeur = source, ex. 'ion_storm')
+  emphasis?: boolean; // effet de compétence : rendu plus marqué (flash + anneau épais)
 }
 
 /** Trait visuel éphémère : rayon, arc électrique. */
