@@ -7,6 +7,7 @@ import { synergyGains, upgradeKind, weaponStats, techNote, TAG_LABELS, DAMAGE_LA
 import { cx } from '../hud/widgets';
 import { statGroups, buildIndicators, cardHeat, fmt1 } from './levelUpModel';
 import { LevelUpStats } from './LevelUpStats';
+import { FitToScreen } from './FitToScreen';
 
 interface UpgradeMenuProps {
   state: GameState;
@@ -186,6 +187,9 @@ const OptionCard: React.FC<CardProps> = ({ state, opt, index, preview, active, a
   );
 };
 
+/** Largeur de mise en page du level-up sur bureau (px avant mise à l'échelle). */
+const LEVELUP_WIDTH = 1200;
+
 export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ state, options, onSelect }) => {
   // Un seul choix par tirage (évite le double clic / la répétition de touche)
   const locked = useRef(false);
@@ -228,14 +232,16 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ state, options, onSele
 
   if (previews.length === 0) return null;
   const base = previews[0]; // « avant » commun à toutes les options (stats hors bonus temporaires)
+  const reserve = [...new Set(previews.flatMap(p => p.changes.map(c => c.key)))];
 
   return (
-    <div className="absolute inset-0 z-50 flex items-[safe_center] justify-center bg-slate-950/90 backdrop-blur-md p-3 sm:p-5 overflow-y-auto">
-      <div className="max-w-6xl w-full ui-zoom">
+    <div className="absolute inset-0 z-50 flex items-[safe_center] justify-center bg-slate-950/90 backdrop-blur-md p-3 lg:p-4 overflow-y-auto">
+      {/* Bureau : l'écran entier est mis à l'échelle pour tenir sans défilement (voir FitToScreen) */}
+      <FitToScreen width={LEVELUP_WIDTH}>
         <div className="flex flex-wrap justify-between items-end gap-2 mb-3 sm:mb-4 border-b border-white/15 pb-2">
-          <div>
-            <div className="font-hud font-semibold text-[14px] uppercase tracking-[0.2em] text-violet-300">Niveau {state.level + 1} atteint</div>
-            <h2 className="font-orbitron font-black text-[24px] sm:text-[32px] text-white uppercase leading-tight">Choisissez une amélioration</h2>
+          <div className="flex flex-wrap items-baseline gap-x-4">
+            <h2 className="font-orbitron font-black text-[24px] sm:text-[30px] text-white uppercase leading-tight">Choisissez une amélioration</h2>
+            <span className="font-hud font-semibold text-[14px] uppercase tracking-[0.2em] text-violet-300">Niveau {state.level + 1} atteint</span>
           </div>
           <span className="font-hud text-[14px] text-slate-300">
             <span className="hidden sm:inline">Clic ou touches <b className="text-white">1</b> <b className="text-white">2</b> <b className="text-white">3</b></span>
@@ -243,7 +249,7 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ state, options, onSele
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4 mb-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4 mb-3 items-start">
           {options.map((opt, i) => (
             <OptionCard
               key={`${opt.type}-${opt.item.id}`}
@@ -271,8 +277,9 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ state, options, onSele
           preview={activePreview}
           accent={active !== null ? accentOf(options[active]) : undefined}
           previewName={active !== null ? options[active].item.name : undefined}
+          reserve={reserve}
         />
-      </div>
+      </FitToScreen>
     </div>
   );
 };

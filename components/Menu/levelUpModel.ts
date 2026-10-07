@@ -37,14 +37,16 @@ const neutral = (key: keyof Stats) => (STAT_INFO[key]?.format === 'mult' ? 1 : 0
 /**
  * Lignes du panneau, groupées. On affiche les stats principales, celles qui s'écartent de leur valeur
  * neutre (ex. une résistance acquise) et celles que la prévisualisation modifie.
+ * `reserve` : lignes à afficher quoi qu'il arrive (stats touchées par l'un des choix proposés),
+ * pour que la mise en page ne bouge pas d'un survol à l'autre.
  */
-export const statGroups = (stats: Stats, changes: StatChange[] = []): StatGroupView[] => {
+export const statGroups = (stats: Stats, changes: StatChange[] = [], reserve: (keyof Stats)[] = []): StatGroupView[] => {
   const byKey = new Map(changes.map(c => [c.key, c]));
   const groups = [...PRIMARY_GROUPS, ...SECONDARY_GROUPS];
   return groups.map(group => {
     const rows: StatRow[] = (Object.keys(STAT_INFO) as (keyof Stats)[])
       .filter(k => STAT_INFO[k]!.group === group)
-      .filter(k => CORE_STATS.includes(k) || Math.abs(stats[k] - neutral(k)) > 1e-6 || byKey.has(k))
+      .filter(k => CORE_STATS.includes(k) || Math.abs(stats[k] - neutral(k)) > 1e-6 || byKey.has(k) || reserve.includes(k))
       .map(k => {
         const c = byKey.get(k);
         return {

@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { UpgradePreview } from '../../engine/Preview';
+import type { Stats } from '../../types';
 import type { StatGroup } from '../../data/statInfo';
 import { cx } from '../hud/widgets';
 import {
@@ -25,7 +26,7 @@ const BAD = '#f87171';
 
 const DeltaPill: React.FC<{ text: string; good?: boolean; big?: boolean }> = ({ text, good, big }) => (
   <span
-    className={cx('font-mono font-bold tabular-nums px-1.5 leading-tight', big ? 'text-[15px] py-0.5' : 'text-[12.5px]')}
+    className={cx('font-mono font-bold tabular-nums px-1 leading-tight', big ? 'text-[15px] py-0.5' : 'text-[12px]')}
     style={{ color: good ? GOOD : BAD, backgroundColor: (good ? GOOD : BAD) + '22', border: `1px solid ${(good ? GOOD : BAD)}66` }}
   >
     {text}
@@ -37,12 +38,12 @@ const Tile: React.FC<{ ind: Indicator }> = ({ ind }) => {
   const color = changed ? (ind.good ? GOOD : BAD) : undefined;
   return (
     <div
+      title={ind.hint}
       className="relative p-2.5 sm:px-3 bg-black/45 border transition-colors duration-200 overflow-hidden"
       style={{ borderColor: color ? color + 'aa' : 'rgba(255,255,255,0.12)', boxShadow: color ? `inset 0 0 24px -8px ${color}` : undefined }}
     >
       <div className="font-hud font-bold text-[12px] sm:text-[13px] uppercase tracking-[0.12em] text-slate-300 leading-tight">{ind.label}</div>
-      <div className="hidden sm:block font-hud text-[12px] text-slate-500 leading-tight">{ind.hint}</div>
-      <div className="flex items-baseline flex-wrap gap-x-2 mt-1">
+      <div className="flex items-baseline gap-x-2 mt-1 whitespace-nowrap">
         {changed && <span className="font-mono text-[14px] sm:text-[16px] text-slate-500 line-through tabular-nums">{ind.value}</span>}
         <span
           key={ind.next ?? ind.value}
@@ -63,19 +64,19 @@ const Row: React.FC<{ row: StatRow; color: string; dim: boolean }> = ({ row, col
   const tone = row.good ? GOOD : BAD;
   return (
     <div
-      className={cx('flex items-center gap-2 px-2 py-[3px] transition-all duration-200', dim && 'opacity-40')}
+      className={cx('flex items-center gap-2 px-1.5 py-[2px] transition-all duration-200', dim && 'opacity-40')}
       style={changed ? { backgroundColor: tone + '18', boxShadow: `inset 3px 0 0 ${tone}` } : undefined}
     >
       <span className="w-1.5 h-1.5 rotate-45 shrink-0" style={{ backgroundColor: changed ? tone : color }} />
-      <span className={cx('font-hud text-[14px] flex-1 min-w-0 truncate', changed ? 'text-white font-semibold' : 'text-slate-300')}>{row.label}</span>
+      <span className={cx('font-hud text-[13px] flex-1 min-w-0 truncate', changed ? 'text-white font-semibold' : 'text-slate-300')}>{row.label}</span>
       {changed ? (
         <span className="flex items-center gap-1.5 shrink-0">
           <span className="font-mono text-[12px] text-slate-500 line-through tabular-nums">{row.value}</span>
-          <span className="font-mono font-bold text-[14px] text-white tabular-nums">{row.next}</span>
+          <span className="font-mono font-bold text-[13px] text-white tabular-nums">{row.next}</span>
           <DeltaPill text={row.delta!} good={row.good} />
         </span>
       ) : (
-        <span className="font-mono text-[14px] text-slate-100 tabular-nums shrink-0">{row.value}</span>
+        <span className="font-mono text-[13px] text-slate-100 tabular-nums shrink-0">{row.value}</span>
       )}
     </div>
   );
@@ -83,7 +84,7 @@ const Row: React.FC<{ row: StatRow; color: string; dim: boolean }> = ({ row, col
 
 const Column: React.FC<{ group: StatGroup; rows: StatRow[]; previewing: boolean; children?: React.ReactNode }> = ({ group, rows, previewing, children }) => (
   <div className="flex flex-col min-w-0">
-    <div className="flex items-center gap-2 mb-1.5">
+    <div className="flex items-center gap-2 mb-1">
       <span className="w-3 h-[3px]" style={{ backgroundColor: GROUP_COLOR[group] }} />
       <span className="font-hud font-bold text-[13px] uppercase tracking-[0.15em]" style={{ color: GROUP_COLOR[group] }}>{group}</span>
       <span className="flex-1 h-px bg-white/10" />
@@ -134,10 +135,16 @@ const HeatBlock: React.FC<{ t: ThermalView }> = ({ t }) => (
   </div>
 );
 
-export const LevelUpStats: React.FC<{ base: UpgradePreview; preview?: UpgradePreview; accent?: string; previewName?: string }> =
-  ({ base, preview, accent, previewName }) => {
-    const [open, setOpen] = useState(false); // petit écran : colonnes repliables
-    const groups = statGroups(base.before, preview?.changes);
+export const LevelUpStats: React.FC<{
+  base: UpgradePreview;
+  preview?: UpgradePreview;
+  accent?: string;
+  previewName?: string;
+  /** Stats modifiées par au moins un des choix : lignes toujours présentes (mise en page stable). */
+  reserve?: (keyof Stats)[];
+}> =
+  ({ base, preview, accent, previewName, reserve = [] }) => {
+    const groups = statGroups(base.before, preview?.changes, reserve);
     const indicators = buildIndicators(
       { stats: base.before, loadout: base.loadoutBefore },
       preview && { stats: preview.after, loadout: preview.loadoutAfter },
@@ -145,7 +152,6 @@ export const LevelUpStats: React.FC<{ base: UpgradePreview; preview?: UpgradePre
     const thermal = thermalView(base.loadoutBefore, preview?.loadoutAfter);
     const primary = PRIMARY_GROUPS.map(g => groups.find(x => x.group === g)).filter(Boolean) as typeof groups;
     const secondary = groups.filter(g => !PRIMARY_GROUPS.includes(g.group));
-    const secondaryChanged = secondary.some(g => g.changed > 0);
     const previewing = !!preview;
     const changedRows = groups.flatMap(g => g.rows).filter(r => r.delta);
     const edge = accent ?? '#22d3ee';
@@ -158,7 +164,7 @@ export const LevelUpStats: React.FC<{ base: UpgradePreview; preview?: UpgradePre
         {/* Liseré d'accent : relie visuellement la carte survolée au panneau */}
         <span className="absolute top-0 left-0 right-0 h-[3px] transition-colors duration-200" style={{ backgroundColor: previewing ? edge : 'rgba(34,211,238,0.35)' }} />
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mb-2.5 min-h-[28px]">
+        <div className="flex items-center gap-x-3 mb-2.5 h-[28px] overflow-hidden whitespace-nowrap">
           <h3 className="font-orbitron font-black text-[18px] sm:text-[20px] uppercase tracking-[0.12em] text-white mr-auto">Votre build</h3>
           {previewing ? (
             <>
@@ -182,31 +188,17 @@ export const LevelUpStats: React.FC<{ base: UpgradePreview; preview?: UpgradePre
           <div className="col-span-3 lg:col-span-1"><HeatBlock t={thermal} /></div>
         </div>
 
-        <button
-          onClick={() => setOpen(o => !o)}
-          className="lg:hidden w-full mb-2 py-2 border border-white/15 font-hud font-bold text-[14px] uppercase tracking-wider text-cyan-300"
-        >
-          {open ? 'Masquer le détail ▴' : 'Détail des stats ▾'}
-        </button>
-
-        <div className={cx(open ? 'grid' : 'hidden', 'lg:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3')}>
+        {/* Toutes les stats, sans repli : Défense / Attaque / Chaleur / Mobilité + Utilitaire */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-5 gap-y-3">
           {primary.map(g => (
             <Column key={g.group} group={g.group} rows={g.rows} previewing={previewing} />
           ))}
-        </div>
-
-        {secondary.length > 0 && (
-          // Replié par défaut, ouvert automatiquement si le choix survolé y change quelque chose
-          <details open={secondaryChanged} key={String(secondaryChanged)} className={cx('group mt-2', !open && 'hidden lg:block')}>
-            <summary className="cursor-pointer list-none flex items-center gap-2 font-hud font-semibold text-[13px] uppercase tracking-[0.12em] text-slate-400">
-              <span className="group-open:rotate-90 transition-transform">▸</span> Autres stats
-              <span className="flex-1 h-px bg-white/10" />
-            </summary>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 mt-2">
+          {secondary.length > 0 && (
+            <div className="flex flex-col gap-2 min-w-0">
               {secondary.map(g => <Column key={g.group} group={g.group} rows={g.rows} previewing={previewing} />)}
             </div>
-          </details>
-        )}
+          )}
+        </div>
       </section>
     );
   };

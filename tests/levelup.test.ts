@@ -104,3 +104,18 @@ describe('level-up : indicateurs du build et chaleur', () => {
     expect(fmt1(40)).toBe('40');
   });
 });
+
+describe('level-up : ajustement à l\'écran', () => {
+  it('fitScale : limité par la hauteur ou la largeur, borné', async () => {
+    const { fitScale, FIT_DEFAULTS } = await import('../components/Menu/FitToScreen');
+    const pad = FIT_DEFAULTS.pad;
+    // Contenu 1200×800 dans 1920×970 : la hauteur limite
+    expect(fitScale(1200, 800, 1920, 970)).toBeCloseTo((970 - 2 * pad) / 800);
+    // Très grand écran : plafonné
+    expect(fitScale(1200, 400, 5000, 3000)).toBe(FIT_DEFAULTS.max);
+    // Fenêtre minuscule : plancher (on accepte alors de défiler)
+    expect(fitScale(1200, 800, 600, 300)).toBe(FIT_DEFAULTS.min);
+    // Contenu non mesuré : neutre
+    expect(fitScale(1200, 0, 1920, 970)).toBe(1);
+  });
+});
