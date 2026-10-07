@@ -21,46 +21,44 @@ export const drawParticles = (ctx: CanvasRenderingContext2D, particles: Particle
   ctx.globalAlpha = 1.0;
 };
 
-export const drawVisualEffects = (ctx: CanvasRenderingContext2D, effects: VisualEffect[]) => {
+/**
+ * Textes flottants (dégâts, butin, messages). Taille exprimée en pixels d'écran :
+ * on compense le zoom de caméra (`viewScale`) pour rester lisible sur petit écran.
+ */
+export const drawVisualEffects = (ctx: CanvasRenderingContext2D, effects: VisualEffect[], viewScale = 1) => {
+  const k = 1 / Math.max(0.4, viewScale);
   effects.forEach(ef => {
     ctx.save();
-    
-    // Animation de "Pop" : Le texte apparaît gros puis se stabilise
-    const age = 1.2 - ef.life; // ef.life part de 1.2 vers 0
-    const popScale = age < 0.1 ? 0.5 + (age / 0.1) * 1.0 : Math.max(1, 1.5 - (age - 0.1) * 2);
-    
-    ctx.globalAlpha = Math.min(1.0, ef.life * 2);
+
+    // Apparition « pop » : grossit puis se stabilise
+    const start = ef.maxLife ?? 1;
+    const age = start - ef.life;
+    const popScale = age < 0.08 ? 0.6 + (age / 0.08) * 0.7 : Math.max(1, 1.3 - (age - 0.08) * 1.5);
+
+    ctx.globalAlpha = Math.min(1, ef.life * 2.5);
     ctx.translate(ef.x, ef.y);
-    ctx.scale(popScale, popScale);
-    
-    const isSpecial = ef.text.includes('!') || ef.text.includes('GOD') || ef.text.includes('SYSTEM') || ef.text.includes('CRIT');
-    const fontSize = isSpecial ? 26 : 18;
-    
+    ctx.scale(popScale * k, popScale * k);
+
+    const isCrit = ef.text.includes('CRIT');
+    const isSpecial = isCrit || ef.text.includes('!') || ef.text.includes('GOD') || ef.text.includes('SYSTEM');
+    const fontSize = ef.kind === 'message' ? (isSpecial ? 30 : 26) : (isCrit ? 30 : 24);
+
     ctx.font = `900 ${fontSize}px Orbitron`;
     ctx.textAlign = 'center';
-    
-    // Ombre portée profonde pour détacher du fond
-    ctx.shadowBlur = 4;
-    ctx.shadowColor = 'black';
-    ctx.shadowOffsetX = 2;
-    ctx.shadowOffsetY = 2;
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
 
-    // Outline pour lisibilité maximale
-    ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-    ctx.lineWidth = 4;
+    // Contour noir épais pour détacher le texte de n'importe quel fond
+    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    ctx.lineWidth = 6;
     ctx.strokeText(ef.text, 0, 0);
-    
-    // Texte principal avec un léger gradient ou couleur pure
-    ctx.fillStyle = ef.color;
+
+    ctx.shadowColor = isCrit ? '#ffffff' : ef.color;
+    ctx.shadowBlur = isCrit ? 10 : 6;
+    ctx.fillStyle = isCrit ? '#ffffff' : ef.color;
     ctx.fillText(ef.text, 0, 0);
-    
-    // Si c'est un crit, on rajoute un petit éclat blanc interne
-    if (ef.text.includes('CRIT')) {
-        ctx.fillStyle = 'white';
-        ctx.font = `900 ${fontSize * 0.8}px Orbitron`;
-        ctx.fillText(ef.text, 0, 0);
-    }
-    
+
     ctx.restore();
   });
 };
+

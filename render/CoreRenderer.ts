@@ -55,7 +55,7 @@ export const renderGame = (
   drawBeams(ctx, state.beams);
 
   // Floating text
-  drawVisualEffects(ctx, options.damageNumbers === false ? state.effects.filter(e => e.kind !== 'damage') : state.effects);
+  drawVisualEffects(ctx, options.damageNumbers === false ? state.effects.filter(e => e.kind !== 'damage') : state.effects, viewScale);
 
   ctx.restore();
   ctx.restore();

@@ -258,6 +258,7 @@ export interface ShipClass {
 export interface VisualEffect {
   id: string;
   kind?: 'damage' | 'message';   // 'damage' = chiffre de dégâts (masquable dans les options)
+  maxLife?: number;               // durée initiale (animation d'apparition)
   x: number;
   y: number;
   text: string;

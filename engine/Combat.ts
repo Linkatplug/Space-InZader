@@ -18,10 +18,18 @@ import { rollEnemyLoot, spawnPickup } from './Pickups';
 export const createEffect = (state: GameState, x: number, y: number, text: string, color: string, kind: 'damage' | 'message' = 'message') => {
   // Limite anti-spam : au-delà, on remplace le plus ancien texte
   if (state.effects.length > 120) state.effects.shift();
+  // Empilement : un chiffre qui apparaît près d'un chiffre récent est décalé vers le haut
+  if (kind === 'damage') {
+    const recent = state.effects.filter(ef => ef.kind === 'damage' && (ef.maxLife ?? 1) - ef.life < 0.35
+      && Math.abs(ef.x - x) < 80 && Math.abs(ef.y - y) < 60).length;
+    y -= recent * 26;
+  }
   state.effects.push({
     id: uid('fx'),
     x, y, text, color, kind,
-    life: 1.0,
+    // Les messages (butin, vague…) restent plus longtemps que les chiffres de dégâts
+    life: kind === 'message' ? 1.6 : 1.0,
+    maxLife: kind === 'message' ? 1.6 : 1.0,
     vx: (Math.random() - 0.5) * 1.5,
     vy: -1.0 - Math.random() * 1.5,
   });
@@ -106,7 +114,8 @@ export const damageEnemy = (state: GameState, e: Entity, packet: DamagePacket, o
   if (!opts.silent) {
     const txt = Math.floor(finalPacket.amount).toString();
     const color = finalPacket.isCrit ? '#ffffff' : DAMAGE_COLORS[finalPacket.type];
-    createEffect(state, e.x + (Math.random() - 0.5) * 20, e.y, finalPacket.isCrit ? `CRIT! ${txt}` : txt, color, 'damage');
+    // Légère dispersion + empilement (voir createEffect) : les impacts simultanés ne se superposent pas
+    createEffect(state, e.x + (Math.random() - 0.5) * 40, e.y - e.radius * 0.5, finalPacket.isCrit ? `CRIT! ${txt}` : txt, color, 'damage');
   }
 
   if (opts.knockback && e.type !== 'boss') {
