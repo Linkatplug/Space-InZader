@@ -1,289 +1,513 @@
-
-import React, { useMemo, useState, useEffect } from 'react';
-import { GameState, Tag, Weapon, DamageType, ActiveAbility } from '../types';
+import React, { useEffect, useState } from 'react';
+import { GameState, ActiveAbility } from '../types';
 import { DAMAGE_COLORS } from '../constants';
-import { weaponCooldown } from '../engine/WeaponSystem';
-import { synergyStatus } from '../engine/Synergies';
 import { EVENTS } from '../data/events';
+import { MAX_WEAPON_LEVEL } from '../engine/Progression';
+import {
+  HudLayout, hudLayout, formatClock, ratio, heatInfo, HeatInfo, weaponSlots, WeaponSlot,
+  synergyRows, SynergyRow, keystoneInfo, bossIncoming, bossInfo,
+} from './hud/model';
+import { Panel, Label, Num, Meter, Pips, cx } from './hud/widgets';
 
-const EventBanner: React.FC<{ state: GameState }> = ({ state }) => {
+/**
+ * HUD en jeu. Deux dispositions :
+ *  - bureau : dessinée pour 1280×720 puis agrandie (×1.5 en 1080p, ×2 en 1440p) ;
+ *  - compacte : téléphone / petite fenêtre, en bandeaux haut et bas.
+ * Voir `hudLayout` (components/hud/model.ts) pour le choix de l'échelle.
+ */
+
+export const useHudLayout = (): HudLayout => {
+  const [layout, setLayout] = useState(() => hudLayout(window.innerWidth, window.innerHeight));
+  useEffect(() => {
+    const onResize = () => setLayout(hudLayout(window.innerWidth, window.innerHeight));
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return layout;
+};
+
+const COLORS = {
+  shield: '#22d3ee',
+  armor: '#f59e0b',
+  hull: '#ef4444',
+  xp: '#a78bfa',
+  wave: '#22d3ee',
+};
+
+const HEAT_STYLE: Record<HeatInfo['level'], { color: string; text: string }> = {
+  ok: { color: '#38bdf8', text: 'Stable' },
+  warm: { color: '#f59e0b', text: 'Chaude' },
+  critical: { color: '#f97316', text: 'Critique !' },
+  overheated: { color: '#ef4444', text: 'Surchauffe' },
+};
+
+// --- Haut : pilote (niveau / XP / score) ------------------------------------
+
+const PilotPanel: React.FC<{ state: GameState }> = ({ state }) => (
+  <Panel className="w-[280px] p-2.5 flex gap-3 items-center" accent={COLORS.xp}>
+    <div className="w-[52px] h-[52px] shrink-0 border-2 flex flex-col items-center justify-center bg-violet-500/10" style={{ borderColor: COLORS.xp }}>
+      <Label className="text-[12px] text-violet-200">Niv</Label>
+      <Num className="text-[24px] mt-0.5">{state.level}</Num>
+    </div>
+    <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+      <div className="flex justify-between items-baseline">
+        <Label>Expérience</Label>
+        <Num className="text-[13px] text-violet-100">{Math.floor(state.experience)} / {state.expToNextLevel}</Num>
+      </div>
+      <Meter value={ratio(state.experience, state.expToNextLevel)} color={COLORS.xp} height={12} />
+      <div className="flex justify-between items-baseline">
+        <Label>Score <Num className="text-[14px] text-amber-300 ml-1">{state.score.toLocaleString('fr-FR')}</Num></Label>
+        {state.autoFire && <Label className="text-[12px] text-cyan-300 border border-cyan-400/50 px-1.5 py-0.5">Tir auto</Label>}
+      </div>
+    </div>
+  </Panel>
+);
+
+// --- Haut : vague -------------------------------------------------------------
+
+const WavePanel: React.FC<{ state: GameState }> = ({ state }) => {
+  const boss = bossIncoming(state);
+  return (
+    <Panel className="w-[440px] px-4 pt-2 pb-3">
+      <div className="grid grid-cols-3 items-end mb-2">
+        <div className="flex flex-col items-start gap-1">
+          <Label className="text-[12px]">Temps</Label>
+          <Num className="text-[20px]">{formatClock(state.time)}</Num>
+        </div>
+        <div className="flex flex-col items-center gap-0.5">
+          <Label className="text-[12px] text-cyan-300">Vague</Label>
+          <span className="font-orbitron font-black text-[34px] leading-none text-cyan-300 drop-shadow-[0_0_10px_rgba(34,211,238,0.6)]">{state.wave}</span>
+        </div>
+        <div className="flex flex-col items-end gap-1">
+          <Label className="text-[12px]">Éliminations</Label>
+          <Num className="text-[20px]">{state.totalKills}</Num>
+        </div>
+      </div>
+      <div className="flex justify-between items-baseline mb-1">
+        <Label className="text-[12px]">Objectif de vague</Label>
+        <Num className="text-[15px]">{state.waveKills} <span className="text-slate-400">/ {state.waveQuota}</span></Num>
+      </div>
+      <Meter value={ratio(state.waveKills, state.waveQuota)} color={boss ? '#facc15' : COLORS.wave} height={12} />
+      {boss && (
+        <div className="mt-1.5 text-center">
+          <Label className="text-amber-300 text-[13px]">⚠ Boss à la vague {state.wave + 1}</Label>
+        </div>
+      )}
+    </Panel>
+  );
+};
+
+const BossBar: React.FC<{ state: GameState; width: number }> = ({ state, width }) => {
+  const boss = bossInfo(state);
+  if (!boss) return null;
+  return (
+    <div style={{ width }} className="flex flex-col gap-1">
+      <div className="flex justify-between items-baseline">
+        <span className="font-orbitron font-bold text-[15px] uppercase tracking-wider" style={{ color: boss.color }}>☠ {boss.name}</span>
+        <Num className="text-[14px]">{Math.ceil(boss.ratio * 100)}%</Num>
+      </div>
+      <Meter value={boss.ratio} color={boss.color} height={14} />
+    </div>
+  );
+};
+
+const EventBanner: React.FC<{ state: GameState; compact?: boolean }> = ({ state, compact }) => {
   const ev = state.activeEvents[0];
   if (!ev) return null;
   const def = EVENTS[ev.type];
   return (
     <div
-      className={`px-6 py-2 border-2 bg-black/70 text-center ${ev.started ? '' : 'animate-pulse'}`}
-      style={{ borderColor: def.color, color: def.color }}
+      className={cx('border-2 bg-slate-950/85 text-center', compact ? 'px-3 py-1.5' : 'px-5 py-2', !ev.started && 'animate-pulse')}
+      style={{ borderColor: def.color }}
     >
-      <div className="text-sm font-black uppercase tracking-[0.3em]">
-        {ev.started ? def.name : `⚠ ${def.name} dans ${Math.ceil(ev.warning)}s`}
-        {ev.started && <span className="text-white ml-3 tabular-nums">{Math.ceil(ev.duration)}s</span>}
+      <div className={cx('font-hud font-bold uppercase leading-tight', compact ? 'text-[14px] tracking-[0.06em]' : 'text-[16px] tracking-[0.12em]')} style={{ color: def.color }}>
+        {ev.started ? def.name : `⚠ ${def.name} dans ${Math.ceil(ev.warning)} s`}
+        {ev.started && <Num className="text-white ml-3 text-[15px]">{Math.ceil(ev.duration)} s</Num>}
       </div>
-      <div className="text-[10px] text-slate-300 italic">{def.description}</div>
+      <div className={cx('font-hud text-slate-200 mt-0.5', compact ? 'text-[12px]' : 'text-[13px]')}>{def.description}</div>
     </div>
   );
 };
 
-/** Échelle du HUD : conçu pour 1700×950, réduit sur petits écrans. */
-export const useHudScale = () => {
-  const compute = () => Math.max(0.45, Math.min(1, window.innerWidth / 1700, window.innerHeight / 950));
-  const [scale, setScale] = useState(compute);
-  useEffect(() => {
-    const onResize = () => setScale(compute());
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-  return scale;
-};
+// --- Haut droite : keystones + synergies -------------------------------------
 
-const SynergyPanel: React.FC<{ state: GameState }> = ({ state }) => {
-  const list = synergyStatus(state).filter(s => s.count > 0);
-  if (list.length === 0 && state.keystones.length === 0) return null;
-  return (
-    <div className="flex flex-col gap-2 items-end">
-      {state.keystones.map(k => (
-        <div key={k.id} className="px-3 py-1 bg-amber-500/10 border border-amber-500/40 text-[11px] font-black text-amber-300 uppercase tracking-wider" title={k.description}>
-          {k.icon} {k.name}
-        </div>
-      ))}
-      {list.map(({ synergy, count, activeTiers, nextTier }) => (
-        <div
-          key={synergy.id}
-          className={`px-3 py-1 border text-[11px] font-black uppercase tracking-wider flex gap-3 items-center ${activeTiers.length ? 'bg-black/60' : 'bg-black/30 opacity-60'}`}
-          style={{ borderColor: synergy.color + (activeTiers.length ? 'aa' : '44'), color: synergy.color }}
-          title={synergy.tiers.map(t => `${t.count}: ${t.description}`).join('\n')}
-        >
-          <span>{synergy.name}</span>
-          <span className="text-white tabular-nums">{count}{nextTier ? `/${nextTier.count}` : ' ★'}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-interface HUDProps {
-  state: GameState;
-}
-
-const SegmentedBar: React.FC<{ 
-  value: number; 
-  max: number; 
-  segments: number; 
-  color: string;
-  vertical?: boolean;
-}> = ({ value, max, segments, color, vertical }) => {
-  const activeSegments = Math.round((Math.max(0, Math.min(max, value)) / (max || 1)) * segments);
-  return (
-    <div className={`flex gap-1.5 ${vertical ? 'flex-col-reverse h-48 w-6' : 'flex-row w-full h-4'}`}>
-      {Array.from({ length: segments }).map((_, i) => (
-        <div 
-          key={i} 
-          className={`${vertical ? 'w-full flex-1' : 'h-full flex-1'} transition-colors duration-200 shadow-sm`}
-          style={{ backgroundColor: i < activeSegments ? color : '#020617', border: '1px solid rgba(255,255,255,0.1)' }}
-        />
-      ))}
-    </div>
-  );
-};
-
-const ShipBlueprint: React.FC<{ shield: number, maxShield: number, isGodMode?: boolean }> = ({ shield, maxShield, isGodMode }) => {
-  const shieldPerc = shield / (maxShield || 1);
-  return (
-    <div className={`relative w-56 h-56 flex items-center justify-center border-2 bg-cyan-400/5 shadow-2xl transition-all duration-500 ${isGodMode ? 'border-amber-400 shadow-amber-500/20' : 'border-cyan-400/30'}`}>
-      <svg viewBox="0 0 100 100" className={`w-40 h-40 fill-none stroke-[1.5] transition-colors ${isGodMode ? 'stroke-amber-400/50' : 'stroke-cyan-400/50'}`}>
-        <path d="M50 10 L85 85 L50 75 L15 85 Z" />
-        <path d="M30 45 L30 75 M70 45 L70 75" />
-        <circle cx="50" cy="45" r="5" />
-      </svg>
-      <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full -rotate-90">
-        <circle cx="50" cy="50" r="46" className="stroke-slate-900/40 fill-none" strokeWidth="8" />
-        <circle 
-          cx="50" cy="50" r="46" 
-          className={`fill-none transition-all duration-700 shadow-lg ${isGodMode ? 'stroke-amber-400' : 'stroke-cyan-400'}`} 
-          strokeWidth="8"
-          strokeDasharray="289"
-          strokeDashoffset={isGodMode ? 0 : 289 - (289 * shieldPerc)}
-        />
-      </svg>
-      <div className={`absolute -top-3 left-1/2 -translate-x-1/2 text-black text-[10px] px-2 py-0.5 font-black tracking-widest shadow-md uppercase transition-colors ${isGodMode ? 'bg-amber-400' : 'bg-cyan-400'}`}>
-        {isGodMode ? 'GOD_MODE' : 'BOUCLIER'}
+const SynergyTooltip: React.FC<{ row: SynergyRow }> = ({ row }) => (
+  <div className="hidden group-hover:block absolute right-full top-0 mr-2 w-[260px] p-3 bg-slate-950/95 border z-10" style={{ borderColor: row.color }}>
+    <div className="font-hud font-bold uppercase text-[14px] mb-2" style={{ color: row.color }}>{row.name} — {row.count} objet{row.count > 1 ? 's' : ''}</div>
+    {row.tiers.map(t => (
+      <div key={t.count} className={cx('flex gap-2 font-hud text-[13px] leading-snug mb-1', t.active ? 'text-white' : 'text-slate-400')}>
+        <span className="font-mono w-6 shrink-0">{t.active ? '✓' : t.count}</span>
+        <span>{t.description}</span>
       </div>
-    </div>
-  );
-};
+    ))}
+    <div className="font-hud text-[12px] text-slate-400 mt-2">Chaque arme ou module portant un tag de la synergie compte pour 1.</div>
+  </div>
+);
 
-const AbilitySlot: React.FC<{ ability: ActiveAbility }> = ({ ability }) => {
-  const progress = ability.currentCooldown / ability.cooldown;
-  const isReady = ability.currentCooldown <= 0;
-  
+const SynergyLine: React.FC<{ row: SynergyRow; compact?: boolean }> = ({ row, compact }) => {
+  const active = !!row.current;
   return (
-    <div className={`relative w-16 h-16 border-2 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm transition-all shadow-xl ${isReady ? 'border-cyan-400' : 'border-slate-700 opacity-60'}`}>
-      <span className="text-2xl">{ability.icon}</span>
-      {!isReady && (
-        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-          <span className="text-xs font-black text-white">{Math.ceil(ability.currentCooldown)}s</span>
+    <div className={cx('group relative px-2.5 py-1.5 border-l-[3px] bg-slate-950/75', !active && 'opacity-80')} style={{ borderColor: row.color }}>
+      <div className="flex items-center gap-2">
+        <span className="font-hud font-bold uppercase text-[14px] tracking-wide flex-1 truncate" style={{ color: row.color }}>{row.name}</span>
+        {/* Une case par objet, les paliers sont soulignés */}
+        <span className="flex gap-[2px]">
+          {Array.from({ length: row.maxCount }, (_, i) => {
+            const tier = row.tiers.some(t => t.count === i + 1);
+            return (
+              <span key={i} className="w-[7px] h-[12px]" style={{
+                backgroundColor: i < row.count ? row.color : 'rgba(255,255,255,0.12)',
+                boxShadow: tier ? 'inset 0 -3px 0 rgba(255,255,255,0.9)' : undefined,
+              }} />
+            );
+          })}
+        </span>
+        <Num className="text-[13px] w-8 text-right">{row.count}{row.next ? `/${row.next.count}` : '★'}</Num>
+      </div>
+      {!compact && (
+        <div className="font-hud text-[12.5px] leading-snug mt-0.5 truncate">
+          {active
+            ? <span className="text-white">✓ {row.current}</span>
+            : <span className="text-slate-400">À {row.next?.count} : {row.next?.description}</span>}
         </div>
       )}
-      <div className="absolute -bottom-2 -right-2 bg-white text-black text-[10px] px-1 font-black uppercase shadow-md">
-        {ability.key}
-      </div>
-      {!isReady && (
-        <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none">
-          <circle cx="32" cy="32" r="30" fill="none" stroke="rgba(34, 211, 238, 0.4)" strokeWidth="4" strokeDasharray="188.5" strokeDashoffset={188.5 * (1 - progress)} />
-        </svg>
-      )}
+      {!compact && <SynergyTooltip row={row} />}
     </div>
   );
 };
 
-const TECH_LABELS: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III' };
+const BuildPanel: React.FC<{ state: GameState; compact?: boolean; maxHeight?: number }> = ({ state, compact, maxHeight }) => {
+  const rows = synergyRows(state);
+  if (rows.length === 0 && state.keystones.length === 0) return null;
+  return (
+    <div className={cx('flex flex-col gap-1 pointer-events-auto', compact ? 'w-[220px] overflow-hidden' : 'w-[270px]')} style={{ maxHeight }}>
+      {state.keystones.map(k => {
+        const info = keystoneInfo(state, k);
+        const color = k.color ?? '#fbbf24';
+        return (
+          <div key={k.id} className="group relative px-2.5 py-1.5 bg-slate-950/80 border" style={{ borderColor: color + (info.active ? 'cc' : '55') }}>
+            <div className="flex items-center gap-2">
+              <span className="text-[15px]">{k.icon}</span>
+              <span className="font-hud font-bold uppercase text-[14px] tracking-wide flex-1 truncate" style={{ color }}>{k.name}</span>
+              {info.kind === 'scaling' && <Num className="text-[13px]">{info.value}/{info.max}</Num>}
+              {info.kind === 'conditional' && compact && (
+                <span className={cx('w-2.5 h-2.5 rounded-full shrink-0', info.active ? 'bg-emerald-400 shadow-[0_0_6px_#34d399]' : 'border border-slate-400')} />
+              )}
+              {info.kind === 'conditional' && !compact && (
+                <span className={cx('font-hud font-bold text-[11.5px] uppercase px-1.5 py-0.5', info.active ? 'bg-emerald-400 text-black' : 'text-slate-400 border border-white/20')}>
+                  {info.active ? 'Actif' : 'Inactif'}
+                </span>
+              )}
+            </div>
+            {!compact && info.kind === 'conditional' && !info.active && (
+              <div className="font-hud text-[12.5px] text-slate-400 mt-0.5">Si {info.label}</div>
+            )}
+            {!compact && (
+              <div className="hidden group-hover:block absolute right-full top-0 mr-2 w-[260px] p-3 bg-slate-950/95 border font-hud text-[13px] text-slate-100 leading-snug z-10" style={{ borderColor: color }}>
+                <div className="font-bold uppercase mb-1" style={{ color }}>{k.icon} {k.name}</div>
+                {k.description}
+              </div>
+            )}
+          </div>
+        );
+      })}
+      {rows.length > 0 && (
+        <div className="flex justify-between items-baseline mt-1 px-0.5">
+          <Label className="text-[12px] text-slate-300">Synergies</Label>
+          {!compact && <span className="font-hud text-[12px] text-slate-400">survoler : détails</span>}
+        </div>
+      )}
+      {rows.map(r => <SynergyLine key={r.id} row={r} compact={compact} />)}
+    </div>
+  );
+};
 
-export const HUD: React.FC<HUDProps> = ({ state }) => {
-  const scale = useHudScale();
-  const { player, heat, maxHeat, isOverheated, score, level, experience, expToNextLevel, activeWeapons, activeAbilities, wave, waveKills, waveQuota, totalKills, startTime, comboCount, comboTimer, currentMisses } = state;
-  const { runtimeStats, defense, isGodMode } = player;
+// --- Bas gauche : défenses + compétences --------------------------------------
 
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
+const DefenseRow: React.FC<{ label: string; value: number; max: number; color: string; height: number; compact?: boolean; blink?: boolean }> =
+  ({ label, value, max, color, height, compact, blink }) => (
+    <div>
+      <div className="flex justify-between items-baseline mb-1">
+        <Label className={compact ? 'text-[12px]' : ''} style={{ color }}>{label}</Label>
+        <Num className={compact ? 'text-[13px]' : 'text-[16px]'}>
+          {Math.ceil(Math.max(0, value))}<span className="text-slate-400 text-[0.8em]"> / {Math.round(max)}</span>
+        </Num>
+      </div>
+      <Meter value={ratio(value, max)} color={color} height={height} blink={blink} />
+    </div>
+  );
 
-  const missionTime = useMemo(() => {
-    const elapsed = (now - startTime) / 1000;
-    const mins = Math.floor(elapsed / 60);
-    const secs = Math.floor(elapsed % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  }, [startTime, now]);
+const DefensePanel: React.FC<{ state: GameState; compact?: boolean }> = ({ state, compact }) => {
+  const { defense, runtimeStats, isGodMode } = state.player;
+  const lowHull = ratio(defense.hull, runtimeStats.maxHull) <= 0.3;
+  const h = compact ? 8 : 12;
+  return (
+    <div className={cx('flex flex-col', compact ? 'gap-1.5' : 'gap-2.5')}>
+      {isGodMode && <Label className="text-amber-300">★ Mode dieu</Label>}
+      <DefenseRow label="Bouclier" value={defense.shield} max={runtimeStats.maxShield} color={COLORS.shield} height={h} compact={compact} />
+      <DefenseRow label="Armure" value={defense.armor} max={runtimeStats.maxArmor} color={COLORS.armor} height={h} compact={compact} />
+      <DefenseRow label="Coque" value={defense.hull} max={runtimeStats.maxHull} color={COLORS.hull} height={h + 2} compact={compact} blink={lowHull} />
+    </div>
+  );
+};
 
+const AbilitySlot: React.FC<{ ability: ActiveAbility; size?: number }> = ({ ability, size = 54 }) => {
+  const ready = ability.currentCooldown <= 0;
+  const remaining = ratio(ability.currentCooldown, ability.cooldown);
   return (
     <div
-      className="absolute top-0 left-0 pointer-events-none p-10 font-orbitron overflow-hidden"
-      style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: `${100 / scale}%`, height: `${100 / scale}%` }}
+      className={cx('relative flex items-center justify-center bg-slate-950/80 border-2 overflow-hidden', ready ? 'border-cyan-300 shadow-[0_0_12px_rgba(34,211,238,0.5)]' : 'border-slate-600')}
+      style={{ width: size, height: size }}
+      title={`${ability.name} — ${ability.description}`}
     >
-      <div className="absolute top-10 right-10">
-        <SynergyPanel state={state} />
+      <span className={cx('text-[24px]', !ready && 'opacity-40')}>{ability.icon}</span>
+      {!ready && (
+        <>
+          <div className="absolute left-0 right-0 bottom-0 bg-cyan-400/25" style={{ height: `${(1 - remaining) * 100}%` }} />
+          <Num className="absolute text-[17px] drop-shadow-[0_1px_2px_black]">{Math.ceil(ability.currentCooldown)}</Num>
+        </>
+      )}
+      <span className="absolute bottom-0 right-0 bg-white text-black font-hud font-bold text-[11.5px] px-1 leading-tight uppercase">{ability.key}</span>
+    </div>
+  );
+};
+
+// --- Bas centre : armes -------------------------------------------------------
+
+/** En dessous de ce délai de recharge, la barre clignoterait en permanence : on l'affiche pleine. */
+const FAST_WEAPON_MS = 250;
+
+const WeaponCard: React.FC<{ slot: WeaponSlot | null; overheated: boolean }> = ({ slot, overheated }) => {
+  if (!slot) {
+    return (
+      <div className="w-[180px] h-[58px] border border-dashed border-white/15 bg-slate-950/40 flex items-center justify-center">
+        <Label className="text-slate-500 text-[12px]">Emplacement libre</Label>
       </div>
-      <div className="absolute top-52 left-1/2 -translate-x-1/2">
+    );
+  }
+  const { weapon } = slot;
+  const color = DAMAGE_COLORS[weapon.type];
+  const readiness = slot.cooldownMs < FAST_WEAPON_MS ? 1 : slot.readiness;
+  const ready = readiness >= 1 && !overheated;
+  return (
+    <div
+      className={cx('w-[180px] h-[58px] px-2.5 py-2 bg-slate-950/80 border flex flex-col justify-between', overheated && 'opacity-50')}
+      style={{ borderColor: ready ? color + 'aa' : 'rgba(255,255,255,0.18)' }}
+      title={`${weapon.name} — Tech ${weapon.level} — ${weapon.description}`}
+    >
+      <div className="flex items-center gap-2 min-w-0">
+        <span className="w-2.5 h-2.5 shrink-0 rotate-45" style={{ backgroundColor: color }} />
+        <span className="font-hud font-bold text-[14px] text-white leading-none truncate">{weapon.name}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="flex items-center gap-1 shrink-0">
+          <Num className="text-[12px] text-slate-200">T{weapon.level}</Num>
+          <Pips value={weapon.level} max={MAX_WEAPON_LEVEL} color={color} size={6} />
+        </span>
+        <Meter value={overheated ? 0 : readiness} color={ready ? color : '#64748b'} height={7} className="flex-1" />
+      </div>
+    </div>
+  );
+};
+
+/** Version réduite (compacte) : pastille avec niveau Tech et recharge. */
+const WeaponChip: React.FC<{ slot: WeaponSlot | null; overheated: boolean }> = ({ slot, overheated }) => {
+  if (!slot) return <div className="w-[32px] h-[32px] border border-dashed border-white/15" />;
+  const color = DAMAGE_COLORS[slot.weapon.type];
+  const readiness = overheated ? 0 : slot.cooldownMs < FAST_WEAPON_MS ? 1 : slot.readiness;
+  return (
+    <div className={cx('relative w-[32px] h-[32px] bg-slate-950/80 border flex items-center justify-center', overheated && 'opacity-50')} style={{ borderColor: color + 'aa' }}>
+      <Num className="text-[12px]" style={{ color }}>T{slot.weapon.level}</Num>
+      <div className="absolute left-0 bottom-0 h-[3px]" style={{ width: `${readiness * 100}%`, backgroundColor: readiness >= 1 ? color : '#64748b' }} />
+    </div>
+  );
+};
+
+// --- Bas droite : chaleur + série --------------------------------------------
+
+const HeatPanel: React.FC<{ state: GameState; compact?: boolean }> = ({ state, compact }) => {
+  const heat = heatInfo(state);
+  const style = HEAT_STYLE[heat.level];
+  const alarm = heat.level === 'overheated' || heat.level === 'critical';
+  return (
+    <div className={cx(compact ? '' : 'w-[250px]')}>
+      <div className="flex justify-between items-baseline mb-1">
+        <Label className={compact ? 'text-[12px]' : ''} style={{ color: alarm ? style.color : undefined }}>Chaleur</Label>
+        <span className="flex items-baseline gap-2">
+          <span className={cx('font-hud font-bold uppercase', compact ? 'text-[12px]' : 'text-[13px]', alarm && 'animate-hud-blink')} style={{ color: style.color }}>{style.text}</span>
+          <Num className={compact ? 'text-[13px]' : 'text-[20px]'} style={{ color: style.color }}>{heat.percent}%</Num>
+        </span>
+      </div>
+      <Meter
+        value={heat.ratio}
+        color={style.color}
+        height={compact ? 10 : 16}
+        blink={heat.level === 'overheated'}
+        markers={heat.level === 'overheated' ? [heat.recovery] : undefined}
+        track={heat.level === 'overheated' ? '#3b0a0a' : undefined}
+      />
+    </div>
+  );
+};
+
+const ComboBadge: React.FC<{ state: GameState; compact?: boolean }> = ({ state, compact }) => {
+  if (state.comboCount <= 0) return null;
+  return (
+    <div className={cx('flex flex-col items-end', compact ? 'w-[110px]' : 'w-[160px]')}>
+      <div className="flex items-baseline gap-2">
+        <Label className="text-cyan-300 text-[13px]">Série</Label>
+        <span key={state.comboCount} className={cx('font-orbitron font-black italic text-white animate-hud-pop', compact ? 'text-[24px]' : 'text-[34px]')}>×{state.comboCount}</span>
+      </div>
+      <Meter value={ratio(state.comboTimer, state.player.runtimeStats.comboWindow)} color="#22d3ee" height={5} />
+    </div>
+  );
+};
+
+// --- Alertes centrales --------------------------------------------------------
+
+const CenterAlert: React.FC<{ state: GameState; compact?: boolean }> = ({ state, compact }) => {
+  const heat = heatInfo(state);
+  if (heat.level !== 'overheated' && heat.level !== 'critical') return null;
+  const over = heat.level === 'overheated';
+  return (
+    <div className="absolute left-0 right-0 flex justify-center" style={{ top: '62%' }}>
+      <div className={cx('flex flex-col items-center', over ? 'px-5 py-2 border-2 bg-slate-950/70 border-red-500 animate-hud-blink' : 'px-3 py-1 bg-slate-950/50')}>
+        <span className={cx('font-orbitron font-black uppercase tracking-[0.15em]', over ? (compact ? 'text-[20px]' : 'text-[28px]') : 'text-[16px]', over ? 'text-red-400' : 'text-orange-300')}>
+          {over ? '⚠ Surchauffe' : 'Chaleur critique'}
+        </span>
+        <span className={cx('font-hud font-semibold text-white', over ? 'text-[14px]' : 'text-[13px] opacity-90')}>
+          {over
+            ? `Armes coupées — reprise à ${Math.round(heat.recovery * 100)}%`
+            : state.autoFire ? 'Surchauffe imminente' : 'Relâchez le tir pour refroidir'}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+/** Bordure rouge pulsante quand la coque est basse (hors échelle, plein écran). */
+const LowHullVignette: React.FC<{ state: GameState }> = ({ state }) => {
+  const { defense, runtimeStats, isGodMode } = state.player;
+  if (isGodMode || ratio(defense.hull, runtimeStats.maxHull) > 0.3) return null;
+  return <div className="absolute inset-0 animate-pulse" style={{ boxShadow: 'inset 0 0 120px 20px rgba(239,68,68,0.45)' }} />;
+};
+
+// --- Dispositions -------------------------------------------------------------
+
+const DesktopHUD: React.FC<{ state: GameState; layout: HudLayout }> = ({ state }) => {
+  const slots = weaponSlots(state);
+  return (
+    <>
+      <div className="absolute top-4 left-4"><PilotPanel state={state} /></div>
+
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+        <WavePanel state={state} />
+        <BossBar state={state} width={520} />
         <EventBanner state={state} />
       </div>
-      {state.autoFire && (
-        <div className="absolute top-10 left-10 px-3 py-1 border border-cyan-400/50 text-cyan-300 text-[11px] font-black uppercase tracking-widest bg-black/50">Tir auto [F]</div>
+
+      <div className="absolute top-4 right-4"><BuildPanel state={state} /></div>
+
+      <div className="absolute bottom-4 left-4 flex flex-col gap-3">
+        <div className="flex gap-3">
+          {state.activeAbilities.map(a => <AbilitySlot key={a.id} ability={a} />)}
+        </div>
+        <Panel className="w-[280px] p-3" accent={COLORS.shield}>
+          <DefensePanel state={state} />
+        </Panel>
+      </div>
+
+      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 grid grid-cols-3 gap-2">
+        {slots.map((s, i) => <WeaponCard key={i} slot={s} overheated={state.isOverheated} />)}
+      </div>
+
+      <div className="absolute bottom-4 right-4 flex flex-col items-end gap-3">
+        <ComboBadge state={state} />
+        <Panel className="p-3" accent={HEAT_STYLE[heatInfo(state).level].color}>
+          <HeatPanel state={state} />
+        </Panel>
+      </div>
+
+      <CenterAlert state={state} />
+    </>
+  );
+};
+
+const CompactHUD: React.FC<{ state: GameState; layout: HudLayout; touch: boolean }> = ({ state, layout, touch }) => {
+  const slots = weaponSlots(state);
+  const boss = bossIncoming(state);
+  const wide = layout.width >= 640;
+  return (
+    <>
+      {/* Bandeau haut (à droite : place pour le bouton pause tactile) */}
+      <div className="absolute top-2 left-2 flex flex-col gap-1.5" style={{ right: touch ? 60 : 8 }}>
+        <Panel className="px-2.5 py-1.5 flex flex-col gap-1.5">
+          <div className="flex items-center gap-2">
+            <Label className="text-[12px] text-cyan-300">Vague</Label>
+            <span className="font-orbitron font-black text-[20px] leading-none text-cyan-300">{state.wave}</span>
+            <Meter value={ratio(state.waveKills, state.waveQuota)} color={boss ? '#facc15' : COLORS.wave} height={9} className="flex-1" />
+            <Num className="text-[13px]">{state.waveKills}/{state.waveQuota}</Num>
+            <Num className="text-[13px] text-slate-300 ml-1">{formatClock(state.time)}</Num>
+          </div>
+          <div className="flex items-center gap-2">
+            <Label className="text-[12px] text-violet-200">Niv</Label>
+            <Num className="text-[16px]">{state.level}</Num>
+            <Meter value={ratio(state.experience, state.expToNextLevel)} color={COLORS.xp} height={7} className="flex-1" />
+            <Num className="text-[12px] text-slate-300">{state.totalKills} élim.</Num>
+          </div>
+          {boss && <Label className="text-[12px] text-amber-300 text-center">⚠ Boss à la vague {state.wave + 1}</Label>}
+        </Panel>
+        {bossInfo(state) && <BossBar state={state} width={Math.min(360, layout.width - 76)} />}
+        <div className="flex justify-center"><EventBanner state={state} compact /></div>
+        {/* Série + build (paysage) à droite sous le bandeau */}
+        <div className="self-end flex flex-col items-end gap-2" style={{ marginRight: touch ? 36 : 0 }}>
+          <ComboBadge state={state} compact />
+          {wide && <BuildPanel state={state} compact maxHeight={layout.height - 110} />}
+        </div>
+      </div>
+
+      {/* Bas gauche : armes, défenses, chaleur (à droite : place pour les boutons tactiles) */}
+      <div className="absolute bottom-2 left-2 flex flex-col gap-2 w-[220px]">
+        <div className="flex gap-1">
+          {slots.map((s, i) => <WeaponChip key={i} slot={s} overheated={state.isOverheated} />)}
+        </div>
+        <Panel className="p-2 flex flex-col gap-2" accent={COLORS.shield}>
+          <DefensePanel state={state} compact />
+          <HeatPanel state={state} compact />
+        </Panel>
+      </div>
+
+      {!touch && (
+        <div className="absolute bottom-2 right-2 flex gap-2">
+          {state.activeAbilities.map(a => <AbilitySlot key={a.id} ability={a} size={46} />)}
+        </div>
       )}
-      
-      <div className="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center">
-        <div className="bg-cyan-950/40 border-x-2 border-t-2 border-cyan-400/60 px-12 py-3 backdrop-blur-xl flex gap-12 items-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
-          <div className="flex flex-col items-center min-w-[100px]">
-             <span className="text-[9px] text-cyan-500 font-bold uppercase tracking-widest opacity-80">Chrono</span>
-             <span className="text-2xl text-white font-black tabular-nums tracking-widest drop-shadow-md">{missionTime}</span>
-          </div>
-          <div className="h-10 w-px bg-cyan-400/30" />
-          <div className="flex flex-col items-center min-w-[150px]">
-             <span className="text-[9px] text-cyan-500 font-bold uppercase tracking-widest opacity-80">Secteur</span>
-             <span className="text-2xl text-cyan-400 font-black tracking-widest italic">{wave}</span>
-          </div>
-          <div className="h-10 w-px bg-cyan-400/30" />
-          <div className="flex flex-col items-center min-w-[100px]">
-             <span className="text-[9px] text-cyan-500 font-bold uppercase tracking-widest opacity-80">Éliminations</span>
-             <span className="text-2xl text-white font-black tabular-nums tracking-widest drop-shadow-md">{totalKills}</span>
-          </div>
-        </div>
-        
-        <div className="w-[700px] h-3 bg-slate-950 border-2 border-cyan-400/40 overflow-hidden shadow-2xl relative">
-          <div 
-            className="h-full bg-cyan-400 transition-all duration-500 ease-out shadow-[0_0_20px_rgba(34,211,238,0.6)]" 
-            style={{ width: `${(waveKills / waveQuota) * 100}%` }} 
-          />
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-             <span className="text-[9px] font-black text-white uppercase mix-blend-difference tracking-[0.6em]">
-               VAGUE {wave} : {waveKills} / {waveQuota} SUPPRESSIONS
-             </span>
-          </div>
-        </div>
 
-        <div className="flex justify-between w-full mt-3 px-2 text-[10px] text-slate-400 font-black tracking-widest uppercase">
-          <span className="flex gap-2">Niveau <span className="text-white">{level}</span></span>
-          <span className="text-orange-400 tracking-widest">Score: {score.toLocaleString()}</span>
-        </div>
-        <div className="w-[500px] h-[3px] bg-slate-900 mt-1 opacity-50">
-           <div className="h-full bg-orange-500 transition-all duration-300" style={{ width: `${(experience / expToNextLevel) * 100}%` }} />
+      <CenterAlert state={state} compact />
+    </>
+  );
+};
+
+export const HUD: React.FC<{ state: GameState; touch?: boolean }> = ({ state, touch = false }) => {
+  const layout = useHudLayout();
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+      <LowHullVignette state={state} />
+      <div
+        className="absolute top-0 left-0"
+        style={{
+          width: layout.width,
+          height: layout.height,
+          transform: `scale(${layout.scale})`,
+          transformOrigin: 'top left',
+          padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div className="relative w-full h-full">
+          {layout.compact ? <CompactHUD state={state} layout={layout} touch={touch} /> : <DesktopHUD state={state} layout={layout} />}
         </div>
       </div>
-
-      <div className="absolute bottom-12 left-12 flex items-end gap-10">
-        <ShipBlueprint shield={defense.shield} maxShield={runtimeStats.maxShield} isGodMode={isGodMode} />
-        <div className="flex flex-col gap-6">
-          <div className="flex gap-4 mb-2">
-            {activeAbilities.map(a => <AbilitySlot key={a.id} ability={a} />)}
-          </div>
-          <div className="w-64">
-            <div className="flex justify-between text-xs text-slate-400 mb-2 font-black uppercase tracking-[0.3em]">
-              <span>Armure</span>
-              <span className="text-white text-lg">{Math.round(defense.armor)}</span>
-            </div>
-            <SegmentedBar value={defense.armor} max={runtimeStats.maxArmor} segments={12} color="#f97316" />
-          </div>
-          <div className="w-64">
-            <div className="flex justify-between text-xs text-slate-400 mb-2 font-black uppercase tracking-[0.3em]">
-              <span>Coque</span>
-              <span className="text-white text-lg">{Math.round(defense.hull)}</span>
-            </div>
-            <SegmentedBar value={defense.hull} max={runtimeStats.maxHull} segments={12} color="#ef4444" />
-          </div>
-        </div>
-      </div>
-
-      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-6">
-        {activeWeapons.map((w, i) => {
-          const cooldown = weaponCooldown(state, w);
-          const elapsed = state.time - w.lastFired;
-          const progress = Math.min(1, elapsed / cooldown);
-          return (
-            <div key={i} className="relative w-48 bg-slate-900/60 border-2 border-white/20 p-4 backdrop-blur-sm shadow-xl overflow-hidden">
-              <div className="absolute top-0 right-0 bg-white/10 px-2 py-0.5 text-[10px] font-black text-cyan-400 border-l border-b border-white/10">
-                TECH {TECH_LABELS[w.level]}
-              </div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-black text-white uppercase truncate tracking-tighter w-2/3">{w.name}</span>
-                <div className="w-2.5 h-2.5 shadow-md" style={{ backgroundColor: DAMAGE_COLORS[w.type] }} />
-              </div>
-              <div className="h-2 bg-black border border-white/10 overflow-hidden">
-                <div className="h-full transition-all duration-75" style={{ width: `${progress * 100}%`, backgroundColor: progress >= 1 ? DAMAGE_COLORS[w.type] : '#1e293b' }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="absolute bottom-12 right-12 flex gap-10 items-end">
-        {comboCount > 0 && (
-          <div className="absolute -top-20 right-0 flex flex-col items-end animate-in fade-in slide-in-from-right-2 duration-300">
-            <div className="flex items-baseline gap-2">
-              <span className="text-[10px] font-black text-cyan-500 uppercase tracking-widest">SÉRIE</span>
-              <span className="text-4xl font-black text-white italic tabular-nums">x{comboCount}</span>
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-col items-center">
-          <span className="text-[10px] font-black text-slate-500 mb-3 uppercase [writing-mode:vertical-lr] tracking-[0.5em]">Thermique</span>
-          <SegmentedBar value={heat} max={maxHeat} segments={10} color={isOverheated ? '#ef4444' : '#f97316'} vertical />
-        </div>
-
-        <div className="flex flex-col items-center">
-          <span className={`text-[10px] font-black mb-3 uppercase [writing-mode:vertical-lr] tracking-[0.5em] transition-colors ${comboCount > 0 ? 'text-cyan-400' : 'text-slate-500'}`}>
-            {comboCount > 0 ? 'Série' : 'Neutre'}
-          </span>
-          <SegmentedBar 
-            value={comboCount > 0 ? comboTimer : 0} 
-            max={runtimeStats.comboWindow} 
-            segments={10} 
-            color="#22d3ee" 
-            vertical 
-          />
-        </div>
-      </div>
-
     </div>
   );
 };

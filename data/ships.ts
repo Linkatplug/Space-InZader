@@ -15,7 +15,7 @@ export const SHIPS: ShipClass[] = [
   {
     id: 'gunner', name: 'Mitrailleur', difficulty: 'moyen', color: '#facc15',
     description: 'Cadence de tir élevée, gestion de la surchauffe.',
-    stats: { fireRate: 1.15, maxShield: 40, cooling: 18 },
+    stats: { fireRate: 1.25, maxShield: 40, cooling: 30 },
     startingWeapon: 'auto_cannon', signatureKeystone: 'overclock_core',
     preferredTags: [Tag.KINETIC, Tag.BALLISTIC],
   },
@@ -29,7 +29,7 @@ export const SHIPS: ShipClass[] = [
   {
     id: 'deadeye', name: 'Œil de Lynx', difficulty: 'moyen', color: '#c084fc',
     description: 'Précision et coups critiques à longue portée.',
-    stats: { critChance: 0.12, critMult: 2.3, rangeMult: 1.2, maxArmor: 70, fireRate: 0.9 },
+    stats: { critChance: 0.12, critMult: 2.3, rangeMult: 1.2, maxArmor: 90, fireRate: 1.0 },
     startingWeapon: 'gauss_repeater', signatureKeystone: 'dead_eye',
     preferredTags: [Tag.KINETIC, Tag.HOMING],
   },

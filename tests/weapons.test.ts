@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { WEAPONS } from '../data/weapons';
+import { weaponBehavior } from '../engine/WeaponSystem';
 import { makeState, addEnemy, run, seedRandom, totalHp } from './helpers';
 
 let rnd: ReturnType<typeof seedRandom>;
@@ -103,3 +104,48 @@ describe('armes — comportements spécifiques', () => {
     expect(dmgAt(3)).toBeGreaterThan(dmgAt(1) * 1.5);
   });
 });
+
+describe('armes — bonus de Tech', () => {
+  it('chaque arme documente ses bonus de Tech II et III', () => {
+    WEAPONS.forEach(w => {
+      expect(w.techNotes, w.id).toBeDefined();
+      expect(w.techNotes!.every(n => n.length > 0), w.id).toBe(true);
+    });
+  });
+
+  it('les bonus de Tech ne changent pas le type de tir', () => {
+    WEAPONS.forEach(w => {
+      expect(w.tech?.[2]?.kind, w.id).toBeUndefined();
+      expect(w.tech?.[3]?.kind, w.id).toBeUndefined();
+    });
+  });
+
+  it('weaponBehavior fusionne les bonus selon le niveau', () => {
+    const w = { ...WEAPONS.find(x => x.id === 'ion_blaster')! };
+    expect(weaponBehavior({ ...w, level: 1 }).pierce).toBeUndefined();
+    expect(weaponBehavior({ ...w, level: 2 }).pierce).toBe(1);
+    expect(weaponBehavior({ ...w, level: 3 })).toMatchObject({ pierce: 1, count: 2 });
+  });
+
+  it('Blaster Tech III : tire deux projectiles par salve', () => {
+    const s = setupTech('ion_blaster', 3);
+    run(s, 0.05);
+    expect(s.projectiles.filter(p => p.ownerId === 'player').length).toBe(2);
+  });
+
+  it('Obusier Tech III : laisse une zone de feu', () => {
+    const s = setupTech('siege_slug', 3);
+    const e = addEnemy(s, 'tank', 300);
+    e.defense.hull = 1e9; e.baseStats.speed = 0;
+    run(s, 4, { mouse: { x: e.x, y: e.y } });
+    expect(s.zones.some(z => z.kind === 'fire')).toBe(true);
+  });
+});
+
+const setupTech = (id: string, level: number) => {
+  const s = makeState({ noSpawn: true, weaponIds: [id] });
+  s.activeWeapons[0].level = level;
+  s.autoFire = true;
+  s.player.isGodMode = true;
+  return s;
+};

@@ -1,4 +1,4 @@
-import { GameState, Weapon, WeaponKind, Projectile, Entity, DamageType } from '../types';
+import { GameState, Weapon, WeaponKind, WeaponBehavior, Projectile, Entity, DamageType } from '../types';
 import { TECH_MULTIPLIERS } from '../constants';
 import { playShotSound } from './SoundEngine';
 import { damageEnemy, explode, nearestEnemy, rollPacket } from './Combat';
@@ -19,11 +19,19 @@ export const weaponCooldown = (state: GameState, w: Weapon) => {
 const weaponDamage = (w: Weapon) => w.damage * (TECH_MULTIPLIERS[w.level] || 1.0);
 
 /** Bonus de quantité au Tech III pour les armes multi-projectiles. */
-const levelCount = (w: Weapon, base: number) => base + (w.level >= 3 ? Math.max(1, Math.floor(base / 3)) : 0);
+/** Bonus de quantité au Tech III pour les armes multi-projectiles (≥3), ex. 3 → 4, 7 → 9. */
+const levelCount = (w: Weapon, base: number) => base + (w.level >= 3 ? Math.floor(base / 3) : 0);
+
+/** Comportement effectif d'une arme : base + bonus de Tech II / III. */
+export const weaponBehavior = (w: Weapon): WeaponBehavior => ({
+  ...w.behavior,
+  ...(w.level >= 2 ? w.tech?.[2] : undefined),
+  ...(w.level >= 3 ? w.tech?.[3] : undefined),
+});
 
 const makeProjectile = (state: GameState, w: Weapon, x: number, y: number, angle: number, speedMult = 1): Projectile => {
   const stats = state.player.runtimeStats;
-  const b = w.behavior;
+  const b = weaponBehavior(w);
   const speed = Math.max(0, w.bulletSpeed * stats.projectileSpeedMult * speedMult);
   const packet = rollPacket(state, weaponDamage(w), w.type);
   let kind: Projectile['kind'] = 'bullet';
@@ -56,7 +64,7 @@ const makeProjectile = (state: GameState, w: Weapon, x: number, y: number, angle
 
 const fireProjectiles = (state: GameState, w: Weapon, aim: number) => {
   const { player } = state;
-  const b = w.behavior;
+  const b = weaponBehavior(w);
   const extra = state.player.runtimeStats.extraProjectiles;
   const count = (b.count ? levelCount(w, b.count) : 1) + extra;
   const spread = b.spread ?? (count > 1 ? 0.12 * (count - 1) : 0);
@@ -72,7 +80,7 @@ const fireProjectiles = (state: GameState, w: Weapon, aim: number) => {
 /** Rayon instantané : touche tout ce qui est sur la ligne (ou le premier si pas de perforation). */
 const fireBeam = (state: GameState, w: Weapon, aim: number) => {
   const { player } = state;
-  const b = w.behavior;
+  const b = weaponBehavior(w);
   const range = w.range * player.runtimeStats.rangeMult;
   const sx = player.x + Math.cos(aim) * player.radius;
   const sy = player.y + Math.sin(aim) * player.radius;
@@ -110,7 +118,7 @@ const fireBeam = (state: GameState, w: Weapon, aim: number) => {
 /** Arc électrique : frappe la cible la plus proche du curseur puis rebondit. */
 const fireChain = (state: GameState, w: Weapon, aimX: number, aimY: number) => {
   const { player } = state;
-  const b = w.behavior;
+  const b = weaponBehavior(w);
   const range = w.range * player.runtimeStats.rangeMult;
   const first = nearestEnemy(state, aimX, aimY, 300) || nearestEnemy(state, player.x, player.y, range);
   if (!first) return false;
@@ -135,14 +143,14 @@ const fireChain = (state: GameState, w: Weapon, aimX: number, aimY: number) => {
 
 const firePulse = (state: GameState, w: Weapon) => {
   const { player } = state;
-  const b = w.behavior;
+  const b = weaponBehavior(w);
   const radius = w.range * player.runtimeStats.rangeMult * (1 + (w.level - 1) * 0.15);
   state.zones.push({ id: uid('z'), kind: 'pulse', x: player.x, y: player.y, radius, life: 0.4, maxLife: 0.4, color: w.bulletColor });
-  const r2 = radius * radius;
   for (const e of state.enemies) {
     if (e.dead) continue;
     const dx = e.x - player.x, dy = e.y - player.y;
-    if (dx * dx + dy * dy < r2) {
+    const reach = radius + e.radius;
+    if (dx * dx + dy * dy < reach * reach) {
       damageEnemy(state, e, rollPacket(state, weaponDamage(w), w.type), { direct: true, knockback: b.knockback, slow: b.slow });
     }
   }
@@ -152,7 +160,7 @@ const firePulse = (state: GameState, w: Weapon) => {
 /** Frappe orbitale : marque une zone, l'explosion arrive après un délai. */
 const fireStrike = (state: GameState, w: Weapon, aimX: number, aimY: number) => {
   const { player } = state;
-  const b = w.behavior;
+  const b = weaponBehavior(w);
   const count = levelCount(w, b.count ?? 1);
   const range = w.range * player.runtimeStats.rangeMult;
   const used = new Set<string>();
@@ -196,16 +204,20 @@ const fireFlame = (state: GameState, w: Weapon, aim: number) => {
   }
 };
 
+/** Durée de vie d'une mine posée (secondes). */
+export const MINE_LIFETIME = 8;
+
 const fireMine = (state: GameState, w: Weapon) => {
   const { player } = state;
-  const count = w.behavior.count ? levelCount(w, w.behavior.count) : 1;
+  const mb = weaponBehavior(w);
+  const count = mb.count ? levelCount(w, mb.count) : 1;
   for (let i = 0; i < count; i++) {
     const a = Math.random() * Math.PI * 2;
     const d = count > 1 ? 30 + Math.random() * 80 : 0;
     const p = makeProjectile(state, w, player.x - Math.cos(player.rotation) * player.radius + Math.cos(a) * d, player.y - Math.sin(player.rotation) * player.radius + Math.sin(a) * d, 0, 0);
     p.kind = 'mine';
     p.radius = 12;
-    p.life = 12;
+    p.life = MINE_LIFETIME;
     p.armTime = 0.5;
     p.maxRange = Infinity;
     state.projectiles.push(p);
@@ -216,7 +228,7 @@ const fireMine = (state: GameState, w: Weapon) => {
 const syncDrones = (state: GameState) => {
   const wanted = new Map<string, number>();
   state.activeWeapons.forEach(w => {
-    if (w.behavior.kind === 'drone') wanted.set(w.id, (w.behavior.count ?? 1) + (w.level - 1) + state.player.runtimeStats.extraDrones);
+    if (w.behavior.kind === 'drone') wanted.set(w.id, (weaponBehavior(w).count ?? 1) + (w.level - 1) + state.player.runtimeStats.extraDrones);
   });
   state.drones = state.drones.filter(d => (wanted.get(d.weaponId) ?? 0) > 0);
   wanted.forEach((n, weaponId) => {
@@ -298,7 +310,7 @@ export const updateWeapons = (
     if (time - w.lastFired < weaponCooldown(state, w)) continue;
 
     let aimAngle = aim;
-    if (w.behavior.autoTarget) {
+    if (weaponBehavior(w).autoTarget) {
       const t = nearestEnemy(state, player.x, player.y, w.range * player.runtimeStats.rangeMult);
       if (!t) continue;
       aimAngle = Math.atan2(t.y - player.y, t.x - player.x);
@@ -343,8 +355,8 @@ export const updatePlayerProjectile = (state: GameState, p: Projectile, deltaTim
     }
   }
   if (p.kind === 'flame') {
-    p.vx *= 0.94;
-    p.vy *= 0.94;
+    p.vx *= 0.95;
+    p.vy *= 0.95;
     p.radius += 0.6;
   }
 };
@@ -358,7 +370,7 @@ export const detonate = (state: GameState, p: Projectile) => {
     state.zones.push({
       id: uid('z'), kind: 'gravity', x: p.x, y: p.y, radius: 260,
       life: 2.5, maxLife: 2.5, color: '#a855f7',
-      packet: { ...p.packet, amount: p.packet.amount * 0.4, type: DamageType.EXPLOSIVE },
+      packet: { ...p.packet, amount: p.packet.amount * 0.25, type: DamageType.EXPLOSIVE },
     });
   }
   if (p.fireZone) {

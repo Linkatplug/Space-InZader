@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Menus (hors HUD) : agrandis par paliers sur grands écrans. Le HUD a sa propre échelle (components/hud/model.ts). */
+@media (min-width: 1700px) and (min-height: 940px) {
+  .ui-zoom { zoom: 1.25; }
+}
+@media (min-width: 2300px) and (min-height: 1300px) {
+  .ui-zoom { zoom: 1.6; }
+}

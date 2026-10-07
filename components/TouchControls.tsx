@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { input } from '../engine/InputManager';
-import { CONTROLS } from '../constants';
+import { ActiveAbility } from '../types';
 
 /** Détection d'un écran tactile principal (téléphone / tablette). */
 export const isTouchDevice = () =>
@@ -12,7 +12,7 @@ const RADIUS = 60;
  * Contrôles tactiles : joystick virtuel à gauche (déplacement),
  * boutons de compétences et de pause à droite. Visée et tir automatiques.
  */
-export const TouchControls: React.FC<{ onPause: () => void }> = ({ onPause }) => {
+export const TouchControls: React.FC<{ onPause: () => void; abilities: ActiveAbility[] }> = ({ onPause, abilities }) => {
   const [stick, setStick] = useState<{ ox: number; oy: number; x: number; y: number } | null>(null);
   const touchId = useRef<number | null>(null);
 
@@ -38,14 +38,31 @@ export const TouchControls: React.FC<{ onPause: () => void }> = ({ onPause }) =>
     input.setAnalog(0, 0);
   };
 
-  const Btn = ({ label, onTap, className = '' }: { label: string; onTap: () => void; className?: string }) => (
+  const Btn = ({ label, onTap, className = '', style }: { label: React.ReactNode; onTap: () => void; className?: string; style?: React.CSSProperties }) => (
     <button
       onTouchStart={(e) => { e.preventDefault(); onTap(); }}
-      className={`w-16 h-16 rounded-full border-2 border-cyan-400/60 bg-black/50 text-2xl text-white active:bg-cyan-400/30 select-none ${className}`}
+      className={`relative rounded-full border-2 border-cyan-400/70 bg-slate-950/70 text-white active:bg-cyan-400/30 select-none flex items-center justify-center overflow-hidden ${className}`}
+      style={style}
     >
       {label}
     </button>
   );
+
+  /** Bouton de compétence : anneau de recharge + secondes restantes. */
+  const AbilityBtn = ({ ability }: { ability: ActiveAbility }) => {
+    const ready = ability.currentCooldown <= 0;
+    const remaining = Math.min(1, ability.currentCooldown / (ability.cooldown || 1));
+    return (
+      <Btn
+        onTap={() => input.tap(ability.key)}
+        className={`w-[68px] h-[68px] ${ready ? 'shadow-[0_0_14px_rgba(34,211,238,0.6)]' : 'border-slate-500/70'}`}
+        style={{ background: ready ? undefined : `conic-gradient(rgba(2,6,23,0.85) ${remaining * 360}deg, rgba(34,211,238,0.25) 0)` }}
+        label={ready
+          ? <span className="text-[28px]">{ability.icon}</span>
+          : <span className="font-mono font-bold text-[20px] text-white">{Math.ceil(ability.currentCooldown)}</span>}
+      />
+    );
+  };
 
   return (
     <div className="absolute inset-0 z-30 pointer-events-none select-none" style={{ touchAction: 'none' }}>
@@ -65,12 +82,19 @@ export const TouchControls: React.FC<{ onPause: () => void }> = ({ onPause }) =>
             style={{ left: stick.x - 24, top: stick.y - 24, width: 48, height: 48 }} />
         </>
       )}
-      <div className="absolute right-6 bottom-56 flex flex-col gap-4 pointer-events-auto">
-        <Btn label="⚡" onTap={() => input.tap(CONTROLS.ABILITY_1)} />
-        <Btn label="🌀" onTap={() => input.tap(CONTROLS.ABILITY_2)} />
+      {/* Compétences : coin bas droit (le HUD compact laisse cette zone libre) */}
+      <div
+        className="absolute flex flex-col gap-3 pointer-events-auto"
+        style={{ right: 'calc(14px + env(safe-area-inset-right))', bottom: 'calc(18px + env(safe-area-inset-bottom))' }}
+      >
+        {[...abilities].reverse().map(a => <AbilityBtn key={a.id} ability={a} />)}
       </div>
-      <div className="absolute left-4 top-24 pointer-events-auto">
-        <Btn label="⏸" onTap={onPause} className="w-12 h-12 text-lg" />
+      {/* Pause : coin haut droit (le bandeau du HUD compact s'arrête avant) */}
+      <div
+        className="absolute pointer-events-auto"
+        style={{ right: 'calc(8px + env(safe-area-inset-right))', top: 'calc(8px + env(safe-area-inset-top))' }}
+      >
+        <Btn label={<span className="text-[18px]">⏸</span>} onTap={onPause} className="w-11 h-11" />
       </div>
     </div>
   );

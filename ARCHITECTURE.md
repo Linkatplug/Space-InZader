@@ -61,6 +61,8 @@ scripts/            rapport d'équilibrage (npm run balance)
 
 ### Une arme
 Ajoute une entrée dans `data/weapons.ts`. Choisis un `behavior.kind` existant (`projectile`, `beam`, `chain`, `pulse`, `strike`, `drone`, `flame`, `mine`) et ses paramètres (`count`, `spread`, `pierce`, `homing`, `explodeRadius`, `burn`, `slow`, `knockback`, `split`, `gravity`, `fireZone`, `autoTarget`…). Les `tags` comptent pour les synergies.
+Bonus de niveau : `tech: { 2: {...}, 3: {...} }` (fusionnés dans `behavior` par `weaponBehavior(w)`) et `techNotes: ['Tech II', 'Tech III']` pour le texte affiché. Les dégâts et la cadence montent automatiquement via `TECH_MULTIPLIERS`.
+Mesure ton arme avec `npm run bench:weapons` (DPS mono-cible, de foule, nombre de kills contre une nuée, part du temps sans surchauffe) et compare-la aux autres.
 Pour un **nouveau type de tir**, ajoute la valeur dans `WeaponKind` (types.ts) et une routine dans `FIRE_HANDLERS` (WeaponSystem.ts).
 
 ### Un ennemi
@@ -100,9 +102,10 @@ Valeur dans `EnvEventType` (types.ts), définition dans `data/events.ts` (durée
   - `addEnemy(state, type, dx, dy)` place un ennemi ;
   - `run(state, secondes, { keys, mouse })` fait avancer la simulation ;
   - `seedRandom(n)` rend l'aléatoire déterministe.
+- `npm run bench:weapons` : banc d'essai des armes (Tech I et III) sur mannequins fixes ancrés et sur une nuée.
 - `npm run balance` : le bot de `tests/bot.ts` joue N parties par vaisseau et affiche survie, vague, kills, dégâts, et les dégâts subis par source. Variables d'environnement : `BALANCE_RUNS`, `BALANCE_SECONDS`.
 
 ## Pièges connus
 
 - Si Vite affiche « does not provide an export named … » après de grosses modifications, c'est un cache HMR périmé : redémarre `npm run dev`.
-- Le HUD est conçu pour 1700×950 puis mis à l'échelle (`useHudScale`, `transform: scale`). La caméra dézoome sur petit écran (`viewScaleFor`).
+- HUD (`components/HUD.tsx`) : données d'affichage calculées par des fonctions pures dans `components/hud/model.ts` (testées dans `tests/hud.test.ts`), briques visuelles dans `components/hud/widgets.tsx`. Disposition bureau dessinée pour 1280×720 puis agrandie (`hudLayout` : ×1.5 en 1080p, ×2 en 1440p) ; en dessous de ×0.9, disposition compacte (téléphone, petite fenêtre) qui laisse libres les coins des boutons tactiles. Polices : Orbitron (titres), Chakra Petch (`font-hud`, libellés), JetBrains Mono (`font-mono`, chiffres). Menus agrandis par paliers sur grand écran (classe `.ui-zoom`, `index.css`). La caméra dézoome sur petit écran (`viewScaleFor`).
