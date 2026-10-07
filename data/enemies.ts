@@ -138,8 +138,12 @@ export const ENEMIES: Record<string, EnemyDef> = {
 
 export const BOSS_ROTATION = ['boss', 'hive', 'warden'];
 
+/** Un boss apparaît à chaque vague multiple de cette valeur. */
+export const BOSS_WAVE_INTERVAL = 10;
+export const isBossWave = (wave: number) => wave % BOSS_WAVE_INTERVAL === 0;
+
 /** Boss de la vague (toutes les 10 vagues, en rotation). */
-export const bossForWave = (wave: number) => BOSS_ROTATION[(Math.floor(wave / 10) - 1 + BOSS_ROTATION.length) % BOSS_ROTATION.length];
+export const bossForWave = (wave: number) => BOSS_ROTATION[(Math.floor(wave / BOSS_WAVE_INTERVAL) - 1 + BOSS_ROTATION.length) % BOSS_ROTATION.length];
 
 /** Multiplicateur de résistance des ennemis selon la vague. */
 export const difficultyForWave = (wave: number) => 1 + (wave - 1) * 0.15;

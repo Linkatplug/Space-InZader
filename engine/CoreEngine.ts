@@ -3,7 +3,7 @@ import { createEffect, updateStatusEffects } from './Combat';
 import { updateZones } from './WeaponSystem';
 import { spawnEnemy } from './EnemyFactory';
 import { updateEnemyAttacks } from './EnemyAttacks';
-import { bossForWave } from '../data/enemies';
+import { bossForWave, isBossWave } from '../data/enemies';
 import { refreshPlayerStats } from './StatsCalculator';
 import { activeMechanics } from './Synergies';
 import { updateParticles, emitParticles } from '../render/ParticleSystem';
@@ -51,7 +51,7 @@ export const updateGameState = (
       state.waveKills = 0;
       state.waveQuota = Math.floor(10 + (state.wave * 6));
 
-      if (state.wave % 10 === 0) {
+      if (isBossWave(state.wave)) {
         state.enemies.push(spawnEnemy(state.wave, player, bossForWave(state.wave)));
         state.bossSpawned = true;
         createEffect(state, player.x, player.y - 160, 'ALERTE : BOSS', '#facc15');

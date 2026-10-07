@@ -192,6 +192,10 @@ export interface Weapon {
   description: string;
   level: number;
   behavior: WeaponBehavior;
+  /** Bonus de comportement débloqués en Tech II / Tech III (fusionnés dans `behavior`). */
+  tech?: { 2?: Partial<WeaponBehavior>; 3?: Partial<WeaponBehavior> };
+  /** Texte des bonus de Tech II / Tech III (affiché dans le menu d'amélioration). */
+  techNotes?: [string, string];
 }
 
 export interface Keystone {

@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "balance": "vitest run -c vitest.balance.config.ts"
+    "balance": "vitest run -c vitest.balance.config.ts scripts/balance.test.ts",
+    "bench:weapons": "vitest run -c vitest.balance.config.ts scripts/weapons.test.ts"
   },
   "dependencies": {
     "react": "^19.0.0",

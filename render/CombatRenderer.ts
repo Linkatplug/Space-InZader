@@ -229,3 +229,34 @@ export const drawDrones = (ctx: CanvasRenderingContext2D, drones: Drone[], state
     ctx.restore();
   }
 };
+
+/**
+ * Jauges collées au vaisseau : arc de bouclier (haut) et de chaleur (bas),
+ * pour lire l'essentiel sans quitter l'action des yeux.
+ */
+export const drawPlayerGauges = (ctx: CanvasRenderingContext2D, state: GameState, time: number) => {
+  const p = state.player;
+  const r = p.radius + 18;
+  const span = Math.PI * 0.7; // ouverture de chaque arc
+  const arc = (center: number, frac: number, color: string, alpha: number) => {
+    ctx.globalAlpha = 0.25 * alpha;
+    ctx.strokeStyle = '#0f172a';
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, center - span / 2, center + span / 2); ctx.stroke();
+    if (frac <= 0) return;
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color;
+    ctx.beginPath(); ctx.arc(p.x, p.y, r, center + span / 2 - span * Math.min(1, frac), center + span / 2); ctx.stroke();
+  };
+  ctx.save();
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  const maxShield = p.runtimeStats.maxShield;
+  if (maxShield > 0) arc(-Math.PI / 2, p.defense.shield / maxShield, '#22d3ee', 0.85);
+  const heat = state.maxHeat > 0 ? state.heat / state.maxHeat : 0;
+  if (heat > 0.02 || state.isOverheated) {
+    const blink = state.isOverheated ? 0.5 + 0.5 * Math.sin(time / 80) : 1;
+    const color = state.isOverheated ? '#ef4444' : heat > 0.8 ? '#f97316' : '#fbbf24';
+    arc(Math.PI / 2, heat, color, 0.85 * blink);
+  }
+  ctx.restore();
+};

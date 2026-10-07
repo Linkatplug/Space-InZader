@@ -3,7 +3,7 @@ import { Passive, Tag } from '../types';
 
 export const PASSIVES: Passive[] = [
   // --- UTILITAIRES ---
-  { id: 'salvager_1', name: 'Salvager I', description: 'Récupérateur d\'Épaves. +30 Portée de ramassage XP.', rarity: 'common', maxStacks: 10, tags: [Tag.MINING], modifiers: [
+  { id: 'salvager_1', name: 'Récupérateur', description: 'Aimant à épaves. +30 portée de ramassage de l\'XP.', rarity: 'common', maxStacks: 10, tags: [Tag.MINING], modifiers: [
     { id: 's1-1', property: 'magnetRange', value: 30, type: 'additive' }
   ] },
   { id: 'learning_algorithm', name: 'Algorithme d\'Apprentissage', description: 'Optimise l\'acquisition de données. +15% Gain XP.', rarity: 'rare', maxStacks: 5, tags: [Tag.ENERGY], modifiers: [
@@ -14,10 +14,10 @@ export const PASSIVES: Passive[] = [
   ] },
 
   // --- DÉFENSE ---
-  { id: 'cap_battery', name: 'Capacitor Battery', description: 'Batterie de Condensateur. +10% Refroidissement.', rarity: 'common', maxStacks: 10, tags: [Tag.ENERGY], modifiers: [
+  { id: 'cap_battery', name: 'Batterie de Condensateurs', description: '+10% Refroidissement.', rarity: 'common', maxStacks: 10, tags: [Tag.ENERGY], modifiers: [
     { id: 'cb-1', property: 'cooling', value: 1.10, type: 'multiplicative' }
   ] },
-  { id: 'pds_module', name: 'Power Diagnostic System', description: 'Couteau suisse : +5 Bouclier Max, +0.5 Régén.', rarity: 'common', maxStacks: 10, tags: [Tag.DEFENSIVE], modifiers: [
+  { id: 'pds_module', name: 'Système de Diagnostic', description: 'Couteau suisse : +5 bouclier max, +0.5 régén. bouclier.', rarity: 'common', maxStacks: 10, tags: [Tag.DEFENSIVE], modifiers: [
     { id: 'pd-1', property: 'maxShield', value: 5, type: 'additive' },
     { id: 'pd-2', property: 'shieldRegen', value: 0.5, type: 'additive' }
   ] },
@@ -29,7 +29,7 @@ export const PASSIVES: Passive[] = [
   ] },
 
   // --- ATTAQUE ---
-  { id: 'co_processor', name: 'Co-Processeur I', description: 'Optimisation CPU : +3% Cadence, +5% Vitesse Projectile.', rarity: 'common', maxStacks: 10, tags: [Tag.ENERGY], modifiers: [
+  { id: 'co_processor', name: 'Co-Processeur', description: 'Optimisation CPU : +3% Cadence, +5% Vitesse Projectile.', rarity: 'common', maxStacks: 10, tags: [Tag.ENERGY], modifiers: [
     { id: 'cp-1', property: 'fireRate', value: 1.03, type: 'multiplicative' },
     { id: 'cp-2', property: 'projectileSpeedMult', value: 1.05, type: 'multiplicative' }
   ] },
@@ -69,7 +69,7 @@ export const PASSIVES: Passive[] = [
   { id: 'multi_shot', name: 'Multi-Tir', description: '+1 projectile par salve.', rarity: 'epic', maxStacks: 3, tags: [Tag.BALLISTIC], modifiers: [
     { id: 'ms-1', property: 'extraProjectiles', value: 1, type: 'additive' }
   ] },
-  { id: 'vampirism', name: 'Vampirisme', description: 'Convertit 2% des dégâts infligés en coque.', rarity: 'rare', maxStacks: 5, tags: [Tag.DOT], modifiers: [
+  { id: 'vampirism', name: 'Vampirisme', description: 'Convertit 2% des dégâts infligés en coque.', rarity: 'rare', maxStacks: 5, tags: [Tag.DEFENSIVE], modifiers: [
     { id: 'va-1', property: 'lifesteal', value: 0.02, type: 'additive' }
   ] },
   { id: 'execution', name: 'Exécution', description: '+25% dégâts contre les ennemis sous 30% de coque.', rarity: 'rare', maxStacks: 3, tags: [Tag.KINETIC], modifiers: [
@@ -104,7 +104,7 @@ export const PASSIVES: Passive[] = [
     { id: 'fl-1', property: 'rangeMult', value: 1.1, type: 'multiplicative' },
     { id: 'fl-2', property: 'projectileSpeedMult', value: 1.1, type: 'multiplicative' }
   ] },
-  { id: 'black_heart', name: 'Cœur Noir', description: '+30% dégâts, -20 coque max.', rarity: 'legendary', maxStacks: 2, tags: [Tag.DOT], modifiers: [
+  { id: 'black_heart', name: 'Cœur Noir', description: '+30% dégâts, -20 coque max.', rarity: 'legendary', maxStacks: 2, tags: [], modifiers: [
     { id: 'bh-1', property: 'damageMult', value: 1.3, type: 'multiplicative' },
     { id: 'bh-2', property: 'maxHull', value: -20, type: 'additive' }
   ] },

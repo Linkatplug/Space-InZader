@@ -4,7 +4,7 @@ import { clearScreen, drawHexGrid, drawWorldBounds } from './WorldRenderer';
 import { drawShip } from './ShipRenderer';
 import { drawParticles, drawXPDrops, drawVisualEffects } from './EffectRenderer';
 import { renderEnvironmentalEffects } from './EventRenderer';
-import { drawZones, drawBeams, drawProjectiles, drawDrones } from './CombatRenderer';
+import { drawZones, drawBeams, drawProjectiles, drawDrones, drawPlayerGauges } from './CombatRenderer';
 
 export const renderGame = (
   ctx: CanvasRenderingContext2D,
@@ -43,6 +43,7 @@ export const renderGame = (
   // Entities
   state.enemies.forEach(e => drawShip(ctx, e, false, time));
   drawShip(ctx, state.player, true, time);
+  drawPlayerGauges(ctx, state, time);
   drawDrones(ctx, state.drones, state);
   drawBeams(ctx, state.beams);
 

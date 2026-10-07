@@ -17,6 +17,7 @@ import { triggerEvent } from './engine/EventSystem';
 import { MainMenu } from './components/Menu/MainMenu';
 import { TouchControls, isTouchDevice } from './components/TouchControls';
 import { GameOverScreen } from './components/Menu/GameOverScreen';
+import { PauseMenu } from './components/Menu/PauseMenu';
 import { MetaSave, RunSummary, loadSave, writeSave, recordRun } from './engine/Meta';
 import { calculateRuntimeStats, syncDefenseState, shipBaseStats } from './engine/StatsCalculator';
 
@@ -44,6 +45,18 @@ const App: React.FC = () => {
     const s = engineState.current;
     if (s.status === 'playing') { s.status = 'paused'; stopBGM(); }
     else if (s.status === 'paused') { s.status = 'playing'; startBGM(); }
+    setUiState({ ...s });
+  };
+
+  /** Abandon depuis la pause : la partie est enregistrée comme une défaite. */
+  const [abandoned, setAbandoned] = useState(false);
+  const abandonRun = () => {
+    const s = engineState.current;
+    if (s.status !== 'paused') return;
+    s.status = 'gameover';
+    stopBGM();
+    setAbandoned(true);
+    finishRun(s);
     setUiState({ ...s });
   };
 
@@ -82,6 +95,7 @@ const App: React.FC = () => {
     freshState.autoFire = saveRef.current.settings.autoFire || isTouch;
     freshState.autoAim = isTouch;
     setRunSummary(null);
+    setAbandoned(false);
     freshState.status = newStatus;
     freshState.startTime = Date.now();
     engineState.current = freshState;
@@ -312,7 +326,7 @@ const App: React.FC = () => {
       <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} className="absolute inset-0" />
       
       {uiState.isDebugMode && <DebugOverlay state={uiState} fps={fps} frameTime={frameTime} />}
-      {uiState.status !== 'menu' && uiState.status !== 'dev' && uiState.status !== 'lab' && <HUD state={uiState} />}
+      {uiState.status !== 'menu' && uiState.status !== 'dev' && uiState.status !== 'lab' && <HUD state={uiState} touch={isTouch} />}
       
       {uiState.status === 'menu' && (
         <MainMenu
@@ -335,6 +349,7 @@ const App: React.FC = () => {
 
       {uiState.status === 'leveling' && (
         <UpgradeMenu
+          state={uiState}
           options={upgradeOptions}
           onSelect={(u) => {
             const s = engineState.current;
@@ -348,23 +363,20 @@ const App: React.FC = () => {
             }
             setUiState({ ...s });
           }}
-          currentWeapons={uiState.activeWeapons}
         />
       )}
       
-      {isTouch && uiState.status === 'playing' && <TouchControls onPause={togglePause} />}
+      {isTouch && uiState.status === 'playing' && <TouchControls onPause={togglePause} abilities={uiState.activeAbilities} />}
 
       {uiState.status === 'paused' && (
-        <div onClick={togglePause} className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-40 font-orbitron cursor-pointer">
-           <h2 className="text-[10vw] font-black text-white italic animate-pulse">SYSTEM_PAUSE</h2>
-           <p className="text-xs text-slate-400 uppercase tracking-[0.4em] mt-4">P / Échap / toucher pour reprendre</p>
-        </div>
+        <PauseMenu state={uiState} onResume={togglePause} onQuit={abandonRun} />
       )}
       
       {uiState.status === 'gameover' && (
         <GameOverScreen
           state={uiState}
           summary={runSummary}
+          abandoned={abandoned}
           onRetry={() => resetGame('playing', uiState.shipId)}
           onMenu={() => resetGame('menu', uiState.shipId)}
         />
