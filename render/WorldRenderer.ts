@@ -1,7 +1,7 @@
 
-import { VIEW_SCALE, WORLD_WIDTH, WORLD_HEIGHT } from '../constants';
+import { WORLD_WIDTH, WORLD_HEIGHT } from '../constants';
 
-export const drawHexGrid = (ctx: CanvasRenderingContext2D, camera: { x: number, y: number }, dimensions: { width: number, height: number }) => {
+export const drawHexGrid = (ctx: CanvasRenderingContext2D, camera: { x: number, y: number }, dimensions: { width: number, height: number }, VIEW_SCALE = 1) => {
   const hexSize = 100;
   const hexHeight = hexSize * 2;
   const hexWidth = Math.sqrt(3) * hexSize;

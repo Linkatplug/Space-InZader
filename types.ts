@@ -54,13 +54,40 @@ export interface Stats {
   projectileSpeedMult: number;
   dodgeChance: number;
   luck: number;
+  lifesteal: number;           // fraction des dégâts infligés rendue à la coque
+  hullRegen: number;           // coque / seconde
+  explosionRadiusMult: number;
+  heatGenMult: number;         // multiplicateur de chaleur générée par tir
+  burnMult: number;            // multiplicateur des brûlures infligées
+  extraChain: number;          // rebonds supplémentaires (armes 'chain')
+  extraDrones: number;         // drones supplémentaires (armes 'drone')
+  extraProjectiles: number;    // projectiles supplémentaires (armes 'projectile' multi-tirs)
+  abilityCooldownMult: number;
+  extraPierce: number;         // ennemis traversés en plus (projectiles)
+  executeBonus: number;        // dégâts en plus contre les ennemis sous 30% de coque
+  healOnKill: number;          // coque rendue par élimination
+  slowOnHit: number;           // chance de ralentir à l'impact (0..1)
 }
+
+/**
+ * Conditions d'activation d'un modificateur (voir engine/Conditions.ts → CONDITIONS).
+ * Un modificateur conditionnel ne s'applique que tant que la condition est vraie.
+ */
+export type ConditionId = 'highHeat' | 'lowHull' | 'stationary' | 'shieldDown' | 'overheated';
+
+/**
+ * Source de mise à l'échelle (voir engine/Conditions.ts → SCALING_SOURCES).
+ * Un modificateur « scaling » vaut value × min(source, max) et est toujours additif.
+ */
+export type ScalingSource = 'hitStreak' | 'droneCount' | 'comboCount' | 'onHitStacks';
 
 export interface Modifier {
   id: string;
   property: keyof Stats;
   value: number;
   type: 'additive' | 'multiplicative';
+  condition?: ConditionId;
+  scaling?: { source: ScalingSource; max: number };
 }
 
 export interface Passive {
@@ -100,6 +127,8 @@ export interface EnvironmentalEvent {
   duration: number;
   maxDuration: number;
   intensity: number;
+  warning: number;      // secondes d'alerte restantes
+  started: boolean;     // false pendant l'alerte
 }
 
 export interface DamagePacket {
@@ -116,6 +145,38 @@ export interface DefenseState {
   hull: number;
 }
 
+/**
+ * Comportement d'une arme. `kind` choisit la routine de tir dans WeaponSystem,
+ * les autres champs sont des paramètres optionnels de cette routine.
+ */
+export type WeaponKind =
+  | 'projectile' // balle(s) tirée(s) vers le curseur
+  | 'beam'       // rayon instantané (hitscan) qui transperce
+  | 'chain'      // arc électrique qui rebondit entre cibles
+  | 'pulse'      // onde de choc circulaire autour du vaisseau
+  | 'strike'     // frappe orbitale différée sur une cible
+  | 'drone'      // drones en orbite qui tirent seuls
+  | 'flame'      // cône de flammes courte portée
+  | 'mine';      // mine posée qui explose au contact
+
+export interface WeaponBehavior {
+  kind: WeaponKind;
+  count?: number;          // projectiles / drones / frappes par tir
+  spread?: number;         // dispersion angulaire totale (radians)
+  jitter?: number;         // imprécision aléatoire (radians)
+  pierce?: number;         // nombre d'ennemis traversés
+  homing?: number;         // vitesse de virage (radians / frame)
+  explodeRadius?: number;  // explosion à l'impact
+  burn?: number;           // brûlure : fraction des dégâts infligée par seconde pendant 3s
+  slow?: number;           // ralentissement (0..1) pendant 2s
+  knockback?: number;      // recul infligé
+  split?: number;          // sous-munitions à l'explosion
+  gravity?: boolean;       // crée un puits gravitationnel à l'impact
+  fireZone?: boolean;      // laisse une zone de feu à l'impact
+  chainTargets?: number;   // rebonds pour 'chain'
+  autoTarget?: boolean;    // vise l'ennemi le plus proche au lieu du curseur
+}
+
 export interface Weapon {
   id: string;
   name: string;
@@ -130,6 +191,7 @@ export interface Weapon {
   lastFired: number;
   description: string;
   level: number;
+  behavior: WeaponBehavior;
 }
 
 export interface Keystone {
@@ -137,6 +199,39 @@ export interface Keystone {
   name: string;
   description: string;
   modifiers: Modifier[];
+  icon?: string;
+  color?: string;
+}
+
+/** Mécaniques spéciales débloquées par les synergies (voir engine/Combat.ts). */
+export type MechanicId = 'critExplosion' | 'chainExplosion' | 'burnSpread' | 'dashInvuln';
+
+export interface SynergyTier {
+  count: number;            // nombre de tags requis
+  description: string;
+  modifiers?: Modifier[];
+  mechanic?: MechanicId;
+}
+
+export interface Synergy {
+  id: string;
+  name: string;
+  color: string;
+  tags: Tag[];              // tags comptés (une fois par arme / passif possédé)
+  tiers: SynergyTier[];     // triés par count croissant
+}
+
+export interface ShipClass {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  stats: Partial<Stats>;    // remplace les valeurs de INITIAL_STATS
+  startingWeapon: string;
+  signatureKeystone: string; // proposé en priorité au premier palier de keystone
+  preferredTags: Tag[];      // les améliorations portant ces tags sortent plus souvent
+  difficulty: 'facile' | 'moyen' | 'difficile';
+  unlock?: { type: 'wave'; wave: number } | { type: 'kills'; kills: number };
 }
 
 export interface VisualEffect {
@@ -180,7 +275,8 @@ export interface Entity {
   vy: number;
   radius: number;
   type: 'player' | 'enemy' | 'boss';
-  subtype?: 'basic' | 'sniper' | 'kamikaze' | 'swarmer' | 'boss';
+  subtype?: string;        // id dans data/enemies.ts (ENEMIES)
+  attackTimers?: number[]; // dernier tir de chaque attaque (ms)
   dead?: boolean;
   baseStats: Stats;
   modifiers: Modifier[];
@@ -192,6 +288,12 @@ export interface Entity {
   lastDamageTime?: number; 
   marks?: { type: 'resonance', count: number };
   isGodMode?: boolean;
+  // Vitesse externe (recul, gravité) ajoutée au mouvement piloté, amortie chaque frame
+  kx?: number;
+  ky?: number;
+  burn?: { dps: number; until: number; type: DamageType };
+  slow?: { amount: number; until: number };
+  invulnUntil?: number;     // invulnérable jusqu'à (ms, horloge state.time)
 }
 
 export interface Projectile {
@@ -207,6 +309,55 @@ export interface Projectile {
   maxRange: number;
   dead?: boolean;
   heatGenerated: number;
+  kind?: 'bullet' | 'missile' | 'mine' | 'flame' | 'gravity' | 'meteor';
+  pierce?: number;
+  hitIds?: string[];
+  homing?: number;
+  explodeRadius?: number;
+  burn?: number;
+  slow?: number;
+  knockback?: number;
+  split?: number;
+  gravity?: boolean;
+  fireZone?: boolean;
+  life?: number;          // durée de vie en secondes (mines, flammes)
+  source?: string;        // origine (id d'ennemi, événement) pour les statistiques
+  armTime?: number;       // délai avant activation (mines)
+}
+
+/** Zone persistante : explosion visuelle, feu, puits gravitationnel, frappe en approche. */
+export interface Zone {
+  id: string;
+  kind: 'explosion' | 'fire' | 'gravity' | 'strike' | 'pulse';
+  x: number;
+  y: number;
+  radius: number;
+  life: number;
+  maxLife: number;
+  color: string;
+  packet?: DamagePacket;  // dégâts (par seconde pour fire/gravity, une fois pour strike)
+  knockback?: number;
+  slow?: number;
+  burn?: number;
+}
+
+/** Trait visuel éphémère : rayon, arc électrique. */
+export interface Beam {
+  x1: number; y1: number; x2: number; y2: number;
+  color: string;
+  width: number;
+  life: number;
+  maxLife: number;
+  jagged?: boolean;
+}
+
+export interface Drone {
+  id: string;
+  weaponId: string;
+  angle: number;
+  x: number;
+  y: number;
+  lastFired: number;
 }
 
 export interface GameState {
@@ -230,6 +381,27 @@ export interface GameState {
   effects: VisualEffect[];
   particles: Particle[];
   activeWeapons: Weapon[];
+  zones: Zone[];
+  beams: Beam[];
+  drones: Drone[];
+  time: number;          // horloge de simulation (ms), figée en pause
+  shake: number;         // intensité de tremblement demandée par le moteur
+  autoFire: boolean;
+  spawnEnabled: boolean; // apparition automatique des ennemis (désactivable : tests, labo)
+  autoAim: boolean;       // vise automatiquement l'ennemi le plus proche (mode tactile)
+  analogMove: { x: number; y: number }; // déplacement analogique (joystick tactile), -1..1
+  shipId: string;
+  hitStreak: number;        // impacts consécutifs sans tir manqué
+  onHitStacks: number;      // cumul « à l'impact » (retombe après 3s sans toucher)
+  lastHitTime: number;
+  stationaryTime: number;   // secondes passées immobile
+  mechanics: MechanicId[];  // mécaniques actives (synergies)
+  bossKills: number;
+  nextEventTime: number;    // ms (horloge state.time), 0 = à planifier
+  damageDealt: number;
+  damageTaken: number;
+  damageBySource: Record<string, number>; // dégâts subis par origine (ennemi, événement...)
+  lastHitBy?: string;
   activeAbilities: ActiveAbility[];
   activeEvents: EnvironmentalEvent[];
   keystones: Keystone[];

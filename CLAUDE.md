@@ -1,0 +1,63 @@
+# Space InZader — notes de reprise (pour Claude)
+
+> Fichier tenu à jour pendant le travail. Si tu reprends le projet, lis tout ce fichier d'abord,
+> puis la section « Journal » en bas pour savoir exactement où on s'est arrêté.
+
+## Règles du propriétaire (Linkatplug)
+- **Ne JAMAIS commit ni push** sans demande explicite : il veut un seul gros commit à la fin.
+- Il parle français, réponses courtes et concrètes.
+- Objectif : **continuer et finir le jeu**. Liberté sur les priorités.
+- Exigences : code facile à étendre/modifier (piloté par les données), et **tests automatisés** (Vitest).
+
+## Contexte
+- `main` = V2 (React 19 + TypeScript + Canvas 2D, Vite). Issue de Google AI Studio, base propre mais contenu creux.
+- V1 (JS vanilla, beaucoup plus de contenu) = commit `fb3e679` / branche `old-vision-release-v1-avant-refonte`.
+  Lire un fichier V1 : `git show fb3e679:js/data/WeaponData.js` (aussi EnemyData, PassiveData, ShipData, SynergyData, KeystoneData, systems/WeatherSystem.js, managers/SaveManager.js, music/*.mp3).
+- Branches `copilot/*` et `codex/*` = obsolètes (ciblent la V1), à ignorer.
+
+## Lancer / vérifier
+- `npm install` puis `npm run dev` (port 5173). Config preview : `.claude/launch.json` (nom `dev`).
+- `npx tsc --noEmit` doit rester à 0 erreur.
+- `npm test` (Vitest) — tests headless du moteur dans `tests/`.
+
+## Architecture (cible)
+- `types.ts` — tous les types partagés.
+- `constants.ts` — réglages globaux (monde, contrôles, stats initiales, couleurs).
+- `data/` — **contenu du jeu, piloté par les données** :
+  - `weapons.ts` (WEAPONS) — chaque arme a un `behavior.kind` → routine dans `engine/WeaponSystem.ts` (`FIRE_HANDLERS`).
+  - `enemies.ts` (ENEMIES) — stats, `ai` → `ai/EnemyAI.ts` (`AI_BEHAVIORS`), `attacks[].pattern` → `engine/EnemyAttacks.ts` (`ATTACK_PATTERNS`), `shape` → `render/ShipRenderer.ts`, `spawnWeight(wave)`, boss en rotation (`BOSS_ROTATION`).
+  - `passives.ts`, `keystones.ts`.
+- `engine/` — logique pure, **sans DOM** (testable sous Node) :
+  - `CoreEngine.ts` `updateGameState(state, dt, keys, mouseWorld, onLevelUp, onGameOver)` — un pas de simulation. Appelé à pas fixe 60 Hz par `App.tsx`.
+  - `GameFactory.ts` `createInitialState()`.
+  - `Combat.ts` — **point d'entrée unique** des dégâts : `damageEnemy`, `killEnemy`, `explode`, `damagePlayer`, statuts (brûlure, ralentissement), `nearestEnemy`.
+  - `WeaponSystem.ts` — tir des armes, drones, projectiles guidés/mines/flammes, zones (feu, gravité, frappes).
+  - `DamageEngine.ts` — couches bouclier > armure > coque + résistances.
+  - `StatsCalculator.ts` — passifs (rendement dégressif 0.8^n) + keystones.
+  - `Progression.ts` — choix d'améliorations au level-up et application.
+  - `SoundEngine.ts` — Web Audio procédural (no-op hors navigateur).
+- `render/` — dessin Canvas uniquement.
+- `components/` — UI React (HUD, menus). `App.tsx` = boucle de jeu + orchestration.
+- Temps : `state.time` (ms, horloge de simulation, figée en pause). Ne pas utiliser `performance.now()` dans le moteur.
+- Tremblement d'écran : le moteur écrit `state.shake`, App le consomme.
+
+## Feuille de route
+1. [FAIT] Combat : comportements réels des 24 armes, pas fixe, pipeline de dégâts unique, ennemis data-driven (+ types V1), tests Vitest.
+2. [FAIT] Progression : keystones conditionnels, port keystones V1.
+3. [FAIT sauf passifs] Contenu V1 : vaisseaux, synergies. RESTE : plus de passifs.
+4. [FAIT] Méta : sauvegarde, déblocages, scores, écran de fin.
+5. [FAIT] Événements.
+6. [FAIT] Polish (équilibrage de base via bot) : HUD responsive, mobile, musique.
+7. [FAIT sauf branches] Nettoyage : README, déploiement (workflow CI). RESTE : suppression des branches obsolètes (demander).
+
+## Journal
+- 2026-10-07 — Repo cloné dans `H:\Space InZader`. Corrigé : erreurs JSX DevMenu, tsconfig types node, importmap AI Studio dans index.html, **bug des contrôles** (React StrictMode → `input.dispose()` débranchait le clavier ; ajouté `input.attach()`).
+- 2026-10-07 — **Phase 1 terminée** : 24 armes avec vrais comportements (registre `FIRE_HANDLERS`), ennemis data-driven (`data/enemies.ts` : 8 ennemis + 3 boss en rotation, IA `AI_BEHAVIORS`, tirs `ATTACK_PATTERNS`), pipeline de dégâts unique (`engine/Combat.ts`), statuts brûlure/ralenti, recul, zones (feu, gravité, frappes), drones, mines, pas fixe 60 Hz, `state.time`, tir auto (F), `GameFactory`, `EnemyFactory`, `Progression` (6 emplacements, max stacks, keystones tous les 5 niveaux), `spawnEnabled`. **Vitest : 122 tests verts** (`tests/`). Vérifié en navigateur.
+  Debug navigateur (dev) : `window.__SI.state()`, `window.__SI.action('spawn_enemy','tank')`, `window.__SI.start()`.
+- 2026-10-07 — **Phases 2-3-4 (base) terminées** : 7 vaisseaux (`data/ships.ts`, 3 à débloquer), 9 keystones dont conditionnelles/à l'échelle (`Modifier.condition` / `Modifier.scaling` → `engine/Conditions.ts`), 7 synergies par tags (`data/synergies.ts`, mécaniques `critExplosion`/`chainExplosion`/`burnSpread`/`dashInvuln` dans Combat/Abilities), nouvelles stats (lifesteal, hullRegen, explosionRadiusMult, heatGenMult, burnMult, extraChain/Drones/Projectiles, abilityCooldownMult), stats recalculées chaque pas (`refreshPlayerStats`), tirage pondéré par tags préférés + keystone signature, méta-progression `engine/Meta.ts` (localStorage, records, historique, déblocages), `MainMenu` (choix vaisseau), `GameOverScreen` (stats + build), HUD mis à l'échelle (transform scale) + panneau synergies/keystones. **147 tests verts**.
+  Astuce : si Vite affiche « does not provide an export named … » après des modifs, c'est un cache HMR périmé → redémarrer le serveur (preview_stop/preview_start).
+  Astuce : sous Git Bash, les heredocs python longs avec apostrophes cassent parfois → écrire le script dans le scratchpad et l'exécuter.
+- 2026-10-07 — 30 passifs (16 portés V1 : perforation, exécution, soin à l'élimination, cryo, multi-tir…, stats entières sans rendement dégressif `INTEGER_STATS`, chance → rareté `rarityWeight`). Événements data-driven (`data/events.ts` + `EVENT_HANDLERS` : météores qui blessent aussi les ennemis, trou noir qui mange l'XP, éruption solaire, tempête magnétique ; alerte → actif ; `playerModifiers` ; planification 40–70s ; bouton dev). Musique MP3 V1 dans `public/music` (playlist, repli procédural, M = muet, N = piste suivante, réglage sauvegardé). Mobile : `components/TouchControls.tsx` (joystick, dash/nova, pause), `state.autoAim`/`analogMove`, zoom caméra `viewScaleFor`, menus `justify-[safe_center]`. **166 tests verts**.
+- 2026-10-07 — Bot d'équilibrage (`tests/bot.ts`, `npm run balance`, `vitest.balance.config.ts`) + suivi `damageBySource`/`lastHitBy` (« Détruit par » en fin de partie). Équilibrage : refroidissement 15→25, reprise après surchauffe à 50% (`OVERHEAT_RECOVERY`), Tireur/Sniper/Kamikaze adoucis, drones nerfés. Tailwind installé localement (v3, `tailwind.config.js`, `index.css`) au lieu du CDN, `base: './'`, workflow `.github/workflows/ci.yml` (tests + déploiement gh-pages). README + ARCHITECTURE réécrits (guides « ajouter du contenu »). HUD synchronisé à 30 Hz. **166 tests verts, build OK, vérifié en navigateur (dev + build prod + mobile)**.
+- ÉTAT : jeu complet et jouable. RIEN N'EST COMMITÉ (attente de l'accord du propriétaire pour un seul gros commit ; `package-lock.json` doit être inclus pour `npm ci` en CI).
+- IDÉES SUITE : plus d'ennemis/boss, compétences actives supplémentaires (V2 n'en a que 2), écran d'options (volume), choix de keystone par vaisseau plus marqués, sprites/effets, traduction, `metadata.json` (reliquat AI Studio) à supprimer si inutile, nettoyage des branches copilot/* (demander).

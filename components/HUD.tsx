@@ -2,6 +2,64 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { GameState, Tag, Weapon, DamageType, ActiveAbility } from '../types';
 import { DAMAGE_COLORS } from '../constants';
+import { weaponCooldown } from '../engine/WeaponSystem';
+import { synergyStatus } from '../engine/Synergies';
+import { EVENTS } from '../data/events';
+
+const EventBanner: React.FC<{ state: GameState }> = ({ state }) => {
+  const ev = state.activeEvents[0];
+  if (!ev) return null;
+  const def = EVENTS[ev.type];
+  return (
+    <div
+      className={`px-6 py-2 border-2 bg-black/70 text-center ${ev.started ? '' : 'animate-pulse'}`}
+      style={{ borderColor: def.color, color: def.color }}
+    >
+      <div className="text-sm font-black uppercase tracking-[0.3em]">
+        {ev.started ? def.name : `⚠ ${def.name} dans ${Math.ceil(ev.warning)}s`}
+        {ev.started && <span className="text-white ml-3 tabular-nums">{Math.ceil(ev.duration)}s</span>}
+      </div>
+      <div className="text-[10px] text-slate-300 italic">{def.description}</div>
+    </div>
+  );
+};
+
+/** Échelle du HUD : conçu pour 1700×950, réduit sur petits écrans. */
+export const useHudScale = () => {
+  const compute = () => Math.max(0.45, Math.min(1, window.innerWidth / 1700, window.innerHeight / 950));
+  const [scale, setScale] = useState(compute);
+  useEffect(() => {
+    const onResize = () => setScale(compute());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  return scale;
+};
+
+const SynergyPanel: React.FC<{ state: GameState }> = ({ state }) => {
+  const list = synergyStatus(state).filter(s => s.count > 0);
+  if (list.length === 0 && state.keystones.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2 items-end">
+      {state.keystones.map(k => (
+        <div key={k.id} className="px-3 py-1 bg-amber-500/10 border border-amber-500/40 text-[11px] font-black text-amber-300 uppercase tracking-wider" title={k.description}>
+          {k.icon} {k.name}
+        </div>
+      ))}
+      {list.map(({ synergy, count, activeTiers, nextTier }) => (
+        <div
+          key={synergy.id}
+          className={`px-3 py-1 border text-[11px] font-black uppercase tracking-wider flex gap-3 items-center ${activeTiers.length ? 'bg-black/60' : 'bg-black/30 opacity-60'}`}
+          style={{ borderColor: synergy.color + (activeTiers.length ? 'aa' : '44'), color: synergy.color }}
+          title={synergy.tiers.map(t => `${t.count}: ${t.description}`).join('\n')}
+        >
+          <span>{synergy.name}</span>
+          <span className="text-white tabular-nums">{count}{nextTier ? `/${nextTier.count}` : ' ★'}</span>
+        </div>
+      ))}
+    </div>
+  );
+};
 
 interface HUDProps {
   state: GameState;
@@ -81,6 +139,7 @@ const AbilitySlot: React.FC<{ ability: ActiveAbility }> = ({ ability }) => {
 const TECH_LABELS: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III' };
 
 export const HUD: React.FC<HUDProps> = ({ state }) => {
+  const scale = useHudScale();
   const { player, heat, maxHeat, isOverheated, score, level, experience, expToNextLevel, activeWeapons, activeAbilities, wave, waveKills, waveQuota, totalKills, startTime, comboCount, comboTimer, currentMisses } = state;
   const { runtimeStats, defense, isGodMode } = player;
 
@@ -98,7 +157,19 @@ export const HUD: React.FC<HUDProps> = ({ state }) => {
   }, [startTime, now]);
 
   return (
-    <div className="absolute inset-0 pointer-events-none p-10 font-orbitron overflow-hidden">
+    <div
+      className="absolute top-0 left-0 pointer-events-none p-10 font-orbitron overflow-hidden"
+      style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: `${100 / scale}%`, height: `${100 / scale}%` }}
+    >
+      <div className="absolute top-10 right-10">
+        <SynergyPanel state={state} />
+      </div>
+      <div className="absolute top-52 left-1/2 -translate-x-1/2">
+        <EventBanner state={state} />
+      </div>
+      {state.autoFire && (
+        <div className="absolute top-10 left-10 px-3 py-1 border border-cyan-400/50 text-cyan-300 text-[11px] font-black uppercase tracking-widest bg-black/50">Tir auto [F]</div>
+      )}
       
       <div className="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center">
         <div className="bg-cyan-950/40 border-x-2 border-t-2 border-cyan-400/60 px-12 py-3 backdrop-blur-xl flex gap-12 items-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
@@ -164,8 +235,8 @@ export const HUD: React.FC<HUDProps> = ({ state }) => {
 
       <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex gap-6">
         {activeWeapons.map((w, i) => {
-          const cooldown = 1000 / (w.fireRate * runtimeStats.fireRate * (w.level > 1 ? (w.level === 2 ? 1.5 : 1.9) : 1.0));
-          const elapsed = performance.now() - w.lastFired;
+          const cooldown = weaponCooldown(state, w);
+          const elapsed = state.time - w.lastFired;
           const progress = Math.min(1, elapsed / cooldown);
           return (
             <div key={i} className="relative w-48 bg-slate-900/60 border-2 border-white/20 p-4 backdrop-blur-sm shadow-xl overflow-hidden">

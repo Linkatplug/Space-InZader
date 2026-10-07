@@ -1,10 +1,10 @@
 
 import { GameState } from '../types';
-import { VIEW_SCALE } from '../constants';
 import { clearScreen, drawHexGrid, drawWorldBounds } from './WorldRenderer';
 import { drawShip } from './ShipRenderer';
 import { drawParticles, drawXPDrops, drawVisualEffects } from './EffectRenderer';
 import { renderEnvironmentalEffects } from './EventRenderer';
+import { drawZones, drawBeams, drawProjectiles, drawDrones } from './CombatRenderer';
 
 export const renderGame = (
   ctx: CanvasRenderingContext2D,
@@ -12,7 +12,8 @@ export const renderGame = (
   dimensions: { width: number, height: number },
   camera: { x: number, y: number },
   screenShake: number,
-  time: number
+  time: number,
+  viewScale = 1
 ) => {
   clearScreen(ctx, dimensions);
 
@@ -25,28 +26,25 @@ export const renderGame = (
   renderEnvironmentalEffects(ctx, state, dimensions, time);
 
   ctx.save();
-  ctx.scale(VIEW_SCALE, VIEW_SCALE);
+  ctx.scale(viewScale, viewScale);
   ctx.translate(-camera.x, -camera.y);
 
   // Fond de carte
-  drawHexGrid(ctx, camera, dimensions);
+  drawHexGrid(ctx, camera, dimensions, viewScale);
   drawWorldBounds(ctx, time); // Ajout de la barrière ici
 
   // Layered rendering
   drawParticles(ctx, state.particles);
   drawXPDrops(ctx, state.xpDrops);
   
-  // Projectiles
-  state.projectiles.forEach(p => {
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-    ctx.fill();
-  });
+  drawZones(ctx, state.zones, time);
+  drawProjectiles(ctx, state.projectiles, time);
 
   // Entities
   state.enemies.forEach(e => drawShip(ctx, e, false, time));
   drawShip(ctx, state.player, true, time);
+  drawDrones(ctx, state.drones, state);
+  drawBeams(ctx, state.beams);
 
   // Floating text
   drawVisualEffects(ctx, state.effects);
