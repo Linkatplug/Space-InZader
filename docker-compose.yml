@@ -1,0 +1,20 @@
+# Space InZader — déploiement Docker / stack Portainer (voir DOCKER.md)
+services:
+  space-inzader:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: space-inzader:latest
+    # Reconstruit l'image à chaque `up` : un redéploiement Portainer (GitOps / webhook)
+    # prend donc toujours le dernier code du dépôt.
+    pull_policy: build
+    container_name: space-inzader
+    ports:
+      - "${HOST_PORT:-8118}:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3

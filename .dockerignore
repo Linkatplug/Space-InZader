@@ -1,0 +1,23 @@
+# Dépendances et sorties (reconstruites dans l'image)
+node_modules
+dist
+dist-ssr
+coverage
+test-results
+playwright-report
+*.log
+*.local
+
+# Git, outils, éditeurs
+.git
+.github
+.claude
+.vscode
+.idea
+.DS_Store
+
+# Fichiers Docker eux-mêmes (inutiles dans le contexte de build)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+DOCKER.md
