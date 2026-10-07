@@ -32,6 +32,8 @@ export const updateGameState = (
   state.time += deltaTime * 1000;
   const time = state.time;
 
+  if (state.buffs.length) state.buffs = state.buffs.filter(b => b.until > time);
+
   // Stats recalculées chaque pas : keystones conditionnels et cumuls évoluent en continu
   state.mechanics = activeMechanics(state);
   refreshPlayerStats(state);

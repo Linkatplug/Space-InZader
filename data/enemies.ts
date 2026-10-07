@@ -8,7 +8,7 @@
 import { DamageType } from '../types';
 
 export type AIBehavior = 'chase' | 'kite' | 'charge' | 'weave' | 'turret';
-export type AttackPatternId = 'aimed' | 'spread' | 'radial' | 'summon';
+export type AttackPatternId = 'aimed' | 'spread' | 'radial' | 'summon' | 'spiral' | 'burst';
 export type ShipShape = 'fighter' | 'dart' | 'diamond' | 'circle' | 'hex' | 'square' | 'star';
 
 export interface EnemyAttack {
@@ -24,6 +24,15 @@ export interface EnemyAttack {
   radius?: number;         // taille projectile
   penetration?: number;
   summonId?: string;       // ennemi invoqué pour 'summon'
+  spin?: number;           // 'spiral' : rotation par tir (radians)
+}
+
+/** Phase d'enragement : sous `below` (fraction de coque), le boss accélère. */
+export interface Enrage {
+  below: number;
+  cooldownMult: number;    // < 1 = tire plus souvent
+  speedMult: number;
+  color?: string;
 }
 
 export interface EnemyDef {
@@ -45,6 +54,7 @@ export interface EnemyDef {
   color: string;
   isBoss?: boolean;
   splitInto?: { id: string; count: number };
+  enrage?: Enrage;
   resist?: Partial<Record<'res_EM' | 'res_Kinetic' | 'res_Explosive' | 'res_Thermal', number>>;
   armorHardness?: number;
   spawnWeight: (wave: number) => number;
@@ -110,14 +120,14 @@ export const ENEMIES: Record<string, EnemyDef> = {
   boss: {
     id: 'boss', name: 'Dreadnought', hull: 6000, armor: 0, shield: 0, speed: 1.4, radius: 110,
     ai: 'chase', contactDps: 30, drops: { count: 50, xp: 30 }, score: 5000,
-    shape: 'circle', color: '#facc15', isBoss: true,
+    shape: 'circle', color: '#facc15', isBoss: true, enrage: { below: 0.5, cooldownMult: 0.6, speedMult: 1.3 },
     attacks: [{ pattern: 'radial', cooldown: 1100, damage: 15, type: DamageType.EXPLOSIVE, speed: 7.5, range: 2000, color: '#facc15', count: 12, radius: 10 }],
     spawnWeight: never,
   },
   hive: {
     id: 'hive', name: 'Ruche', hull: 4500, armor: 500, shield: 0, speed: 2.0, radius: 95,
     ai: 'weave', contactDps: 25, drops: { count: 50, xp: 30 }, score: 5000,
-    shape: 'hex', color: '#4ade80', isBoss: true,
+    shape: 'hex', color: '#4ade80', isBoss: true, enrage: { below: 0.4, cooldownMult: 0.6, speedMult: 1.2 },
     attacks: [
       { pattern: 'summon', cooldown: 4000, damage: 0, type: DamageType.KINETIC, speed: 0, range: 1500, color: '#4ade80', count: 4, summonId: 'swarmer' },
       { pattern: 'spread', cooldown: 1600, damage: 12, type: DamageType.THERMAL, speed: 8, range: 1200, color: '#86efac', count: 7, arc: 1.2, radius: 8 },
@@ -127,16 +137,38 @@ export const ENEMIES: Record<string, EnemyDef> = {
   warden: {
     id: 'warden', name: 'Gardien', hull: 5000, armor: 0, shield: 2500, speed: 2.4, radius: 90,
     ai: 'kite', kiteRange: [500, 750], contactDps: 25, drops: { count: 50, xp: 30 }, score: 5000,
-    shape: 'star', color: '#22d3ee', isBoss: true, resist: { res_EM: 0.3 },
+    shape: 'star', color: '#22d3ee', isBoss: true, resist: { res_EM: 0.3 }, enrage: { below: 0.5, cooldownMult: 0.65, speedMult: 1.25 },
     attacks: [
       { pattern: 'aimed', cooldown: 700, damage: 16, type: DamageType.EM, speed: 16, range: 1600, color: '#67e8f9', radius: 6 },
       { pattern: 'radial', cooldown: 3500, damage: 12, type: DamageType.EM, speed: 5, range: 1600, color: '#22d3ee', count: 16, radius: 9 },
     ],
     spawnWeight: never,
   },
+  carrier: {
+    id: 'carrier', name: 'Porte-Nef', hull: 7000, armor: 1500, shield: 0, speed: 1.2, radius: 120,
+    ai: 'kite', kiteRange: [600, 900], contactDps: 30, drops: { count: 60, xp: 30 }, score: 7000,
+    shape: 'square', color: '#f97316', isBoss: true, resist: { res_Kinetic: 0.25 },
+    enrage: { below: 0.5, cooldownMult: 0.55, speedMult: 1.4 },
+    attacks: [
+      { pattern: 'summon', cooldown: 5000, damage: 0, type: DamageType.KINETIC, speed: 0, range: 1800, color: '#f97316', count: 3, summonId: 'kamikaze' },
+      { pattern: 'burst', cooldown: 2400, damage: 12, type: DamageType.KINETIC, speed: 13, range: 1400, color: '#fdba74', count: 5, radius: 7 },
+    ],
+    spawnWeight: never,
+  },
+  devastator: {
+    id: 'devastator', name: 'Dévastateur', hull: 9000, armor: 0, shield: 4000, speed: 1.6, radius: 105,
+    ai: 'chase', contactDps: 40, drops: { count: 70, xp: 30 }, score: 9000,
+    shape: 'star', color: '#e879f9', isBoss: true, resist: { res_Thermal: 0.25 },
+    enrage: { below: 0.5, cooldownMult: 0.6, speedMult: 1.3 },
+    attacks: [
+      { pattern: 'spiral', cooldown: 120, damage: 9, type: DamageType.EM, speed: 6, range: 1600, color: '#f0abfc', count: 3, spin: 0.22, radius: 8 },
+      { pattern: 'aimed', cooldown: 1800, damage: 22, type: DamageType.EXPLOSIVE, speed: 11, range: 1400, color: '#e879f9', radius: 14 },
+    ],
+    spawnWeight: never,
+  },
 };
 
-export const BOSS_ROTATION = ['boss', 'hive', 'warden'];
+export const BOSS_ROTATION = ['boss', 'hive', 'warden', 'carrier', 'devastator'];
 
 /** Un boss apparaît à chaque vague multiple de cette valeur. */
 export const BOSS_WAVE_INTERVAL = 10;

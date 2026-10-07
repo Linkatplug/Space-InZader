@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { WEAPONS } from '../data/weapons';
 import { PASSIVES } from '../data/passives';
 import { KEYSTONES } from '../data/keystones';
-import { ENEMIES, BOSS_ROTATION, bossForWave, pickEnemyType } from '../data/enemies';
+import { ENEMIES, BOSS_ROTATION, BOSS_WAVE_INTERVAL, bossForWave, pickEnemyType } from '../data/enemies';
 import { FIRE_HANDLERS } from '../engine/WeaponSystem';
 import { AI_BEHAVIORS } from '../ai/EnemyAI';
 import { ATTACK_PATTERNS } from '../engine/EnemyAttacks';
@@ -53,9 +53,10 @@ describe('données — ennemis', () => {
   });
   it('les boss en rotation existent et sont des boss', () => {
     BOSS_ROTATION.forEach(id => expect(ENEMIES[id]?.isBoss).toBe(true));
-    expect(bossForWave(10)).toBe(BOSS_ROTATION[0]);
-    expect(bossForWave(20)).toBe(BOSS_ROTATION[1]);
-    expect(bossForWave(40)).toBe(BOSS_ROTATION[0]);
+    expect(bossForWave(BOSS_WAVE_INTERVAL)).toBe(BOSS_ROTATION[0]);
+    expect(bossForWave(BOSS_WAVE_INTERVAL * 2)).toBe(BOSS_ROTATION[1]);
+    // La rotation boucle après le dernier boss
+    expect(bossForWave(BOSS_WAVE_INTERVAL * (BOSS_ROTATION.length + 1))).toBe(BOSS_ROTATION[0]);
   });
   it('le tirage ne renvoie que des ennemis autorisés pour la vague', () => {
     for (const wave of [1, 2, 5, 10, 30]) {

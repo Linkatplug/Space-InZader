@@ -14,12 +14,12 @@ import { hasMechanic } from './Synergies';
  * Gère le texte flottant, les statuts et la mort.
  */
 
-export const createEffect = (state: GameState, x: number, y: number, text: string, color: string) => {
+export const createEffect = (state: GameState, x: number, y: number, text: string, color: string, kind: 'damage' | 'message' = 'message') => {
   // Limite anti-spam : au-delà, on remplace le plus ancien texte
   if (state.effects.length > 120) state.effects.shift();
   state.effects.push({
     id: uid('fx'),
-    x, y, text, color,
+    x, y, text, color, kind,
     life: 1.0,
     vx: (Math.random() - 0.5) * 1.5,
     vy: -1.0 - Math.random() * 1.5,
@@ -104,7 +104,7 @@ export const damageEnemy = (state: GameState, e: Entity, packet: DamagePacket, o
   if (!opts.silent) {
     const txt = Math.floor(finalPacket.amount).toString();
     const color = finalPacket.isCrit ? '#ffffff' : DAMAGE_COLORS[finalPacket.type];
-    createEffect(state, e.x + (Math.random() - 0.5) * 20, e.y, finalPacket.isCrit ? `CRIT! ${txt}` : txt, color);
+    createEffect(state, e.x + (Math.random() - 0.5) * 20, e.y, finalPacket.isCrit ? `CRIT! ${txt}` : txt, color, 'damage');
   }
 
   if (opts.knockback && e.type !== 'boss') {
@@ -232,7 +232,7 @@ export const damagePlayer = (state: GameState, packet: DamagePacket, showText = 
     state.damageBySource[source] = (state.damageBySource[source] ?? 0) + taken;
     state.lastHitBy = source;
   }
-  if (showText) createEffect(state, player.x, player.y, Math.floor(packet.amount).toString(), '#ef4444');
+  if (showText) createEffect(state, player.x, player.y, Math.floor(packet.amount).toString(), '#ef4444', 'damage');
 };
 
 /** Applique brûlures et expiration des ralentissements. */

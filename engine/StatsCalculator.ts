@@ -59,6 +59,9 @@ export const calculateRuntimeStats = (entity: Entity, gameState?: GameState): St
       if (ev.started) EVENTS[ev.type].playerModifiers?.forEach(mod => applyMod(result, mod, gameState));
     });
 
+    // Bonus temporaires (compétences)
+    gameState.buffs.forEach(b => b.modifiers.forEach(mod => applyMod(result, mod, gameState)));
+
     // Keystones : pas de rendement dégressif (uniques)
     gameState.keystones.forEach(ks => ks.modifiers.forEach(mod => applyMod(result, mod, gameState)));
   }

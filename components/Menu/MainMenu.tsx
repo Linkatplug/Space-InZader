@@ -9,6 +9,7 @@ interface MainMenuProps {
   onStart: (shipId: string) => void;
   onDev: () => void;
   onLab: () => void;
+  onOptions: () => void;
 }
 
 const DIFFICULTY_COLOR = { facile: 'text-green-400', moyen: 'text-amber-400', difficile: 'text-red-400' };
@@ -20,7 +21,7 @@ const CONTROLS_HELP: [string, string][] = [
   ['P / Échap', 'Pause'], ['M / N', 'Son / piste'],
 ];
 
-export const MainMenu: React.FC<MainMenuProps> = ({ save, onStart, onDev, onLab }) => {
+export const MainMenu: React.FC<MainMenuProps> = ({ save, onStart, onDev, onLab, onOptions }) => {
   const initial = SHIPS.find(s => s.id === save.lastShipId && isShipUnlocked(s, save)) ?? SHIPS[0];
   const [selected, setSelected] = useState(initial.id);
   const ship = SHIPS.find(s => s.id === selected)!;
@@ -90,6 +91,9 @@ export const MainMenu: React.FC<MainMenuProps> = ({ save, onStart, onDev, onLab 
           className="px-8 py-5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-orbitron font-black text-2xl border-b-8 border-cyan-800 disabled:border-slate-900 transition-all uppercase active:translate-y-1"
         >
           Démarrer mission
+        </button>
+        <button onClick={onOptions} className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-[16px] border-b-4 border-slate-950 transition-all uppercase tracking-wider">
+          ⚙ Options
         </button>
         <div className="flex gap-3">
           <button onClick={onDev} className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-[13px] border-b-4 border-slate-950 transition-all uppercase tracking-wider">Base de données</button>

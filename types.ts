@@ -225,6 +225,15 @@ export interface Synergy {
   tiers: SynergyTier[];     // triés par count croissant
 }
 
+/** Bonus temporaire (compétence) : modificateurs appliqués au joueur jusqu'à `until`. */
+export interface Buff {
+  id: string;
+  name: string;
+  until: number;        // ms (horloge state.time)
+  modifiers: Modifier[];
+  color: string;
+}
+
 export interface ShipClass {
   id: string;
   name: string;
@@ -234,12 +243,14 @@ export interface ShipClass {
   startingWeapon: string;
   signatureKeystone: string; // proposé en priorité au premier palier de keystone
   preferredTags: Tag[];      // les améliorations portant ces tags sortent plus souvent
+  abilities: [string, string]; // compétences (Shift, E) — ids de engine/AbilitySystem.ts → ABILITIES
   difficulty: 'facile' | 'moyen' | 'difficile';
   unlock?: { type: 'wave'; wave: number } | { type: 'kills'; kills: number };
 }
 
 export interface VisualEffect {
   id: string;
+  kind?: 'damage' | 'message';   // 'damage' = chiffre de dégâts (masquable dans les options)
   x: number;
   y: number;
   text: string;
@@ -281,6 +292,8 @@ export interface Entity {
   type: 'player' | 'enemy' | 'boss';
   subtype?: string;        // id dans data/enemies.ts (ENEMIES)
   attackTimers?: number[]; // dernier tir de chaque attaque (ms)
+  spiralAngle?: number;    // angle courant du motif 'spiral'
+  enraged?: boolean;       // boss en phase d'enragement
   dead?: boolean;
   baseStats: Stats;
   modifiers: Modifier[];
@@ -400,6 +413,8 @@ export interface GameState {
   lastHitTime: number;
   stationaryTime: number;   // secondes passées immobile
   mechanics: MechanicId[];  // mécaniques actives (synergies)
+  buffs: Buff[];            // bonus temporaires actifs (compétences)
+  enemySlowUntil: number;   // ms : projectiles ennemis ralentis jusqu'à (Distorsion)
   bossKills: number;
   nextEventTime: number;    // ms (horloge state.time), 0 = à planifier
   damageDealt: number;

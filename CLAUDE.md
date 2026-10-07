@@ -10,6 +10,12 @@
 - Objectif : **continuer et finir le jeu**. Liberté sur les priorités.
 - Exigences : code facile à étendre/modifier (piloté par les données), et **tests automatisés** (Vitest).
 
+## Répartition en cours (mise à jour par l'organisatrice)
+- Branches gardées : `main`, `gh-pages` (site), `old-vision-release-v1-avant-refonte` (archive V1), branche de travail courante. Les branches copilot/*, codex/* ont été supprimées le 2026-10-07.
+- Périmètres habituels : **session UI (« Space InZader HUD refactor »)** → `components/**`, `App.tsx`, `index.css`, tests UI (`tests/hud.test.ts`, `tests/options.test.ts`). **Organisatrice (« Space-InZader project review »)** → `engine/**`, `data/**`, `ai/**`, `render/**`, `types.ts`, autres tests.
+- Tâches en cours : aucune (dernière intégration commitée le 2026-10-07).
+- API moteur fournie pour les options : `GameSettings` / `DEFAULT_SETTINGS` (engine/Meta.ts), `setMusicVolume`, `setSfxVolume`, `applyAudioSettings` (engine/SoundEngine.ts), `RenderOptions.damageNumbers` (dernier paramètre de `renderGame`), `VisualEffect.kind = 'damage'`.
+
 ## Contexte
 - `main` = V2 (React 19 + TypeScript + Canvas 2D, Vite). Issue de Google AI Studio, base propre mais contenu creux.
 - V1 (JS vanilla, beaucoup plus de contenu) = commit `fb3e679` / branche `old-vision-release-v1-avant-refonte`.

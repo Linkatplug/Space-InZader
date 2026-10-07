@@ -60,6 +60,25 @@ const startMusic = (): boolean => {
   return true;
 };
 
+const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
+
+export const setMusicVolume = (v: number) => {
+  audioSettings.musicVolume = clamp01(v);
+  if (music) music.volume = audioSettings.muted ? 0 : audioSettings.musicVolume;
+};
+
+export const setSfxVolume = (v: number) => {
+  audioSettings.sfxVolume = clamp01(v);
+  if (sfxGain) sfxGain.gain.value = audioSettings.muted ? 0 : audioSettings.sfxVolume;
+};
+
+/** Applique en une fois les réglages audio sauvegardés. */
+export const applyAudioSettings = (s: { muted: boolean; musicVolume: number; sfxVolume: number }) => {
+  setMusicVolume(s.musicVolume);
+  setSfxVolume(s.sfxVolume);
+  setMuted(s.muted);
+};
+
 export const setMuted = (muted: boolean) => {
   audioSettings.muted = muted;
   if (music) music.volume = muted ? 0 : audioSettings.musicVolume;

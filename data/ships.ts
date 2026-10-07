@@ -11,6 +11,7 @@ export const SHIPS: ShipClass[] = [
     stats: {},
     startingWeapon: 'ion_blaster', signatureKeystone: 'overheat_protocol',
     preferredTags: [Tag.ENERGY],
+    abilities: ['blink_dash', 'tactical_nova'],
   },
   {
     id: 'gunner', name: 'Mitrailleur', difficulty: 'moyen', color: '#facc15',
@@ -18,6 +19,7 @@ export const SHIPS: ShipClass[] = [
     stats: { fireRate: 1.25, maxShield: 40, cooling: 30 },
     startingWeapon: 'auto_cannon', signatureKeystone: 'overclock_core',
     preferredTags: [Tag.KINETIC, Tag.BALLISTIC],
+    abilities: ['blink_dash', 'overdrive'],
   },
   {
     id: 'fortress', name: 'Forteresse', difficulty: 'facile', color: '#60a5fa',
@@ -25,6 +27,7 @@ export const SHIPS: ShipClass[] = [
     stats: { maxArmor: 180, maxHull: 140, armorHardness: 0.2, speed: 5, fireRate: 0.85 },
     startingWeapon: 'minefield_layer', signatureKeystone: 'fortress_mode',
     preferredTags: [Tag.DEFENSIVE, Tag.AREA, Tag.EXPLOSIVE],
+    abilities: ['aegis_shield', 'tactical_nova'],
   },
   {
     id: 'deadeye', name: 'Œil de Lynx', difficulty: 'moyen', color: '#c084fc',
@@ -32,6 +35,7 @@ export const SHIPS: ShipClass[] = [
     stats: { critChance: 0.12, critMult: 2.3, rangeMult: 1.2, maxArmor: 90, fireRate: 1.0 },
     startingWeapon: 'gauss_repeater', signatureKeystone: 'dead_eye',
     preferredTags: [Tag.KINETIC, Tag.HOMING],
+    abilities: ['blink_dash', 'time_dilation'],
   },
   {
     id: 'engineer', name: 'Ingénieur', difficulty: 'moyen', color: '#4ade80',
@@ -39,6 +43,7 @@ export const SHIPS: ShipClass[] = [
     stats: { maxShield: 70, shieldRegen: 3 },
     startingWeapon: 'em_drone_wing', signatureKeystone: 'machine_network',
     preferredTags: [Tag.DRONE, Tag.ORBITAL, Tag.SWARM],
+    abilities: ['repair_nanites', 'orbital_barrage'],
     unlock: { type: 'wave', wave: 15 },
   },
   {
@@ -47,6 +52,7 @@ export const SHIPS: ShipClass[] = [
     stats: { maxHull: 80, maxArmor: 60, lifesteal: 0.04, speed: 6.4, critMult: 2.2 },
     startingWeapon: 'solar_flare', signatureKeystone: 'blood_frenzy',
     preferredTags: [Tag.DOT, Tag.ENERGY],
+    abilities: ['blink_dash', 'gravity_well'],
     unlock: { type: 'kills', kills: 1000 },
   },
   {
@@ -55,6 +61,7 @@ export const SHIPS: ShipClass[] = [
     stats: { maxShield: 30, speed: 7, damageMult: 1.15, dmgTakenMult: 1.1 },
     startingWeapon: 'plasma_stream', signatureKeystone: 'rage_engine',
     preferredTags: [Tag.DOT, Tag.AREA],
+    abilities: ['blink_dash', 'emergency_vent'],
     unlock: { type: 'wave', wave: 25 },
   },
 ];

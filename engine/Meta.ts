@@ -29,12 +29,26 @@ export interface MetaSave {
   bossKills: number;
   lastShipId?: string;
   history: RunRecord[];   // 10 dernières parties, la plus récente en premier
-  settings: { muted: boolean; autoFire: boolean };
+  settings: GameSettings;
 }
+
+/** Réglages joueur (écran d'options). Valeurs 0..1 pour les volumes et le tremblement. */
+export interface GameSettings {
+  muted: boolean;
+  autoFire: boolean;
+  musicVolume: number;
+  sfxVolume: number;
+  screenShake: number;      // multiplicateur du tremblement d'écran (0 = désactivé)
+  damageNumbers: boolean;   // affiche les chiffres de dégâts flottants
+}
+
+export const DEFAULT_SETTINGS: GameSettings = {
+  muted: false, autoFire: false, musicVolume: 0.35, sfxVolume: 1, screenShake: 1, damageNumbers: true,
+};
 
 export const emptySave = (): MetaSave => ({
   version: 2, bestScore: 0, bestWave: 0, totalKills: 0, totalRuns: 0, totalPlaySec: 0, bossKills: 0,
-  history: [], settings: { muted: false, autoFire: false },
+  history: [], settings: { ...DEFAULT_SETTINGS },
 });
 
 const storage = (): Storage | null => {
