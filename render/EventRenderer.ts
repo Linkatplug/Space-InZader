@@ -3,6 +3,7 @@ import { GameState, EnvEventType } from '../types';
 
 export const renderEnvironmentalEffects = (ctx: CanvasRenderingContext2D, state: GameState, dimensions: { width: number, height: number }, time: number) => {
   state.activeEvents.forEach(event => {
+    if (!event.started) return;
     switch (event.type) {
       case EnvEventType.SOLAR_STORM:
         // Teinte orange pulsante sur tout l'écran

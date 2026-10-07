@@ -1,57 +1,65 @@
-# 🚀 Space InZader : Technical Documentation
+# 🚀 Space InZader
 
-**Space InZader** est un Roguelite Spatial Tactique haute performance construit avec React et l'API Canvas.
+Roguelite spatial tactique en vue de dessus : survis aux vagues, monte de niveau, combine armes, passifs et keystones pour déclencher des synergies.
 
-## 🛠 Stack Technique
-- **Framework** : React 19
-- **Langage** : TypeScript (TSX)
-- **Rendu** : HTML5 Canvas (2D Context)
-- **Style** : Tailwind CSS (Utility-first)
-- **Build Tool** : Vite (pour le développement local)
+Construit avec **React 19 + TypeScript + Canvas 2D** (Vite). Aucun moteur de jeu externe.
 
-## 🧠 Architecture du Moteur
-Le jeu utilise un pattern de **découplage Moteur/Rendu** pour garantir 60 FPS constants même avec des centaines d'objets :
+## Jouer
 
-1.  **CoreEngine (Moteur de Logique)** : 
-    - L'état du jeu (`GameState`) est stocké dans un `useRef` (mutable).
-    - Cela évite les re-renders inutiles de React qui tueraient les performances.
-    - La logique de collision utilise un **QuadTree** pour passer d'une complexité O(n²) à O(n log n).
+```bash
+npm install
+```
 
-2.  **CoreRenderer (Moteur de Rendu)** :
-    - Utilise `requestAnimationFrame` pour synchroniser le dessin avec le rafraîchissement de l'écran.
-    - Système de couches (Background > Particles > Entities > VFX > HUD).
+```bash
+npm run dev
+```
 
-3.  **StatsCalculator (Système de Synergies)** :
-    - Implémentation d'un **rendement dégressif** (Diminishing Returns).
-    - Formule : `BonusEffectif = Σ (0.8^i)` pour chaque stack. Cela permet d'empiler les passifs sans casser l'équilibrage.
+Puis ouvre `http://localhost:5173`.
 
-## 🛠 Installation & Lancement Local
+### Commandes
 
-### Prérequis
-- [Node.js](https://nodejs.org/) (Version 18 ou supérieure)
+| Action | Clavier / souris | Tactile |
+|---|---|---|
+| Se déplacer | ZQSD / WASD / flèches | joystick (moitié gauche de l'écran) |
+| Viser | souris | automatique |
+| Tirer | clic gauche / Espace | automatique |
+| Tir automatique | F | — |
+| Dash | Shift | bouton ⚡ |
+| Nova EM | E | bouton 🌀 |
+| Pause | P / Échap | bouton ⏸ |
+| Couper le son / piste suivante | M / N | — |
+| Overlay debug (FPS, entités) | F3 | — |
 
-### Procédure
-1.  Exporte tous les fichiers dans un dossier nommé `space-inzader`.
-2.  Ouvre un terminal dans ce dossier.
-3.  Installe les dépendances :
-    ```bash
-    npm install
-    ```
-4.  Lance le serveur de développement :
-    ```bash
-    npm start
-    ```
-5.  Ouvre ton navigateur sur `http://localhost:5173`.
+## Contenu
 
-## 🕹 Commandes de Développement
-- **F3** : Activer/Désactiver l'overlay de Debug (FPS, FrameTime, Entités).
-- **Mode Lab** : Accessible depuis le menu principal. Permet de modifier la physique (vitesse, dégâts, heat) en temps réel pendant que tu joues.
+- **7 vaisseaux** (3 à débloquer) avec stats, arme de départ et keystone signature.
+- **24 armes** aux comportements distincts : balles, rayons perforants, arcs électriques, ondes de choc, frappes orbitales, drones, lance-flammes, mines, missiles guidés, bombes à fragmentation, puits gravitationnels…
+- **30 passifs** (rendement dégressif), **9 keystones** (dont conditionnelles : chaleur, coque basse, immobilité, série d'impacts…).
+- **7 synergies** par tags, avec paliers et mécaniques spéciales (critiques explosifs, réactions en chaîne, propagation des brûlures…).
+- **8 ennemis + 3 boss** en rotation toutes les 10 vagues.
+- **4 événements** : pluie de météores, trou noir, éruption solaire, tempête magnétique.
+- Défense en couches **bouclier → armure → coque** avec 4 types de dégâts (EM, cinétique, thermique, explosif).
+- Méta-progression sauvegardée (records, historique, déblocages), musique, version mobile.
 
-## 🎨 Feedback Visuel (Game Feel)
-- **Hit Flash** : Les entités clignotent en blanc pur lors d'un impact.
-- **Damage Numbers** : Textes flottants avec pop-animation.
-    - ⚪ *Cinétique*
-    - 🔵 *EM / Ions*
-    - 🟠 *Thermique*
-    - 🟡 *Explosif / Crit*
-    - 🔴 *Dégâts Joueur*
+## Développement
+
+| Commande | Rôle |
+|---|---|
+| `npm run dev` | serveur de développement |
+| `npm test` | tests du moteur (Vitest, sans navigateur) |
+| `npm run typecheck` | vérification TypeScript |
+| `npm run build` | typecheck + build de production dans `dist/` |
+| `npm run balance` | rapport d'équilibrage : un bot joue des parties avec chaque vaisseau |
+
+- **Mode Lab** (menu principal → ENGINEERING_LAB) : modifie les stats en direct, fait apparaître ennemis et événements, installe n'importe quelle arme ou passif.
+- **Console (dev)** : `window.__SI.state()` renvoie l'état du jeu ; `window.__SI.action('spawn_enemy', 'tank')` déclenche une action dev.
+
+L'architecture et les guides « comment ajouter une arme / un ennemi / … » sont dans [ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Déploiement
+
+Le workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) lance typecheck, tests et build à chaque push et PR. Sur `main`, il publie `dist/` sur la branche `gh-pages` (GitHub Pages). Le build utilise des chemins relatifs (`base: './'`) : il fonctionne aussi bien à la racine d'un domaine que sous `/Space-InZader/`.
+
+## Crédits
+
+Musiques 8-bit issues de Newgrounds Audio Portal (fichiers `public/music/`, repris de la V1 du projet).

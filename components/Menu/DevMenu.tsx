@@ -1,7 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { GameState } from '../../types';
-import { INITIAL_STATS, WEAPON_POOL, PASSIVES, KEYSTONES } from '../../constants';
+import { INITIAL_STATS } from '../../constants';
+import { WEAPONS } from '../../data/weapons';
+import { PASSIVES } from '../../data/passives';
+import { KEYSTONES } from '../../data/keystones';
+import { ENEMIES } from '../../data/enemies';
+import { EVENTS } from '../../data/events';
 
 interface DevMenuProps {
   state: GameState;
@@ -22,7 +27,7 @@ export const DevMenu: React.FC<DevMenuProps> = ({ state, isLabMenuOpen, onClose,
 
   const [selectedAsset, setSelectedAsset] = useState<{type: 'Armes' | 'Keystones' | 'Modules', item: any}>({
     type: 'Armes',
-    item: WEAPON_POOL[0]
+    item: WEAPONS[0]
   });
 
   const TabButton = ({ id, label, icon }: { id: any, label: string, icon?: string }) => (
@@ -91,7 +96,7 @@ export const DevMenu: React.FC<DevMenuProps> = ({ state, isLabMenuOpen, onClose,
                <div className="w-[450px] border-r border-white/10 flex flex-col bg-slate-900/20 overflow-y-auto p-8 gap-6">
                   <section>
                     <h3 className="text-[10px] font-black text-cyan-500 mb-4 uppercase tracking-widest">Armement</h3>
-                    {WEAPON_POOL.map(w => (
+                    {WEAPONS.map(w => (
                       <button key={w.id} onMouseDown={() => setSelectedAsset({type: 'Armes', item: w})} className={`w-full text-left px-4 py-3 text-[10px] font-bold border-l-2 mb-1 pointer-events-auto ${selectedAsset.item.id === w.id ? 'bg-cyan-500/10 border-cyan-400 text-white' : 'border-transparent text-slate-500 hover:text-white'}`}>{w.name}</button>
                     ))}
                   </section>
@@ -202,43 +207,35 @@ export const DevMenu: React.FC<DevMenuProps> = ({ state, isLabMenuOpen, onClose,
                 <h3 className="text-[10px] font-black text-red-500 uppercase tracking-widest mb-4">// Entity Injection</h3>
                 
                 <div className="grid grid-cols-1 gap-3">
-                   <button 
-                    onMouseDown={() => onTriggerAction('spawn_basic')} 
-                    className="p-5 bg-slate-900 border border-white/10 hover:border-white transition-all text-left flex justify-between items-center group pointer-events-auto"
-                   >
-                      <span className="text-xs font-bold text-slate-300 group-hover:text-white">BASIC_DRONE_v1</span>
-                      <span className="text-[9px] font-mono text-slate-600">INJECT ></span>
-                   </button>
-                   <button 
-                    onMouseDown={() => onTriggerAction('spawn_swarmer')} 
-                    className="p-5 bg-slate-900 border border-white/10 hover:border-purple-500 transition-all text-left flex justify-between items-center group pointer-events-auto"
-                   >
-                      <span className="text-xs font-bold text-slate-300 group-hover:text-purple-400">SWARM_CELL_B</span>
-                      <span className="text-[9px] font-mono text-slate-600">INJECT ></span>
-                   </button>
-                   <button 
-                    onMouseDown={() => onTriggerAction('spawn_sniper')} 
-                    className="p-5 bg-slate-900 border border-white/10 hover:border-blue-500 transition-all text-left flex justify-between items-center group pointer-events-auto"
-                   >
-                      <span className="text-xs font-bold text-slate-300 group-hover:text-blue-400">PRECISION_SNIPER</span>
-                      <span className="text-[9px] font-mono text-slate-600">INJECT ></span>
-                   </button>
-                   <button 
-                    onMouseDown={() => onTriggerAction('spawn_kamikaze')} 
-                    className="p-5 bg-slate-900 border border-white/10 hover:border-orange-500 transition-all text-left flex justify-between items-center group pointer-events-auto"
-                   >
-                      <span className="text-xs font-bold text-slate-300 group-hover:text-orange-400">BOOM_INTERCEPTOR</span>
-                      <span className="text-[9px] font-mono text-slate-600">INJECT ></span>
-                   </button>
-                   
-                   <button 
-                    onMouseDown={() => onTriggerAction('spawn_boss')} 
-                    className="mt-4 p-6 bg-red-600/10 border-2 border-red-600 text-red-500 font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-[0_0_20px_rgba(220,38,38,0.2)] pointer-events-auto"
-                   >
-                      SPAWN_ALPHA_BOSS
-                   </button>
+                   {Object.values(ENEMIES).map(def => (
+                     <button
+                       key={def.id}
+                       onMouseDown={() => onTriggerAction('spawn_enemy', def.id)}
+                       className={`p-4 border transition-all text-left flex justify-between items-center group pointer-events-auto ${def.isBoss ? 'bg-red-600/10 border-red-600/60 hover:bg-red-600/30' : 'bg-slate-900 border-white/10 hover:border-white'}`}
+                     >
+                        <span className="text-xs font-bold text-slate-300 group-hover:text-white flex items-center gap-3">
+                          <span className="w-2.5 h-2.5 inline-block" style={{ backgroundColor: def.color }} />
+                          {def.isBoss ? 'BOSS — ' : ''}{def.name.toUpperCase()}
+                        </span>
+                        <span className="text-[9px] font-mono text-slate-600">INJECT {'>'}</span>
+                     </button>
+                   ))}
                 </div>
                 
+                <h3 className="text-[10px] font-black text-amber-500 uppercase tracking-widest mt-8 mb-2">// Événements</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.values(EVENTS).map(ev => (
+                    <button
+                      key={ev.type}
+                      onMouseDown={() => onTriggerAction('trigger_event', ev.type)}
+                      className="p-3 bg-slate-900 border border-white/10 hover:border-white text-[10px] font-black uppercase pointer-events-auto text-left"
+                      style={{ color: ev.color }}
+                    >
+                      {ev.name}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="pt-10 border-t border-white/10 space-y-3">
                    <button onMouseDown={() => onTriggerAction('clear_enemies')} className="w-full py-4 bg-slate-900 text-[10px] font-black uppercase hover:bg-red-600 transition-all pointer-events-auto">PURGE_ENTITIES</button>
                    <button onMouseDown={() => onTriggerAction('reset_simulation')} className="w-full py-4 border border-white/20 text-[10px] font-black uppercase hover:bg-white hover:text-black transition-all pointer-events-auto">REBOOT_SCENARIO</button>

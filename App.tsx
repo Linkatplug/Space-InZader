@@ -1,17 +1,26 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { GameState, Entity, DamageType, Weapon, Stats, Keystone, Passive, EnvEventType } from './types';
-import { WORLD_WIDTH, WORLD_HEIGHT, VIEW_SCALE, INITIAL_STATS, WEAPON_POOL, CONTROLS } from './constants';
+import { WORLD_WIDTH, WORLD_HEIGHT, viewScaleFor, INITIAL_STATS, CONTROLS } from './constants';
 import { HUD } from './components/HUD';
 import { UpgradeMenu } from './components/Menu/UpgradeMenu';
 import { DevMenu } from './components/Menu/DevMenu';
 import { DebugOverlay } from './components/DebugOverlay';
 import { updateGameState, spawnEnemy, createEffect } from './engine/CoreEngine';
 import { renderGame } from './render/CoreRenderer';
-import { startBGM, stopBGM } from './engine/SoundEngine';
+import { startBGM, stopBGM, setMuted, nextTrack } from './engine/SoundEngine';
 import { input } from './engine/InputManager';
-import { BLINK_DASH, TACTICAL_NOVA } from './engine/AbilitySystem';
-import { calculateRuntimeStats, syncDefenseState } from './engine/StatsCalculator';
+import { createInitialState } from './engine/GameFactory';
+import { applyUpgrade, rollUpgradeOptions, UpgradeOption } from './engine/Progression';
+import { WEAPONS } from './data/weapons';
+import { triggerEvent } from './engine/EventSystem';
+import { MainMenu } from './components/Menu/MainMenu';
+import { TouchControls, isTouchDevice } from './components/TouchControls';
+import { GameOverScreen } from './components/Menu/GameOverScreen';
+import { MetaSave, RunSummary, loadSave, writeSave, recordRun } from './engine/Meta';
+import { calculateRuntimeStats, syncDefenseState, shipBaseStats } from './engine/StatsCalculator';
+
+const SIM_STEP = 1 / 60;
 
 const App: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -23,34 +32,42 @@ const App: React.FC = () => {
   const frameTimes = useRef<number[]>([]);
   const lastFpsUpdate = useRef<number>(0);
 
-  const createInitialState = (): GameState => ({
-    player: {
-      id: 'player', x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2, rotation: -Math.PI / 2, vx: 0, vy: 0, radius: 40, type: 'player',
-      baseStats: { ...INITIAL_STATS }, runtimeStats: { ...INITIAL_STATS }, modifiers: [], statsDirty: true,
-      defense: { shield: INITIAL_STATS.maxShield, armor: INITIAL_STATS.maxArmor, hull: INITIAL_STATS.maxHull },
-      isGodMode: false
-    },
-    heat: 0, maxHeat: INITIAL_STATS.maxHeat, isOverheated: false, score: 0, level: 1, experience: 0, 
-    expToNextLevel: 60,
-    wave: 1, waveTimer: 35,
-    waveKills: 0,
-    waveQuota: 15,
-    totalKills: 0,
-    startTime: Date.now(),
-    enemies: [], projectiles: [], xpDrops: [], effects: [], particles: [], activeWeapons: [{ ...WEAPON_POOL[0], level: 1 }],
-    activeAbilities: [
-      { ...BLINK_DASH },
-      { ...TACTICAL_NOVA }
-    ],
-    activeEvents: [],
-    keystones: [], activePassives: [], status: 'menu', comboCount: 0, comboTimer: 0, currentMisses: 0, bossSpawned: false,
-    isDebugMode: false,
-  });
-
   const engineState = useRef<GameState>(createInitialState());
+  const [upgradeOptions, setUpgradeOptions] = useState<UpgradeOption[]>([]);
+  const [save, setSave] = useState<MetaSave>(() => loadSave());
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(() => { setMuted(saveRef.current.settings.muted); }, []);
+  const [runSummary, setRunSummary] = useState<RunSummary | null>(null);
+  const isTouch = React.useMemo(() => isTouchDevice(), []);
+  const togglePause = () => {
+    const s = engineState.current;
+    if (s.status === 'playing') { s.status = 'paused'; stopBGM(); }
+    else if (s.status === 'paused') { s.status = 'playing'; startBGM(); }
+    setUiState({ ...s });
+  };
+
+  /** Fin de partie : enregistre records / déblocages. */
+  const finishRun = (s: GameState) => {
+    const { save: next, summary } = recordRun(saveRef.current, s);
+    saveRef.current = next;
+    writeSave(next);
+    setSave(next);
+    setRunSummary(summary);
+  };
+
+  const updateSettings = (patch: Partial<MetaSave['settings']>) => {
+    const next = { ...saveRef.current, settings: { ...saveRef.current.settings, ...patch } };
+    saveRef.current = next;
+    writeSave(next);
+    setSave(next);
+  };
   const [uiState, setUiState] = useState<GameState>(engineState.current);
   const lastTime = useRef<number>(0);
+  const accumulator = useRef<number>(0);
+  const lastUiSync = useRef<number>(0);
   const screenShake = useRef<number>(0);
+  const VIEW_SCALE = viewScaleFor(dimensions);
   const camera = useRef({ x: WORLD_WIDTH / 2 - dimensions.width / (2 * VIEW_SCALE), y: WORLD_HEIGHT / 2 - dimensions.height / (2 * VIEW_SCALE) });
 
   useEffect(() => {
@@ -60,8 +77,11 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const resetGame = (newStatus: 'menu' | 'playing' | 'dev' | 'lab' = 'menu') => {
-    const freshState = createInitialState();
+  const resetGame = (newStatus: 'menu' | 'playing' | 'dev' | 'lab' = 'menu', shipId?: string) => {
+    const freshState = createInitialState(shipId ?? engineState.current.shipId);
+    freshState.autoFire = saveRef.current.settings.autoFire || isTouch;
+    freshState.autoAim = isTouch;
+    setRunSummary(null);
     freshState.status = newStatus;
     freshState.startTime = Date.now();
     engineState.current = freshState;
@@ -92,28 +112,40 @@ const App: React.FC = () => {
 
       if ((s.status === 'playing' || s.status === 'lab') && ctx) {
         const mousePos = input.getMousePos();
-        const mouseWorld = {
-          x: (mousePos.x / VIEW_SCALE) + camera.current.x,
-          y: (mousePos.y / VIEW_SCALE) + camera.current.y
-        };
-
         const isInputFocused = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
         const keys = isInputFocused ? new Set<string>() : input.getKeys();
+        s.analogMove = input.getAnalog();
 
-        updateGameState(
-          s, deltaTime, time, keys, mouseWorld,
-          () => { if(s.status !== 'lab') { s.status = 'leveling'; stopBGM(); } },
-          () => { 
-            if(s.status === 'lab') {
-              handleDevAction('heal_player');
-              createEffect(s, s.player.x, s.player.y, "RESPAWN_SIMULÉ", "#ffffff");
-            } else {
-              s.status = 'gameover'; 
-              stopBGM(); 
+        // Pas de simulation fixe (60 Hz) : même vitesse de jeu quel que soit l'écran
+        accumulator.current += deltaTime;
+        let steps = 0;
+        while (accumulator.current >= SIM_STEP && steps < 6) {
+          accumulator.current -= SIM_STEP;
+          steps++;
+          const mouseWorld = {
+            x: (mousePos.x / VIEW_SCALE) + camera.current.x,
+            y: (mousePos.y / VIEW_SCALE) + camera.current.y
+          };
+          updateGameState(
+            s, SIM_STEP, keys, mouseWorld,
+            () => { if (s.status !== 'lab') { s.status = 'leveling'; setUpgradeOptions(rollUpgradeOptions(s)); stopBGM(); } },
+            () => {
+              if (s.status === 'lab') {
+                handleDevAction('heal_player');
+                createEffect(s, s.player.x, s.player.y, "RESPAWN_SIMULÉ", "#ffffff");
+              } else {
+                s.status = 'gameover';
+                stopBGM();
+                finishRun(s);
+              }
             }
-          },
-          (amount) => { screenShake.current = amount; }
-        );
+          );
+          if (s.status !== 'playing' && s.status !== 'lab') { accumulator.current = 0; break; }
+        }
+        if (steps >= 6) accumulator.current = 0;
+
+        if (s.shake > screenShake.current) screenShake.current = s.shake;
+        s.shake = 0;
 
         const sidebarWidth = 450;
         const offset = (s.status === 'lab' && isLabMenuOpen) ? sidebarWidth : 0;
@@ -127,11 +159,15 @@ const App: React.FC = () => {
         camera.current.y += (s.player.y - dimensions.height / (2 * VIEW_SCALE) - camera.current.y) * 0.1;
 
         if (screenShake.current > 0) screenShake.current -= deltaTime * 40;
-        setUiState({ ...s });
+        // HUD React synchronisé à ~30 Hz (immédiatement si l'écran change : level-up, game over)
+        if (time - lastUiSync.current > 33 || s.status !== 'playing') {
+          lastUiSync.current = time;
+          setUiState({ ...s });
+        }
       }
 
       if (ctx) {
-        renderGame(ctx, s, dimensions, camera.current, screenShake.current, time);
+        renderGame(ctx, s, dimensions, camera.current, screenShake.current, s.time, VIEW_SCALE);
       }
       animationFrameId = requestAnimationFrame(gameLoop);
     };
@@ -142,10 +178,20 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
-      if (key === CONTROLS.PAUSE) {
+      if (key === CONTROLS.PAUSE || key === 'escape') togglePause();
+      if (key === CONTROLS.MUTE) {
+        const muted = !saveRef.current.settings.muted;
+        setMuted(muted);
+        updateSettings({ muted });
         const s = engineState.current;
-        if (s.status === 'playing') { s.status = 'paused'; stopBGM(); } 
-        else if (s.status === 'paused') { s.status = 'playing'; startBGM(); }
+        createEffect(s, s.player.x, s.player.y - 60, muted ? 'SON : OFF' : 'SON : ON', '#94a3b8');
+      }
+      if (key === CONTROLS.NEXT_TRACK) nextTrack();
+      if (key === CONTROLS.AUTO_FIRE) {
+        const s = engineState.current;
+        s.autoFire = !s.autoFire;
+        updateSettings({ autoFire: s.autoFire });
+        createEffect(s, s.player.x, s.player.y - 60, s.autoFire ? 'TIR AUTO : ON' : 'TIR AUTO : OFF', '#22d3ee');
         setUiState({...s});
       }
       if (key === CONTROLS.DEBUG) {
@@ -155,6 +201,7 @@ const App: React.FC = () => {
         setUiState({...s});
       }
     };
+    input.attach();
     window.addEventListener('keydown', handleGlobalKeys);
     return () => { window.removeEventListener('keydown', handleGlobalKeys); input.dispose(); };
   }, []);
@@ -175,7 +222,7 @@ const App: React.FC = () => {
         break;
       case 'reset_physics':
         // Reset profond : réalignement des PV max et désactivation God Mode
-        s.player.baseStats = { ...INITIAL_STATS };
+        s.player.baseStats = shipBaseStats(s.shipId);
         s.player.isGodMode = false;
         s.player.statsDirty = true;
         // On force le recalcul immédiat pour éviter les overflows de PV
@@ -183,11 +230,15 @@ const App: React.FC = () => {
         syncDefenseState(s.player);
         createEffect(s, s.player.x, s.player.y, "PHYSICS_NORMALIZED", "#fbbf24");
         break;
-      case 'spawn_basic': case 'spawn_swarmer': case 'spawn_sniper': case 'spawn_kamikaze': case 'spawn_boss':
-        const type = action.replace('spawn_', '');
-        const newEnemy = spawnEnemy(s.wave, s.player, type as any, spawnDist);
+      case 'spawn_enemy': {
+        const newEnemy = spawnEnemy(s.wave, s.player, data, spawnDist);
         s.enemies.push(newEnemy);
-        createEffect(s, newEnemy.x, newEnemy.y, `INJECT_${type.toUpperCase()}`, "#ef4444");
+        createEffect(s, newEnemy.x, newEnemy.y, `INJECT_${String(data).toUpperCase()}`, "#ef4444");
+        break;
+      }
+      case 'trigger_event':
+        s.activeEvents = [];
+        triggerEvent(s, data);
         break;
       case 'clear_enemies': 
         s.enemies = []; 
@@ -198,24 +249,17 @@ const App: React.FC = () => {
         s.player.statsDirty = true;
         break;
       case 'install_weapon':
-        const existingW = s.activeWeapons.find(w => w.id === data.id);
-        if (existingW) existingW.level = Math.min(3, existingW.level + 1);
-        else s.activeWeapons.push({ ...data, level: 1 });
+        applyUpgrade(s, { type: 'weapon', item: data }, false);
         break;
       case 'install_passive':
-        const existingP = s.activePassives.find(ap => ap.passive.id === data.id);
-        if (existingP) existingP.stacks++;
-        else s.activePassives.push({ passive: data, stacks: 1 });
-        s.player.statsDirty = true;
+        applyUpgrade(s, { type: 'passive', item: data }, false);
         break;
       case 'install_keystone':
-        if (!s.keystones.find(k => k.id === data.id)) {
-          s.keystones.push(data);
-          s.player.statsDirty = true;
-        }
+        applyUpgrade(s, { type: 'keystone', item: data }, false);
         break;
       case 'clear_loadout':
-        s.activeWeapons = [{ ...WEAPON_POOL[0], level: 1 }];
+        s.activeWeapons = [{ ...WEAPONS[0], level: 1 }];
+        s.drones = [];
         s.activePassives = [];
         s.keystones = [];
         s.player.statsDirty = true;
@@ -253,6 +297,16 @@ const App: React.FC = () => {
     setUiState({...s});
   };
 
+  // Accès debug (dev uniquement) : window.__SI.state(), window.__SI.action('spawn_enemy', 'tank')...
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    (window as any).__SI = {
+      state: () => engineState.current,
+      action: (a: string, d?: any) => handleDevAction(a, d),
+      start: () => resetGame('playing'),
+    };
+  });
+
   return (
     <div className="relative w-screen h-screen bg-black flex items-center justify-center overflow-hidden">
       <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} className="absolute inset-0" />
@@ -261,16 +315,12 @@ const App: React.FC = () => {
       {uiState.status !== 'menu' && uiState.status !== 'dev' && uiState.status !== 'lab' && <HUD state={uiState} />}
       
       {uiState.status === 'menu' && (
-        <div className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center z-50 font-orbitron text-center">
-          <h1 className="text-[8rem] font-bold text-cyan-400 mb-4 uppercase tracking-tighter italic drop-shadow-[0_0_50px_rgba(34,211,238,0.3)]">Space InZader</h1>
-          <div className="flex flex-col gap-4">
-            <button onClick={() => resetGame('playing')} className="px-12 py-10 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-3xl border-b-8 border-cyan-800 transition-all uppercase active:translate-y-1">DÉMARRER MISSION</button>
-            <div className="flex gap-4">
-               <button onClick={() => resetGame('dev')} className="flex-1 px-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold text-sm border-b-4 border-slate-950 transition-all uppercase tracking-widest">DATABASE_DEV</button>
-               <button onClick={() => resetGame('lab')} className="flex-1 px-8 py-4 bg-indigo-900/50 hover:bg-indigo-800 text-indigo-300 font-bold text-sm border-b-4 border-indigo-950 transition-all uppercase tracking-widest">ENGINEERING_LAB</button>
-            </div>
-          </div>
-        </div>
+        <MainMenu
+          save={save}
+          onStart={(shipId) => resetGame('playing', shipId)}
+          onDev={() => resetGame('dev')}
+          onLab={() => resetGame('lab')}
+        />
       )}
 
       {(uiState.status === 'dev' || uiState.status === 'lab') && (
@@ -284,47 +334,40 @@ const App: React.FC = () => {
       )}
 
       {uiState.status === 'leveling' && (
-        <UpgradeMenu 
+        <UpgradeMenu
+          options={upgradeOptions}
           onSelect={(u) => {
             const s = engineState.current;
-            if (u.type === 'weapon') {
-              const ex = s.activeWeapons.find(w => w.id === u.item.id);
-              if (ex) ex.level = Math.min(3, ex.level + 1);
-              else s.activeWeapons.push({ ...u.item, level: 1 });
-            } else if (u.type === 'passive') {
-              const ex = s.activePassives.find(p => p.passive.id === u.item.id);
-              if (ex) ex.stacks = Math.min(u.item.maxStacks, ex.stacks + 1);
-              else s.activePassives.push({ passive: u.item, stacks: 1 });
-              s.player.statsDirty = true;
+            applyUpgrade(s, u);
+            // Plusieurs niveaux d'un coup : on enchaîne les menus
+            if (s.experience >= s.expToNextLevel) {
+              setUpgradeOptions(rollUpgradeOptions(s));
+            } else {
+              s.status = 'playing';
+              startBGM();
             }
-            if (s.player.statsDirty) {
-              s.player.runtimeStats = calculateRuntimeStats(s.player, s);
-              syncDefenseState(s.player);
-              s.player.statsDirty = false;
-            }
-            s.experience -= s.expToNextLevel;
-            s.expToNextLevel = Math.floor(s.expToNextLevel * 1.3);
-            s.level++;
-            s.status = 'playing';
-            startBGM();
             setUiState({ ...s });
-          }} 
-          currentWeapons={uiState.activeWeapons} 
-          currentKeystones={uiState.keystones} 
+          }}
+          currentWeapons={uiState.activeWeapons}
         />
       )}
       
+      {isTouch && uiState.status === 'playing' && <TouchControls onPause={togglePause} />}
+
       {uiState.status === 'paused' && (
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40 font-orbitron">
+        <div onClick={togglePause} className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-40 font-orbitron cursor-pointer">
            <h2 className="text-[10vw] font-black text-white italic animate-pulse">SYSTEM_PAUSE</h2>
+           <p className="text-xs text-slate-400 uppercase tracking-[0.4em] mt-4">P / Échap / toucher pour reprendre</p>
         </div>
       )}
       
       {uiState.status === 'gameover' && (
-        <div className="absolute inset-0 bg-red-950/95 flex flex-col items-center justify-center z-50 text-center font-orbitron p-20">
-           <h2 className="text-[10vw] font-bold text-white mb-6 uppercase tracking-tighter">CRITICAL_FAILURE</h2>
-           <button onClick={() => resetGame('playing')} className="px-24 py-12 bg-white text-red-900 font-bold text-4xl uppercase hover:bg-red-100 transition-colors">SYSTEM_REBOOT</button>
-        </div>
+        <GameOverScreen
+          state={uiState}
+          summary={runSummary}
+          onRetry={() => resetGame('playing', uiState.shipId)}
+          onMenu={() => resetGame('menu', uiState.shipId)}
+        />
       )}
     </div>
   );

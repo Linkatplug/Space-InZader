@@ -9,7 +9,8 @@ export const applyDamage = (target: Entity, packet: DamagePacket, time?: number)
   const defense = target.defense;
   
   // Marquer le temps du dernier impact pour le délai de régénération
-  target.lastDamageTime = time || performance.now();
+  // (time non fourni = dégât continu, ne déclenche pas le flash)
+  if (time !== undefined) target.lastDamageTime = time;
 
   // Appliquer le multiplicateur de dégâts reçus (ex: Microwarpdrive)
   let remainingDamage = packet.amount * (stats.dmgTakenMult || 1.0);
