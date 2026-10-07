@@ -395,7 +395,7 @@ const App: React.FC = () => {
       )}
 
       {optionsOpen && (uiState.status === 'menu' || uiState.status === 'paused') && (
-        <OptionsMenu settings={save.settings} onChange={changeSettings} onClose={() => setOptionsOpen(false)} />
+        <OptionsMenu settings={save.settings} onChange={changeSettings} onClose={() => setOptionsOpen(false)} autoFireLocked={isTouch} />
       )}
       
       {uiState.status === 'gameover' && (

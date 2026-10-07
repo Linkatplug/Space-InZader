@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   hudLayout, HUD_BASE, formatClock, heatInfo, weaponSlots, synergyRows, keystoneInfo,
-  bossIncoming, bossInfo, synergyGains, upgradeKind, weaponStats, techNote, TAG_LABELS, DAMAGE_LABELS,
+  bossIncoming, bossInfo, activeBuffs, synergyGains, upgradeKind, weaponStats, techNote, TAG_LABELS, DAMAGE_LABELS,
 } from '../components/hud/model';
 import { MAX_WEAPON_SLOTS } from '../constants';
 import { KEYSTONES } from '../data/keystones';
@@ -163,7 +163,21 @@ describe('HUD : vague et boss', () => {
     expect(bossInfo(s)).toMatchObject({ name: 'Dreadnought', ratio: 1 });
     boss.defense.hull = boss.runtimeStats.maxHull / 2;
     expect(bossInfo(s)!.ratio).toBeLessThan(1);
+    expect(bossInfo(s)!.enraged).toBe(false);
+    boss.enraged = true;
+    expect(bossInfo(s)!.enraged).toBe(true);
     boss.dead = true;
     expect(bossInfo(s)).toBeNull();
+  });
+
+  it('bonus temporaires : temps restant en secondes, expirés masqués, plus court en premier', () => {
+    const s = makeState();
+    s.time = 10_000;
+    s.buffs = [
+      { id: 'a', name: 'Long', until: 15_000, duration: 5_000, modifiers: [], color: '#fff' },
+      { id: 'b', name: 'Court', until: 11_500, duration: 5_000, modifiers: [], color: '#fff' },
+      { id: 'c', name: 'Fini', until: 9_000, duration: 5_000, modifiers: [], color: '#fff' },
+    ];
+    expect(activeBuffs(s).map(b => [b.name, b.remaining])).toEqual([['Court', 1.5], ['Long', 5]]);
   });
 });

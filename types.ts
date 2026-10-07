@@ -230,6 +230,7 @@ export interface Buff {
   id: string;
   name: string;
   until: number;        // ms (horloge state.time)
+  duration: number;     // durée totale (ms), pour afficher une jauge
   modifiers: Modifier[];
   color: string;
 }

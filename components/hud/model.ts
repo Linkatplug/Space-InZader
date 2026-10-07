@@ -156,7 +156,7 @@ export const keystoneInfo = (s: GameState, k: Keystone): KeystoneInfo => {
 export { BOSS_WAVE_INTERVAL };
 export const bossIncoming = (s: GameState) => (s.wave + 1) % BOSS_WAVE_INTERVAL === 0;
 
-export interface BossInfo { name: string; color: string; ratio: number; }
+export interface BossInfo { name: string; color: string; ratio: number; enraged: boolean; }
 
 export const bossInfo = (s: GameState): BossInfo | null => {
   const boss = s.enemies.find(e => e.type === 'boss' && !e.dead);
@@ -168,6 +168,7 @@ export const bossInfo = (s: GameState): BossInfo | null => {
     name: def?.name ?? 'Boss',
     color: def?.color ?? '#facc15',
     ratio: ratio(shield + armor + hull, maxShield + maxArmor + maxHull),
+    enraged: !!boss.enraged,
   };
 };
 
@@ -264,3 +265,14 @@ export const weaponStats = (w: Weapon, level = w.level) => {
 
 /** Bonus apporté par le passage au niveau Tech `level` (2 ou 3), depuis `Weapon.techNotes`. */
 export const techNote = (w: Weapon, level: number): string | undefined => w.techNotes?.[level - 2];
+
+// --- Bonus temporaires --------------------------------------------------------
+
+export interface BuffView { id: string; name: string; color: string; remaining: number; }
+
+/** Bonus de compétence encore actifs, avec leur temps restant (s), le plus court d'abord. */
+export const activeBuffs = (s: GameState): BuffView[] =>
+  (s.buffs ?? [])
+    .map(b => ({ id: b.id, name: b.name, color: b.color, remaining: (b.until - s.time) / 1000 }))
+    .filter(b => b.remaining > 0)
+    .sort((a, b) => a.remaining - b.remaining);

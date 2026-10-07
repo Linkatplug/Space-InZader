@@ -5,7 +5,7 @@ import { EVENTS } from '../data/events';
 import { MAX_WEAPON_LEVEL } from '../engine/Progression';
 import {
   HudLayout, hudLayout, formatClock, ratio, heatInfo, HeatInfo, weaponSlots, WeaponSlot,
-  synergyRows, SynergyRow, keystoneInfo, bossIncoming, bossInfo,
+  synergyRows, SynergyRow, keystoneInfo, bossIncoming, bossInfo, activeBuffs,
 } from './hud/model';
 import { Panel, Label, Num, Meter, Pips, cx } from './hud/widgets';
 
@@ -103,10 +103,13 @@ const BossBar: React.FC<{ state: GameState; width: number }> = ({ state, width }
   return (
     <div style={{ width }} className="flex flex-col gap-1">
       <div className="flex justify-between items-baseline">
-        <span className="font-orbitron font-bold text-[15px] uppercase tracking-wider" style={{ color: boss.color }}>☠ {boss.name}</span>
+        <span className="flex items-center gap-2">
+          <span className="font-orbitron font-bold text-[15px] uppercase tracking-wider" style={{ color: boss.color }}>☠ {boss.name}</span>
+          {boss.enraged && <span className="font-hud font-bold text-[12px] uppercase px-1.5 py-0.5 bg-red-600 text-white animate-hud-blink">Enragé</span>}
+        </span>
         <Num className="text-[14px]">{Math.ceil(boss.ratio * 100)}%</Num>
       </div>
-      <Meter value={boss.ratio} color={boss.color} height={14} />
+      <Meter value={boss.ratio} color={boss.enraged ? '#ef4444' : boss.color} height={14} />
     </div>
   );
 };
@@ -272,6 +275,22 @@ const AbilitySlot: React.FC<{ ability: ActiveAbility; size?: number }> = ({ abil
   );
 };
 
+/** Bonus temporaires des compétences, avec le temps restant. */
+const BuffList: React.FC<{ state: GameState; compact?: boolean }> = ({ state, compact }) => {
+  const buffs = activeBuffs(state);
+  if (buffs.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {buffs.map(b => (
+        <div key={b.id} className={cx('flex items-center gap-2 bg-slate-950/80 border-l-[3px]', compact ? 'px-1.5 py-0.5' : 'px-2 py-1', b.remaining < 1.5 && 'animate-hud-blink')} style={{ borderColor: b.color }}>
+          <span className={cx('font-hud font-bold uppercase', compact ? 'text-[12px]' : 'text-[13px]')} style={{ color: b.color }}>{b.name}</span>
+          <Num className={compact ? 'text-[12px]' : 'text-[14px]'}>{b.remaining.toFixed(1)} s</Num>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // --- Bas centre : armes -------------------------------------------------------
 
 /** En dessous de ce délai de recharge, la barre clignoterait en permanence : on l'affiche pleine. */
@@ -408,7 +427,8 @@ const DesktopHUD: React.FC<{ state: GameState; layout: HudLayout }> = ({ state }
 
       <div className="absolute top-4 right-4"><BuildPanel state={state} /></div>
 
-      <div className="absolute bottom-4 left-4 flex flex-col gap-3">
+      <div className="absolute bottom-4 left-4 flex flex-col gap-3 w-[280px]">
+        <BuffList state={state} />
         <div className="flex gap-3">
           {state.activeAbilities.map(a => <AbilitySlot key={a.id} ability={a} />)}
         </div>
@@ -468,6 +488,7 @@ const CompactHUD: React.FC<{ state: GameState; layout: HudLayout; touch: boolean
 
       {/* Bas gauche : armes, défenses, chaleur (à droite : place pour les boutons tactiles) */}
       <div className="absolute bottom-2 left-2 flex flex-col gap-2 w-[220px]">
+        <BuffList state={state} compact />
         <div className="flex gap-1">
           {slots.map((s, i) => <WeaponChip key={i} slot={s} overheated={state.isOverheated} />)}
         </div>

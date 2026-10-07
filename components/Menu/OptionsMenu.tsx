@@ -8,6 +8,8 @@ interface OptionsMenuProps {
   settings: GameSettings;
   onChange: (patch: Partial<GameSettings>) => void;
   onClose: () => void;
+  /** Écran tactile : pas de bouton de tir, le tir auto est toujours actif. */
+  autoFireLocked?: boolean;
 }
 
 const Row: React.FC<{ label: string; hint?: string; children: React.ReactNode }> = ({ label, hint, children }) => (
@@ -55,7 +57,7 @@ const Toggle: React.FC<{ checked: boolean; label: string; onChange: (v: boolean)
 );
 
 /** Écran d'options : audio, confort visuel, tir auto. Les changements sont appliqués et sauvegardés immédiatement. */
-export const OptionsMenu: React.FC<OptionsMenuProps> = ({ settings, onChange, onClose }) => {
+export const OptionsMenu: React.FC<OptionsMenuProps> = ({ settings, onChange, onClose, autoFireLocked }) => {
   const set = (patch: Partial<GameSettings>) => onChange(normalizeSettingsPatch(patch));
   const slide = (k: SliderKey) => (v: number) => set({ [k]: v });
 
@@ -96,9 +98,20 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({ settings, onChange, on
         </Row>
 
         <h3 className="font-hud font-bold text-[14px] uppercase tracking-[0.15em] text-cyan-300 mt-6">Commandes</h3>
-        <Row label="Tir automatique" hint="Les armes tirent en continu vers le curseur.">
-          <Toggle label="Tir automatique" checked={settings.autoFire} onChange={v => set({ autoFire: v })} shortcut="F" />
-        </Row>
+        {autoFireLocked ? (
+          <Row label="Tir automatique" hint="Pas de bouton de tir sur écran tactile.">
+            <span className="flex items-center gap-3 opacity-60" aria-disabled="true">
+              <span className="relative w-[56px] h-[30px] border-2 bg-cyan-500/20 border-slate-400">
+                <span className="absolute top-[3px] left-[29px] w-[20px] h-[20px] bg-slate-300" />
+              </span>
+              <span className="font-hud font-bold text-[15px] text-slate-200">Toujours actif sur écran tactile</span>
+            </span>
+          </Row>
+        ) : (
+          <Row label="Tir automatique" hint="Les armes tirent en continu vers le curseur.">
+            <Toggle label="Tir automatique" checked={settings.autoFire} onChange={v => set({ autoFire: v })} shortcut="F" />
+          </Row>
+        )}
       </div>
     </div>
   );

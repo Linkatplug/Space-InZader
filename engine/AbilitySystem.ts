@@ -27,7 +27,7 @@ export const updateAbilities = (state: GameState, deltaTime: number, keys: Set<s
 /** Bonus temporaire : modificateurs appliqués au joueur jusqu'à `until` (ms). */
 export const addBuff = (state: GameState, id: string, name: string, seconds: number, modifiers: Modifier[], color: string) => {
   state.buffs = state.buffs.filter(b => b.id !== id);
-  state.buffs.push({ id, name, until: state.time + seconds * 1000, modifiers, color });
+  state.buffs.push({ id, name, until: state.time + seconds * 1000, duration: seconds * 1000, modifiers, color });
   refreshPlayerStats(state); // effet immédiat, sans attendre le pas suivant
 };
 
