@@ -178,7 +178,7 @@ export const isBossWave = (wave: number) => wave % BOSS_WAVE_INTERVAL === 0;
 export const bossForWave = (wave: number) => BOSS_ROTATION[(Math.floor(wave / BOSS_WAVE_INTERVAL) - 1 + BOSS_ROTATION.length) % BOSS_ROTATION.length];
 
 /** Multiplicateur de résistance des ennemis selon la vague. */
-export const difficultyForWave = (wave: number) => 1 + (wave - 1) * 0.15;
+export const difficultyForWave = (wave: number) => 1 + (wave - 1) * 0.25;
 
 /** Tire un type d'ennemi selon les poids de la vague. `rand` ∈ [0,1). */
 export const pickEnemyType = (wave: number, rand: number): string => {

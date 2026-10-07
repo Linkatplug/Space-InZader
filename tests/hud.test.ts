@@ -52,7 +52,11 @@ describe('HUD : formats et chaleur', () => {
     expect(heatInfo(s).level).toBe('ok');
     s.heat = s.maxHeat * 0.7;
     expect(heatInfo(s)).toMatchObject({ level: 'warm', percent: 70 });
-    s.heat = s.maxHeat * 0.9;
+    expect(heatInfo(s).ratePenalty).toBe(0);
+    s.heat = s.maxHeat * 0.85;
+    expect(heatInfo(s).level).toBe('throttled');
+    expect(heatInfo(s).ratePenalty).toBeGreaterThan(0);
+    s.heat = s.maxHeat * 0.95;
     expect(heatInfo(s).level).toBe('critical');
     s.isOverheated = true;
     expect(heatInfo(s).level).toBe('overheated');

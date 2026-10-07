@@ -6,7 +6,7 @@ import { ConditionId, DamageType, GameState, Keystone, Passive, ScalingSource, T
 import type { UpgradeOption } from '../../engine/Progression';
 import { synergyStatus } from '../../engine/Synergies';
 import { CONDITIONS, SCALING_SOURCES } from '../../engine/Conditions';
-import { OVERHEAT_RECOVERY } from '../../engine/CoreEngine';
+import { HEAT, heatThrottle } from '../../engine/Heat';
 import { weaponCooldown } from '../../engine/WeaponSystem';
 import { MAX_WEAPON_SLOTS, TECH_MULTIPLIERS } from '../../constants';
 import { ENEMIES, BOSS_WAVE_INTERVAL } from '../../data/enemies';
@@ -52,19 +52,38 @@ export const ratio = (value: number, max: number) => (max > 0 ? clamp(value / ma
 
 // --- Chaleur ----------------------------------------------------------------
 
-export type HeatLevel = 'ok' | 'warm' | 'critical' | 'overheated';
+export type HeatLevel = 'ok' | 'warm' | 'throttled' | 'critical' | 'overheated';
 
 export interface HeatInfo {
   ratio: number;
   percent: number;
   level: HeatLevel;
-  recovery: number; // seuil de reprise après surchauffe (0..1)
+  recovery: number;       // seuil de reprise après surchauffe (0..1)
+  throttleStart: number;  // début du bridage de cadence (0..1)
+  throttle: number;       // multiplicateur de cadence dû à la chaleur (1 = pleine cadence)
+  ratePenalty: number;    // baisse de cadence en % (0 = aucune)
 }
 
+/**
+ * États : stable → chaude (60 %) → bridage (la cadence baisse, voir engine/Heat.ts)
+ * → critique (90 %) → surchauffe (tir coupé jusqu'à la reprise).
+ */
 export const heatInfo = (s: GameState): HeatInfo => {
   const r = ratio(s.heat, s.maxHeat);
-  const level: HeatLevel = s.isOverheated ? 'overheated' : r >= 0.85 ? 'critical' : r >= 0.6 ? 'warm' : 'ok';
-  return { ratio: r, percent: Math.round(r * 100), level, recovery: OVERHEAT_RECOVERY };
+  const throttle = s.isOverheated ? 0 : heatThrottle(s);
+  const level: HeatLevel = s.isOverheated ? 'overheated'
+    : r >= 0.9 ? 'critical'
+    : r > HEAT.THROTTLE_START ? 'throttled'
+    : r >= 0.6 ? 'warm' : 'ok';
+  return {
+    ratio: r,
+    percent: Math.round(r * 100),
+    level,
+    recovery: HEAT.OVERHEAT_RECOVERY,
+    throttleStart: HEAT.THROTTLE_START,
+    throttle,
+    ratePenalty: Math.round((1 - throttle) * 100),
+  };
 };
 
 // --- Armes ------------------------------------------------------------------

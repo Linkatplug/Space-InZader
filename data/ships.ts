@@ -16,7 +16,7 @@ export const SHIPS: ShipClass[] = [
   {
     id: 'gunner', name: 'Mitrailleur', difficulty: 'moyen', color: '#facc15',
     description: 'Cadence de tir élevée, gestion de la surchauffe.',
-    stats: { fireRate: 1.25, maxShield: 40, cooling: 30 },
+    stats: { fireRate: 1.25, maxShield: 40, cooling: 33 },
     startingWeapon: 'auto_cannon', signatureKeystone: 'overclock_core',
     preferredTags: [Tag.KINETIC, Tag.BALLISTIC],
     abilities: ['blink_dash', 'overdrive'],

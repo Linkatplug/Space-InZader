@@ -339,6 +339,14 @@ const App: React.FC = () => {
       state: () => engineState.current,
       action: (a: string, d?: any) => handleDevAction(a, d),
       start: () => resetGame('playing'),
+      // Force un tirage de level-up précis (tests visuels du menu d'amélioration)
+      offer: (opts: UpgradeOption[]) => {
+        const s = engineState.current;
+        s.status = 'leveling';
+        stopBGM();
+        setUpgradeOptions(opts);
+        setUiState({ ...s });
+      },
     };
   });
 

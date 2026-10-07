@@ -37,6 +37,7 @@ const COLORS = {
 const HEAT_STYLE: Record<HeatInfo['level'], { color: string; text: string }> = {
   ok: { color: '#38bdf8', text: 'Stable' },
   warm: { color: '#f59e0b', text: 'Chaude' },
+  throttled: { color: '#f97316', text: 'Bridage' },
   critical: { color: '#f97316', text: 'Critique !' },
   overheated: { color: '#ef4444', text: 'Surchauffe' },
 };
@@ -348,6 +349,7 @@ const HeatPanel: React.FC<{ state: GameState; compact?: boolean }> = ({ state, c
   const heat = heatInfo(state);
   const style = HEAT_STYLE[heat.level];
   const alarm = heat.level === 'overheated' || heat.level === 'critical';
+  const over = heat.level === 'overheated';
   return (
     <div className={cx(compact ? '' : 'w-[250px]')}>
       <div className="flex justify-between items-baseline mb-1">
@@ -357,14 +359,33 @@ const HeatPanel: React.FC<{ state: GameState; compact?: boolean }> = ({ state, c
           <Num className={compact ? 'text-[13px]' : 'text-[20px]'} style={{ color: style.color }}>{heat.percent}%</Num>
         </span>
       </div>
-      <Meter
-        value={heat.ratio}
-        color={style.color}
-        height={compact ? 10 : 16}
-        blink={heat.level === 'overheated'}
-        markers={heat.level === 'overheated' ? [heat.recovery] : undefined}
-        track={heat.level === 'overheated' ? '#3b0a0a' : undefined}
-      />
+      <div className="relative">
+        <Meter
+          value={heat.ratio}
+          color={style.color}
+          height={compact ? 10 : 16}
+          blink={over}
+          markers={over ? [heat.recovery] : [heat.throttleStart]}
+          track={over ? '#3b0a0a' : undefined}
+        />
+        {/* Zone de bridage : au-delà, la cadence de tir baisse */}
+        {!over && (
+          <div
+            className="absolute top-0 bottom-0 right-0 pointer-events-none"
+            style={{ left: `${heat.throttleStart * 100}%`, backgroundImage: 'repeating-linear-gradient(135deg, rgba(249,115,22,0.35) 0 3px, transparent 3px 7px)' }}
+          />
+        )}
+      </div>
+      <div className={cx('flex justify-between items-baseline mt-1 font-hud', compact ? 'text-[12px]' : 'text-[13px]')}>
+        {over ? (
+          <span className="text-red-300 font-semibold">Tir coupé — reprise à {Math.round(heat.recovery * 100)}%</span>
+        ) : heat.ratePenalty > 0 ? (
+          <span className="font-bold text-orange-300">Cadence −{heat.ratePenalty} %</span>
+        ) : (
+          <span className="text-slate-400">Pleine cadence</span>
+        )}
+        {!compact && !over && <span className="text-slate-500">bridage ≥ {Math.round(heat.throttleStart * 100)}%</span>}
+      </div>
     </div>
   );
 };
@@ -392,12 +413,12 @@ const CenterAlert: React.FC<{ state: GameState; compact?: boolean }> = ({ state,
     <div className="absolute left-0 right-0 flex justify-center" style={{ top: '62%' }}>
       <div className={cx('flex flex-col items-center', over ? 'px-5 py-2 border-2 bg-slate-950/70 border-red-500 animate-hud-blink' : 'px-3 py-1 bg-slate-950/50')}>
         <span className={cx('font-orbitron font-black uppercase tracking-[0.15em]', over ? (compact ? 'text-[20px]' : 'text-[28px]') : 'text-[16px]', over ? 'text-red-400' : 'text-orange-300')}>
-          {over ? '⚠ Surchauffe' : 'Chaleur critique'}
+          {over ? '⚠ Surchauffe' : `Cadence −${heat.ratePenalty} %`}
         </span>
         <span className={cx('font-hud font-semibold text-white', over ? 'text-[14px]' : 'text-[13px] opacity-90')}>
           {over
             ? `Armes coupées — reprise à ${Math.round(heat.recovery * 100)}%`
-            : state.autoFire ? 'Surchauffe imminente' : 'Relâchez le tir pour refroidir'}
+            : state.autoFire ? 'Chaleur critique — surchauffe à 100 %' : 'Chaleur critique — relâchez le tir'}
         </span>
       </div>
     </div>
