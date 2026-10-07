@@ -14,9 +14,11 @@ export const updatePhysics = (state: GameState, deltaTime: number) => {
     if (p.dead) return;
     if (p.ownerId === 'player') updatePlayerProjectile(state, p, deltaTime);
     if (p.dead) return;
-    p.x += p.vx;
-    p.y += p.vy;
-    p.distanceTraveled += Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+    // Distorsion : les projectiles ennemis avancent à 40 %
+    const k = p.ownerId !== 'player' && p.ownerId !== 'env' && state.enemySlowUntil > state.time ? 0.4 : 1;
+    p.x += p.vx * k;
+    p.y += p.vy * k;
+    p.distanceTraveled += Math.sqrt(p.vx * p.vx + p.vy * p.vy) * k;
     if (p.distanceTraveled > p.maxRange) {
       // Les explosifs détonent en bout de course
       if (p.ownerId === 'player' && (p.explodeRadius || p.gravity)) detonate(state, p);

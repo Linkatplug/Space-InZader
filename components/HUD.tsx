@@ -5,7 +5,7 @@ import { EVENTS } from '../data/events';
 import { MAX_WEAPON_LEVEL } from '../engine/Progression';
 import {
   HudLayout, hudLayout, formatClock, ratio, heatInfo, HeatInfo, weaponSlots, WeaponSlot,
-  synergyRows, SynergyRow, keystoneInfo, bossIncoming, bossInfo,
+  synergyRows, SynergyRow, keystoneInfo, bossIncoming, bossInfo, activeBuffs,
 } from './hud/model';
 import { Panel, Label, Num, Meter, Pips, cx } from './hud/widgets';
 
@@ -37,6 +37,7 @@ const COLORS = {
 const HEAT_STYLE: Record<HeatInfo['level'], { color: string; text: string }> = {
   ok: { color: '#38bdf8', text: 'Stable' },
   warm: { color: '#f59e0b', text: 'Chaude' },
+  throttled: { color: '#f97316', text: 'Bridage' },
   critical: { color: '#f97316', text: 'Critique !' },
   overheated: { color: '#ef4444', text: 'Surchauffe' },
 };
@@ -103,10 +104,13 @@ const BossBar: React.FC<{ state: GameState; width: number }> = ({ state, width }
   return (
     <div style={{ width }} className="flex flex-col gap-1">
       <div className="flex justify-between items-baseline">
-        <span className="font-orbitron font-bold text-[15px] uppercase tracking-wider" style={{ color: boss.color }}>☠ {boss.name}</span>
+        <span className="flex items-center gap-2">
+          <span className="font-orbitron font-bold text-[15px] uppercase tracking-wider" style={{ color: boss.color }}>☠ {boss.name}</span>
+          {boss.enraged && <span className="font-hud font-bold text-[12px] uppercase px-1.5 py-0.5 bg-red-600 text-white animate-hud-blink">Enragé</span>}
+        </span>
         <Num className="text-[14px]">{Math.ceil(boss.ratio * 100)}%</Num>
       </div>
-      <Meter value={boss.ratio} color={boss.color} height={14} />
+      <Meter value={boss.ratio} color={boss.enraged ? '#ef4444' : boss.color} height={14} />
     </div>
   );
 };
@@ -272,6 +276,22 @@ const AbilitySlot: React.FC<{ ability: ActiveAbility; size?: number }> = ({ abil
   );
 };
 
+/** Bonus temporaires des compétences, avec le temps restant. */
+const BuffList: React.FC<{ state: GameState; compact?: boolean }> = ({ state, compact }) => {
+  const buffs = activeBuffs(state);
+  if (buffs.length === 0) return null;
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {buffs.map(b => (
+        <div key={b.id} className={cx('flex items-center gap-2 bg-slate-950/80 border-l-[3px]', compact ? 'px-1.5 py-0.5' : 'px-2 py-1', b.remaining < 1.5 && 'animate-hud-blink')} style={{ borderColor: b.color }}>
+          <span className={cx('font-hud font-bold uppercase', compact ? 'text-[12px]' : 'text-[13px]')} style={{ color: b.color }}>{b.name}</span>
+          <Num className={compact ? 'text-[12px]' : 'text-[14px]'}>{b.remaining.toFixed(1)} s</Num>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // --- Bas centre : armes -------------------------------------------------------
 
 /** En dessous de ce délai de recharge, la barre clignoterait en permanence : on l'affiche pleine. */
@@ -329,6 +349,7 @@ const HeatPanel: React.FC<{ state: GameState; compact?: boolean }> = ({ state, c
   const heat = heatInfo(state);
   const style = HEAT_STYLE[heat.level];
   const alarm = heat.level === 'overheated' || heat.level === 'critical';
+  const over = heat.level === 'overheated';
   return (
     <div className={cx(compact ? '' : 'w-[250px]')}>
       <div className="flex justify-between items-baseline mb-1">
@@ -338,14 +359,33 @@ const HeatPanel: React.FC<{ state: GameState; compact?: boolean }> = ({ state, c
           <Num className={compact ? 'text-[13px]' : 'text-[20px]'} style={{ color: style.color }}>{heat.percent}%</Num>
         </span>
       </div>
-      <Meter
-        value={heat.ratio}
-        color={style.color}
-        height={compact ? 10 : 16}
-        blink={heat.level === 'overheated'}
-        markers={heat.level === 'overheated' ? [heat.recovery] : undefined}
-        track={heat.level === 'overheated' ? '#3b0a0a' : undefined}
-      />
+      <div className="relative">
+        <Meter
+          value={heat.ratio}
+          color={style.color}
+          height={compact ? 10 : 16}
+          blink={over}
+          markers={over ? [heat.recovery] : [heat.throttleStart]}
+          track={over ? '#3b0a0a' : undefined}
+        />
+        {/* Zone de bridage : au-delà, la cadence de tir baisse */}
+        {!over && (
+          <div
+            className="absolute top-0 bottom-0 right-0 pointer-events-none"
+            style={{ left: `${heat.throttleStart * 100}%`, backgroundImage: 'repeating-linear-gradient(135deg, rgba(249,115,22,0.35) 0 3px, transparent 3px 7px)' }}
+          />
+        )}
+      </div>
+      <div className={cx('flex justify-between items-baseline mt-1 font-hud', compact ? 'text-[12px]' : 'text-[13px]')}>
+        {over ? (
+          <span className="text-red-300 font-semibold">Tir coupé — reprise à {Math.round(heat.recovery * 100)}%</span>
+        ) : heat.ratePenalty > 0 ? (
+          <span className="font-bold text-orange-300">Cadence −{heat.ratePenalty} %</span>
+        ) : (
+          <span className="text-slate-400">Pleine cadence</span>
+        )}
+        {!compact && !over && <span className="text-slate-500">bridage ≥ {Math.round(heat.throttleStart * 100)}%</span>}
+      </div>
     </div>
   );
 };
@@ -373,12 +413,12 @@ const CenterAlert: React.FC<{ state: GameState; compact?: boolean }> = ({ state,
     <div className="absolute left-0 right-0 flex justify-center" style={{ top: '62%' }}>
       <div className={cx('flex flex-col items-center', over ? 'px-5 py-2 border-2 bg-slate-950/70 border-red-500 animate-hud-blink' : 'px-3 py-1 bg-slate-950/50')}>
         <span className={cx('font-orbitron font-black uppercase tracking-[0.15em]', over ? (compact ? 'text-[20px]' : 'text-[28px]') : 'text-[16px]', over ? 'text-red-400' : 'text-orange-300')}>
-          {over ? '⚠ Surchauffe' : 'Chaleur critique'}
+          {over ? '⚠ Surchauffe' : `Cadence −${heat.ratePenalty} %`}
         </span>
         <span className={cx('font-hud font-semibold text-white', over ? 'text-[14px]' : 'text-[13px] opacity-90')}>
           {over
             ? `Armes coupées — reprise à ${Math.round(heat.recovery * 100)}%`
-            : state.autoFire ? 'Surchauffe imminente' : 'Relâchez le tir pour refroidir'}
+            : state.autoFire ? 'Chaleur critique — surchauffe à 100 %' : 'Chaleur critique — relâchez le tir'}
         </span>
       </div>
     </div>
@@ -408,7 +448,8 @@ const DesktopHUD: React.FC<{ state: GameState; layout: HudLayout }> = ({ state }
 
       <div className="absolute top-4 right-4"><BuildPanel state={state} /></div>
 
-      <div className="absolute bottom-4 left-4 flex flex-col gap-3">
+      <div className="absolute bottom-4 left-4 flex flex-col gap-3 w-[280px]">
+        <BuffList state={state} />
         <div className="flex gap-3">
           {state.activeAbilities.map(a => <AbilitySlot key={a.id} ability={a} />)}
         </div>
@@ -468,6 +509,7 @@ const CompactHUD: React.FC<{ state: GameState; layout: HudLayout; touch: boolean
 
       {/* Bas gauche : armes, défenses, chaleur (à droite : place pour les boutons tactiles) */}
       <div className="absolute bottom-2 left-2 flex flex-col gap-2 w-[220px]">
+        <BuffList state={state} compact />
         <div className="flex gap-1">
           {slots.map((s, i) => <WeaponChip key={i} slot={s} overheated={state.isOverheated} />)}
         </div>

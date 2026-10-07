@@ -42,7 +42,7 @@ export const INITIAL_STATS: Stats = {
   fireRate: 1,
   critChance: 0.05,
   critMult: 2.0,
-  cooling: 25,
+  cooling: 28,
   maxHeat: 250,
   magnetRange: 120,
   xpMult: 1,

@@ -46,8 +46,9 @@ export const updateEnemyAI = (e: Entity, player: Entity, state: GameState, _delt
 
   e.rotation = angle;
   const v = AI_BEHAVIORS[def.ai]({ e, def, player, dist, angle, time });
-  e.vx = v.vx;
-  e.vy = v.vy;
+  const enrage = e.enraged && def.enrage ? def.enrage.speedMult : 1;
+  e.vx = v.vx * enrage;
+  e.vy = v.vy * enrage;
 
   // Ralentissement (statut)
   if (e.slow && e.slow.until > state.time) {

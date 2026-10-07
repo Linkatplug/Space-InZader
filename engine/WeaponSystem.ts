@@ -4,6 +4,7 @@ import { playShotSound } from './SoundEngine';
 import { damageEnemy, explode, nearestEnemy, rollPacket } from './Combat';
 import { emitParticles } from '../render/ParticleSystem';
 import { uid } from './ids';
+import { addHeat, heatThrottle, weaponHeatPerShot } from './Heat';
 
 /**
  * Tir des armes du joueur. Chaque `behavior.kind` a sa routine.
@@ -303,11 +304,13 @@ export const updateWeapons = (
   if (!isFiring || state.isOverheated) return;
 
   const aim = player.rotation;
+  const throttle = heatThrottle(state);
   let playedSound = false;
 
   for (const w of state.activeWeapons) {
     if (w.behavior.kind === 'drone') continue;
-    if (time - w.lastFired < weaponCooldown(state, w)) continue;
+    // Bridage thermique : au-delà de 75 % de chaleur, la cadence baisse progressivement
+    if (time - w.lastFired < weaponCooldown(state, w) / throttle) continue;
 
     let aimAngle = aim;
     if (weaponBehavior(w).autoTarget) {
@@ -321,11 +324,8 @@ export const updateWeapons = (
 
     w.lastFired = time;
     if (!playedSound) { playShotSound(w.type); playedSound = true; }
-    state.heat += w.heatPerShot * player.runtimeStats.heatGenMult;
-    if (state.heat >= state.maxHeat) {
-      state.isOverheated = true;
-      break;
-    }
+    addHeat(state, weaponHeatPerShot(state, w));
+    if (state.isOverheated) break;
   }
 };
 

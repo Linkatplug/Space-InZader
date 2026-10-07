@@ -1,7 +1,7 @@
 import { GameState } from '../types';
 import { WORLD_WIDTH, WORLD_HEIGHT } from '../constants';
 import { WEAPONS } from '../data/weapons';
-import { BLINK_DASH, TACTICAL_NOVA } from './AbilitySystem';
+import { makeAbility } from './AbilitySystem';
 import { DEFAULT_SHIP_ID, getShip } from '../data/ships';
 import { shipBaseStats } from './StatsCalculator';
 
@@ -19,7 +19,7 @@ export const createInitialState = (shipId: string = DEFAULT_SHIP_ID): GameState 
       defense: { shield: base.maxShield, armor: base.maxArmor, hull: base.maxHull },
       isGodMode: false,
     },
-    shipId: ship.id, hitStreak: 0, onHitStacks: 0, lastHitTime: 0, stationaryTime: 0, mechanics: [],
+    shipId: ship.id, hitStreak: 0, onHitStacks: 0, lastHitTime: 0, stationaryTime: 0, mechanics: [], buffs: [], enemySlowUntil: 0,
     bossKills: 0, damageDealt: 0, damageTaken: 0, damageBySource: {}, nextEventTime: 0,
     heat: 0, maxHeat: base.maxHeat, isOverheated: false, score: 0, level: 1, experience: 0,
     expToNextLevel: 60,
@@ -32,7 +32,7 @@ export const createInitialState = (shipId: string = DEFAULT_SHIP_ID): GameState 
     activeWeapons: [{ ...startWeapon, level: 1 }],
     zones: [], beams: [], drones: [],
     time: 0, shake: 0, autoFire: false, spawnEnabled: true, autoAim: false, analogMove: { x: 0, y: 0 },
-    activeAbilities: [{ ...BLINK_DASH }, { ...TACTICAL_NOVA }],
+    activeAbilities: [makeAbility(ship.abilities[0], 0), makeAbility(ship.abilities[1], 1)],
     activeEvents: [],
     keystones: [], activePassives: [], status: 'menu', comboCount: 0, comboTimer: 0, currentMisses: 0, bossSpawned: false,
     isDebugMode: false,

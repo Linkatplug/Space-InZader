@@ -9,6 +9,7 @@ interface PauseMenuProps {
   state: GameState;
   onResume: () => void;
   onQuit: () => void;
+  onOptions: () => void;
 }
 
 const Section: React.FC<{ title: string; children: React.ReactNode; empty?: string }> = ({ title, children, empty }) => (
@@ -29,7 +30,7 @@ const Item: React.FC<{ color: string; title: React.ReactNode; right?: React.Reac
 );
 
 /** Pause : reprise, abandon et récapitulatif complet du build (synergies, keystones, modules). */
-export const PauseMenu: React.FC<PauseMenuProps> = ({ state, onResume, onQuit }) => {
+export const PauseMenu: React.FC<PauseMenuProps> = ({ state, onResume, onQuit, onOptions }) => {
   const synergies = synergyRows(state);
   return (
     <div className="absolute inset-0 z-40 bg-slate-950/90 backdrop-blur-md overflow-y-auto p-3 sm:p-8 flex justify-center items-[safe_center]">
@@ -41,9 +42,12 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({ state, onResume, onQuit })
               Vague <b className="text-white">{state.wave}</b> · Niveau <b className="text-white">{state.level}</b> · <span className="font-mono">{formatClock(state.time)}</span> · {state.totalKills} éliminations
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <button onClick={onResume} className="px-6 py-3 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-hud font-bold text-[18px] uppercase tracking-wider">
               Reprendre <span className="hidden sm:inline text-[13px] opacity-70">(P / Échap)</span>
+            </button>
+            <button onClick={onOptions} className="px-5 py-3 border-2 border-white/40 text-white hover:bg-white/10 font-hud font-bold text-[16px] uppercase tracking-wider">
+              ⚙ Options
             </button>
             <button onClick={onQuit} className="px-5 py-3 border-2 border-red-400/60 text-red-300 hover:bg-red-500/15 font-hud font-bold text-[16px] uppercase tracking-wider">
               Abandonner

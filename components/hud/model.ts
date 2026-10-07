@@ -6,7 +6,7 @@ import { ConditionId, DamageType, GameState, Keystone, Passive, ScalingSource, T
 import type { UpgradeOption } from '../../engine/Progression';
 import { synergyStatus } from '../../engine/Synergies';
 import { CONDITIONS, SCALING_SOURCES } from '../../engine/Conditions';
-import { OVERHEAT_RECOVERY } from '../../engine/CoreEngine';
+import { HEAT, heatThrottle } from '../../engine/Heat';
 import { weaponCooldown } from '../../engine/WeaponSystem';
 import { MAX_WEAPON_SLOTS, TECH_MULTIPLIERS } from '../../constants';
 import { ENEMIES, BOSS_WAVE_INTERVAL } from '../../data/enemies';
@@ -52,19 +52,38 @@ export const ratio = (value: number, max: number) => (max > 0 ? clamp(value / ma
 
 // --- Chaleur ----------------------------------------------------------------
 
-export type HeatLevel = 'ok' | 'warm' | 'critical' | 'overheated';
+export type HeatLevel = 'ok' | 'warm' | 'throttled' | 'critical' | 'overheated';
 
 export interface HeatInfo {
   ratio: number;
   percent: number;
   level: HeatLevel;
-  recovery: number; // seuil de reprise après surchauffe (0..1)
+  recovery: number;       // seuil de reprise après surchauffe (0..1)
+  throttleStart: number;  // début du bridage de cadence (0..1)
+  throttle: number;       // multiplicateur de cadence dû à la chaleur (1 = pleine cadence)
+  ratePenalty: number;    // baisse de cadence en % (0 = aucune)
 }
 
+/**
+ * États : stable → chaude (60 %) → bridage (la cadence baisse, voir engine/Heat.ts)
+ * → critique (90 %) → surchauffe (tir coupé jusqu'à la reprise).
+ */
 export const heatInfo = (s: GameState): HeatInfo => {
   const r = ratio(s.heat, s.maxHeat);
-  const level: HeatLevel = s.isOverheated ? 'overheated' : r >= 0.85 ? 'critical' : r >= 0.6 ? 'warm' : 'ok';
-  return { ratio: r, percent: Math.round(r * 100), level, recovery: OVERHEAT_RECOVERY };
+  const throttle = s.isOverheated ? 0 : heatThrottle(s);
+  const level: HeatLevel = s.isOverheated ? 'overheated'
+    : r >= 0.9 ? 'critical'
+    : r > HEAT.THROTTLE_START ? 'throttled'
+    : r >= 0.6 ? 'warm' : 'ok';
+  return {
+    ratio: r,
+    percent: Math.round(r * 100),
+    level,
+    recovery: HEAT.OVERHEAT_RECOVERY,
+    throttleStart: HEAT.THROTTLE_START,
+    throttle,
+    ratePenalty: Math.round((1 - throttle) * 100),
+  };
 };
 
 // --- Armes ------------------------------------------------------------------
@@ -156,7 +175,7 @@ export const keystoneInfo = (s: GameState, k: Keystone): KeystoneInfo => {
 export { BOSS_WAVE_INTERVAL };
 export const bossIncoming = (s: GameState) => (s.wave + 1) % BOSS_WAVE_INTERVAL === 0;
 
-export interface BossInfo { name: string; color: string; ratio: number; }
+export interface BossInfo { name: string; color: string; ratio: number; enraged: boolean; }
 
 export const bossInfo = (s: GameState): BossInfo | null => {
   const boss = s.enemies.find(e => e.type === 'boss' && !e.dead);
@@ -168,6 +187,7 @@ export const bossInfo = (s: GameState): BossInfo | null => {
     name: def?.name ?? 'Boss',
     color: def?.color ?? '#facc15',
     ratio: ratio(shield + armor + hull, maxShield + maxArmor + maxHull),
+    enraged: !!boss.enraged,
   };
 };
 
@@ -264,3 +284,14 @@ export const weaponStats = (w: Weapon, level = w.level) => {
 
 /** Bonus apporté par le passage au niveau Tech `level` (2 ou 3), depuis `Weapon.techNotes`. */
 export const techNote = (w: Weapon, level: number): string | undefined => w.techNotes?.[level - 2];
+
+// --- Bonus temporaires --------------------------------------------------------
+
+export interface BuffView { id: string; name: string; color: string; remaining: number; }
+
+/** Bonus de compétence encore actifs, avec leur temps restant (s), le plus court d'abord. */
+export const activeBuffs = (s: GameState): BuffView[] =>
+  (s.buffs ?? [])
+    .map(b => ({ id: b.id, name: b.name, color: b.color, remaining: (b.until - s.time) / 1000 }))
+    .filter(b => b.remaining > 0)
+    .sort((a, b) => a.remaining - b.remaining);

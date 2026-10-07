@@ -8,7 +8,7 @@ import { DevMenu } from './components/Menu/DevMenu';
 import { DebugOverlay } from './components/DebugOverlay';
 import { updateGameState, spawnEnemy, createEffect } from './engine/CoreEngine';
 import { renderGame } from './render/CoreRenderer';
-import { startBGM, stopBGM, setMuted, nextTrack } from './engine/SoundEngine';
+import { startBGM, stopBGM, nextTrack, applyAudioSettings } from './engine/SoundEngine';
 import { input } from './engine/InputManager';
 import { createInitialState } from './engine/GameFactory';
 import { applyUpgrade, rollUpgradeOptions, UpgradeOption } from './engine/Progression';
@@ -18,6 +18,7 @@ import { MainMenu } from './components/Menu/MainMenu';
 import { TouchControls, isTouchDevice } from './components/TouchControls';
 import { GameOverScreen } from './components/Menu/GameOverScreen';
 import { PauseMenu } from './components/Menu/PauseMenu';
+import { OptionsMenu } from './components/Menu/OptionsMenu';
 import { MetaSave, RunSummary, loadSave, writeSave, recordRun } from './engine/Meta';
 import { calculateRuntimeStats, syncDefenseState, shipBaseStats } from './engine/StatsCalculator';
 
@@ -38,7 +39,10 @@ const App: React.FC = () => {
   const [save, setSave] = useState<MetaSave>(() => loadSave());
   const saveRef = useRef(save);
   saveRef.current = save;
-  useEffect(() => { setMuted(saveRef.current.settings.muted); }, []);
+  useEffect(() => { applyAudioSettings(saveRef.current.settings); }, []);
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const optionsOpenRef = useRef(false);
+  optionsOpenRef.current = optionsOpen;
   const [runSummary, setRunSummary] = useState<RunSummary | null>(null);
   const isTouch = React.useMemo(() => isTouchDevice(), []);
   const togglePause = () => {
@@ -75,6 +79,21 @@ const App: React.FC = () => {
     writeSave(next);
     setSave(next);
   };
+
+  /**
+   * Point d'entrée unique des changements de réglages (écran d'options ET raccourcis M / F) :
+   * applique l'effet (audio, tir auto) puis sauvegarde. L'écran d'options lit `save.settings`, il reste donc synchronisé.
+   */
+  const changeSettings = (patch: Partial<MetaSave['settings']>) => {
+    updateSettings(patch);
+    const settings = saveRef.current.settings;
+    if ('muted' in patch || 'musicVolume' in patch || 'sfxVolume' in patch) applyAudioSettings(settings);
+    if ('autoFire' in patch) {
+      const s = engineState.current;
+      s.autoFire = settings.autoFire;
+      setUiState({ ...s });
+    }
+  };
   const [uiState, setUiState] = useState<GameState>(engineState.current);
   const lastTime = useRef<number>(0);
   const accumulator = useRef<number>(0);
@@ -96,6 +115,7 @@ const App: React.FC = () => {
     freshState.autoAim = isTouch;
     setRunSummary(null);
     setAbandoned(false);
+    setOptionsOpen(false);
     freshState.status = newStatus;
     freshState.startTime = Date.now();
     engineState.current = freshState;
@@ -158,7 +178,9 @@ const App: React.FC = () => {
         }
         if (steps >= 6) accumulator.current = 0;
 
-        if (s.shake > screenShake.current) screenShake.current = s.shake;
+        // Intensité réglable dans les options (0 = pas de tremblement)
+        const shake = s.shake * saveRef.current.settings.screenShake;
+        if (shake > screenShake.current) screenShake.current = shake;
         s.shake = 0;
 
         const sidebarWidth = 450;
@@ -181,7 +203,7 @@ const App: React.FC = () => {
       }
 
       if (ctx) {
-        renderGame(ctx, s, dimensions, camera.current, screenShake.current, s.time, VIEW_SCALE);
+        renderGame(ctx, s, dimensions, camera.current, screenShake.current, s.time, VIEW_SCALE, { damageNumbers: saveRef.current.settings.damageNumbers });
       }
       animationFrameId = requestAnimationFrame(gameLoop);
     };
@@ -192,21 +214,20 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
-      if (key === CONTROLS.PAUSE || key === 'escape') togglePause();
+      // Écran d'options ouvert : P / Échap ne doivent pas relancer la partie derrière (Échap est géré par OptionsMenu)
+      if ((key === CONTROLS.PAUSE || key === 'escape') && !optionsOpenRef.current) togglePause();
       if (key === CONTROLS.MUTE) {
         const muted = !saveRef.current.settings.muted;
-        setMuted(muted);
-        updateSettings({ muted });
+        changeSettings({ muted });
         const s = engineState.current;
         createEffect(s, s.player.x, s.player.y - 60, muted ? 'SON : OFF' : 'SON : ON', '#94a3b8');
       }
       if (key === CONTROLS.NEXT_TRACK) nextTrack();
       if (key === CONTROLS.AUTO_FIRE) {
         const s = engineState.current;
-        s.autoFire = !s.autoFire;
-        updateSettings({ autoFire: s.autoFire });
-        createEffect(s, s.player.x, s.player.y - 60, s.autoFire ? 'TIR AUTO : ON' : 'TIR AUTO : OFF', '#22d3ee');
-        setUiState({...s});
+        const autoFire = !s.autoFire;
+        createEffect(s, s.player.x, s.player.y - 60, autoFire ? 'TIR AUTO : ON' : 'TIR AUTO : OFF', '#22d3ee');
+        changeSettings({ autoFire });
       }
       if (key === CONTROLS.DEBUG) {
         e.preventDefault();
@@ -318,6 +339,14 @@ const App: React.FC = () => {
       state: () => engineState.current,
       action: (a: string, d?: any) => handleDevAction(a, d),
       start: () => resetGame('playing'),
+      // Force un tirage de level-up précis (tests visuels du menu d'amélioration)
+      offer: (opts: UpgradeOption[]) => {
+        const s = engineState.current;
+        s.status = 'leveling';
+        stopBGM();
+        setUpgradeOptions(opts);
+        setUiState({ ...s });
+      },
     };
   });
 
@@ -334,6 +363,7 @@ const App: React.FC = () => {
           onStart={(shipId) => resetGame('playing', shipId)}
           onDev={() => resetGame('dev')}
           onLab={() => resetGame('lab')}
+          onOptions={() => setOptionsOpen(true)}
         />
       )}
 
@@ -369,7 +399,11 @@ const App: React.FC = () => {
       {isTouch && uiState.status === 'playing' && <TouchControls onPause={togglePause} abilities={uiState.activeAbilities} />}
 
       {uiState.status === 'paused' && (
-        <PauseMenu state={uiState} onResume={togglePause} onQuit={abandonRun} />
+        <PauseMenu state={uiState} onResume={togglePause} onQuit={abandonRun} onOptions={() => setOptionsOpen(true)} />
+      )}
+
+      {optionsOpen && (uiState.status === 'menu' || uiState.status === 'paused') && (
+        <OptionsMenu settings={save.settings} onChange={changeSettings} onClose={() => setOptionsOpen(false)} autoFireLocked={isTouch} />
       )}
       
       {uiState.status === 'gameover' && (

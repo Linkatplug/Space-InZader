@@ -6,6 +6,7 @@ import { updateEnemyAttacks } from './EnemyAttacks';
 import { bossForWave, isBossWave } from '../data/enemies';
 import { refreshPlayerStats } from './StatsCalculator';
 import { activeMechanics } from './Synergies';
+import { HEAT, updateHeat } from './Heat';
 import { updateParticles, emitParticles } from '../render/ParticleSystem';
 import { updatePhysics } from './PhysicsEngine';
 import { checkCollisions } from './CollisionSystem';
@@ -15,8 +16,8 @@ import { handlePlayerControls } from './PlayerController';
 import { updateEnvironmentalEvents } from './EventSystem';
 
 const ON_HIT_RESET_MS = 3000;
-/** Après surchauffe, le tir reprend quand la chaleur redescend sous ce seuil (fraction du max). */
-export const OVERHEAT_RECOVERY = 0.5;
+/** Après surchauffe, le tir reprend sous ce seuil (fraction du max). Réglages dans engine/Heat.ts. */
+export const OVERHEAT_RECOVERY = HEAT.OVERHEAT_RECOVERY;
 
 export { createEffect, spawnEnemy };
 
@@ -31,6 +32,8 @@ export const updateGameState = (
   const { player } = state;
   state.time += deltaTime * 1000;
   const time = state.time;
+
+  if (state.buffs.length) state.buffs = state.buffs.filter(b => b.until > time);
 
   // Stats recalculées chaque pas : keystones conditionnels et cumuls évoluent en continu
   state.mechanics = activeMechanics(state);
@@ -79,8 +82,7 @@ export const updateGameState = (
   updateStatusEffects(state, deltaTime);
   checkCollisions(state);
 
-  if (state.heat > 0) state.heat = Math.max(0, state.heat - player.runtimeStats.cooling * deltaTime);
-  if (state.isOverheated && state.heat <= state.maxHeat * OVERHEAT_RECOVERY) state.isOverheated = false;
+  updateHeat(state, deltaTime);
 
   if (player.runtimeStats.hullRegen > 0) {
     player.defense.hull = Math.min(player.runtimeStats.maxHull, player.defense.hull + player.runtimeStats.hullRegen * deltaTime);
@@ -94,7 +96,7 @@ export const updateGameState = (
     }
   }
 
-  const maxPop = Math.min(35, 8 + (state.wave * 2));
+  const maxPop = Math.min(45, 8 + Math.round(state.wave * 2.5));
   const currentEnemies = state.enemies.length;
 
   if (state.status === 'playing' && state.spawnEnabled && currentEnemies < maxPop && (currentEnemies + state.waveKills) < state.waveQuota) {

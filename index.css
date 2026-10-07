@@ -9,3 +9,41 @@
 @media (min-width: 2300px) and (min-height: 1300px) {
   .ui-zoom { zoom: 1.6; }
 }
+
+/* Curseurs de l'écran d'options (piste remplie jusqu'à --fill, poignée large pour le tactile) */
+.si-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 28px;
+  background: transparent;
+  cursor: pointer;
+}
+.si-range::-webkit-slider-runnable-track {
+  height: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(to right, #22d3ee var(--fill, 0%), #0b1222 var(--fill, 0%));
+}
+.si-range::-moz-range-track {
+  height: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: linear-gradient(to right, #22d3ee var(--fill, 0%), #0b1222 var(--fill, 0%));
+}
+.si-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 26px;
+  margin-top: -9px;
+  background: #e0f2fe;
+  border: 2px solid #22d3ee;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.7);
+}
+.si-range::-moz-range-thumb {
+  width: 22px;
+  height: 26px;
+  border-radius: 0;
+  background: #e0f2fe;
+  border: 2px solid #22d3ee;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.7);
+}
+.si-range:disabled { opacity: 0.4; cursor: not-allowed; }
+.si-range:focus-visible { outline: 2px solid #67e8f9; outline-offset: 4px; }

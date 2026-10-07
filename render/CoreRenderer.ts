@@ -6,6 +6,10 @@ import { drawParticles, drawXPDrops, drawVisualEffects } from './EffectRenderer'
 import { renderEnvironmentalEffects } from './EventRenderer';
 import { drawZones, drawBeams, drawProjectiles, drawDrones, drawPlayerGauges } from './CombatRenderer';
 
+export interface RenderOptions {
+  damageNumbers?: boolean; // false = masque les chiffres de dégâts
+}
+
 export const renderGame = (
   ctx: CanvasRenderingContext2D,
   state: GameState,
@@ -13,7 +17,8 @@ export const renderGame = (
   camera: { x: number, y: number },
   screenShake: number,
   time: number,
-  viewScale = 1
+  viewScale = 1,
+  options: RenderOptions = {}
 ) => {
   clearScreen(ctx, dimensions);
 
@@ -48,7 +53,7 @@ export const renderGame = (
   drawBeams(ctx, state.beams);
 
   // Floating text
-  drawVisualEffects(ctx, state.effects);
+  drawVisualEffects(ctx, options.damageNumbers === false ? state.effects.filter(e => e.kind !== 'damage') : state.effects);
 
   ctx.restore();
   ctx.restore();
