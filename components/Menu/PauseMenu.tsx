@@ -35,7 +35,7 @@ const Item: React.FC<{ color: string; title: React.ReactNode; right?: React.Reac
 export const PauseMenu: React.FC<PauseMenuProps> = ({ state, onResume, onQuit, onOptions, onFeedback }) => {
   const synergies = synergyRows(state);
   return (
-    <div className="absolute inset-0 z-40 bg-slate-950/90 backdrop-blur-md overflow-y-auto p-3 sm:p-8 flex justify-center items-[safe_center]">
+    <div data-pad-scope className="absolute inset-0 z-40 bg-slate-950/90 backdrop-blur-md overflow-y-auto p-3 sm:p-8 flex justify-center items-[safe_center]">
       <div className="w-full max-w-6xl ui-zoom">
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <div>

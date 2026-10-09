@@ -18,7 +18,18 @@ export const normalizeSettingsPatch = (patch: Partial<GameSettings>): Partial<Ga
     const safe = Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : 0;
     out[k] = Math.round(safe / SLIDER_STEP) / (1 / SLIDER_STEP); // division : évite 0.35000000000000003
   }
+  if (patch.viewZoom !== undefined) out.viewZoom = clampViewZoom(patch.viewZoom);
   return out;
+};
+
+/** Zoom de la zone de jeu : 70 % (voit plus loin, vaisseau plus petit) à 130 %, pas de 5 %. */
+export const VIEW_ZOOM = { min: 0.7, max: 1.3, step: 0.05, default: 1 } as const;
+
+/** Borne et arrondit le zoom (valeur invalide ou absente → défaut). */
+export const clampViewZoom = (v: unknown): number => {
+  if (typeof v !== 'number' || !Number.isFinite(v)) return VIEW_ZOOM.default;
+  const c = Math.max(VIEW_ZOOM.min, Math.min(VIEW_ZOOM.max, v));
+  return Math.round(c / VIEW_ZOOM.step) / (1 / VIEW_ZOOM.step);
 };
 
 export const percentLabel = (v: number) => `${Math.round(v * 100)}%`;

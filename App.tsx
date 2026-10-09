@@ -17,11 +17,17 @@ import { WEAPONS } from './data/weapons';
 import { triggerEvent } from './engine/EventSystem';
 import { MainMenu } from './components/Menu/MainMenu';
 import { TouchControls, isTouchDevice } from './components/TouchControls';
+import { PadNav, PadToast } from './components/PadNav';
 import { GameOverScreen } from './components/Menu/GameOverScreen';
 import { PauseMenu } from './components/Menu/PauseMenu';
 import { OptionsMenu } from './components/Menu/OptionsMenu';
 import { MetaSave, RunSummary, loadSave, writeSave, recordRun } from './engine/Meta';
 import { botThink, botPickUpgrade } from './engine/Bot';
+import { clampViewZoom } from './components/Menu/optionsModel';
+import { loadPlayer, savePlayerName } from './components/player/playerStore';
+import { Leaderboard, LeaderboardView } from './components/leaderboard/Leaderboard';
+import { buildRunSubmission, fetchLeaderboard, submitScore, LeaderboardResult } from './components/leaderboard/api';
+import { installErrorReporter } from './components/errorReporter';
 import { FeedbackModal } from './components/feedback/FeedbackModal';
 import { buildContext } from './components/feedback/logic';
 import { FEEDBACK_KEY } from './components/feedback/text';
@@ -53,6 +59,16 @@ const App: React.FC = () => {
   // Une partie où le bot a joué (used) n'est pas enregistrée dans la sauvegarde.
   const botRef = useRef({ on: false, used: false, log: [] as string[] });
   optionsOpenRef.current = optionsOpen;
+  // Joueur local (pseudo + identifiant) et classement en ligne de la dernière partie
+  const [player, setPlayer] = useState(() => loadPlayer());
+  const playerRef = useRef(player);
+  playerRef.current = player;
+  const changePlayerName = (name: string) => setPlayer(savePlayerName(name));
+  const [leaderboard, setLeaderboard] = useState<LeaderboardView>({ status: 'loading' });
+  // Partie lancée depuis la base de données / le labo : jamais envoyée au classement
+  const sandboxRunRef = useRef(false);
+  const levelTimesRef = useRef<number[]>([]);
+  useEffect(() => installErrorReporter(__BUILD__), []);
   const [runSummary, setRunSummary] = useState<RunSummary | null>(null);
   const isTouch = React.useMemo(() => isTouchDevice(), []);
   const togglePause = () => {
@@ -95,12 +111,29 @@ const App: React.FC = () => {
     if (s.status !== 'paused') return;
     s.status = 'gameover';
     setAbandoned(true);
-    finishRun(s);
+    finishRun(s, 'abandon');
     setUiState({ ...s });
   };
 
+  /**
+   * Envoie le score au classement en ligne, sauf partie bot ou lancée depuis dev/labo (on lit alors
+   * seulement le classement). Serveur absent : « Classement indisponible », le reste de l'écran fonctionne.
+   */
+  const publishScore = (s: GameState, end: 'mort' | 'abandon', botUsed: boolean) => {
+    setLeaderboard({ status: 'loading' });
+    const me = playerRef.current;
+    const request: Promise<LeaderboardResult> = botUsed || sandboxRunRef.current
+      ? fetchLeaderboard(me.id)
+      : submitScore(buildRunSubmission(s, me, {
+          device: isTouch ? 'telephone' : 'ordinateur',
+          input: input.isGamepadActive() ? 'manette' : isTouch ? 'tactile' : 'clavier',
+          end, build: __BUILD__, levelTimes: levelTimesRef.current,
+        }));
+    request.then(res => setLeaderboard('data' in res ? { status: 'ready', data: res.data } : { status: 'unavailable', message: res.message }));
+  };
+
   /** Fin de partie : enregistre records / déblocages, puis musique de fin (record ou game over). */
-  const finishRun = (s: GameState) => {
+  const finishRun = (s: GameState, end: 'mort' | 'abandon' = 'mort') => {
     const { save: next, summary } = recordRun(saveRef.current, s);
     setRunSummary(summary);
     const bot = botRef.current.used;
@@ -110,6 +143,7 @@ const App: React.FC = () => {
       writeSave(next);
       setSave(next);
     }
+    publishScore(s, end, bot);
     // Lecture unique, sans stopBGM derrière. startBGM d'abord : après une pause la musique est
     // arrêtée et setMusicContext ne ferait que mémoriser le choix.
     startBGM();
@@ -142,7 +176,8 @@ const App: React.FC = () => {
   const accumulator = useRef<number>(0);
   const lastUiSync = useRef<number>(0);
   const screenShake = useRef<number>(0);
-  const VIEW_SCALE = viewScaleFor(dimensions);
+  const viewZoom = clampViewZoom(save.settings.viewZoom);
+  const VIEW_SCALE = viewScaleFor(dimensions) * viewZoom;
   const camera = useRef({ x: WORLD_WIDTH / 2 - dimensions.width / (2 * VIEW_SCALE), y: WORLD_HEIGHT / 2 - dimensions.height / (2 * VIEW_SCALE) });
 
   useEffect(() => {
@@ -157,6 +192,8 @@ const App: React.FC = () => {
     freshState.autoFire = saveRef.current.settings.autoFire || isTouch;
     freshState.autoAim = isTouch;
     botRef.current = { on: false, used: false, log: [] };
+    sandboxRunRef.current = false;
+    levelTimesRef.current = [];
     setRunSummary(null);
     setAbandoned(false);
     setOptionsOpen(false);
@@ -195,6 +232,8 @@ const App: React.FC = () => {
         const isInputFocused = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
         let keys = isInputFocused ? new Set<string>() : input.getKeys();
         s.analogMove = input.getAnalog();
+        // Manette : stick droit au repos = visée automatique (comme sur mobile)
+        if (!botRef.current.on) s.autoAim = isTouch || input.wantsAutoAim();
         if (botRef.current.on && s.status === 'playing') {
           const bot = botThink(s);
           s.analogMove = bot.move;
@@ -217,6 +256,7 @@ const App: React.FC = () => {
             s, SIM_STEP, keys, mouseWorld,
             () => {
               if (s.status === 'lab') return;
+              levelTimesRef.current.push(Math.round(s.time / 1000));
               if (botRef.current.on) {
                 botRef.current.log.push(`niv ${s.level + 1} à ${Math.round(s.time / 1000)}s`);
                 const o = botPickUpgrade(rollUpgradeOptions(s));
@@ -270,11 +310,13 @@ const App: React.FC = () => {
     };
     animationFrameId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [dimensions, isLabMenuOpen]);
+  }, [dimensions, isLabMenuOpen, viewZoom]);
 
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
+      // Saisie dans un champ (pseudo) : les raccourcis de lettre (M, N, F, P…) ne doivent pas se déclencher
+      if ((e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) && e.key.length === 1) return;
       // Fenêtre d'avis ouverte : elle capte elle-même les touches (F8 / Échap) avant d'arriver ici
       if (feedbackOpenRef.current) return;
       if (key === FEEDBACK_KEY) { e.preventDefault(); openFeedback(); return; }
@@ -392,6 +434,7 @@ const App: React.FC = () => {
         s.player.statsDirty = true;
         break;
       case 'change_status':
+        if (data === 'playing') sandboxRunRef.current = true;
         s.status = data;
         if (data === 'playing') startBGM(); else stopBGM();
         break;
@@ -464,6 +507,8 @@ const App: React.FC = () => {
           onLab={() => resetGame('lab')}
           onOptions={() => setOptionsOpen(true)}
           onFeedback={openFeedback}
+          playerName={player.name}
+          onPlayerName={changePlayerName}
         />
       )}
 
@@ -496,6 +541,9 @@ const App: React.FC = () => {
         />
       )}
       
+      <PadNav />
+      <PadToast />
+
       {isTouch && uiState.status === 'playing' && <TouchControls onPause={togglePause} onFeedback={openFeedback} abilities={uiState.activeAbilities} />}
 
       {uiState.status === 'paused' && (
@@ -510,6 +558,7 @@ const App: React.FC = () => {
         <FeedbackModal
           snapshot={feedback.snapshot}
           context={feedback.context}
+          defaultName={player.name}
           screenToWorld={(x, y) => ({ x: x / VIEW_SCALE + camera.current.x, y: y / VIEW_SCALE + camera.current.y })}
           onClose={closeFeedback}
         />
@@ -520,6 +569,7 @@ const App: React.FC = () => {
           state={uiState}
           summary={runSummary}
           abandoned={abandoned}
+          leaderboard={leaderboard}
           onRetry={() => resetGame('playing', uiState.shipId)}
           onMenu={() => resetGame('menu', uiState.shipId)}
         />

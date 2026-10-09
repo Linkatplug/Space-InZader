@@ -11,6 +11,8 @@ interface FeedbackModalProps {
   /** Conversion écran → monde (même que la souris du jeu). */
   screenToWorld: (clientX: number, clientY: number) => { x: number; y: number };
   onClose: () => void;
+  /** Pseudo du joueur : pré-remplit le champ pseudo. */
+  defaultName?: string;
 }
 
 const BLOCKED_POINTER_EVENTS = ['mousedown', 'mouseup', 'pointerdown', 'pointerup', 'touchstart', 'touchend'] as const;
@@ -19,10 +21,10 @@ const BLOCKED_POINTER_EVENTS = ['mousedown', 'mouseup', 'pointerdown', 'pointeru
  * Fenêtre d'avis. Pendant qu'elle est ouverte (App ne simule plus), elle capte toutes les touches
  * (le jeu et les raccourcis ne les voient pas) : F8 / Échap ferment, Échap annule la sélection d'élément.
  */
-export const FeedbackModal: React.FC<FeedbackModalProps> = ({ snapshot, context, screenToWorld, onClose }) => {
+export const FeedbackModal: React.FC<FeedbackModalProps> = ({ snapshot, context, screenToWorld, onClose, defaultName = '' }) => {
   const [kind, setKind] = useState<FeedbackKind>('bug');
   const [message, setMessage] = useState('');
-  const [name, setName] = useState('');
+  const [name, setName] = useState(defaultName);
   const [website, setWebsite] = useState('');
   const [element, setElement] = useState<FeedbackElement | undefined>();
   const [picking, setPicking] = useState(false);
@@ -115,7 +117,7 @@ export const FeedbackModal: React.FC<FeedbackModalProps> = ({ snapshot, context,
   }
 
   return (
-    <div ref={rootRef} className="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-sm overflow-y-auto p-3 sm:p-8 flex justify-center items-[safe_center]">
+    <div ref={rootRef} data-pad-scope className="fixed inset-0 z-[100] bg-slate-950/85 backdrop-blur-sm overflow-y-auto p-3 sm:p-8 flex justify-center items-[safe_center]">
       <div className="w-full max-w-xl bg-slate-900 border border-amber-300/40 p-4 sm:p-6 flex flex-col gap-4 font-hud">
         <div className="flex items-start justify-between gap-3">
           <div>

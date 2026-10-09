@@ -4,6 +4,7 @@ import { SHIPS } from '../../data/ships';
 import { WEAPONS } from '../../data/weapons';
 import { KEYSTONES } from '../../data/keystones';
 import { MetaSave, isShipUnlocked, unlockLabel } from '../../engine/Meta';
+import { PseudoField } from '../player/PseudoField';
 import { BUILD_LABEL } from '../../buildInfo';
 
 interface MainMenuProps {
@@ -13,6 +14,8 @@ interface MainMenuProps {
   onLab: () => void;
   onOptions: () => void;
   onFeedback: () => void;
+  playerName: string;
+  onPlayerName: (name: string) => void;
 }
 
 const DIFFICULTY_COLOR = { facile: 'text-green-400', moyen: 'text-amber-400', difficile: 'text-red-400' };
@@ -24,7 +27,7 @@ const CONTROLS_HELP: [string, string][] = [
   ['P / Échap', 'Pause'], ['M / N', 'Son / piste'],
 ];
 
-export const MainMenu: React.FC<MainMenuProps> = ({ save, onStart, onDev, onLab, onOptions, onFeedback }) => {
+export const MainMenu: React.FC<MainMenuProps> = ({ save, onStart, onDev, onLab, onOptions, onFeedback, playerName, onPlayerName }) => {
   const initial = SHIPS.find(s => s.id === save.lastShipId && isShipUnlocked(s, save)) ?? SHIPS[0];
   const [selected, setSelected] = useState(initial.id);
   const ship = SHIPS.find(s => s.id === selected)!;
@@ -33,7 +36,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ save, onStart, onDev, onLab,
   const keystone = KEYSTONES.find(k => k.id === ship.signatureKeystone);
 
   return (
-    <div className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-[safe_center] z-50 font-hud text-center overflow-y-auto p-4 sm:p-8">
+    <div data-pad-scope className="absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-[safe_center] z-50 font-hud text-center overflow-y-auto p-4 sm:p-8">
       <div className="ui-zoom w-full flex flex-col items-center">
       <h1 className="font-orbitron text-5xl sm:text-7xl lg:text-8xl font-black text-cyan-400 mb-2 uppercase tracking-tighter italic drop-shadow-[0_0_50px_rgba(34,211,238,0.3)]">Space InZader</h1>
       <div className="text-[14px] sm:text-[15px] text-slate-300 tracking-[0.15em] uppercase mb-6 sm:mb-10">
@@ -48,6 +51,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ save, onStart, onDev, onLab,
             <button
               key={s.id}
               onClick={() => setSelected(s.id)}
+              onFocus={() => setSelected(s.id)}
               className={`p-3 border-2 transition-all text-left ${active ? 'bg-white/10' : 'bg-slate-900/60 hover:bg-white/5'} ${ok ? '' : 'opacity-50'}`}
               style={{ borderColor: active ? s.color : 'rgba(255,255,255,0.08)' }}
             >
@@ -88,8 +92,10 @@ export const MainMenu: React.FC<MainMenuProps> = ({ save, onStart, onDev, onLab,
       </div>
 
       <div className="flex flex-col gap-3 w-full max-w-md">
+        <PseudoField value={playerName} onCommit={onPlayerName} className="text-left" />
         <button
           disabled={!unlocked}
+          data-pad-default
           onClick={() => onStart(ship.id)}
           className="px-8 py-5 bg-cyan-600 hover:bg-cyan-500 disabled:bg-slate-800 disabled:text-slate-500 text-white font-orbitron font-black text-2xl border-b-8 border-cyan-800 disabled:border-slate-900 transition-all uppercase active:translate-y-1"
         >

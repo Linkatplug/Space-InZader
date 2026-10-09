@@ -63,7 +63,7 @@ const OptionCard: React.FC<CardProps> = ({ state, opt, index, preview, active, a
       onPointerDown={e => { pointerType.current = e.pointerType; }}
       onPointerEnter={e => { if (e.pointerType === 'mouse') onActivate('hover'); }}
       onPointerLeave={e => { if (e.pointerType === 'mouse') onActivate(null); }}
-      onFocus={e => { if (e.currentTarget.matches(':focus-visible')) onActivate('focus'); }}
+      onFocus={() => onActivate('focus')}
       onBlur={() => onActivate(null)}
       onClick={() => onPress(pointerType.current)}
       className={cx(
@@ -235,7 +235,7 @@ export const UpgradeMenu: React.FC<UpgradeMenuProps> = ({ state, options, onSele
   const reserve = [...new Set(previews.flatMap(p => p.changes.map(c => c.key)))];
 
   return (
-    <div className="absolute inset-0 z-50 flex items-[safe_center] justify-center bg-slate-950/90 backdrop-blur-md p-3 lg:p-4 overflow-y-auto">
+    <div data-pad-scope className="absolute inset-0 z-50 flex items-[safe_center] justify-center bg-slate-950/90 backdrop-blur-md p-3 lg:p-4 overflow-y-auto">
       {/* Bureau : l'écran entier est mis à l'échelle pour tenir sans défilement (voir FitToScreen) */}
       <FitToScreen width={LEVELUP_WIDTH}>
         <div className="flex flex-wrap justify-between items-end gap-2 mb-3 sm:mb-4 border-b border-white/15 pb-2">

@@ -5,6 +5,7 @@ import { getShip } from '../../data/ships';
 import { ENEMIES } from '../../data/enemies';
 import { DAMAGE_COLORS } from '../../constants';
 import { formatClock } from '../hud/model';
+import { Leaderboard, LeaderboardView } from '../leaderboard/Leaderboard';
 
 const SOURCE_NAMES: Record<string, string> = { meteor: 'Météore', black_hole: 'Trou noir', solar_storm: 'Éruption solaire' };
 const sourceName = (id: string) => ENEMIES[id]?.name ?? SOURCE_NAMES[id] ?? id;
@@ -13,6 +14,7 @@ interface GameOverProps {
   state: GameState;
   summary: RunSummary | null;
   abandoned?: boolean;
+  leaderboard: LeaderboardView;
   onRetry: () => void;
   onMenu: () => void;
 }
@@ -25,10 +27,10 @@ const Stat: React.FC<{ label: string; value: string | number; record?: boolean }
   </div>
 );
 
-export const GameOverScreen: React.FC<GameOverProps> = ({ state, summary, abandoned, onRetry, onMenu }) => {
+export const GameOverScreen: React.FC<GameOverProps> = ({ state, summary, abandoned, leaderboard, onRetry, onMenu }) => {
   const ship = getShip(state.shipId);
   return (
-    <div className="absolute inset-0 bg-gradient-to-b from-red-950/95 to-slate-950/95 flex flex-col items-center justify-[safe_center] z-50 text-center p-4 sm:p-10 overflow-y-auto">
+    <div data-pad-scope className="absolute inset-0 bg-gradient-to-b from-red-950/95 to-slate-950/95 flex flex-col items-center justify-[safe_center] z-50 text-center p-4 sm:p-10 overflow-y-auto">
       <div className="ui-zoom w-full flex flex-col items-center">
       <h2 className="font-orbitron font-black text-[40px] sm:text-[64px] text-white mb-2 uppercase leading-none">
         {abandoned ? 'Mission abandonnée' : 'Vaisseau détruit'}
@@ -70,6 +72,8 @@ export const GameOverScreen: React.FC<GameOverProps> = ({ state, summary, abando
           Nouveau vaisseau débloqué : {summary.unlockedShips.map(s => s.name).join(', ')}
         </div>
       )}
+
+      <Leaderboard view={leaderboard} className="w-full max-w-4xl text-left mb-6" />
 
       <div className="flex flex-wrap justify-center gap-4">
         <button onClick={onRetry} className="px-10 py-4 bg-white text-red-900 font-hud font-bold text-[20px] uppercase tracking-wider hover:bg-red-100 transition-colors">Rejouer</button>

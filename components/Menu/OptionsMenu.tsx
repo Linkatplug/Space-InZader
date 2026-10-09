@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { GameSettings } from '../../engine/Meta';
 import { playCollectXPSound } from '../../engine/SoundEngine';
-import { normalizeSettingsPatch, percentLabel, shakeLabel, SliderKey } from './optionsModel';
+import { clampViewZoom, normalizeSettingsPatch, percentLabel, VIEW_ZOOM, shakeLabel, SliderKey } from './optionsModel';
 import { cx } from '../hud/widgets';
 
 interface OptionsMenuProps {
@@ -71,7 +71,7 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({ settings, onChange, on
   }, [onClose]);
 
   return (
-    <div className="absolute inset-0 z-[60] bg-slate-950/95 backdrop-blur-md overflow-y-auto p-3 sm:p-8 flex justify-center items-[safe_center]">
+    <div data-pad-scope className="absolute inset-0 z-[60] bg-slate-950/95 backdrop-blur-md overflow-y-auto p-3 sm:p-8 flex justify-center items-[safe_center]">
       <div className="w-full max-w-3xl ui-zoom">
         <div className="flex items-end justify-between gap-4 mb-4 border-b border-cyan-400/30 pb-3">
           <h2 className="font-orbitron font-black text-[34px] sm:text-[48px] text-white leading-none">OPTIONS</h2>
@@ -94,6 +94,17 @@ export const OptionsMenu: React.FC<OptionsMenuProps> = ({ settings, onChange, on
         <h3 className="font-hud font-bold text-[14px] uppercase tracking-[0.15em] text-cyan-300 mt-6">Affichage</h3>
         <Row label="Tremblement d'écran" hint="Secousses lors des explosions et des impacts.">
           <Slider label="Intensité du tremblement" value={settings.screenShake} display={shakeLabel(settings.screenShake)} onChange={slide('screenShake')} />
+        </Row>
+        <Row label="Zoom de la zone de jeu" hint="Dézoomer : voir plus loin, vaisseau plus petit.">
+          <input
+            type="range" min={Math.round(VIEW_ZOOM.min * 100)} max={Math.round(VIEW_ZOOM.max * 100)} step={Math.round(VIEW_ZOOM.step * 100)}
+            value={Math.round(clampViewZoom(settings.viewZoom) * 100)}
+            aria-label="Zoom de la zone de jeu"
+            onChange={e => set({ viewZoom: Number(e.target.value) / 100 })}
+            className="si-range flex-1 min-w-0"
+            style={{ '--fill': `${((clampViewZoom(settings.viewZoom) - VIEW_ZOOM.min) / (VIEW_ZOOM.max - VIEW_ZOOM.min)) * 100}%` } as React.CSSProperties}
+          />
+          <span className="font-mono font-bold text-[16px] w-[96px] text-right tabular-nums text-white">{percentLabel(clampViewZoom(settings.viewZoom))}</span>
         </Row>
         <Row label="Chiffres de dégâts" hint="Valeurs flottantes au-dessus des ennemis touchés.">
           <Toggle label="Chiffres de dégâts" checked={settings.damageNumbers} onChange={v => set({ damageNumbers: v })} />
