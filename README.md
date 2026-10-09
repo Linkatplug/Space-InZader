@@ -1,10 +1,12 @@
 # 🚀 Space InZader
 
+### 🎮 Jouer en ligne : **https://space.linkatplug.be**
+
 Roguelite spatial tactique en vue de dessus : survis aux vagues, monte de niveau, combine armes, passifs et keystones pour déclencher des synergies.
 
 Construit avec **React 19 + TypeScript + Canvas 2D** (Vite). Aucun moteur de jeu externe.
 
-## Jouer
+## Lancer en local
 
 ```bash
 npm install
@@ -58,7 +60,9 @@ L'architecture et les guides « comment ajouter une arme / un ennemi / … » so
 
 ## Déploiement
 
-Le workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) lance typecheck, tests et build à chaque push et PR. Sur `main`, il publie `dist/` sur la branche `gh-pages` (GitHub Pages). Le build utilise des chemins relatifs (`base: './'`) : il fonctionne aussi bien à la racine d'un domaine que sous `/Space-InZader/`.
+Le jeu est hébergé sur **https://space.linkatplug.be** (conteneur Docker + nginx), déployé depuis le dépôt Gitea `https://git.linkatplug.be/linkatplug/Space-InZader.git` avec le script `deploy/update.sh`. Procédure complète : [DOCKER.md](DOCKER.md).
+
+GitHub sert de sauvegarde : le workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) y lance seulement typecheck, tests et build à chaque push et PR. Le build utilise des chemins relatifs (`base: './'`) : il fonctionne à la racine d'un domaine comme dans un sous-chemin.
 
 ## Crédits
 

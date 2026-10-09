@@ -12,7 +12,7 @@ const buildDate = process.env.SI_BUILD_DATE ?? '';
 
 export default defineConfig({
   plugins: [react()],
-  // Chemins relatifs : fonctionne à la racine d'un domaine comme sur GitHub Pages (/Space-InZader/)
+  // Chemins relatifs : fonctionne à la racine d'un domaine comme dans un sous-chemin
   base: './',
   define: {
     __BUILD__: JSON.stringify(build),
