@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { input } from '../engine/InputManager';
 import { ActiveAbility } from '../types';
+import { FEEDBACK_TEXT } from './feedback/text';
 
 /** Détection d'un écran tactile principal (téléphone / tablette). */
 export const isTouchDevice = () =>
@@ -12,7 +13,7 @@ const RADIUS = 60;
  * Contrôles tactiles : joystick virtuel à gauche (déplacement),
  * boutons de compétences et de pause à droite. Visée et tir automatiques.
  */
-export const TouchControls: React.FC<{ onPause: () => void; abilities: ActiveAbility[] }> = ({ onPause, abilities }) => {
+export const TouchControls: React.FC<{ onPause: () => void; onFeedback: () => void; abilities: ActiveAbility[] }> = ({ onPause, onFeedback, abilities }) => {
   const [stick, setStick] = useState<{ ox: number; oy: number; x: number; y: number } | null>(null);
   const touchId = useRef<number | null>(null);
 
@@ -95,6 +96,13 @@ export const TouchControls: React.FC<{ onPause: () => void; abilities: ActiveAbi
         style={{ right: 'calc(8px + env(safe-area-inset-right))', top: 'calc(8px + env(safe-area-inset-top))' }}
       >
         <Btn label={<span className="text-[18px]">⏸</span>} onTap={onPause} className="w-11 h-11" />
+      </div>
+      {/* Avis : à gauche du bouton pause */}
+      <div
+        className="absolute pointer-events-auto"
+        style={{ right: 'calc(60px + env(safe-area-inset-right))', top: 'calc(8px + env(safe-area-inset-top))' }}
+      >
+        <Btn label={<span className="text-[16px]" title={FEEDBACK_TEXT.buttonHint}>💬</span>} onTap={onFeedback} className="w-11 h-11 border-amber-300/70" />
       </div>
     </div>
   );

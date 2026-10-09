@@ -22,6 +22,11 @@ import { PauseMenu } from './components/Menu/PauseMenu';
 import { OptionsMenu } from './components/Menu/OptionsMenu';
 import { MetaSave, RunSummary, loadSave, writeSave, recordRun } from './engine/Meta';
 import { botThink, botPickUpgrade } from './engine/Bot';
+import { FeedbackModal } from './components/feedback/FeedbackModal';
+import { buildContext } from './components/feedback/logic';
+import { FEEDBACK_KEY } from './components/feedback/text';
+import { buildFeedbackSnapshot } from './engine/FeedbackSnapshot';
+import type { FeedbackContext, FeedbackSnapshot } from './types';
 import { calculateRuntimeStats, syncDefenseState, shipBaseStats } from './engine/StatsCalculator';
 
 const SIM_STEP = 1 / 60;
@@ -55,6 +60,32 @@ const App: React.FC = () => {
     if (s.status === 'playing') { s.status = 'paused'; stopBGM(); }
     else if (s.status === 'paused') { s.status = 'playing'; startBGM(); }
     setUiState({ ...s });
+  };
+
+  /**
+   * Fenêtre d'avis : instantané figé à l'ouverture. Ouverte = aucun pas de simulation (comme la pause),
+   * l'état de la partie n'est pas modifié donc il reprend tel quel à la fermeture.
+   */
+  const [feedback, setFeedback] = useState<{ snapshot: FeedbackSnapshot; context: FeedbackContext } | null>(null);
+  const feedbackOpenRef = useRef(false);
+  feedbackOpenRef.current = feedback !== null;
+  const openFeedback = () => {
+    if (feedbackOpenRef.current) return;
+    const s = engineState.current;
+    feedbackOpenRef.current = true;
+    input.getKeys().clear();
+    setFeedback({
+      snapshot: buildFeedbackSnapshot(s),
+      context: buildContext({
+        status: s.status, startTime: s.startTime, now: Date.now(), touch: isTouch,
+        width: window.innerWidth, height: window.innerHeight, build: __BUILD__,
+      }),
+    });
+  };
+  const closeFeedback = () => {
+    feedbackOpenRef.current = false;
+    input.getKeys().clear();
+    setFeedback(null);
   };
 
   /** Abandon depuis la pause : la partie est enregistrée comme une défaite. */
@@ -159,7 +190,7 @@ const App: React.FC = () => {
         }
       }
 
-      if ((s.status === 'playing' || s.status === 'lab') && ctx) {
+      if ((s.status === 'playing' || s.status === 'lab') && ctx && !feedbackOpenRef.current) {
         const mousePos = input.getMousePos();
         const isInputFocused = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
         let keys = isInputFocused ? new Set<string>() : input.getKeys();
@@ -244,6 +275,9 @@ const App: React.FC = () => {
   useEffect(() => {
     const handleGlobalKeys = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase();
+      // Fenêtre d'avis ouverte : elle capte elle-même les touches (F8 / Échap) avant d'arriver ici
+      if (feedbackOpenRef.current) return;
+      if (key === FEEDBACK_KEY) { e.preventDefault(); openFeedback(); return; }
       // Écran d'options ouvert : P / Échap ne doivent pas relancer la partie derrière (Échap est géré par OptionsMenu)
       if ((key === CONTROLS.PAUSE || key === 'escape') && !optionsOpenRef.current) togglePause();
       if (key === CONTROLS.MUTE) {
@@ -415,7 +449,7 @@ const App: React.FC = () => {
       <canvas ref={canvasRef} width={dimensions.width} height={dimensions.height} className="absolute inset-0" />
       
       {uiState.isDebugMode && <DebugOverlay state={uiState} fps={fps} frameTime={frameTime} />}
-      {uiState.status !== 'menu' && uiState.status !== 'dev' && uiState.status !== 'lab' && <HUD state={uiState} touch={isTouch} size={save.settings.hudSize} />}
+      {uiState.status !== 'menu' && uiState.status !== 'dev' && uiState.status !== 'lab' && <HUD state={uiState} touch={isTouch} size={save.settings.hudSize} onFeedback={openFeedback} />}
       
       {uiState.status === 'menu' && (
         <MainMenu
@@ -424,6 +458,7 @@ const App: React.FC = () => {
           onDev={() => resetGame('dev')}
           onLab={() => resetGame('lab')}
           onOptions={() => setOptionsOpen(true)}
+          onFeedback={openFeedback}
         />
       )}
 
@@ -456,16 +491,25 @@ const App: React.FC = () => {
         />
       )}
       
-      {isTouch && uiState.status === 'playing' && <TouchControls onPause={togglePause} abilities={uiState.activeAbilities} />}
+      {isTouch && uiState.status === 'playing' && <TouchControls onPause={togglePause} onFeedback={openFeedback} abilities={uiState.activeAbilities} />}
 
       {uiState.status === 'paused' && (
-        <PauseMenu state={uiState} onResume={togglePause} onQuit={abandonRun} onOptions={() => setOptionsOpen(true)} />
+        <PauseMenu state={uiState} onResume={togglePause} onQuit={abandonRun} onOptions={() => setOptionsOpen(true)} onFeedback={openFeedback} />
       )}
 
       {optionsOpen && (uiState.status === 'menu' || uiState.status === 'paused') && (
         <OptionsMenu settings={save.settings} onChange={changeSettings} onClose={() => setOptionsOpen(false)} autoFireLocked={isTouch} />
       )}
       
+      {feedback && (
+        <FeedbackModal
+          snapshot={feedback.snapshot}
+          context={feedback.context}
+          screenToWorld={(x, y) => ({ x: x / VIEW_SCALE + camera.current.x, y: y / VIEW_SCALE + camera.current.y })}
+          onClose={closeFeedback}
+        />
+      )}
+
       {uiState.status === 'gameover' && (
         <GameOverScreen
           state={uiState}

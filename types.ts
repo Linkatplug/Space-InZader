@@ -460,3 +460,38 @@ export interface GameState {
   bossSpawned: boolean;
   isDebugMode: boolean;
 }
+
+// ---------------------------------------------------------------------------
+// Avis des testeurs (F8 / bouton « Avis ») — contrat client ↔ serveur (POST /api/feedback)
+// ---------------------------------------------------------------------------
+
+export type FeedbackKind = 'texte' | 'visuel' | 'bug' | 'equilibrage' | 'idee' | 'jaime' | 'autre';
+
+/** Élément montré par le testeur (« Montrer l'élément »). Canvas : path 'canvas' + coordonnées monde. */
+export interface FeedbackElement { text: string; path: string; world?: { x: number; y: number } }
+
+/** Instantané de la partie, figé à l'ouverture de la fenêtre (buildFeedbackSnapshot). Valeurs arrondies. */
+export interface FeedbackSnapshot {
+  status: GameState['status'];
+  ship?: string; wave?: number; level?: number; timeSec?: number;
+  /** [actuel, max] */
+  hull?: [number, number]; shield?: [number, number]; armor?: [number, number];
+  /** chaleur en % (0–100) */
+  heat?: number;
+  weapons?: { id: string; level: number }[];
+  passives?: { id: string; stacks: number }[];
+  keystones?: string[]; synergies?: string[];
+  kills?: number; score?: number; enemies?: number; bossAlive?: boolean;
+  event?: string | null; lastHitBy?: string | null;
+  /** 5 premières sources de dégâts SUBIS (state.damageBySource : ennemis, événements…) */
+  topDamage?: { source: string; dmg: number }[];
+}
+
+export interface FeedbackContext {
+  status: string; playtimeMin: number; device: 'ordinateur' | 'telephone'; viewport: string; build: string;
+}
+
+export interface FeedbackPayload {
+  kind: FeedbackKind; message: string; name: string; website: string;
+  element?: FeedbackElement; snapshot: FeedbackSnapshot; context: FeedbackContext;
+}

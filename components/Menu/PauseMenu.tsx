@@ -1,4 +1,5 @@
 import React from 'react';
+import { FeedbackButton } from '../feedback/FeedbackButton';
 import { GameState } from '../../types';
 import { DAMAGE_COLORS } from '../../constants';
 import { MAX_WEAPON_LEVEL } from '../../engine/Progression';
@@ -10,6 +11,7 @@ interface PauseMenuProps {
   onResume: () => void;
   onQuit: () => void;
   onOptions: () => void;
+  onFeedback: () => void;
 }
 
 const Section: React.FC<{ title: string; children: React.ReactNode; empty?: string }> = ({ title, children, empty }) => (
@@ -30,7 +32,7 @@ const Item: React.FC<{ color: string; title: React.ReactNode; right?: React.Reac
 );
 
 /** Pause : reprise, abandon et récapitulatif complet du build (synergies, keystones, modules). */
-export const PauseMenu: React.FC<PauseMenuProps> = ({ state, onResume, onQuit, onOptions }) => {
+export const PauseMenu: React.FC<PauseMenuProps> = ({ state, onResume, onQuit, onOptions, onFeedback }) => {
   const synergies = synergyRows(state);
   return (
     <div className="absolute inset-0 z-40 bg-slate-950/90 backdrop-blur-md overflow-y-auto p-3 sm:p-8 flex justify-center items-[safe_center]">
@@ -49,6 +51,7 @@ export const PauseMenu: React.FC<PauseMenuProps> = ({ state, onResume, onQuit, o
             <button onClick={onOptions} className="px-5 py-3 border-2 border-white/40 text-white hover:bg-white/10 font-hud font-bold text-[16px] uppercase tracking-wider">
               ⚙ Options
             </button>
+            <FeedbackButton onClick={onFeedback} className="px-5 py-3 text-[16px] border-2" />
             <button onClick={onQuit} className="px-5 py-3 border-2 border-red-400/60 text-red-300 hover:bg-red-500/15 font-hud font-bold text-[16px] uppercase tracking-wider">
               Abandonner
             </button>

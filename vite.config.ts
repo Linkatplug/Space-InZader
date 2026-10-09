@@ -20,6 +20,8 @@ export default defineConfig({
   },
   server: {
     port: 5173,
-    open: true
+    open: true,
+    // Avis F8 en dev : lancer aussi `node feedback/server.mjs` (port 3000)
+    proxy: { '/api': 'http://localhost:3000' },
   }
 });

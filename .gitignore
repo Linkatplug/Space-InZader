@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Secrets et avis des testeurs en dev (ne pas confondre avec data/ = contenu du jeu)
+.env
+/feedback/data/

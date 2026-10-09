@@ -21,3 +21,7 @@ Dockerfile
 .dockerignore
 docker-compose*.yml
 DOCKER.md
+
+# Secrets et avis des testeurs en dev (data/ = contenu du jeu, à garder)
+.env
+feedback/data

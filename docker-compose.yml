@@ -12,6 +12,8 @@ services:
     # Reconstruit l'image à chaque `up` : toujours le dernier code du dépôt
     pull_policy: build
     container_name: space-inzader
+    depends_on:
+      - feedback
     ports:
       - "${HOST_PORT:-8118}:80"
     restart: unless-stopped
@@ -21,3 +23,25 @@ services:
       timeout: 5s
       start_period: 10s
       retries: 3
+
+  # Serveur des avis (F8) : joint uniquement par nginx (/api/), jamais exposé à l'extérieur
+  feedback:
+    build:
+      context: ./feedback
+      dockerfile: Dockerfile
+    image: space-inzader-feedback:latest
+    pull_policy: build
+    container_name: space-inzader-feedback
+    labels:
+      app: space-inzader
+    environment:
+      # Jeton de la page privée, lu dans le fichier .env du serveur (jamais commité).
+      # Vide ou < 24 caractères → page privée désactivée.
+      FEEDBACK_ADMIN_TOKEN: ${FEEDBACK_ADMIN_TOKEN:-}
+    volumes:
+      - feedback-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  # Avis des testeurs (avis.md + archive/) : conservés entre les mises à jour
+  feedback-data:

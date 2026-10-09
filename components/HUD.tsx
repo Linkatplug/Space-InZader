@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { FeedbackButton } from './feedback/FeedbackButton';
 import { GameState, ActiveAbility } from '../types';
 import { DAMAGE_COLORS } from '../constants';
 import { MAX_WEAPON_LEVEL } from '../engine/Progression';
@@ -460,11 +461,14 @@ const CompactHUD: React.FC<{ state: GameState; layout: HudLayout; touch: boolean
   );
 };
 
-export const HUD: React.FC<{ state: GameState; touch?: boolean; size?: HudSize }> = ({ state, touch = false, size = 'normal' }) => {
+export const HUD: React.FC<{ state: GameState; touch?: boolean; size?: HudSize; onFeedback?: () => void }> = ({ state, touch = false, size = 'normal', onFeedback }) => {
   const layout = useHudLayout(size);
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden select-none">
       <LowHullVignette state={state} />
+      {onFeedback && !touch && (
+        <FeedbackButton onClick={onFeedback} className="pointer-events-auto absolute right-2 bottom-2 z-10 px-3 py-1 text-[13px] opacity-70 hover:opacity-100" />
+      )}
       <div
         className="absolute top-0 left-0"
         style={{

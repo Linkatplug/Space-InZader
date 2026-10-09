@@ -5,7 +5,9 @@ L'image est construite en deux étapes :
 1. **Build** (`node:20-alpine`) : `npm ci`, `npm test` (l'image n'est pas créée si un test échoue), `npx vite build`.
 2. **Serveur** (`nginx:alpine`) : sert le dossier `dist/` sur le port 80 (gzip, cache long pour `/assets/*`, pas de cache pour `index.html`).
 
-Fichiers : `Dockerfile`, `nginx.conf`, `.dockerignore`, `docker-compose.yml`, `deploy/update.sh`.
+Fichiers : `Dockerfile`, `nginx.conf`, `.dockerignore`, `docker-compose.yml`, `deploy/update.sh`, `feedback/` (serveur des avis), `.env.example`.
+
+Deux conteneurs : `space-inzader` (nginx, le jeu, port 8118) et `space-inzader-feedback` (avis des testeurs, **non exposé** : seul nginx lui parle via `/api/`).
 
 ---
 
@@ -41,6 +43,51 @@ La version (ex. `v142 · mis à jour le 09/10/2026`) apparaît en bas du menu pr
 Si les tests échouent, la reconstruction échoue et **l'ancien conteneur continue de tourner**.
 
 > L'ancienne stack Portainer (autre serveur, branchée sur GitHub) peut être arrêtée.
+
+---
+
+## Avis des testeurs (F8 / bouton « Avis »)
+
+Les avis sont ajoutés en Markdown dans `avis.md`, dans le volume Docker `space-inzader_feedback-data` (conservé entre les mises à jour). L'adresse IP n'est jamais enregistrée (seulement un compteur en mémoire pour limiter à 30 avis/heure).
+
+### Activer la page privée (une fois, sur le serveur)
+
+1. Générer un jeton (à garder pour soi, ne jamais le commiter ni le donner à Claude) :
+
+```bash
+openssl rand -hex 24
+```
+
+2. Créer le fichier `.env` à côté de `docker-compose.yml` (modèle : `.env.example`) :
+
+```bash
+cd /home/DOCKER/space-inzader && cp .env.example .env && nano .env
+```
+
+et coller le jeton après `FEEDBACK_ADMIN_TOKEN=`.
+
+3. Relancer : `deploy/update.sh` (ou `docker compose up -d`).
+
+### Lire les avis
+
+- Page privée : `https://space.linkatplug.be/api/avis/<jeton>/`
+- Texte brut : `https://space.linkatplug.be/api/avis/<jeton>/raw` (ajouter `?download=1` pour télécharger)
+- Bouton **Archiver et vider** : déplace `avis.md` vers `archive/avis-<date>.md` (rien n'est supprimé).
+- Sans jeton (ou jeton < 24 caractères), la page privée répond 404 ; les avis sont quand même enregistrés.
+- En SSH : `docker compose exec feedback cat /app/data/avis.md`
+
+Notes :
+- Le jeton apparaît dans l'adresse : ne pas partager le lien, et savoir qu'il peut figurer dans les journaux du reverse proxy.
+- Si un reverse proxy est devant le port 8118 (HTTPS de space.linkatplug.be), il doit transmettre `/api/` comme le reste et poser `X-Forwarded-For` (comportement par défaut de la plupart des proxys) : c'est l'adresse utilisée pour la limite par heure.
+- Si le service d'avis est arrêté, le jeu reste jouable ; l'envoi d'un avis affiche « serveur d'avis indisponible ».
+
+### En développement
+
+```bash
+node feedback/server.mjs
+```
+
+(port 3000, avis dans `feedback/data/avis.md`, ignoré par git) — `npm run dev` redirige `/api` vers ce serveur.
 
 ---
 
