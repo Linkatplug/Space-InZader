@@ -15,6 +15,7 @@ import { updateLootMagnetism } from './LootSystem';
 import { updatePickups } from './Pickups';
 import { handlePlayerControls } from './PlayerController';
 import { updateEnvironmentalEvents } from './EventSystem';
+import { keepInArena } from './Arena';
 
 const ON_HIT_RESET_MS = 3000;
 /** Après surchauffe, le tir reprend sous ce seuil (fraction du max). Réglages dans engine/Heat.ts. */
@@ -56,7 +57,7 @@ export const updateGameState = (
       state.waveQuota = Math.floor(10 + (state.wave * 6));
 
       if (isBossWave(state.wave)) {
-        state.enemies.push(spawnEnemy(state.wave, player, bossForWave(state.wave)));
+        state.enemies.push(spawnEnemy(state.wave, player, bossForWave(state.wave), undefined, true));
         state.bossSpawned = true;
         createEffect(state, player.x, player.y - 160, 'ALERTE : BOSS', '#facc15');
       }
@@ -71,6 +72,12 @@ export const updateGameState = (
   state.stationaryTime = (player.vx === 0 && player.vy === 0) ? state.stationaryTime + deltaTime : 0;
 
   state.enemies.forEach(e => {
+    // Sortie d'hypervitesse : l'ennemi se matérialise sur place, inoffensif
+    if (e.warpIn) {
+      e.warpIn.left -= deltaTime;
+      if (e.warpIn.left > 0) return;
+      e.warpIn = undefined;
+    }
     updateEnemyAI(e, player, state, deltaTime, time);
 
     updateEnemyAttacks(state, e, time);
@@ -104,7 +111,7 @@ export const updateGameState = (
   if (state.status === 'playing' && state.spawnEnabled && currentEnemies < maxPop && (currentEnemies + state.waveKills) < state.waveQuota) {
     const spawnProb = 0.03 + (state.wave * 0.005);
     if (Math.random() < spawnProb) {
-      state.enemies.push(spawnEnemy(state.wave, player));
+      state.enemies.push(spawnEnemy(state.wave, player, undefined, undefined, true));
     }
   }
 
@@ -114,6 +121,9 @@ export const updateGameState = (
     ef.life -= deltaTime * 1.2;
   });
   state.effects = state.effects.filter(ef => ef.life > 0);
+
+  // Rien de jouable hors du cadre (ennemis, XP, butin, zones, événements…)
+  keepInArena(state);
 
   if (player.defense.hull <= 0) {
     emitParticles(state, player.x, player.y, '#22d3ee', 80, 12);

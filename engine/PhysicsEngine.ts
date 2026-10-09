@@ -1,13 +1,12 @@
 import { GameState } from '../types';
-import { WORLD_WIDTH, WORLD_HEIGHT } from '../constants';
+import { clampToArena } from './Arena';
 import { updatePlayerProjectile, detonate } from './WeaponSystem';
 
 export const updatePhysics = (state: GameState, deltaTime: number) => {
   const { player, projectiles } = state;
 
   // 1. Limites du monde
-  player.x = Math.max(player.radius, Math.min(WORLD_WIDTH - player.radius, player.x));
-  player.y = Math.max(player.radius, Math.min(WORLD_HEIGHT - player.radius, player.y));
+  clampToArena(player, player.radius);
 
   // 2. Projectiles
   projectiles.forEach(p => {

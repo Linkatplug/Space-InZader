@@ -333,6 +333,8 @@ export interface Entity {
   burn?: { dps: number; until: number; type: DamageType };
   slow?: { amount: number; until: number };
   invulnUntil?: number;     // invulnérable jusqu'à (ms, horloge state.time)
+  /** Sortie d'hypervitesse en cours (apparition) : ni mouvement, ni tir, ni dégâts de contact. */
+  warpIn?: { left: number; total: number; dirX: number; dirY: number; color: string; boss: boolean };
 }
 
 export interface Projectile {
@@ -494,4 +496,42 @@ export interface FeedbackContext {
 export interface FeedbackPayload {
   kind: FeedbackKind; message: string; name: string; website: string;
   element?: FeedbackElement; snapshot: FeedbackSnapshot; context: FeedbackContext;
+}
+
+// ---------------------------------------------------------------------------
+// Pseudo + classement en ligne — contrat client ↔ serveur (POST/GET /api/scores)
+// ---------------------------------------------------------------------------
+
+/** Score envoyé à la fin d'une partie (sauf partie bot, dev, labo). Sert aussi aux statistiques (runs.jsonl). */
+export interface ScoreSubmission {
+  playerId: string; name: string; score: number; wave: number; level: number;
+  timeSec: number; kills: number; ship: string; build: string;
+  /** piège à robots : toujours vide */
+  website: string;
+  device?: 'ordinateur' | 'telephone';
+  input?: 'clavier' | 'tactile' | 'manette';
+  end?: 'mort' | 'abandon';
+  lastHitBy?: string | null;
+  weapons?: { id: string; level: number }[];
+  keystones?: string[];
+  /** secondes du passage de chaque niveau (index 0 = niveau 2) */
+  levelTimes?: number[];
+  /** 5 premières sources de dégâts subis */
+  topDamage?: { source: string; dmg: number }[];
+}
+
+export interface ScoreRow {
+  rank: number; name: string; score: number; wave: number; timeSec: number; ship: string;
+  /** date ISO du meilleur score */
+  date: string;
+  /** ligne du joueur qui demande */
+  me?: boolean;
+}
+
+export interface LeaderboardResponse {
+  top: ScoreRow[];
+  me?: ScoreRow | null;
+  total: number;
+  /** vrai si l'envoi qui vient d'être fait bat le record perso du joueur */
+  personalBest?: boolean;
 }

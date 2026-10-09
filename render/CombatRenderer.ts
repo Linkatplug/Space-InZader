@@ -1,5 +1,6 @@
-import { GameState, Projectile, Zone, Beam, Drone, Pickup } from '../types';
+import { GameState, Projectile, Zone, Beam, Drone, Pickup, Entity } from '../types';
 import { PICKUPS } from '../data/pickups';
+import { WARP_IN } from '../data/enemies';
 
 /** Rendu des éléments de combat : projectiles, zones, rayons, drones. */
 
@@ -346,4 +347,52 @@ export const drawPickups = (ctx: CanvasRenderingContext2D, pickups: Pickup[], ti
     }
     ctx.restore();
   }
+};
+
+/**
+ * Sortie d'hypervitesse d'un ennemi (Entity.warpIn) : traînée lumineuse étirée derrière lui
+ * dans l'axe d'arrivée, qui se rétracte, + flash blanc au début. Boss : plus long, plus large, onde de choc.
+ * Renvoie l'opacité à appliquer au vaisseau (il se matérialise).
+ */
+export const drawWarpIn = (ctx: CanvasRenderingContext2D, e: Entity): number => {
+  const w = e.warpIn;
+  if (!w) return 1;
+  const k = Math.max(0, Math.min(1, 1 - w.left / w.total)); // 0 → 1
+  const trail = (w.boss ? WARP_IN.bossTrail : WARP_IN.trail) * (1 - k) * (1 - k);
+  const width = e.radius * (w.boss ? 1.1 : 0.8) * (1 - k * 0.7) + 2;
+  const tx = e.x - w.dirX * trail, ty = e.y - w.dirY * trail;
+
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.lineCap = 'round';
+  if (trail > 2) {
+    const g = ctx.createLinearGradient(tx, ty, e.x, e.y);
+    g.addColorStop(0, 'rgba(255,255,255,0)');
+    g.addColorStop(1, w.color);
+    ctx.strokeStyle = g;
+    ctx.globalAlpha = 0.85;
+    ctx.lineWidth = width;
+    ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(e.x, e.y); ctx.stroke();
+    // cœur blanc
+    ctx.strokeStyle = '#ffffff';
+    ctx.globalAlpha = 0.7;
+    ctx.lineWidth = Math.max(1.5, width * 0.25);
+    ctx.beginPath(); ctx.moveTo(e.x - w.dirX * trail * 0.5, e.y - w.dirY * trail * 0.5); ctx.lineTo(e.x, e.y); ctx.stroke();
+  }
+  // Flash d'arrivée
+  if (k < 0.4) {
+    const f = 1 - k / 0.4;
+    ctx.globalAlpha = f;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.arc(e.x, e.y, e.radius * (0.6 + k * 2.5), 0, Math.PI * 2); ctx.fill();
+  }
+  // Boss : onde de choc qui s'élargit
+  if (w.boss) {
+    ctx.globalAlpha = (1 - k) * 0.8;
+    ctx.strokeStyle = w.color;
+    ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(e.x, e.y, e.radius * (1 + k * 4), 0, Math.PI * 2); ctx.stroke();
+  }
+  ctx.restore();
+  return 0.2 + 0.8 * k;
 };

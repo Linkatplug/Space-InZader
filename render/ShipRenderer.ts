@@ -83,11 +83,12 @@ export const drawShip = (ctx: CanvasRenderingContext2D, entity: Entity, isPlayer
       grd.addColorStop(0, accent);
       grd.addColorStop(1, 'transparent');
       ctx.fillStyle = grd;
-      ctx.globalAlpha = 0.4 + Math.sin(time/200)*0.2;
+      const a0 = ctx.globalAlpha; // respecte l'opacité de l'appelant (sortie d'hypervitesse)
+      ctx.globalAlpha = a0 * (0.4 + Math.sin(time/200)*0.2);
       ctx.beginPath();
       ctx.arc(0, 0, radius * 0.7, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 1.0;
+      ctx.globalAlpha = a0;
     }
   }
 

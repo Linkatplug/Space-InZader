@@ -133,7 +133,7 @@ export const checkCollisions = (state: GameState) => {
 
   const nearbyEnemies = enemyTree.query({ x: player.x, y: player.y, w: 250, h: 250 });
   nearbyEnemies.forEach(e => {
-    if (e.dead) return;
+    if (e.dead || e.warpIn) return; // en sortie d'hypervitesse : pas de dégâts de contact
     const dx = player.x - e.x;
     const dy = player.y - e.y;
     const radiusSum = player.radius + e.radius;

@@ -62,6 +62,17 @@ export interface EnemyDef {
 
 const never = () => 0;
 
+/**
+ * Arrivée des ennemis en sortie d'hypervitesse (ils peuvent apparaître à l'écran).
+ * duration : secondes pendant lesquelles l'ennemi se matérialise (inoffensif) ;
+ * trail : longueur de la traînée lumineuse ; minDist : distance minimale au joueur.
+ */
+export const WARP_IN = {
+  duration: 0.5, trail: 320,
+  bossDuration: 0.9, bossTrail: 700,
+  minDist: 350,
+};
+
 export const ENEMIES: Record<string, EnemyDef> = {
   basic: {
     id: 'basic', name: 'Drone', hull: 85, armor: 0, shield: 0, speed: 2.4, radius: 32,
