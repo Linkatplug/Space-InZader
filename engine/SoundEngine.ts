@@ -146,6 +146,33 @@ const fadeTo = (target: number, ms: number, done?: () => void) => {
   }, 50);
 };
 
+// --- Lecture bloquée avant le premier geste (autoplay) : réessai unique au premier clic/touche ---
+const UNLOCK_EVENTS = ['pointerdown', 'pointerup', 'click', 'keydown', 'touchstart', 'touchend'];
+let unlockArmed = false;
+
+const disarmUnlock = () => {
+  if (!unlockArmed) return;
+  unlockArmed = false;
+  if (typeof window === 'undefined' || typeof window.removeEventListener !== 'function') return;
+  for (const e of UNLOCK_EVENTS) window.removeEventListener(e, onUnlock, true);
+};
+
+const onUnlock = () => {
+  disarmUnlock();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+  if (musicWanted && music && music.paused) {
+    applyMusicVolume();
+    music.play().catch(armUnlock); // toujours refusé (ex. geste non qualifiant) : on réessaiera au suivant
+  }
+};
+
+/** Installe (une seule fois) les écouteurs de premier geste. Pas de doublon. */
+const armUnlock = () => {
+  if (unlockArmed || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+  unlockArmed = true;
+  for (const e of UNLOCK_EVENTS) window.addEventListener(e, onUnlock, true);
+};
+
 const playTrack = (startAt = 0) => {
   if (!music) return;
   deferredStartAt = 0;
@@ -172,7 +199,7 @@ const playTrack = (startAt = 0) => {
     el.addEventListener('loadedmetadata', () => { el.currentTime = Math.min(startAt, (el.duration || startAt + 1) - 0.5); }, { once: true });
   }
   applyMusicVolume();
-  music.play().catch(() => { /* lecture bloquée avant interaction : on réessaiera */ });
+  music.play().catch(armUnlock); // lecture bloquée avant interaction : on réessaiera au premier geste
 };
 
 const startMusic = (): boolean => {
@@ -205,7 +232,7 @@ const startMusic = (): boolean => {
     playTrack(deferredStartAt);
   } else {
     applyMusicVolume();
-    music.play().catch(() => {});
+    music.play().catch(armUnlock);
   }
   return true;
 };
@@ -313,7 +340,8 @@ const initAudio = () => {
     audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
   }
   if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
+    audioCtx.resume().catch(() => {});
+    armUnlock(); // le contexte reste suspendu tant qu'il n'y a pas eu de geste
   }
 };
 
@@ -503,6 +531,7 @@ export const playExplosionSound = (radius: number) => {
 
 // HMR (Vite) : le module est recréé, l'ancien lecteur audio doit être coupé pour ne pas se superposer
 (import.meta as any).hot?.dispose(() => {
+  disarmUnlock();
   if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
   stopBGM();
   if (music) { music.pause(); music.removeAttribute('src'); music.load(); music = null; }

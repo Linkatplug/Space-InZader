@@ -317,6 +317,11 @@ const App: React.FC = () => {
 
   // Musique par contexte : menu, combat (selon la vague), boss, événement actif.
   // Dépend de valeurs lues à 30 Hz depuis uiState (pas de la frame) ; setMusicContext est idempotent.
+  // Premier affichage sur le menu : démarre la musique (relancée au premier geste si le navigateur la bloque).
+  useEffect(() => {
+    if (engineState.current.status === 'menu') { setMusicContext('menu'); startBGM(); }
+  }, []);
+
   const musicStatus = uiState.status;
   const musicWave = uiState.wave;
   const eventActive = uiState.activeEvents.some(e => e.started);
