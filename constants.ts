@@ -19,10 +19,24 @@ export const CONTROLS = {
   AUTO_FIRE: 'f',
   MUTE: 'm',
   NEXT_TRACK: 'n',
-  DEBUG: 'f3'
+  DEBUG: 'f3',
+  /** Touche cachée : le bot prend la main (partie non enregistrée). F8 réservé. */
+  BOT: 'f9'
 };
 
 export const MAX_WEAPON_SLOTS = 6;
+
+/**
+ * Courbe d'XP : XP nécessaire pour passer du niveau `level` au suivant.
+ * Courbe géométrique base × growth^(n−1) (sur laquelle la difficulté est équilibrée),
+ * avec un plancher floor + floorStep·(n−1) qui ralentit seulement les premiers niveaux.
+ * Réglage du rythme : `npm run pacing` ; vérifier la survie : `npm run balance`.
+ */
+export const XP_CURVE = { base: 60, growth: 1.3, floor: 260, floorStep: 45 };
+export const xpForLevel = (level: number) => Math.round(Math.max(
+  XP_CURVE.base * Math.pow(XP_CURVE.growth, level - 1),
+  XP_CURVE.floor + XP_CURVE.floorStep * (level - 1),
+));
 
 export const TECH_MULTIPLIERS: Record<number, number> = {
   1: 1.0,

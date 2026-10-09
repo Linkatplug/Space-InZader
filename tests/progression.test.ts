@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { WEAPONS } from '../data/weapons';
 import { PASSIVES } from '../data/passives';
 import { KEYSTONES } from '../data/keystones';
-import { MAX_WEAPON_SLOTS } from '../constants';
+import { MAX_WEAPON_SLOTS, xpForLevel } from '../constants';
+import { ENEMIES } from '../data/enemies';
 import { applyUpgrade, availableUpgrades, rollUpgradeOptions, MAX_WEAPON_LEVEL, KEYSTONE_LEVEL_INTERVAL } from '../engine/Progression';
 import { makeState } from './helpers';
 
@@ -39,6 +40,16 @@ describe('Progression', () => {
     const o = rollUpgradeOptions(s);
     expect(o.length).toBe(Math.min(3, KEYSTONES.length));
     o.forEach(x => expect(x.type).toBe('keystone'));
+  });
+
+  it("courbe d'XP : croissante, et le 1er niveau demande plus que quelques ennemis de base", () => {
+    const basicXp = ENEMIES.basic.drops.count * ENEMIES.basic.drops.xp;
+    expect(xpForLevel(1)).toBeGreaterThanOrEqual(basicXp * 4);
+    for (let l = 1; l < 40; l++) expect(xpForLevel(l + 1)).toBeGreaterThan(xpForLevel(l));
+    const s = makeState();
+    s.experience = s.expToNextLevel;
+    applyUpgrade(s, { type: 'passive', item: PASSIVES[0] });
+    expect(s.expToNextLevel).toBe(xpForLevel(2));
   });
 
   it('appliquer une amélioration : niveau +1, XP consommée, stats recalculées', () => {

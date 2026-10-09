@@ -8,7 +8,8 @@ import { DevMenu } from './components/Menu/DevMenu';
 import { DebugOverlay } from './components/DebugOverlay';
 import { updateGameState, spawnEnemy, createEffect } from './engine/CoreEngine';
 import { renderGame } from './render/CoreRenderer';
-import { startBGM, stopBGM, nextTrack, applyAudioSettings } from './engine/SoundEngine';
+import { startBGM, stopBGM, nextTrack, applyAudioSettings, setMusicContext } from './engine/SoundEngine';
+import { isBossWave } from './data/enemies';
 import { input } from './engine/InputManager';
 import { createInitialState } from './engine/GameFactory';
 import { applyUpgrade, rollUpgradeOptions, UpgradeOption } from './engine/Progression';
@@ -20,6 +21,7 @@ import { GameOverScreen } from './components/Menu/GameOverScreen';
 import { PauseMenu } from './components/Menu/PauseMenu';
 import { OptionsMenu } from './components/Menu/OptionsMenu';
 import { MetaSave, RunSummary, loadSave, writeSave, recordRun } from './engine/Meta';
+import { botThink, botPickUpgrade } from './engine/Bot';
 import { calculateRuntimeStats, syncDefenseState, shipBaseStats } from './engine/StatsCalculator';
 
 const SIM_STEP = 1 / 60;
@@ -42,6 +44,9 @@ const App: React.FC = () => {
   useEffect(() => { applyAudioSettings(saveRef.current.settings); }, []);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const optionsOpenRef = useRef(false);
+  // Mode bot (touche cachée F9, ou __SI.bot() en dev) : le bot pilote le vaisseau et choisit les améliorations.
+  // Une partie où le bot a joué (used) n'est pas enregistrée dans la sauvegarde.
+  const botRef = useRef({ on: false, used: false, log: [] as string[] });
   optionsOpenRef.current = optionsOpen;
   const [runSummary, setRunSummary] = useState<RunSummary | null>(null);
   const isTouch = React.useMemo(() => isTouchDevice(), []);
@@ -58,6 +63,7 @@ const App: React.FC = () => {
     const s = engineState.current;
     if (s.status !== 'paused') return;
     s.status = 'gameover';
+    setMusicContext('gameover');
     stopBGM();
     setAbandoned(true);
     finishRun(s);
@@ -67,6 +73,11 @@ const App: React.FC = () => {
   /** Fin de partie : enregistre records / déblocages. */
   const finishRun = (s: GameState) => {
     const { save: next, summary } = recordRun(saveRef.current, s);
+    if (botRef.current.used) {
+      botRef.current.log.push(`mort à ${Math.round(s.time / 1000)}s — niv ${s.level}, vague ${s.wave}`);
+      setRunSummary(summary);
+      return;
+    }
     saveRef.current = next;
     writeSave(next);
     setSave(next);
@@ -113,6 +124,7 @@ const App: React.FC = () => {
     const freshState = createInitialState(shipId ?? engineState.current.shipId);
     freshState.autoFire = saveRef.current.settings.autoFire || isTouch;
     freshState.autoAim = isTouch;
+    botRef.current = { on: false, used: false, log: [] };
     setRunSummary(null);
     setAbandoned(false);
     setOptionsOpen(false);
@@ -147,8 +159,15 @@ const App: React.FC = () => {
       if ((s.status === 'playing' || s.status === 'lab') && ctx) {
         const mousePos = input.getMousePos();
         const isInputFocused = document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement;
-        const keys = isInputFocused ? new Set<string>() : input.getKeys();
+        let keys = isInputFocused ? new Set<string>() : input.getKeys();
         s.analogMove = input.getAnalog();
+        if (botRef.current.on && s.status === 'playing') {
+          const bot = botThink(s);
+          s.analogMove = bot.move;
+          keys = new Set([...keys, ...bot.keys]);
+          s.autoFire = true;
+          s.autoAim = true;
+        }
 
         // Pas de simulation fixe (60 Hz) : même vitesse de jeu quel que soit l'écran
         accumulator.current += deltaTime;
@@ -162,13 +181,23 @@ const App: React.FC = () => {
           };
           updateGameState(
             s, SIM_STEP, keys, mouseWorld,
-            () => { if (s.status !== 'lab') { s.status = 'leveling'; setUpgradeOptions(rollUpgradeOptions(s)); stopBGM(); } },
+            () => {
+              if (s.status === 'lab') return;
+              if (botRef.current.on) {
+                botRef.current.log.push(`niv ${s.level + 1} à ${Math.round(s.time / 1000)}s`);
+                const o = botPickUpgrade(rollUpgradeOptions(s));
+                if (o) applyUpgrade(s, o); else s.experience = 0;
+                return;
+              }
+              s.status = 'leveling'; setUpgradeOptions(rollUpgradeOptions(s)); stopBGM();
+            },
             () => {
               if (s.status === 'lab') {
                 handleDevAction('heal_player');
                 createEffect(s, s.player.x, s.player.y, "RESPAWN_SIMULÉ", "#ffffff");
               } else {
                 s.status = 'gameover';
+                setMusicContext('gameover');
                 stopBGM();
                 finishRun(s);
               }
@@ -229,6 +258,16 @@ const App: React.FC = () => {
         createEffect(s, s.player.x, s.player.y - 60, autoFire ? 'TIR AUTO : ON' : 'TIR AUTO : OFF', '#22d3ee');
         changeSettings({ autoFire });
       }
+      if (key === CONTROLS.BOT) {
+        e.preventDefault();
+        const s = engineState.current;
+        if (s.status !== 'playing') return;
+        const on = !botRef.current.on;
+        botRef.current.on = on;
+        if (on) botRef.current.used = true;
+        else { s.autoFire = saveRef.current.settings.autoFire || isTouch; s.autoAim = isTouch; }
+        createEffect(s, s.player.x, s.player.y - 60, on ? 'BOT : ON (partie non enregistrée)' : 'BOT : OFF', '#a78bfa');
+      }
       if (key === CONTROLS.DEBUG) {
         e.preventDefault();
         const s = engineState.current;
@@ -240,6 +279,19 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleGlobalKeys);
     return () => { window.removeEventListener('keydown', handleGlobalKeys); input.dispose(); };
   }, []);
+
+  // Musique par contexte : menu, combat (selon la vague), boss, événement actif.
+  // Dépend de valeurs lues à 30 Hz depuis uiState (pas de la frame) ; setMusicContext est idempotent.
+  const musicStatus = uiState.status;
+  const musicWave = uiState.wave;
+  const eventActive = uiState.activeEvents.some(e => e.started);
+  useEffect(() => {
+    if (musicStatus === 'menu') setMusicContext('menu');
+    else if (musicStatus === 'playing' || musicStatus === 'paused' || musicStatus === 'leveling') {
+      if (eventActive) setMusicContext('event', musicWave);
+      else setMusicContext(isBossWave(musicWave) ? 'boss' : 'combat', musicWave);
+    }
+  }, [musicStatus, musicWave, eventActive]);
 
   const handleDevAction = (action: string, data?: any) => {
     const s = engineState.current;
@@ -339,6 +391,13 @@ const App: React.FC = () => {
       state: () => engineState.current,
       action: (a: string, d?: any) => handleDevAction(a, d),
       start: () => resetGame('playing'),
+      // Mode bot : __SI.bot() lance une partie pilotée par le bot, __SI.bot(false) l'arrête,
+      // __SI.botLog() = montées de niveau / mort (parties non enregistrées dans la sauvegarde)
+      bot: (on = true) => {
+        if (on) resetGame('playing');
+        botRef.current = { on, used: botRef.current.used || on, log: on ? [] : botRef.current.log };
+      },
+      botLog: () => botRef.current.log,
       // Force un tirage de level-up précis (tests visuels du menu d'amélioration)
       offer: (opts: UpgradeOption[]) => {
         const s = engineState.current;

@@ -1,5 +1,5 @@
 import { GameState, Weapon, Passive, Keystone } from '../types';
-import { MAX_WEAPON_SLOTS } from '../constants';
+import { MAX_WEAPON_SLOTS, xpForLevel } from '../constants';
 import { WEAPONS } from '../data/weapons';
 import { PASSIVES } from '../data/passives';
 import { KEYSTONES } from '../data/keystones';
@@ -129,7 +129,7 @@ export const applyUpgrade = (state: GameState, opt: UpgradeOption, consumeLevel 
 
   if (consumeLevel) {
     state.experience = Math.max(0, state.experience - state.expToNextLevel);
-    state.expToNextLevel = Math.floor(state.expToNextLevel * 1.3);
     state.level++;
+    state.expToNextLevel = xpForLevel(state.level);
   }
 };

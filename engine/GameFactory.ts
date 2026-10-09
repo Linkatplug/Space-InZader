@@ -1,5 +1,5 @@
 import { GameState } from '../types';
-import { WORLD_WIDTH, WORLD_HEIGHT } from '../constants';
+import { WORLD_WIDTH, WORLD_HEIGHT, xpForLevel } from '../constants';
 import { WEAPONS } from '../data/weapons';
 import { makeAbility } from './AbilitySystem';
 import { DEFAULT_SHIP_ID, getShip } from '../data/ships';
@@ -22,7 +22,7 @@ export const createInitialState = (shipId: string = DEFAULT_SHIP_ID): GameState 
     shipId: ship.id, hitStreak: 0, onHitStacks: 0, lastHitTime: 0, stationaryTime: 0, mechanics: [], buffs: [], enemySlowUntil: 0,
     bossKills: 0, damageDealt: 0, damageTaken: 0, damageBySource: {}, nextEventTime: 0,
     heat: 0, maxHeat: base.maxHeat, isOverheated: false, score: 0, level: 1, experience: 0,
-    expToNextLevel: 60,
+    expToNextLevel: xpForLevel(1),
     wave: 1, waveTimer: 35,
     waveKills: 0,
     waveQuota: 15,
