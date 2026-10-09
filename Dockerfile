@@ -3,7 +3,13 @@
 
 # ---------- Étape 1 : build ----------
 FROM node:20-alpine AS build
+LABEL app=space-inzader
 WORKDIR /app
+
+# Numéro de version (git rev-list --count HEAD) et date, fournis de l'extérieur
+# (.dockerignore exclut .git) par deploy/update.sh via docker-compose. Repli : « dev ».
+ARG SI_BUILD=dev
+ARG SI_BUILD_DATE=
 
 # Dépendances d'abord (cache Docker tant que package*.json ne change pas)
 COPY package.json package-lock.json ./
@@ -16,10 +22,12 @@ COPY . .
 RUN npm test
 
 # Bundle de production → /app/dist
-RUN npx vite build
+RUN SI_BUILD="$SI_BUILD" SI_BUILD_DATE="$SI_BUILD_DATE" npx vite build
 
 # ---------- Étape 2 : serveur ----------
 FROM nginx:alpine
+# Étiquette : permet de nettoyer uniquement les anciennes images du jeu (deploy/update.sh)
+LABEL app=space-inzader
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html

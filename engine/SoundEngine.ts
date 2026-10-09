@@ -31,7 +31,7 @@ export const MUSIC_TRACKS = [
 ];
 
 /** Situations de jeu qui peuvent avoir leur propre musique. */
-export type MusicContext = 'menu' | 'combat' | 'boss' | 'event' | 'gameover';
+export type MusicContext = 'menu' | 'combat' | 'boss' | 'event' | 'gameover' | 'record';
 
 /** Palier de musique : actif à partir de `minWave` (défaut 1). Le palier le plus élevé atteint gagne. */
 export interface MusicTier { minWave?: number; files: string[] }
@@ -40,23 +40,37 @@ export interface MusicTier { minWave?: number; files: string[] }
  * Registre des musiques par contexte (piloté par les données).
  * Pour ajouter une piste : déposer le MP3 dans public/music/ et l'ajouter ici.
  * Liste vide = pas de piste dédiée : menu/combat/boss prennent la playlist historique,
- * event/gameover laissent la musique en cours.
- * Fichiers prévus (à produire) : menu.mp3, combat-1/2/3.mp3, boss.mp3, event.mp3, gameover.mp3.
+ * event/gameover/record laissent la musique en cours.
+ * Un fichier introuvable est ignoré (repli sur la playlist historique MUSIC_TRACKS).
  */
 export const MUSIC_CONTEXTS: Record<MusicContext, MusicTier[]> = {
-  menu: [{ files: ['575907_Space-Dumka-8bit.mp3'] }],
+  menu: [{ files: ['menu.mp3'] }],
   combat: [
-    { minWave: 1, files: ['888921_8-Bit-Flight-Loop.mp3', '1263681_8-Bit-Flight.mp3'] },
-    { minWave: 5, files: ['290077_spacecake.mp3', '770175_Outer-Space-Adventure-Agen.mp3'] },
-    { minWave: 11, files: ['19583_newgrounds_robot_.mp3', '290077_spacecake.mp3'] },
+    { minWave: 1, files: ['combat-1.mp3'] },
+    { minWave: 5, files: ['combat-2.mp3'] },
+    { minWave: 11, files: ['combat-3.mp3'] },
   ],
-  boss: [{ files: ['19583_newgrounds_robot_.mp3'] }],
-  event: [],
-  gameover: [],
+  boss: [{ files: ['boss.mp3'] }],
+  event: [{ files: ['event.mp3'] }],
+  gameover: [{ files: ['gameover.mp3'] }],
+  record: [{ files: ['record.mp3'] }],
 };
 
 /** Contextes joués une seule fois (les autres bouclent). */
-export const MUSIC_ONE_SHOT: ReadonlySet<MusicContext> = new Set<MusicContext>(['gameover']);
+export const MUSIC_ONE_SHOT: ReadonlySet<MusicContext> = new Set<MusicContext>(['gameover', 'record']);
+
+/**
+ * Contextes dont un changement de pistes (ex. palier de vague) attend la fin du morceau en cours
+ * au lieu de couper. Le boss, lui, démarre tout de suite.
+ */
+export const MUSIC_WAIT_TRACK_END: ReadonlySet<MusicContext> = new Set<MusicContext>(['combat']);
+
+/** Contextes « interruption » : à leur fin, la musique d'avant reprend là où elle en était. */
+export const MUSIC_INTERRUPTIONS: ReadonlySet<MusicContext> = new Set<MusicContext>(['event']);
+
+/** Pur : comment passer de `from` à `to` (pistes différentes) : tout de suite, ou à la fin du morceau. */
+export const musicTransition = (from: MusicContext | null, to: MusicContext): 'now' | 'afterTrack' =>
+  from === to && MUSIC_WAIT_TRACK_END.has(to) ? 'afterTrack' : 'now';
 
 /** Pur : pistes d'un contexte pour une vague donnée ([] = aucune piste dédiée). */
 export const musicFilesFor = (ctx: MusicContext, wave = 1): string[] => {
@@ -79,6 +93,9 @@ export const nextPlayable = (files: readonly string[], failed: ReadonlySet<strin
   return -1;
 };
 
+/** Pur : la piste en cours appartient-elle à la playlist ? (sinon il faut changer de piste) */
+export const trackInPlaylist = (file: string, files: readonly string[]): boolean => !!file && files.includes(file);
+
 const FADE_OUT_MS = 500;
 const FADE_IN_MS = 1000;
 
@@ -95,6 +112,16 @@ let musicWanted = false;       // startBGM appelé et pas de stopBGM depuis
 const failedFiles = new Set<string>();
 let fadeMul = 1;
 let fadeTimer: any = null;
+
+/** Une playlist prête à jouer pour un contexte. */
+interface MusicChoice { ctx: MusicContext; files: string[]; key: string; loop: boolean }
+let currentCtx: MusicContext | null = null;
+/** Changement en attente de la fin du morceau en cours (MUSIC_WAIT_TRACK_END). */
+let pending: MusicChoice | null = null;
+/** Musique interrompue par un événement : reprise à la position mémorisée. */
+let resume: (MusicChoice & { file: string; time: number }) | null = null;
+/** Position de reprise à appliquer au prochain startBGM (reprise décidée pendant l'arrêt). */
+let deferredStartAt = 0;
 
 const musicUrl = (file: string) => `${(import.meta as any).env?.BASE_URL ?? '/'}music/${file}`;
 
@@ -119,8 +146,9 @@ const fadeTo = (target: number, ms: number, done?: () => void) => {
   }, 50);
 };
 
-const playTrack = () => {
+const playTrack = (startAt = 0) => {
   if (!music) return;
+  deferredStartAt = 0;
   let idx = nextPlayable(playlist, failedFiles, trackIndex);
   if (idx < 0 && playlist !== MUSIC_TRACKS) {
     // Plus aucune piste du contexte : repli sur la playlist historique
@@ -139,6 +167,10 @@ const playTrack = () => {
   trackIndex = idx;
   currentFile = playlist[idx];
   music.src = musicUrl(currentFile);
+  if (startAt > 0) {
+    const el = music;
+    el.addEventListener('loadedmetadata', () => { el.currentTime = Math.min(startAt, (el.duration || startAt + 1) - 0.5); }, { once: true });
+  }
   applyMusicVolume();
   music.play().catch(() => { /* lecture bloquée avant interaction : on réessaiera */ });
 };
@@ -150,6 +182,12 @@ const startMusic = (): boolean => {
     music = new Audio();
     music.preload = 'auto';
     music.addEventListener('ended', () => {
+      if (pending) { // palier suivant, à la fin du morceau
+        applyChoice(pending);
+        trackIndex = Math.floor(Math.random() * playlist.length);
+        playTrack();
+        return;
+      }
       if (!loopPlaylist) return; // piste unique (game over) : silence ensuite
       trackIndex++;
       playTrack();
@@ -161,6 +199,10 @@ const startMusic = (): boolean => {
       playTrack();
     });
     playTrack();
+  } else if (!trackInPlaylist(currentFile, playlist)) {
+    // Le contexte a changé pendant l'arrêt : on reprend sur une piste de la nouvelle playlist
+    fadeMul = 1;
+    playTrack(deferredStartAt);
   } else {
     applyMusicVolume();
     music.play().catch(() => {});
@@ -205,21 +247,59 @@ export const nextTrack = () => {
 export const setMusicContext = (ctx: MusicContext, wave = 1) => {
   let files = musicFilesFor(ctx, wave);
   if (!files.length) {
-    // Pas de piste dédiée : événement et game over laissent la musique en cours
-    if (ctx === 'event' || ctx === 'gameover') return;
+    // Pas de piste dédiée : événement, game over et record laissent la musique en cours
+    if (ctx === 'event' || ctx === 'gameover' || ctx === 'record') return;
     files = MUSIC_TRACKS;
   }
   const loop = !MUSIC_ONE_SHOT.has(ctx);
-  const key = `${loop ? 'loop' : 'once'}:${files.join(',')}`;
-  if (key === playlistKey) return;
-  playlist = files;
-  playlistKey = key;
-  loopPlaylist = loop;
+  const choice: MusicChoice = { ctx, files, loop, key: `${loop ? 'loop' : 'once'}:${files.join(',')}` };
+
+  // Fin d'une interruption (événement) : on reprend la musique d'avant là où elle en était.
+  // Si le palier a changé entre-temps, il attendra la fin de ce morceau.
+  if (resume && currentCtx && MUSIC_INTERRUPTIONS.has(currentCtx) && !MUSIC_INTERRUPTIONS.has(ctx)) {
+    const r = resume;
+    resume = null;
+    if (r.ctx === ctx && (r.key === choice.key || musicTransition(r.ctx, ctx) === 'afterTrack')) {
+      pending = r.key === choice.key ? null : choice;
+      applyChoice(r);
+      trackIndex = Math.max(0, r.files.indexOf(r.file));
+      switchTrack(r.time);
+      return;
+    }
+  }
+
+  if (choice.key === playlistKey) { pending = null; return; }
+  if (pending?.key === choice.key) return;
+  if (musicTransition(currentCtx, ctx) === 'afterTrack' && trackInPlaylist(currentFile, playlist)) {
+    pending = choice; // le morceau en cours va jusqu'au bout
+    return;
+  }
+  pending = null;
+  // Début d'une interruption : mémorise la musique en cours et sa position
+  if (MUSIC_INTERRUPTIONS.has(ctx) && currentCtx && !MUSIC_INTERRUPTIONS.has(currentCtx) && music && currentFile) {
+    resume = { ctx: currentCtx, files: playlist, key: playlistKey, loop: loopPlaylist, file: currentFile, time: music.currentTime };
+  } else if (!MUSIC_INTERRUPTIONS.has(ctx)) resume = null;
+  applyChoice(choice);
   trackIndex = Math.floor(Math.random() * files.length);
-  if (!music || !musicWanted) return;
-  if (music.paused) { fadeMul = 1; playTrack(); return; }
+  switchTrack();
+};
+
+const applyChoice = (c: MusicChoice) => {
+  playlist = c.files;
+  playlistKey = c.key;
+  loopPlaylist = c.loop;
+  currentCtx = c.ctx;
+  if (pending === c) pending = null;
+};
+
+/** Passe à la piste choisie : fondu si la musique joue, direct si elle est en pause, rien si arrêtée. */
+const switchTrack = (startAt = 0) => {
+  deferredStartAt = startAt;
+  if (!music || !musicWanted) return; // arrêtée : startBGM jouera la bonne piste à cette position
+  deferredStartAt = 0;
+  if (music.paused) { fadeMul = 1; playTrack(startAt); return; }
   fadeTo(0, FADE_OUT_MS, () => {
-    playTrack();
+    playTrack(startAt);
     fadeTo(1, FADE_IN_MS);
   });
 };
@@ -420,3 +500,10 @@ export const playExplosionSound = (radius: number) => {
   gain.connect(sfxOut());
   noise.start();
 };
+
+// HMR (Vite) : le module est recréé, l'ancien lecteur audio doit être coupé pour ne pas se superposer
+(import.meta as any).hot?.dispose(() => {
+  if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
+  stopBGM();
+  if (music) { music.pause(); music.removeAttribute('src'); music.load(); music = null; }
+});

@@ -1,12 +1,15 @@
-# Space InZader — déploiement Docker / stack Portainer (voir DOCKER.md)
+# Space InZader — déploiement Docker depuis Gitea (voir DOCKER.md, script deploy/update.sh)
 services:
   space-inzader:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Fournis par deploy/update.sh (numéro de version = nombre de commits) ; sinon « dev »
+        SI_BUILD: ${SI_BUILD:-dev}
+        SI_BUILD_DATE: ${SI_BUILD_DATE:-}
     image: space-inzader:latest
-    # Reconstruit l'image à chaque `up` : un redéploiement Portainer (GitOps / webhook)
-    # prend donc toujours le dernier code du dépôt.
+    # Reconstruit l'image à chaque `up` : toujours le dernier code du dépôt
     pull_policy: build
     container_name: space-inzader
     ports:

@@ -1,7 +1,13 @@
 import { describe, it, expect } from 'vitest';
+// @ts-expect-error pas de @types/node dans ce projet (tests exécutés sous Node par Vitest)
+import { existsSync } from 'node:fs';
+// @ts-expect-error idem
+import { join } from 'node:path';
+
+const MUSIC_DIR = join((globalThis as any).process.cwd(), 'public', 'music');
 import {
   MUSIC_CONTEXTS, MUSIC_TRACKS, MUSIC_ONE_SHOT, MusicContext,
-  musicFilesFor, nextPlayable, setMusicContext, startBGM, stopBGM, nextTrack,
+  musicFilesFor, nextPlayable, trackInPlaylist, setMusicContext, startBGM, stopBGM, nextTrack,
 } from '../engine/SoundEngine';
 
 const CONTEXTS = Object.keys(MUSIC_CONTEXTS) as MusicContext[];
@@ -24,11 +30,8 @@ describe('musique par contexte', () => {
     expect(musicFilesFor('combat', 0)).toEqual(MUSIC_CONTEXTS.combat[0].files);
   });
 
-  it('un contexte sans piste dédiée renvoie une liste vide', () => {
-    const saved = MUSIC_CONTEXTS.event;
-    expect(musicFilesFor('event', 3)).toEqual([]);
-    expect(musicFilesFor('gameover')).toEqual([]);
-    expect(saved).toEqual([]);
+  it('chaque contexte a au moins une piste dédiée', () => {
+    for (const ctx of CONTEXTS) expect(musicFilesFor(ctx, 1).length).toBeGreaterThan(0);
   });
 
   it('renvoie une copie (pas le tableau du registre)', () => {
@@ -37,13 +40,17 @@ describe('musique par contexte', () => {
     expect(musicFilesFor('menu')).not.toContain('x.mp3');
   });
 
-  it('le registre ne référence que des MP3 connus tant que les nouveaux fichiers ne sont pas livrés', () => {
+  it('tous les fichiers du registre existent dans public/music', () => {
     for (const ctx of CONTEXTS) {
       for (const tier of MUSIC_CONTEXTS[ctx]) {
         expect(tier.files.length).toBeGreaterThan(0);
-        for (const f of tier.files) expect(MUSIC_TRACKS).toContain(f);
+        for (const f of tier.files) expect(existsSync(join(MUSIC_DIR, f)), f).toBe(true);
       }
     }
+  });
+
+  it('la playlist de repli existe aussi', () => {
+    for (const f of MUSIC_TRACKS) expect(existsSync(join(MUSIC_DIR, f)), f).toBe(true);
   });
 
   it('les paliers de combat sont triés et commencent à la vague 1', () => {
@@ -52,8 +59,8 @@ describe('musique par contexte', () => {
     expect([...waves].sort((a, b) => a - b)).toEqual(waves);
   });
 
-  it('seul le game over est joué une fois', () => {
-    expect([...MUSIC_ONE_SHOT]).toEqual(['gameover']);
+  it('game over et record sont joués une fois', () => {
+    expect([...MUSIC_ONE_SHOT].sort()).toEqual(['gameover', 'record']);
   });
 });
 
@@ -74,6 +81,15 @@ describe('repli quand un fichier manque', () => {
   });
 });
 
+describe('reprise après arrêt', () => {
+  it('reprend la piste courante si elle est dans la playlist, sinon change', () => {
+    const combat = musicFilesFor('combat', 1);
+    expect(trackInPlaylist(combat[0], combat)).toBe(true);
+    expect(trackInPlaylist(musicFilesFor('menu')[0], combat)).toBe(false);
+    expect(trackInPlaylist('', combat)).toBe(false);
+  });
+});
+
 describe('API sous Node (sans navigateur)', () => {
   it('ne plante pas hors navigateur', () => {
     expect(() => {
@@ -82,6 +98,7 @@ describe('API sous Node (sans navigateur)', () => {
       setMusicContext('boss', 10);
       setMusicContext('event');
       setMusicContext('gameover');
+      setMusicContext('record');
       startBGM();
       nextTrack();
       stopBGM();

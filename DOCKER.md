@@ -5,37 +5,42 @@ L'image est construite en deux étapes :
 1. **Build** (`node:20-alpine`) : `npm ci`, `npm test` (l'image n'est pas créée si un test échoue), `npx vite build`.
 2. **Serveur** (`nginx:alpine`) : sert le dossier `dist/` sur le port 80 (gzip, cache long pour `/assets/*`, pas de cache pour `index.html`).
 
-Fichiers : `Dockerfile`, `nginx.conf`, `.dockerignore`, `docker-compose.yml`.
+Fichiers : `Dockerfile`, `nginx.conf`, `.dockerignore`, `docker-compose.yml`, `deploy/update.sh`.
 
 ---
 
-## 1. Déploiement via Portainer (stack) — recommandé
+## 1. Déploiement depuis Gitea (serveur) — méthode officielle
 
-### Créer la stack
+Le jeu se déploie **uniquement depuis Gitea** : https://git.linkatplug.be/linkatplug/Space-InZader.git
+(GitHub ne sert plus que de sauvegarde.)
 
-1. Portainer → **Stacks** → **+ Add stack**.
-2. Nom : `space-inzader`.
-3. Méthode de build : **Repository**.
-   - Repository URL : `https://github.com/Linkatplug/Space-InZader`
-   - Repository reference : `refs/heads/main`
-   - Compose path : `docker-compose.yml`
-   - (Dépôt privé : cocher *Authentication* et donner un jeton GitHub en lecture.)
-4. **GitOps updates** : activer.
-   - Mechanism **Polling** (ex. toutes les `5m`) → Portainer vérifie le dépôt et redéploie dès qu'un commit arrive sur `main`.
-   - ou **Webhook** → Portainer donne une URL ; l'appeler (à la main, ou depuis GitHub *Settings → Webhooks*) déclenche la mise à jour.
-   - Cocher **Force redeployment** si l'option est proposée.
-5. *Environment variables* (facultatif) : `HOST_PORT` = `8118` (ou un autre port).
-6. **Deploy the stack**. Le premier déploiement prend 1 à 2 minutes (installation npm + tests + build).
+### Installation (une seule fois, en SSH sur le serveur)
 
-Jeu disponible sur `http://<ip-du-serveur>:8118`.
+```bash
+cd /home/DOCKER && git clone https://git.linkatplug.be/linkatplug/Space-InZader.git space-inzader && cd space-inzader && sh deploy/update.sh
+```
 
-### Mettre à jour
+Jeu disponible sur `http://<ip-du-serveur>:8118` (port modifiable avec `HOST_PORT` dans un fichier `.env` à côté de `docker-compose.yml`).
 
-Rien à faire : un `git push` sur `main` suffit. Avec le polling, Portainer détecte le nouveau commit et relance la stack ; comme `docker-compose.yml` contient `pull_policy: build`, l'image est **reconstruite** avec le nouveau code à chaque redéploiement.
+### Mettre à jour (à chaque nouvelle version)
 
-Mise à jour manuelle : Stacks → `space-inzader` → **Pull and redeploy**.
+```bash
+/home/DOCKER/space-inzader/deploy/update.sh
+```
+
+Le script `deploy/update.sh` :
+
+1. `git pull --ff-only` (dernier code de Gitea) ;
+2. calcule le numéro de version `SI_BUILD` = nombre de commits (`git rev-list --count HEAD`) et la date `SI_BUILD_DATE` ;
+3. `docker compose up -d --build` : reconstruit l'image (tests compris) et relance le conteneur ;
+4. supprime **uniquement** les anciennes images du jeu (`docker image prune -f --filter "label=app=space-inzader"`) — jamais de nettoyage global, d'autres services tournent sur le serveur ;
+5. affiche la version déployée.
+
+La version (ex. `v142 · mis à jour le 09/10/2026`) apparaît en bas du menu principal du jeu.
 
 Si les tests échouent, la reconstruction échoue et **l'ancien conteneur continue de tourner**.
+
+> L'ancienne stack Portainer (autre serveur, branchée sur GitHub) peut être arrêtée.
 
 ---
 
@@ -69,13 +74,7 @@ HOST_PORT=9000
 
 ### Mettre à jour
 
-```bash
-git pull
-```
-
-```bash
-docker compose up -d --build
-```
+Utiliser `deploy/update.sh` (voir plus haut) : il fait le `git pull`, passe le numéro de version au build et nettoie les anciennes images du jeu.
 
 ---
 
@@ -96,4 +95,4 @@ docker compose logs -f space-inzader
 - Le build Vite utilise `base: './'` : le jeu fonctionne aussi derrière un reverse proxy dans un sous-chemin.
 - Les musiques sont servies depuis `/music/*.mp3` (`audio/mpeg`).
 - Les sauvegardes du jeu sont dans le `localStorage` du navigateur : rien à persister côté serveur (pas de volume).
-- Alternative possible plus tard : faire construire l'image par GitHub Actions et la publier sur GHCR, puis utiliser dans Portainer une stack `image: ghcr.io/linkatplug/space-inzader:latest` avec « Re-pull image ». Évite de builder sur le serveur, mais demande un workflow supplémentaire.
+- Sans `deploy/update.sh` (ex. `docker compose up -d --build` à la main), la version affichée est `v1.0.0-dev`.

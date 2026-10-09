@@ -63,25 +63,26 @@ const App: React.FC = () => {
     const s = engineState.current;
     if (s.status !== 'paused') return;
     s.status = 'gameover';
-    setMusicContext('gameover');
-    stopBGM();
     setAbandoned(true);
     finishRun(s);
     setUiState({ ...s });
   };
 
-  /** Fin de partie : enregistre records / déblocages. */
+  /** Fin de partie : enregistre records / déblocages, puis musique de fin (record ou game over). */
   const finishRun = (s: GameState) => {
     const { save: next, summary } = recordRun(saveRef.current, s);
-    if (botRef.current.used) {
-      botRef.current.log.push(`mort à ${Math.round(s.time / 1000)}s — niv ${s.level}, vague ${s.wave}`);
-      setRunSummary(summary);
-      return;
-    }
-    saveRef.current = next;
-    writeSave(next);
-    setSave(next);
     setRunSummary(summary);
+    const bot = botRef.current.used;
+    if (bot) botRef.current.log.push(`mort à ${Math.round(s.time / 1000)}s — niv ${s.level}, vague ${s.wave}`);
+    else {
+      saveRef.current = next;
+      writeSave(next);
+      setSave(next);
+    }
+    // Lecture unique, sans stopBGM derrière. startBGM d'abord : après une pause la musique est
+    // arrêtée et setMusicContext ne ferait que mémoriser le choix.
+    startBGM();
+    setMusicContext(!bot && (summary.newBestScore || summary.newBestWave) ? 'record' : 'gameover');
   };
 
   const updateSettings = (patch: Partial<MetaSave['settings']>) => {
@@ -133,7 +134,9 @@ const App: React.FC = () => {
     engineState.current = freshState;
     camera.current = { x: freshState.player.x - dimensions.width / (2 * VIEW_SCALE), y: freshState.player.y - dimensions.height / (2 * VIEW_SCALE) };
     setUiState(freshState);
-    if (newStatus === 'playing') startBGM(); else stopBGM();
+    if (newStatus === 'playing') startBGM();
+    else if (newStatus === 'menu') { startBGM(); setMusicContext('menu'); }
+    else stopBGM();
   };
 
   useEffect(() => {
@@ -197,8 +200,6 @@ const App: React.FC = () => {
                 createEffect(s, s.player.x, s.player.y, "RESPAWN_SIMULÉ", "#ffffff");
               } else {
                 s.status = 'gameover';
-                setMusicContext('gameover');
-                stopBGM();
                 finishRun(s);
               }
             }

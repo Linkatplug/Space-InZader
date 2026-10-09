@@ -3,6 +3,7 @@ import { SHIPS } from '../../data/ships';
 import { WEAPONS } from '../../data/weapons';
 import { KEYSTONES } from '../../data/keystones';
 import { MetaSave, isShipUnlocked, unlockLabel } from '../../engine/Meta';
+import { BUILD_LABEL } from '../../buildInfo';
 
 interface MainMenuProps {
   save: MetaSave;
@@ -104,6 +105,7 @@ export const MainMenu: React.FC<MainMenuProps> = ({ save, onStart, onDev, onLab,
             <div key={k} className="flex gap-2"><kbd className="font-mono text-white bg-white/10 px-1.5 border border-white/20 whitespace-nowrap w-[120px] shrink-0 text-center">{k}</kbd><span>{v}</span></div>
           ))}
         </div>
+        <div className="font-mono text-[11px] text-slate-500 mt-1">{BUILD_LABEL}</div>
       </div>
       </div>
     </div>
