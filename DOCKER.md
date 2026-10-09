@@ -48,7 +48,7 @@ Si les tests échouent, la reconstruction échoue et **l'ancien conteneur contin
 
 ## Avis des testeurs (F8 / bouton « Avis »)
 
-Les avis sont ajoutés en Markdown dans `avis.md`, dans le volume Docker `space-inzader_feedback-data` (conservé entre les mises à jour). L'adresse IP n'est jamais enregistrée (seulement un compteur en mémoire pour limiter à 30 avis/heure).
+Les avis sont ajoutés en Markdown dans `avis.md`, dans le volume Docker `space-inzader_feedback-data` (conservé entre les mises à jour). Le même conteneur gère le classement en ligne (`scores.json`), le journal des parties (`runs.jsonl`) et les erreurs JavaScript du jeu (`errors.jsonl`). L'adresse IP n'est jamais enregistrée (seulement un compteur en mémoire pour limiter à 30 avis/heure).
 
 ### Activer la page privée (une fois, sur le serveur)
 
@@ -73,6 +73,8 @@ et coller le jeton après `FEEDBACK_ADMIN_TOKEN=`.
 - Page privée : `https://space.linkatplug.be/api/avis/<jeton>/`
 - Texte brut : `https://space.linkatplug.be/api/avis/<jeton>/raw` (ajouter `?download=1` pour télécharger)
 - Bouton **Archiver et vider** : déplace `avis.md` vers `archive/avis-<date>.md` (rien n'est supprimé).
+- **Classement** : `https://space.linkatplug.be/api/avis/<jeton>/scores` — tous les joueurs, bouton **Retirer** pour un tricheur (la ligne part dans `archive/scores-retires.jsonl`, rien n'est supprimé).
+- **Statistiques** : `https://space.linkatplug.be/api/avis/<jeton>/stats` — parties, joueurs, temps de jeu, par vaisseau, causes de mort, armes/keystones, rythme des niveaux, versions, anomalies (scores improbables), erreurs JavaScript, avis par type. Filtres période (7 j / 30 j / tout) et version.
 - Sans jeton (ou jeton < 24 caractères), la page privée répond 404 ; les avis sont quand même enregistrés.
 - En SSH : `docker compose exec feedback cat /app/data/avis.md`
 

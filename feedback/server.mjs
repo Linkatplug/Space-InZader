@@ -6,6 +6,11 @@
 //   GET  /api/avis/<code>/raw       → texte brut (?download=1) │ absent ou trop court → 404 partout
 //   POST /api/avis/<code>/purge     → archive data/archive/avis-<date>.md (jamais de suppression)
 //   GET  /api/health                → 200 ok
+//   POST /api/scores                → 201 classement (score de fin de partie) | 400 | 413 | 429   ┐ feedback/scores.mjs
+//   GET  /api/scores?limit=&playerId=→ 200 classement                                           │
+//   POST /api/errors                → 201 (erreur JavaScript du jeu) | 400 | 413 | 429          ┘
+//   GET  /api/avis/<code>/scores    → classement complet, bouton « Retirer » (archivé)
+//   GET  /api/avis/<code>/stats     → tableau de bord statistiques (feedback/stats.mjs)
 //
 // Vie privée : l'IP (X-Real-IP posée par nginx) ne sert qu'à un compteur en mémoire vidé chaque heure,
 // elle n'est jamais écrite. Lancer : `node feedback/server.mjs` (PORT=3000, DATA_DIR=./feedback/data).
@@ -15,6 +20,8 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { timingSafeEqual } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
+import { SCORE_LIMITS, validateScore, validateError, createScoreStore, leaderboard } from './scores.mjs';
+import { computeStats, renderStatsPage, renderScoresAdminPage } from './stats.mjs';
 
 export const LIMITS = {
   body: 32 * 1024,       // octets
@@ -128,7 +135,7 @@ export const renderAdminPage = (markdown, count) => `<!doctype html>
   pre { white-space: pre-wrap; word-break: break-word; background: #020617; padding: 12px; border: 1px solid #1e293b; }
 </style></head><body>
 <h1>Avis des testeurs — ${count} avis</h1>
-<nav><a href="./raw">texte brut</a><a href="./raw?download=1">télécharger</a>
+<nav><a href="./stats">statistiques</a><a href="./scores">classement</a><a href="./raw">texte brut</a><a href="./raw?download=1">télécharger</a>
 <form method="post" action="./purge" onsubmit="return confirm('Archiver tous les avis ? (déplacés dans data/archive)')"><button>Archiver et vider</button></form></nav>
 <pre>${escapeHtml(markdown || 'Aucun avis pour le moment.')}</pre>
 </body></html>`;
@@ -152,6 +159,7 @@ const readBody = (req, max) => new Promise((resolve) => {
   req.on('error', () => resolve(null));
 });
 
+const cleanBuild = (b) => (typeof b === 'string' && /^[A-Za-z0-9.\-?]{1,30}$/.test(b) ? b : 'all');
 const fileSize = async (f) => { try { return (await fs.stat(f)).size; } catch { return 0; } };
 const readText = async (f) => { try { return await fs.readFile(f, 'utf8'); } catch { return ''; } };
 
@@ -162,7 +170,11 @@ const readText = async (f) => { try { return await fs.readFile(f, 'utf8'); } cat
 export const createFeedbackServer = ({ dataDir, adminToken = '', now = () => Date.now() }) => {
   const avisFile = path.join(dataDir, 'avis.md');
   const allow = makeRateLimiter(LIMITS.perHour, now);
+  const allowScore = makeRateLimiter(SCORE_LIMITS.perHour, now);
+  const allowError = makeRateLimiter(SCORE_LIMITS.errorsPerHour, now);
+  const store = createScoreStore(dataDir, now);
   const iso = () => new Date(now()).toISOString();
+  const clientOf = (req) => String(req.headers['x-real-ip'] || req.socket.remoteAddress || '?');
 
   const send = (res, status, body, type = 'application/json; charset=utf-8', extra = {}) => {
     res.writeHead(status, {
@@ -181,8 +193,7 @@ export const createFeedbackServer = ({ dataDir, adminToken = '', now = () => Dat
     if (raw === null) return json(res, 413, { error: 'trop gros' });
     let body;
     try { body = JSON.parse(raw); } catch { return json(res, 400, { error: 'JSON invalide' }); }
-    const client = String(req.headers['x-real-ip'] || req.socket.remoteAddress || '?');
-    if (!allow(client)) return json(res, 429, { error: "trop d'avis, réessaie plus tard" });
+    if (!allow(clientOf(req))) return json(res, 429, { error: "trop d'avis, réessaie plus tard" });
     const v = validateFeedback(body);
     if (v.status !== 201) return json(res, v.status, { error: v.error });
     if (v.bot) return json(res, 201, { ok: true });
@@ -193,8 +204,40 @@ export const createFeedbackServer = ({ dataDir, adminToken = '', now = () => Dat
     return json(res, 201, { ok: true });
   };
 
+  /** Lit un corps JSON borné. → objet | { _status } en cas d'erreur */
+  const readJson = async (req, max) => {
+    const raw = await readBody(req, max);
+    if (raw === null) return { _status: 413 };
+    try { return JSON.parse(raw); } catch { return { _status: 400 }; }
+  };
+
+  const handleScores = async (req, res, url) => {
+    if (req.method === 'GET') {
+      return json(res, 200, await store.get(String(url.searchParams.get('playerId') ?? ''), Number(url.searchParams.get('limit') ?? 10)));
+    }
+    if (req.method !== 'POST') return send(res, 405, '', 'text/plain', { Allow: 'GET, POST' });
+    const body = await readJson(req, SCORE_LIMITS.body);
+    if (body._status) return json(res, body._status, { error: body._status === 413 ? 'trop gros' : 'JSON invalide' });
+    if (!allowScore(clientOf(req))) return json(res, 429, { error: 'trop de scores, réessaie plus tard' });
+    const v = validateScore(body);
+    if (v.status !== 201) return json(res, v.status, { error: v.error });
+    if (v.bot) return json(res, 201, { ...leaderboard(await store.loadBoard(), '', 10), personalBest: false });
+    return json(res, 201, await store.submit(v.sub));
+  };
+
+  const handleErrors = async (req, res) => {
+    if (req.method !== 'POST') return send(res, 405, '', 'text/plain', { Allow: 'POST' });
+    const body = await readJson(req, 4 * 1024);
+    if (body._status) return json(res, body._status, { error: 'invalide' });
+    if (!allowError(clientOf(req))) return json(res, 429, { error: "trop d'erreurs envoyées" });
+    const v = validateError(body);
+    if (v.status !== 201) return json(res, v.status, { error: v.error });
+    await store.logError(v.err);
+    return json(res, 201, { ok: true });
+  };
+
   const handleAdmin = async (req, res, url, rest) => {
-    const [code, action = ''] = rest;
+    const [code, action = '', sub = ''] = rest;
     if (!tokenOk(code, adminToken)) return send(res, 404, 'introuvable', 'text/plain; charset=utf-8');
     const html = { 'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; form-action 'self'", 'X-Robots-Tag': 'noindex' };
     if (req.method === 'GET' && action === '') {
@@ -218,6 +261,23 @@ export const createFeedbackServer = ({ dataDir, adminToken = '', now = () => Dat
       }
       return send(res, 303, '', 'text/plain', { Location: './' });
     }
+    if (req.method === 'GET' && action === 'scores' && !sub) {
+      const removed = url.searchParams.get('removed');
+      const notice = removed === '1' ? 'Joueur retiré (archivé dans archive/scores-retires.jsonl).' : removed === '0' ? 'Joueur introuvable.' : '';
+      return send(res, 200, renderScoresAdminPage(await store.loadBoard(), notice), 'text/html; charset=utf-8', html);
+    }
+    if (req.method === 'POST' && action === 'scores' && sub === 'remove') {
+      const raw = await readBody(req, 1024);
+      const playerId = new URLSearchParams(raw ?? '').get('playerId') ?? '';
+      const ok = /^[A-Za-z0-9-]{8,64}$/.test(playerId) && await store.remove(playerId);
+      return send(res, 303, '', 'text/plain', { Location: `../scores?removed=${ok ? 1 : 0}` });
+    }
+    if (req.method === 'GET' && action === 'stats' && !sub) {
+      const period = ['7', '30', 'all'].includes(url.searchParams.get('period') ?? '') ? url.searchParams.get('period') : '30';
+      const build = cleanBuild(url.searchParams.get('build'));
+      const st = computeStats(await store.runs(), { period, build, now: now(), errors: await store.errors(), avis: await readText(avisFile) });
+      return send(res, 200, renderStatsPage(st), 'text/html; charset=utf-8', html);
+    }
     return send(res, 404, 'introuvable', 'text/plain; charset=utf-8');
   };
 
@@ -231,7 +291,9 @@ export const createFeedbackServer = ({ dataDir, adminToken = '', now = () => Dat
         if (req.method !== 'POST') return send(res, 405, '', 'text/plain', { Allow: 'POST' });
         return await handleFeedback(req, res);
       }
-      if (parts[1] === 'avis' && parts.length >= 3 && parts.length <= 4) return await handleAdmin(req, res, url, parts.slice(2));
+      if (parts[1] === 'scores' && parts.length === 2) return await handleScores(req, res, url);
+      if (parts[1] === 'errors' && parts.length === 2) return await handleErrors(req, res);
+      if (parts[1] === 'avis' && parts.length >= 3 && parts.length <= 5) return await handleAdmin(req, res, url, parts.slice(2));
       return send(res, 404, 'introuvable', 'text/plain; charset=utf-8');
     } catch (err) {
       console.error('[feedback]', err);

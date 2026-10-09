@@ -2,7 +2,7 @@
 FROM node:20-alpine
 LABEL app=space-inzader
 WORKDIR /app
-COPY server.mjs feedback/server.mjs
+COPY server.mjs scores.mjs stats.mjs feedback/
 # Dossier des avis : volume nommé, appartient à l'utilisateur non privilégié « node »
 RUN mkdir -p /app/data && chown node:node /app/data
 USER node
