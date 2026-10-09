@@ -62,7 +62,7 @@ L'architecture et les guides « comment ajouter une arme / un ennemi / … » so
 
 Le jeu est hébergé sur **https://space.linkatplug.be** (conteneur Docker + nginx), déployé depuis le dépôt Gitea `https://git.linkatplug.be/linkatplug/Space-InZader.git` avec le script `deploy/update.sh`. Procédure complète : [DOCKER.md](DOCKER.md).
 
-GitHub sert de sauvegarde : le workflow [.github/workflows/ci.yml](.github/workflows/ci.yml) y lance seulement typecheck, tests et build à chaque push et PR. Le build utilise des chemins relatifs (`base: './'`) : il fonctionne à la racine d'un domaine comme dans un sous-chemin.
+GitHub sert uniquement de sauvegarde (aucun test automatique ni déploiement). Les tests tournent pendant la construction de l'image Docker : une version qui échoue n'est jamais mise en ligne. Le build utilise des chemins relatifs (`base: './'`) : il fonctionne à la racine d'un domaine comme dans un sous-chemin.
 
 ## Crédits
 

@@ -4,7 +4,7 @@
 > puis la section « Journal » en bas pour savoir exactement où on s'est arrêté.
 
 ## Règles du propriétaire (Linkatplug)
-- **Ne JAMAIS commit ni push** sans demande explicite. Il préfère peu de commits, gros et propres.
+- **Commit + push sans demander** (depuis le 2026-10-09) dès qu'un travail est fini et vérifié (tsc 0, `npm test` vert) : `git push gitea main` puis `git push origin main`. **Exception : les énormes changements** (grosse refonte, suppressions massives, changement de déploiement/architecture) → accord direct du propriétaire d'abord. Il préfère peu de commits, propres et groupés.
 - **Organisation multi-sessions** : la session « Space-InZader project review » est l'ORGANISATRICE GÉNÉRALE. Tout passe par elle : elle répartit le travail, intègre, vérifie et commite. Les autres sessions (ex. « Space InZader HUD refactor ») lui rendent compte en fin de tâche. Toutes travaillent dans le MÊME dossier `H:\Space InZader` : avant de modifier un fichier, vérifier qu'aucune autre session ne travaille dessus (le dire à l'organisatrice) ; ne pas changer de branche sans prévenir ; un onglet navigateur par session (`tabs_create`) car le panneau est partagé.
 - Il parle français, réponses courtes et concrètes.
 - Objectif : **continuer et finir le jeu**. Liberté sur les priorités.
@@ -29,7 +29,7 @@
 - `npm test` (Vitest) — tests headless du moteur dans `tests/`.
 
 ## Déployer
-- Le jeu se déploie **uniquement depuis Gitea** (`gitea` = https://git.linkatplug.be/linkatplug/Space-InZader.git) ; GitHub (`origin`) = sauvegarde (son workflow CI ne fait plus que typecheck + tests + build, plus de publication gh-pages).
+- Le jeu se déploie **uniquement depuis Gitea** (`gitea` = https://git.linkatplug.be/linkatplug/Space-InZader.git) ; GitHub (`origin`) = simple sauvegarde : plus aucun workflow (CI supprimée le 2026-10-09). Ne pas attendre/interroger GitHub après un push. Les tests tournent dans le build Docker (`update.sh`) et en local (`npm test`).
 - Jeu en ligne : https://space.linkatplug.be (vérifier la version en bas du menu après `update.sh`).
 - Procédure : commit (sur demande du propriétaire) → `git push gitea main` puis `git push origin main` → sur le serveur, en SSH : `/home/DOCKER/space-inzader/deploy/update.sh` (pull, build Docker avec tests, relance, nettoyage des seules images `label=app=space-inzader`). Détails : DOCKER.md.
 - Version affichée en bas du menu : `__BUILD__` / `__BUILD_DATE__` (vite.config.ts, env `SI_BUILD` = nombre de commits, `SI_BUILD_DATE`), formatée par `buildInfo.ts` ; en dev `v1.0.0-dev`. Servira aussi au contexte des avis F8.
@@ -63,7 +63,7 @@
 4. [FAIT] Méta : sauvegarde, déblocages, scores, écran de fin.
 5. [FAIT] Événements.
 6. [FAIT] Polish (équilibrage de base via bot) : HUD responsive, mobile, musique.
-7. [FAIT sauf branches] Nettoyage : README, déploiement (workflow CI). RESTE : suppression des branches obsolètes (demander).
+7. [FAIT sauf branches] Nettoyage : README, déploiement (Gitea + Docker, `deploy/update.sh`). RESTE : suppression des branches obsolètes (demander).
 
 ## Journal
 - 2026-10-07 — Repo cloné dans `H:\Space InZader`. Corrigé : erreurs JSX DevMenu, tsconfig types node, importmap AI Studio dans index.html, **bug des contrôles** (React StrictMode → `input.dispose()` débranchait le clavier ; ajouté `input.attach()`).
@@ -84,4 +84,5 @@
 - 2026-10-09 — **Déploiement Gitea** : Dockerfile (LABEL app=space-inzader, ARG SI_BUILD/SI_BUILD_DATE → Vite), docker-compose (build.args), `deploy/update.sh` (LF via .gitattributes, exécutable), DOCKER.md réécrit (procédure Gitea, Portainer/GitHub retiré), version dans le menu (`buildInfo.ts`, test `tests/build-info.test.ts`, `resolveJsonModule` dans tsconfig), remote `gitea` ajouté. Docker non installé sur ce PC : build d'image non testé ici (vite build avec SI_BUILD vérifié). 288 tests verts.
 - 2026-10-09 — **Fin du site GitHub Pages** : jeu en ligne sur https://space.linkatplug.be (Docker, `deploy/update.sh`, dépôt Gitea). CI GitHub réduite aux vérifications (job `deploy` gh-pages retiré, `permissions: contents: read`). README : lien « Jouer en ligne » + section Déploiement Gitea. Branche `gh-pages` ensuite supprimée sur GitHub à la demande du propriétaire (github.io → 404).
 - 2026-10-09 — **Avis testeurs F8 — partie serveur** (organisatrice ; la partie UI est faite par une autre session : components/feedback/**, App.tsx, menus) : contrat `FeedbackKind/Element/Snapshot/Context/Payload` (types.ts), `buildFeedbackSnapshot` (engine/FeedbackSnapshot.ts, topDamage = dégâts SUBIS, heat en %), `feedback/server.mjs` (Node pur, `POST /api/feedback`, page privée `/api/avis/<FEEDBACK_ADMIN_TOKEN>/`, purge = archive, IP jamais écrite), `feedback/Dockerfile` (utilisateur node, volume nommé `feedback-data`), nginx `/api/` (résolution DNS à la demande, IP client = dernière entrée X-Forwarded-For), `.env.example`, `.env`/`feedback/data/` ignorés (avis de dev ; surtout pas `data/` = contenu du jeu), proxy Vite `/api` → :3000. Tests : tests/feedback-snapshot.test.ts, tests/feedback-server.test.ts. Docker absent sur ce PC : images et nginx non testés ici (chaîne dev Vite → serveur vérifiée).
+- 2026-10-09 — **CI GitHub supprimée** (`.github/workflows/ci.yml`) à la demande du propriétaire : GitHub = sauvegarde seulement, priorité Gitea.
 - IDÉES SUITE : plus d'ennemis/boss, compétences actives supplémentaires (V2 n'en a que 2), écran d'options (volume), choix de keystone par vaisseau plus marqués, sprites/effets, traduction, `metadata.json` (reliquat AI Studio) à supprimer si inutile, nettoyage des branches copilot/* (demander).
